@@ -1,6 +1,5 @@
 package chess
 
-// GenerateLegalMoves returns all legal moves for the side to move.
 func GenerateLegalMoves(pos *Position) []Move {
 	pseudo := generatePseudo(pos)
 	legal := pseudo[:0]
@@ -13,7 +12,6 @@ func GenerateLegalMoves(pos *Position) []Move {
 	return legal
 }
 
-// LegalMovesFrom returns legal moves originating from sq.
 func LegalMovesFrom(pos *Position, from Square) []Move {
 	var out []Move
 	for _, m := range GenerateLegalMoves(pos) {
@@ -24,7 +22,6 @@ func LegalMovesFrom(pos *Position, from Square) []Move {
 	return out
 }
 
-// generatePseudo produces moves without checking whether they leave the king in check.
 func generatePseudo(pos *Position) []Move {
 	var moves []Move
 	for sq := Square(0); sq <= 63; sq++ {
@@ -80,12 +77,9 @@ func pawnMoves(pos *Position, from Square) []Move {
 		}
 	}
 
-	// Single push
 	to := NewSquare(f, r+dir)
 	if to.Valid() && pos.Board[to] == nil {
 		addPawn(to, Normal)
-
-		// Double push from starting rank
 		if r == startRank {
 			to2 := NewSquare(f, r+2*dir)
 			if to2.Valid() && pos.Board[to2] == nil {
@@ -94,7 +88,6 @@ func pawnMoves(pos *Position, from Square) []Move {
 		}
 	}
 
-	// Diagonal captures and en passant
 	for _, df := range []int{-1, 1} {
 		to := NewSquare(f+df, r+dir)
 		if !to.Valid() {
@@ -162,7 +155,6 @@ func kingMoves(pos *Position, from Square) []Move {
 		}
 	}
 
-	// Castling — king must be on its starting square and not in check
 	opp := c.Opponent()
 	if c == White && from == NewSquare(4, 0) {
 		if pos.Castling.WK && castleKSClear(pos, 0, opp) {
@@ -184,7 +176,6 @@ func kingMoves(pos *Position, from Square) []Move {
 	return moves
 }
 
-// castleKSClear checks empty squares and attack-free king path for kingside castling.
 func castleKSClear(pos *Position, rank int, opp Color) bool {
 	sqF := NewSquare(5, rank)
 	sqG := NewSquare(6, rank)
@@ -197,8 +188,6 @@ func castleKSClear(pos *Position, rank int, opp Color) bool {
 		!IsAttacked(pos, sqG, opp)
 }
 
-// castleQSClear checks empty squares and attack-free king path for queenside castling.
-// b-file only needs to be empty; king travels e→d→c so those three must not be attacked.
 func castleQSClear(pos *Position, rank int, opp Color) bool {
 	sqB := NewSquare(1, rank)
 	sqC := NewSquare(2, rank)
@@ -206,6 +195,7 @@ func castleQSClear(pos *Position, rank int, opp Color) bool {
 	if pos.Board[sqB] != nil || pos.Board[sqC] != nil || pos.Board[sqD] != nil {
 		return false
 	}
+	// b-file only needs to be empty; king travels e→d→c so those three must not be attacked
 	sqE := NewSquare(4, rank)
 	return !IsAttacked(pos, sqE, opp) &&
 		!IsAttacked(pos, sqD, opp) &&

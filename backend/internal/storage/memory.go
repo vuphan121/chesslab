@@ -6,14 +6,12 @@ import (
 	"github.com/chesslab/backend/internal/chess"
 )
 
-// Store is the interface for game persistence.
 type Store interface {
 	Save(g *chess.Game)
 	Get(id string) (*chess.Game, bool)
 	Delete(id string)
 }
 
-// Memory is a thread-safe in-memory store.
 type Memory struct {
 	mu    sync.RWMutex
 	games map[string]*chess.Game

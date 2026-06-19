@@ -50,13 +50,11 @@ export function useChessGame() {
     async (square: Square) => {
       if (!gs || busy) return
 
-      // Deselect
       if (selected === square) {
         setSelected(null)
         return
       }
 
-      // Attempt move if a square is already selected and target is legal
       if (selected) {
         const isLegal = gs.legalMoves.some((m) => m.from === selected && m.to === square)
         if (isLegal) {
@@ -81,7 +79,6 @@ export function useChessGame() {
         }
       }
 
-      // Select clicked square if it has a piece of the current turn
       const piece = gs.pieces[square]
       if (piece && piece.color === gs.turn) {
         setSelected(square)

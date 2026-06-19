@@ -1,6 +1,5 @@
 package chess
 
-// IsAttacked reports whether sq is attacked by any piece belonging to `by`.
 func IsAttacked(pos *Position, sq Square, by Color) bool {
 	return pawnAttacks(pos, sq, by) ||
 		knightAttacks(pos, sq, by) ||
@@ -9,7 +8,6 @@ func IsAttacked(pos *Position, sq Square, by Color) bool {
 		kingAttacks(pos, sq, by)
 }
 
-// InCheck reports whether color c's king is in check.
 func InCheck(pos *Position, c Color) bool {
 	k := pos.KingSquare(c)
 	return k.Valid() && IsAttacked(pos, k, c.Opponent())
@@ -17,7 +15,6 @@ func InCheck(pos *Position, c Color) bool {
 
 func pawnAttacks(pos *Position, sq Square, by Color) bool {
 	f, r := sq.File(), sq.Rank()
-	// from-rank: white pawns attack from the rank below, black from above
 	fromRank := r - 1
 	if by == Black {
 		fromRank = r + 1

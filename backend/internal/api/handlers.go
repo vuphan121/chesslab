@@ -18,8 +18,6 @@ func NewHandler(store storage.Store) *Handler {
 	return &Handler{store: store}
 }
 
-// --- request / response types ---
-
 type PieceJSON struct {
 	Type  string `json:"type"`
 	Color string `json:"color"`
@@ -50,10 +48,8 @@ type GameStateJSON struct {
 type MakeMoveRequest struct {
 	From      string `json:"from"`
 	To        string `json:"to"`
-	Promotion string `json:"promotion"` // "q"|"r"|"b"|"n" — empty defaults to queen
+	Promotion string `json:"promotion"`
 }
-
-// --- handlers ---
 
 func (h *Handler) CreateGame(w http.ResponseWriter, r *http.Request) {
 	id := uuid.New().String()
@@ -116,8 +112,6 @@ func (h *Handler) DeleteGame(w http.ResponseWriter, r *http.Request) {
 	h.store.Delete(chi.URLParam(r, "id"))
 	w.WriteHeader(http.StatusNoContent)
 }
-
-// --- helpers ---
 
 func toGameState(g *chess.Game) GameStateJSON {
 	pieces := map[string]PieceJSON{}

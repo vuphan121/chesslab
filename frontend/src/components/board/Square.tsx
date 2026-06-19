@@ -5,7 +5,6 @@ interface Props {
   square: SquareType
   piece: PieceType | null
   squareSize: number
-  // col and row in sprite coords (0-7), where row 0 = rank 8 (top of board)
   spriteCol: number
   spriteRow: number
   isSelected: boolean
@@ -31,7 +30,7 @@ export default function Square({
   fileLabel,
   onClick,
 }: Props) {
-  // dark square when (col + row) sum is odd
+  // (col + row) odd = dark square — determines label colour contrast
   const isDark = (spriteCol + spriteRow) % 2 === 1
   const labelColor = isDark ? 'rgba(176, 196, 216, 0.9)' : 'rgba(100, 140, 170, 0.9)'
   const fontSize = Math.max(9, squareSize * 0.2)
@@ -50,17 +49,14 @@ export default function Square({
       }}
       onClick={onClick}
     >
-      {/* Last move highlight */}
       {isLastMove && (
         <div className="absolute inset-0" style={{ backgroundColor: 'rgba(20, 85, 30, 0.5)' }} />
       )}
 
-      {/* Selected highlight */}
       {isSelected && (
         <div className="absolute inset-0" style={{ backgroundColor: 'rgba(20, 85, 30, 0.5)' }} />
       )}
 
-      {/* Check highlight */}
       {isCheck && piece?.type === 'k' && (
         <div
           className="absolute inset-0"
@@ -70,14 +66,12 @@ export default function Square({
         />
       )}
 
-      {/* Piece */}
       {piece && (
         <div className="absolute inset-0 flex items-center justify-center z-10">
           <Piece piece={piece} size={squareSize * 0.9} />
         </div>
       )}
 
-      {/* Rank label — top-left of a-file squares */}
       {rankLabel && (
         <span
           className="absolute z-30 font-semibold leading-none select-none pointer-events-none"
@@ -87,7 +81,6 @@ export default function Square({
         </span>
       )}
 
-      {/* File label — bottom-right of rank-1 squares */}
       {fileLabel && (
         <span
           className="absolute z-30 font-semibold leading-none select-none pointer-events-none"
@@ -97,19 +90,14 @@ export default function Square({
         </span>
       )}
 
-      {/* Legal move indicator */}
       {isLegalMove && (
         <div className="absolute inset-0 flex items-center justify-center z-20">
           {piece ? (
-            // Capture ring
             <div
               className="absolute inset-0 rounded-none"
-              style={{
-                boxShadow: 'inset 0 0 0 4px rgba(0,0,0,0.25)',
-              }}
+              style={{ boxShadow: 'inset 0 0 0 4px rgba(0,0,0,0.25)' }}
             />
           ) : (
-            // Move dot
             <div
               className="rounded-full"
               style={{

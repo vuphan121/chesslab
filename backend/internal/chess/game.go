@@ -2,7 +2,6 @@ package chess
 
 import "fmt"
 
-// applyMove returns a new Position resulting from move m (assumed pseudo-legal).
 func applyMove(pos *Position, m Move) *Position {
 	next := pos.Clone()
 	piece := next.Board[m.From]
@@ -22,11 +21,11 @@ func applyMove(pos *Position, m Move) *Position {
 
 	case EnPassant:
 		next.Board[m.To] = piece
-		// The captured pawn sits one rank behind the EP target square.
 		dir := 1
 		if pos.Turn == Black {
 			dir = -1
 		}
+		// captured pawn sits one rank behind the EP target square
 		next.Board[NewSquare(m.To.File(), m.To.Rank()-dir)] = nil
 		next.HalfClock = 0
 
@@ -46,7 +45,7 @@ func applyMove(pos *Position, m Move) *Position {
 		next.Board[m.To] = &Piece{Type: m.PromotionPiece(), Color: pos.Turn}
 		next.HalfClock = 0
 
-	default: // Normal capture or quiet move
+	default:
 		if next.Board[m.To] != nil {
 			next.HalfClock = 0
 		}
@@ -66,13 +65,12 @@ func applyMove(pos *Position, m Move) *Position {
 }
 
 func updateCastling(c *CastlingRights, from, to Square) {
-	if from == NewSquare(4, 0) { // white king moved
+	if from == NewSquare(4, 0) {
 		c.WK, c.WQ = false, false
 	}
-	if from == NewSquare(4, 7) { // black king moved
+	if from == NewSquare(4, 7) {
 		c.BK, c.BQ = false, false
 	}
-	// Rook moved from or captured on its home square
 	if from == NewSquare(7, 0) || to == NewSquare(7, 0) {
 		c.WK = false
 	}
@@ -87,7 +85,6 @@ func updateCastling(c *CastlingRights, from, to Square) {
 	}
 }
 
-// Game wraps a position with move history.
 type Game struct {
 	ID       string
 	Pos      *Position
@@ -95,7 +92,6 @@ type Game struct {
 	LastMove *Move
 }
 
-// NewGame creates a game starting from the standard initial position.
 func NewGame(id string) *Game {
 	pos, _ := ParseFEN(StartFEN)
 	return &Game{ID: id, Pos: pos}
@@ -105,7 +101,6 @@ func (g *Game) LegalMoves() []Move {
 	return GenerateLegalMoves(g.Pos)
 }
 
-// ApplyMove validates and applies a move, defaulting promotions to queen.
 func (g *Game) ApplyMove(m Move) error {
 	legal := g.LegalMoves()
 
@@ -116,13 +111,12 @@ func (g *Game) ApplyMove(m Move) error {
 		if lm.IsPromotion() {
 			want := m.Flag
 			if !m.IsPromotion() {
-				want = PromoQ // default to queen when client doesn't specify
+				want = PromoQ
 			}
 			if lm.Flag != want {
 				continue
 			}
 		}
-		// Matched — apply
 		matched := legal[i]
 		g.Pos = applyMove(g.Pos, matched)
 		g.History = append(g.History, matched)
@@ -133,18 +127,13 @@ func (g *Game) ApplyMove(m Move) error {
 	return fmt.Errorf("illegal move: %s→%s", m.From, m.To)
 }
 
-func (g *Game) IsCheck() bool     { return InCheck(g.Pos, g.Pos.Turn) }
+func (g *Game) IsCheck() bool      { return InCheck(g.Pos, g.Pos.Turn) }
 func (g *Game) HasLegalMoves() bool { return len(g.LegalMoves()) > 0 }
-
-func (g *Game) IsCheckmate() bool { return g.IsCheck() && !g.HasLegalMoves() }
-func (g *Game) IsStalemate() bool { return !g.IsCheck() && !g.HasLegalMoves() }
-
-func (g *Game) Is50MoveRule() bool {
-	return g.Pos.HalfClock >= 100
-}
+func (g *Game) IsCheckmate() bool  { return g.IsCheck() && !g.HasLegalMoves() }
+func (g *Game) IsStalemate() bool  { return !g.IsCheck() && !g.HasLegalMoves() }
+func (g *Game) Is50MoveRule() bool { return g.Pos.HalfClock >= 100 }
 
 func (g *Game) IsInsufficientMaterial() bool {
-	// Bare minimum: king vs king only.
 	var pieces int
 	for _, p := range g.Pos.Board {
 		if p != nil {
@@ -154,10 +143,7 @@ func (g *Game) IsInsufficientMaterial() bool {
 	return pieces == 2
 }
 
-func (g *Game) IsDraw() bool {
-	return g.IsStalemate() || g.Is50MoveRule() || g.IsInsufficientMaterial()
-}
-
+func (g *Game) IsDraw() bool    { return g.IsStalemate() || g.Is50MoveRule() || g.IsInsufficientMaterial() }
 func (g *Game) IsGameOver() bool { return g.IsCheckmate() || g.IsDraw() }
 
 func (g *Game) GameOverReason() string {
