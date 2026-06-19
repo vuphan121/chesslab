@@ -12,6 +12,8 @@ interface Props {
   isLegalMove: boolean
   isLastMove: boolean
   isCheck: boolean
+  rankLabel?: string
+  fileLabel?: string
   onClick: () => void
 }
 
@@ -25,8 +27,15 @@ export default function Square({
   isLegalMove,
   isLastMove,
   isCheck,
+  rankLabel,
+  fileLabel,
   onClick,
 }: Props) {
+  // dark square when (col + row) sum is odd
+  const isDark = (spriteCol + spriteRow) % 2 === 1
+  const labelColor = isDark ? 'rgba(176, 196, 216, 0.9)' : 'rgba(100, 140, 170, 0.9)'
+  const fontSize = Math.max(9, squareSize * 0.2)
+  const labelPad = squareSize * 0.04
   const textureSize = squareSize * 8
 
   return (
@@ -66,6 +75,26 @@ export default function Square({
         <div className="absolute inset-0 flex items-center justify-center z-10">
           <Piece piece={piece} size={squareSize * 0.9} />
         </div>
+      )}
+
+      {/* Rank label — top-left of a-file squares */}
+      {rankLabel && (
+        <span
+          className="absolute z-30 font-semibold leading-none select-none pointer-events-none"
+          style={{ top: labelPad, left: labelPad, fontSize, color: labelColor }}
+        >
+          {rankLabel}
+        </span>
+      )}
+
+      {/* File label — bottom-right of rank-1 squares */}
+      {fileLabel && (
+        <span
+          className="absolute z-30 font-semibold leading-none select-none pointer-events-none"
+          style={{ bottom: labelPad, right: labelPad, fontSize, color: labelColor }}
+        >
+          {fileLabel}
+        </span>
       )}
 
       {/* Legal move indicator */}

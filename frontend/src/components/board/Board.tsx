@@ -14,39 +14,27 @@ interface Props {
 }
 
 export default function Board({ boardState, onSquareClick, flipped = false, squareSize = 80 }: Props) {
-  const boardSize = squareSize * 8
-  const coordSize = squareSize * 0.22
-  const fontSize = Math.max(10, squareSize * 0.18)
-
   const files = flipped ? [...FILES].reverse() : FILES
   const ranks = flipped ? [...RANKS].reverse() : RANKS
 
-  return (
-    <div className="inline-flex flex-col" style={{ userSelect: 'none' }}>
-      {ranks.map((rank, rankIdx) => (
-        <div key={rank} className="flex">
-          {/* Rank label */}
-          <div
-            className="flex items-start justify-center shrink-0"
-            style={{
-              width: coordSize,
-              height: squareSize,
-              paddingTop: squareSize * 0.04,
-              color: '#b0c4d8',
-              fontSize,
-              fontWeight: 600,
-              fontFamily: 'sans-serif',
-            }}
-          >
-            {rank}
-          </div>
+  const lastRank = ranks[ranks.length - 1]
+  const firstFile = files[0]
 
-          {/* Squares */}
-          {files.map((file, fileIdx) => {
+  return (
+    <div
+      className="inline-flex flex-col"
+      style={{
+        userSelect: 'none',
+        borderRadius: 4,
+        overflow: 'hidden',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(0,0,0,0.08)',
+      }}
+    >
+      {ranks.map((rank) => (
+        <div key={rank} className="flex">
+          {files.map((file) => {
             const square = `${file}${rank}`
             const piece = boardState.pieces[square] ?? null
-
-            // Sprite position: col = file index (a=0..h=7), row = rank index in texture (rank 8 = row 0)
             const spriteCol = FILES.indexOf(file)
             const spriteRow = RANKS.indexOf(rank)
 
@@ -64,33 +52,14 @@ export default function Board({ boardState, onSquareClick, flipped = false, squa
                   boardState.lastMove?.from === square || boardState.lastMove?.to === square
                 }
                 isCheck={boardState.isCheck && piece?.type === 'k' && piece.color !== boardState.turn}
+                rankLabel={file === firstFile ? rank : undefined}
+                fileLabel={rank === lastRank ? file : undefined}
                 onClick={() => onSquareClick(square)}
               />
             )
           })}
         </div>
       ))}
-
-      {/* File labels row */}
-      <div className="flex" style={{ paddingLeft: coordSize }}>
-        {files.map((file) => (
-          <div
-            key={file}
-            className="flex items-center justify-end"
-            style={{
-              width: squareSize,
-              height: coordSize,
-              paddingRight: squareSize * 0.04,
-              color: '#b0c4d8',
-              fontSize,
-              fontWeight: 600,
-              fontFamily: 'sans-serif',
-            }}
-          >
-            {file}
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
