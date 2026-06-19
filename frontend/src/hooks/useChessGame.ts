@@ -1,88 +1,107 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { Chess } from 'chess.js'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { createGame, makeMove } from '@/lib/api/client'
+import type { GameState } from '@/lib/api/client'
 import type { BoardState, Square } from '@/lib/chess/types'
 
-function buildBoardState(game: Chess, selectedSquare: Square | null, history: { from: Square; to: Square }[]): BoardState {
+function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
   const pieces: BoardState['pieces'] = {}
-  const board = game.board()
-
-  for (let r = 0; r < 8; r++) {
-    for (let c = 0; c < 8; c++) {
-      const sq = board[r][c]
-      if (sq) {
-        pieces[sq.square] = { type: sq.type, color: sq.color }
-      }
-    }
+  for (const [sq, p] of Object.entries(gs.pieces)) {
+    pieces[sq] = { type: p.type as any, color: p.color as any }
   }
 
   const legalMoves = selectedSquare
-    ? game.moves({ square: selectedSquare as any, verbose: true }).map((m) => m.to)
+    ? gs.legalMoves.filter((m) => m.from === selectedSquare).map((m) => m.to)
     : []
-
-  const lastMove = history.length > 0 ? history[history.length - 1] : null
 
   return {
     pieces,
-    turn: game.turn(),
+    turn: gs.turn,
     selectedSquare,
     legalMoves,
-    lastMove,
-    isCheck: game.isCheck(),
-    isGameOver: game.isGameOver(),
-    gameOverReason: game.isCheckmate()
+    lastMove: gs.lastMove ? { from: gs.lastMove.from, to: gs.lastMove.to } : null,
+    isCheck: gs.isCheck,
+    isGameOver: gs.isGameOver,
+    gameOverReason: gs.isCheckmate
       ? 'checkmate'
-      : game.isStalemate()
+      : gs.isStalemate
         ? 'stalemate'
-        : game.isDraw()
-          ? 'draw'
+        : gs.isDraw
+          ? gs.gameOverReason
           : null,
   }
 }
 
 export function useChessGame() {
-  const [game] = useState(() => new Chess())
-  const [moveHistory, setMoveHistory] = useState<{ from: Square; to: Square }[]>([])
-  const [boardState, setBoardState] = useState<BoardState>(() => buildBoardState(game, null, []))
+  const [gs, setGs] = useState<GameState | null>(null)
+  const [selected, setSelected] = useState<Square | null>(null)
+  const [busy, setBusy] = useState(false)
+  const moveSound = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    moveSound.current = new Audio('/sounds/move.mp3')
+    createGame().then(setGs).catch(console.error)
+  }, [])
+
+  const boardState: BoardState | null = gs ? toBoardState(gs, selected) : null
 
   const selectSquare = useCallback(
-    (square: Square) => {
-      const current = boardState.selectedSquare
+    async (square: Square) => {
+      if (!gs || busy) return
 
-      // Clicking selected square deselects
-      if (current === square) {
-        setBoardState(buildBoardState(game, null, moveHistory))
+      // Deselect
+      if (selected === square) {
+        setSelected(null)
         return
       }
 
-      // Attempt move if a piece is selected and target is a legal move
-      if (current && boardState.legalMoves.includes(square)) {
-        const move = game.move({ from: current, to: square, promotion: 'q' })
-        if (move) {
-          const newHistory = [...moveHistory, { from: move.from, to: move.to }]
-          setMoveHistory(newHistory)
-          setBoardState(buildBoardState(game, null, newHistory))
+      // Attempt move if a square is already selected and target is legal
+      if (selected) {
+        const isLegal = gs.legalMoves.some((m) => m.from === selected && m.to === square)
+        if (isLegal) {
+          setBusy(true)
+          try {
+            const piece = gs.pieces[selected]
+            const isPromo =
+              piece?.type === 'p' &&
+              ((piece.color === 'w' && square[1] === '8') ||
+                (piece.color === 'b' && square[1] === '1'))
+
+            const next = await makeMove(gs.id, selected, square, isPromo ? 'q' : undefined)
+            setGs(next)
+            setSelected(null)
+            moveSound.current?.play().catch(() => {})
+          } catch {
+            setSelected(null)
+          } finally {
+            setBusy(false)
+          }
           return
         }
       }
 
-      // Select the clicked square if it has a piece of the current turn
-      const piece = boardState.pieces[square]
-      if (piece && piece.color === game.turn()) {
-        setBoardState(buildBoardState(game, square, moveHistory))
+      // Select clicked square if it has a piece of the current turn
+      const piece = gs.pieces[square]
+      if (piece && piece.color === gs.turn) {
+        setSelected(square)
       } else {
-        setBoardState(buildBoardState(game, null, moveHistory))
+        setSelected(null)
       }
     },
-    [game, boardState, moveHistory],
+    [gs, selected, busy],
   )
 
-  const reset = useCallback(() => {
-    game.reset()
-    setMoveHistory([])
-    setBoardState(buildBoardState(game, null, []))
-  }, [game])
+  const reset = useCallback(async () => {
+    setBusy(true)
+    try {
+      const next = await createGame()
+      setGs(next)
+      setSelected(null)
+    } finally {
+      setBusy(false)
+    }
+  }, [])
 
-  return { boardState, selectSquare, reset }
+  return { boardState, selectSquare, reset, busy }
 }

@@ -8,7 +8,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-[#e8e8e6] gap-6">
-      <Board boardState={boardState} onSquareClick={selectSquare} squareSize={80} />
+      {boardState && (
+        <Board boardState={boardState} onSquareClick={selectSquare} squareSize={80} />
+      )}
 
     </main>
   )
