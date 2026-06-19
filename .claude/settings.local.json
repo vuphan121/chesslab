@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o \"/d/chesslab/frontend/public/board-texture.png\" \"https://images.chesscomfiles.com/chess-themes/boards/icy_sea/200.png\")"
+    ]
+  }
+}
