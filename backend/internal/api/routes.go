@@ -18,6 +18,7 @@ func NewRouter(h *Handler) http.Handler {
 		r.Get("/{id}", h.GetGame)
 		r.Post("/{id}/moves", h.MakeMove)
 		r.Delete("/{id}", h.DeleteGame)
+		r.Get("/{id}/analysis", h.AnalyzeGame)
 	})
 
 	return r

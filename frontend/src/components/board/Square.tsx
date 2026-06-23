@@ -11,13 +11,13 @@ interface Props {
   isLegalMove: boolean
   isLastMove: boolean
   isCheck: boolean
+  isDragHighlight?: boolean
+  hidePiece?: boolean
   rankLabel?: string
   fileLabel?: string
-  onClick: () => void
 }
 
 export default function Square({
-  square,
   piece,
   squareSize,
   spriteCol,
@@ -26,47 +26,44 @@ export default function Square({
   isLegalMove,
   isLastMove,
   isCheck,
+  isDragHighlight,
+  hidePiece,
   rankLabel,
   fileLabel,
-  onClick,
 }: Props) {
   // (col + row) odd = dark square — determines label colour contrast
   const isDark = (spriteCol + spriteRow) % 2 === 1
   const labelColor = isDark ? 'rgba(176, 196, 216, 0.9)' : 'rgba(100, 140, 170, 0.9)'
   const fontSize = Math.max(9, squareSize * 0.2)
   const labelPad = squareSize * 0.04
+  const isHighlighted = isSelected || isLastMove || isDragHighlight
   const textureSize = squareSize * 8
 
   return (
     <div
-      className="relative cursor-pointer"
+      className="relative"
       style={{
         width: squareSize,
         height: squareSize,
-        backgroundImage: "url('/board-texture.png')",
-        backgroundSize: `${textureSize}px ${textureSize}px`,
-        backgroundPosition: `-${spriteCol * squareSize}px -${spriteRow * squareSize}px`,
+        backgroundColor: isHighlighted ? '#7ecae8' : undefined,
+        backgroundImage: isHighlighted ? undefined : "url('/board-texture.png')",
+        backgroundSize: isHighlighted ? undefined : `${textureSize}px ${textureSize}px`,
+        backgroundPosition: isHighlighted
+          ? undefined
+          : `-${spriteCol * squareSize}px -${spriteRow * squareSize}px`,
       }}
-      onClick={onClick}
     >
-      {isLastMove && (
-        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(20, 85, 30, 0.5)' }} />
-      )}
-
-      {isSelected && (
-        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(20, 85, 30, 0.5)' }} />
-      )}
-
-      {isCheck && piece?.type === 'k' && (
+      {isCheck && (
         <div
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(circle, rgba(255,0,0,0.8) 0%, rgba(255,0,0,0.3) 60%, transparent 100%)',
+            background:
+              'radial-gradient(circle, rgba(255,0,0,0.8) 0%, rgba(255,0,0,0.3) 60%, transparent 100%)',
           }}
         />
       )}
 
-      {piece && (
+      {piece && !hidePiece && (
         <div className="absolute inset-0 flex items-center justify-center z-10">
           <Piece piece={piece} size={squareSize * 0.9} />
         </div>

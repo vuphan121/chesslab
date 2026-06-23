@@ -11,6 +11,7 @@ export type Square = string // e.g. "e4", "a1"
 export interface BoardState {
   pieces: Record<Square, Piece>
   turn: Color
+  fullMove: number
   selectedSquare: Square | null
   legalMoves: Square[]
   lastMove: { from: Square; to: Square } | null

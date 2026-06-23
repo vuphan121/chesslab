@@ -16,6 +16,7 @@ export interface GameState {
   id: string
   fen: string
   turn: 'w' | 'b'
+  fullMove: number
   pieces: Record<string, PieceJSON>
   legalMoves: MoveJSON[]
   lastMove: MoveJSON | null
@@ -25,6 +26,22 @@ export interface GameState {
   isDraw: boolean
   isGameOver: boolean
   gameOverReason: string
+}
+
+export interface AnalysisLine {
+  score: number
+  mate: number
+  depth: number
+  moves: string[]
+}
+
+export interface Analysis {
+  bestMove: string
+  score: number
+  mate: number
+  depth: number
+  engineName: string
+  lines: AnalysisLine[]
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -53,3 +70,6 @@ export const makeMove = (
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ from, to, promotion: promotion ?? '' }),
   })
+
+export const analyzeGame = (id: string): Promise<Analysis> =>
+  request(`/api/games/${id}/analysis`)

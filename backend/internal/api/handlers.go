@@ -5,17 +5,19 @@ import (
 	"net/http"
 
 	"github.com/chesslab/backend/internal/chess"
+	"github.com/chesslab/backend/internal/engine"
 	"github.com/chesslab/backend/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
 type Handler struct {
-	store storage.Store
+	store  storage.Store
+	engine *engine.Engine
 }
 
-func NewHandler(store storage.Store) *Handler {
-	return &Handler{store: store}
+func NewHandler(store storage.Store, eng *engine.Engine) *Handler {
+	return &Handler{store: store, engine: eng}
 }
 
 type PieceJSON struct {
@@ -34,6 +36,7 @@ type GameStateJSON struct {
 	ID             string               `json:"id"`
 	FEN            string               `json:"fen"`
 	Turn           string               `json:"turn"`
+	FullMove       int                  `json:"fullMove"`
 	Pieces         map[string]PieceJSON `json:"pieces"`
 	LegalMoves     []MoveJSON           `json:"legalMoves"`
 	LastMove       *MoveJSON            `json:"lastMove"`
@@ -49,6 +52,22 @@ type MakeMoveRequest struct {
 	From      string `json:"from"`
 	To        string `json:"to"`
 	Promotion string `json:"promotion"`
+}
+
+type LineJSON struct {
+	Score int      `json:"score"` // centipawns, white perspective
+	Mate  int      `json:"mate"`  // >0 = white mates in N; <0 = black mates in N
+	Depth int      `json:"depth"`
+	Moves []string `json:"moves"` // SAN
+}
+
+type AnalysisJSON struct {
+	BestMove   string     `json:"bestMove"`
+	Score      int        `json:"score"`
+	Mate       int        `json:"mate"`
+	Depth      int        `json:"depth"`
+	EngineName string     `json:"engineName"`
+	Lines      []LineJSON `json:"lines"`
 }
 
 func (h *Handler) CreateGame(w http.ResponseWriter, r *http.Request) {
@@ -113,6 +132,49 @@ func (h *Handler) DeleteGame(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
+	if h.engine == nil {
+		http.Error(w, "engine not configured", http.StatusServiceUnavailable)
+		return
+	}
+	g, ok := h.store.Get(chi.URLParam(r, "id"))
+	if !ok {
+		http.Error(w, "game not found", http.StatusNotFound)
+		return
+	}
+	if g.IsGameOver() {
+		respondJSON(w, http.StatusOK, AnalysisJSON{EngineName: h.engine.Name})
+		return
+	}
+
+	raw, err := h.engine.Analyze(chess.FEN(g.Pos), 3, 18)
+	if err != nil {
+		http.Error(w, "analysis failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	flipScore := g.Pos.Turn == chess.Black
+	result := AnalysisJSON{BestMove: raw.BestMove, EngineName: h.engine.Name}
+	for i, l := range raw.Lines {
+		score, mate := l.Score, l.Mate
+		if flipScore {
+			score, mate = -score, -mate
+		}
+		if i == 0 {
+			result.Score = score
+			result.Mate = mate
+			result.Depth = l.Depth
+		}
+		result.Lines = append(result.Lines, LineJSON{
+			Score: score,
+			Mate:  mate,
+			Depth: l.Depth,
+			Moves: chess.MovesToSAN(g.Pos, l.Moves),
+		})
+	}
+	respondJSON(w, http.StatusOK, result)
+}
+
 func toGameState(g *chess.Game) GameStateJSON {
 	pieces := map[string]PieceJSON{}
 	for sq := chess.Square(0); sq <= 63; sq++ {
@@ -138,6 +200,7 @@ func toGameState(g *chess.Game) GameStateJSON {
 		ID:             g.ID,
 		FEN:            chess.FEN(g.Pos),
 		Turn:           g.Pos.Turn.String(),
+		FullMove:       g.Pos.FullMove,
 		Pieces:         pieces,
 		LegalMoves:     legalMoves,
 		LastMove:       lastMove,
