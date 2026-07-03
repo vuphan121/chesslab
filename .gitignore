@@ -5,3 +5,4 @@
 *.zip
 .env
 *.env
+backend/data/opening-sources/

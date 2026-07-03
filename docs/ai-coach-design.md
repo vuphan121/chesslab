@@ -63,6 +63,16 @@ Curated opening-theory documents (currently: 3 documents covering one specific o
 Sicilian Accelerated Dragon — with overlapping and unique line coverage across them). Scope stays
 narrow — one opening at a time — to validate the pipeline before expanding to more openings.
 
+**Status: built and validated.** All 3 documents have been hand-chunked into
+`backend/data/opening-sources/accelerated-dragon/chunks.json` (254 chunks after fixes — see
+`handoff.md` for what was excluded and why). Each chunk was run through
+`validate_chunks.py`, which parses `moveSequence` with python-chess and replays it against the
+*actual* Go backend (`POST /api/games` + `POST /api/games/{id}/moves`) — the backend's own
+legality rules are the ground truth, not python-chess's. Output is
+`chunks.validated.json`: the same chunks, annotated with a canonical `resolvedFen` and
+`eco`/`openingName` resolved via `/explorer`. This is the file the indexing layer should read
+from, not `chunks.json` directly.
+
 The 3 documents are structured differently, which matters for chunking:
 - **Annotated master games** (Nielsen & Hansen) — chapters = variation/system, content unit = a
   full annotated game with prose interleaved move-by-move
@@ -82,16 +92,29 @@ single-move explanation.
   structure — using paragraph breaks / Q&A blocks / diagram boundaries as natural split points,
   not whole games or whole sections. Each chunk covers the move(s) its commentary is actually
   about, not everything else in the same game/section.
-- Index key: **ECO code** as primary key — we already get this for free from the `/explorer`
-  response (`openingEco`), and it's how the source documents are naturally organized
+- **Only chunk where there's real explanatory prose — skip bare move-list branches with no
+  commentary.** All three books contain long stretches of raw variation trees (`10.Nd5 d6 11.Bg5
+  (11.h3 Nd7 12.c3...) ...`) with no prose attached. Those are just engine-style lines in book
+  form — the `analyze_position` tool already covers that ground. The chunks worth indexing are
+  the ones with actual prose explaining *why*, anchored to whichever move they're attached to.
+  See `docs/example-chunks.json` for 6 worked examples (2 per document) applying this rule.
+- **Index key: `resolvedFen`, not ECO code — this changed from the original plan.** The original
+  assumption was that ECO would be the primary key since `/explorer` gives it for free. In
+  practice, once the real corpus was built and validated, **only 8 of 254 chunks resolved an ECO
+  code** — Lichess only assigns ECO/opening names within the first several moves of a line, and
+  almost all of this corpus's value is in deep, specific theory (move 10-20+) well past that
+  point. ECO is too coarse to be useful as the primary key for a corpus like this.
+  - **Primary key: `resolvedFen`** (from `chunks.validated.json`) — canonical, transposition-safe,
+    always present regardless of how deep the line goes.
+  - **ECO stays as a coarse secondary tag** — useful for grouping/browsing by opening family where
+    it does resolve (mostly the first few moves of each document), not for lookup.
 - Each key maps to a **list** of chunks, not a single chunk — multiple documents can cover the
   same line. Tag each chunk with its source document. Lines only one document covers just
   naturally resolve to a list of length 1, no special-casing needed.
-- FEN used underneath as a canonicalization key so transposed move orders that reach the same
-  position resolve to the same theory, instead of being treated as unrelated lines
 - No embeddings/vector search needed yet — a well-tagged domain like chess openings can just use
-  exact-key lookup (ECO → chunks). Revisit if/when coverage grows large enough that ECO alone is
-  too coarse.
+  exact-key lookup (FEN → chunks). Revisit if/when coverage grows large enough that exact-FEN
+  matching misses too many near-identical positions (e.g. differing only in irrelevant flank
+  pawns) and a fuzzier match is needed.
 
 **General principles** (center control, development, king safety, tempo, ...)
 - Small, finite set — not worth indexing/retrieving at all. Bake directly into the system prompt
@@ -100,19 +123,35 @@ single-move explanation.
 ### Retrieval flow (per-move path)
 
 ```
-position → ECO code (from explorer response)
-         → look up chunks[ECO]  (list, possibly from multiple sources)
+position → FEN (already have this from the move/analysis response — no extra computation)
+         → look up chunks[resolvedFen]  (list, possibly from multiple sources, possibly empty)
          → include all in the grounded prompt, attributed by source
 ```
 
+If a position has no matching chunk (a real position not covered by any document — will be most
+positions, since the corpus only covers specific book lines), the prompt just proceeds with
+eval/explorer grounding and no retrieved theory. That's fine — not every move has book commentary
+attached to it in real life either.
+
 ## Open questions / not yet decided
 
-- Where the coach endpoint lives in the monorepo — new package under `backend/internal/coach/`
-  calling the Claude API directly, vs. a separate service. Leaning toward keeping it in the Go
-  backend to reuse existing engine/lichess/storage packages.
-- Chunk storage format for the theory corpus — likely a structured file (JSON keyed by ECO) for
-  now, given only 3 source documents; revisit if corpus grows.
+- **Not yet built: the actual index structure.** `chunks.validated.json` is a flat list today —
+  nothing groups it by `resolvedFen` yet. Next concrete step (see `handoff.md`).
+- **Not yet built: the coach endpoint itself.** Where it lives in the monorepo — new package under
+  `backend/internal/coach/` calling the Claude API directly, vs. a separate service. Leaning
+  toward keeping it in the Go backend to reuse existing engine/lichess/storage packages.
+- **Not yet set up: Anthropic API key.** Separate from the Claude Code subscription used to build
+  this — needs its own key from console.anthropic.com, billed separately, stored in
+  `backend/.env` as `ANTHROPIC_API_KEY` (same pattern as `LICHESS_TOKEN`). See `handoff.md`.
 - How to handle documents disagreeing on why a move is played — current plan is to surface all
-  sources and let the LLM synthesize/note disagreement rather than silently picking one.
-- Scaling indexing beyond ECO-code granularity once corpus covers many openings (ECO can be coarse
-  for long lines).
+  sources and let the LLM synthesize/note disagreement rather than silently picking one. Not yet
+  exercised in practice since we haven't built retrieval yet.
+- Whether exact-FEN lookup will miss too many near-transpositions in practice once this is live
+  (e.g. move-order swaps that reach the "same" position via a different FEN due to en passant/
+  castling-rights bookkeeping) — revisit once the retrieval layer is built and tested against real
+  gameplay.
+- Some source pages use a 2-column "sidebar" layout (e.g. the "Bonus Game" insets in the Nielsen &
+  Hansen book's Larsen chapter) that breaks plain top-to-bottom text extraction — the two columns
+  get interleaved line-by-line. This was worked around by hand for the current corpus; a future
+  automated extraction script will need to detect these pages and crop by x-position rather than
+  trust default text extraction everywhere.
