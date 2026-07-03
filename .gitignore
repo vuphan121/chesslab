@@ -6,3 +6,5 @@
 .env
 *.env
 backend/data/opening-sources/
+.claude/
+*.md
