@@ -21,6 +21,8 @@ func NewRouter(h *Handler) http.Handler {
 		r.Get("/{id}/analysis", h.AnalyzeGame)
 		r.Get("/{id}/explorer", h.Explorer)
 		r.Post("/{id}/goto", h.GotoNode)
+		r.Post("/{id}/coach/explain", h.ExplainMove)
+		r.Post("/{id}/coach/chat", h.CoachChat)
 	})
 
 	return r

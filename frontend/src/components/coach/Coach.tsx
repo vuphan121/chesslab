@@ -1,39 +1,98 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import type { ChatTurn } from '@/lib/api/client'
 
-interface Message {
-  role: 'coach' | 'user'
-  text: string
+interface CoachProps {
+  // Path 1 — auto per-move explanation of the current position.
+  explanation: string | null
+  explaining: boolean
+  explainError: string | null
+  // Path 2 — freeform chat. Resolves to the coach's reply, or throws with a
+  // user-facing message.
+  onSendChat: (message: string, history: ChatTurn[]) => Promise<string>
 }
 
-// Placeholder demo conversation — replace once the AI coach backend is wired up.
-const SEED_MESSAGES: Message[] = [
-  {
-    role: 'coach',
-    text: 'This is the Ruy López — after 3.Bb5 White pins pressure on the c6-knight that guards e5. It’s the most respected try for a lasting opening edge.',
-  },
-  { role: 'user', text: 'Why not just take on c6 and win the e5 pawn?' },
-  {
-    role: 'coach',
-    text: 'After 4.Bxc6 dxc6 5.Nxe5 Black plays 5…Qd4!, forking e5 and e4 to regain the pawn with a fine game. The pressure is positional — not a free pawn.',
-  },
-  { role: 'user', text: "So what's the main move for Black?" },
-  {
-    role: 'coach',
-    text: '3…a6 (the Morphy) is most flexible — it puts the question to the bishop. Prefer solid, symmetrical endgames? 3…Nf6 (the Berlin) is rock-solid.',
-  },
-]
+interface ChatMessage {
+  role: 'user' | 'assistant'
+  text: string
+  pending?: boolean
+  error?: boolean
+}
 
-export default function Coach() {
-  const [messages, setMessages] = useState<Message[]>(SEED_MESSAGES)
+// A three-dot "thinking" indicator — local model inference takes a few seconds.
+function Thinking() {
+  return (
+    <div style={{ display: 'flex', gap: 4, alignItems: 'center', padding: '2px 0' }}>
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: '#c4c2ba',
+            animation: 'coachPulse 1.2s ease-in-out infinite',
+            animationDelay: `${i * 0.18}s`,
+          }}
+        />
+      ))}
+      <style>{`@keyframes coachPulse { 0%, 60%, 100% { opacity: 0.3 } 30% { opacity: 1 } }`}</style>
+    </div>
+  )
+}
+
+export default function Coach({
+  explanation,
+  explaining,
+  explainError,
+  onSendChat,
+}: CoachProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
+  const [sending, setSending] = useState(false)
+  const scrollRef = useRef<HTMLDivElement | null>(null)
 
-  const send = () => {
+  // Keep the newest content in view as the explanation updates or chat grows.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+  }, [messages, explanation, explaining])
+
+  const send = async () => {
     const text = input.trim()
-    if (!text) return
-    setMessages((prev) => [...prev, { role: 'user', text }])
+    if (!text || sending) return
+
+    // History sent to the backend is the committed conversation so far (only
+    // real user/assistant turns — no pending/error placeholders).
+    const history: ChatTurn[] = messages
+      .filter((m) => !m.pending && !m.error)
+      .map((m) => ({ role: m.role, content: m.text }))
+
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user', text },
+      { role: 'assistant', text: '', pending: true },
+    ])
     setInput('')
+    setSending(true)
+
+    try {
+      const reply = await onSendChat(text, history)
+      setMessages((prev) => {
+        const next = [...prev]
+        next[next.length - 1] = { role: 'assistant', text: reply }
+        return next
+      })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Coach is unavailable right now.'
+      setMessages((prev) => {
+        const next = [...prev]
+        next[next.length - 1] = { role: 'assistant', text: msg, error: true }
+        return next
+      })
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -77,12 +136,15 @@ export default function Coach() {
         </div>
         <div>
           <div style={{ fontSize: 14, fontWeight: 600 }}>Coach</div>
-          <div style={{ fontSize: 11, color: '#a3a099' }}>Explaining this position</div>
+          <div style={{ fontSize: 11, color: '#a3a099' }}>
+            {explaining ? 'Thinking…' : 'Explaining this position'}
+          </div>
         </div>
       </div>
 
       {/* Message list */}
       <div
+        ref={scrollRef}
         style={{
           flex: 1,
           minHeight: 0,
@@ -93,15 +155,44 @@ export default function Coach() {
           gap: 16,
         }}
       >
+        {/* Path 1 — live explanation of the current position, pinned at top */}
+        {explainError ? (
+          <div style={{ fontSize: 13, lineHeight: 1.5, color: '#b06a56' }}>{explainError}</div>
+        ) : explaining && !explanation ? (
+          <Thinking />
+        ) : explanation ? (
+          <div
+            className="serif"
+            style={{ maxWidth: '90%', fontSize: 15, lineHeight: 1.6, color: '#37352f' }}
+          >
+            {explanation}
+          </div>
+        ) : (
+          <div style={{ fontSize: 13, lineHeight: 1.5, color: '#a3a099' }}>
+            Play a move and I&apos;ll explain the idea behind it — or ask me anything about this
+            position or opening.
+          </div>
+        )}
+
+        {/* Path 2 — freeform chat thread */}
         {messages.map((m, i) =>
-          m.role === 'coach' ? (
-            <div
-              key={i}
-              className="serif"
-              style={{ maxWidth: '90%', fontSize: 15, lineHeight: 1.6, color: '#37352f' }}
-            >
-              {m.text}
-            </div>
+          m.role === 'assistant' ? (
+            m.pending ? (
+              <Thinking key={i} />
+            ) : (
+              <div
+                key={i}
+                className="serif"
+                style={{
+                  maxWidth: '90%',
+                  fontSize: 15,
+                  lineHeight: 1.6,
+                  color: m.error ? '#b06a56' : '#37352f',
+                }}
+              >
+                {m.text}
+              </div>
+            )
           ) : (
             <div
               key={i}
@@ -140,7 +231,8 @@ export default function Coach() {
             onKeyDown={(e) => {
               if (e.key === 'Enter') send()
             }}
-            placeholder="Ask about this position…"
+            disabled={sending}
+            placeholder={sending ? 'Coach is thinking…' : 'Ask about this position…'}
             className="coach-input"
             style={{
               flex: 1,
@@ -153,6 +245,7 @@ export default function Coach() {
           />
           <button
             onClick={send}
+            disabled={sending || !input.trim()}
             style={{
               width: 34,
               height: 34,
@@ -161,7 +254,8 @@ export default function Coach() {
               background: '#1c1b18',
               color: '#fff',
               fontSize: 16,
-              cursor: 'pointer',
+              cursor: sending || !input.trim() ? 'default' : 'pointer',
+              opacity: sending || !input.trim() ? 0.5 : 1,
               flexShrink: 0,
             }}
           >

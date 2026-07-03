@@ -27,6 +27,10 @@ export default function Home() {
     analysis,
     explorer,
     explorerLoading,
+    coachExplanation,
+    coachExplaining,
+    coachError,
+    sendCoachChat,
   } = useChessGame()
   const [flipped, setFlipped] = useState(false)
 
@@ -176,7 +180,12 @@ export default function Home() {
               onNavEnd={navEnd}
               onReset={reset}
             />
-            <Coach />
+            <Coach
+              explanation={coachExplanation}
+              explaining={coachExplaining}
+              explainError={coachError}
+              onSendChat={sendCoachChat}
+            />
           </div>
         </div>
       </div>

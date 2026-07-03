@@ -1,0 +1,145 @@
+[
+  {
+    "opening": "Accelerated Dragon",
+    "topic": "introduction",
+    "title": "What the Accelerated Dragon is",
+    "text": "The Sicilian Accelerated Dragon arises after 1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6. It is characterised by an early fianchetto of the dark-squared bishop, just like the standard Sicilian Dragon (1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 g6). The key difference is that Black delays moving his d-pawn: this concedes White the option of the Maroczy Bind with 5.c4, but in return Black reserves the option of playing ...d7-d5 in a single move in many variations — often saving a full tempo compared with the ordinary Dragon. It has been employed by Bent Larsen, Tigran Petrosian, and more recently Magnus Carlsen, Viswanathan Anand, Veselin Topalov, Vassily Ivanchuk and others.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction"
+    }
+  },
+  {
+    "opening": "Accelerated Dragon",
+    "topic": "move-order",
+    "title": "Why 2...g6 (avoiding the Rossolimo)",
+    "text": "Black plays 2...g6 rather than developing a knight with 2...Nc6 largely to sidestep the Rossolimo Variation with 3.Bb5 — a line in which Black can struggle to get counterplay, especially if White captures on c6 and doubles Black's pawns. Reaching the Accelerated Dragon via the 2...g6 (Hyper-Accelerated) move order avoids that. This move-order flexibility is a recurring theme: because the Accelerated Dragon can be reached from so many move orders, it also serves as the basis of a defence against the flank openings 1.c4 and 1.Nf3, transposing into a Maroczy structure after, e.g., 1.c4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.e4.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction"
+    }
+  },
+  {
+    "opening": "Accelerated Dragon",
+    "topic": "engine-vs-human",
+    "title": "Why engine evaluations underrate the Accelerated Dragon",
+    "text": "Computers have probably deterred many potential devotees from the Accelerated Dragon. Engine evaluations in the main lines tend to fluctuate between +0.25 and +0.5, which can make it look like playing with a small handicap straight out of the opening compared to something like the Berlin or Marshall (nearer +0.15). But things are not so simple: computers evaluate each position by objective features, without regard for the subjective factors that are often more important in tournament chess. Machines systematically ignore the value of being able to follow one of a small number of thematic plans irrespective of what the opponent does — saving clock time and reducing the risk of mishandling the position. This human element is unaccounted for by the engine, inflating its estimation of White's chances. There is a real parallel with the King's Indian Defence, another opening notoriously misjudged by the engine: devotees are used to seeing +0.5 and are not discouraged, because they recognise there is a narrow margin of error for White, and to err is human.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Introduction — My Favorite Sicilian"
+    }
+  },
+  {
+    "opening": "Accelerated Dragon",
+    "topic": "engine-vs-human",
+    "title": "Engines value material; humans value the initiative",
+    "text": "A recurring practical point in Accelerated Dragon / Maroczy positions: the engines will often still give White a plus, but that is largely because they value material (and other static factors) heavily in their assessment algorithms. Many '+=' evaluations are more accurately '=', and — more importantly — 'easier to play for Black', a factor that should not be underestimated, especially at faster time controls. The spirit of the opening is that of a position refusing to be evaluated on static grounds alone; terms like 'elastic', 'counterplay', 'counterattacking potential' and 'mutual chances' are far more informative here than a reductive '=' or '+='.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Introduction — About This Book (with a parallel note in Davies, Introduction)"
+    }
+  },
+  {
+    "opening": "Accelerated Dragon",
+    "topic": "philosophy",
+    "title": "The Accelerated Dragon 'state of mind' — hidden dynamics",
+    "text": "There is a requisite 'state of mind' for handling the Accelerated Dragon, best grasped from experience. Panjwani suggests thinking of the Maroczy as a close cousin of the Hedgehog, borrowing Mihai Suba's description: White's position 'looks ideal', but the 'ideal' has by definition one drawback — it cannot be improved. It is rigid, not elastic. Black's position 'looks' worse but has greater scope for improvement. The Accelerated Dragon state of mind is an appreciation for these hidden dynamic factors that compensate for static deficiencies. In fact Black often has more freedom than in the Hedgehog: whereas in the Hedgehog it is usually bad for Black to exchange queens, in the Maroczy White frequently takes pains to avoid exchanging queens so as not to lose the initiative — a liability that contributes to the rigidity of White's position.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Introduction — The Accelerated Dragon State of Mind"
+    }
+  },
+  {
+    "opening": "Accelerated Dragon",
+    "topic": "philosophy",
+    "title": "It feels like playing White — Black controls the tempo and initiative",
+    "text": "One of the remarkable things about the Accelerated Dragon is that when you play it, it 'feels' like you are playing White, not Black (albeit in a hypermodern manner). Normally White controls the tempo of the game and Black must play accurately just to avoid ending up slightly worse or handing White the initiative. For the well-prepared Accelerated Dragon player the situation is precisely the reverse: in the Maroczy, for example, there are half a dozen different ways for Black to develop, so players of diverse styles choose the one that suits them, and Black controls the tempo and determines the character of the struggle — which is why it is so effective in must-win games. The claim is not that 'Black is better', but that the character of the Accelerated Dragon is that of a White opening (its mirror image, with colours reversed and a tempo up, is literally the English Opening).",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Introduction — An Inclusive Opening"
+    }
+  },
+  {
+    "opening": "Accelerated Dragon",
+    "topic": "style-fit",
+    "title": "An opening that suits opposite styles",
+    "text": "The Accelerated Dragon appeals to players with vastly different styles. Compare Bent Larsen — the epitome of dynamic, offbeat, risky chess — with Sergei Tiviakov, whose style was shaped by Petrosian, Smyslov and Karpov: both champion the Accelerated Dragon as their main weapon against 1.e4 despite being near-opposites. Because Black can develop in several sound ways, a risk-averse (Petrosian-type) player and a risk-craving (Larsen-type) player can each find a congenial set-up. Panjwani accordingly recommends two systems against each of the 7.Bc4 and Maroczy Bind variations — one solid, one ambitious — so a reader can pick the flavour that matches their temperament.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Introduction — An Inclusive Opening / About This Book"
+    }
+  },
+  {
+    "opening": "Accelerated Dragon",
+    "topic": "typical-plans",
+    "title": "Typical strategic themes and plans",
+    "text": "The positional themes of the Accelerated Dragon are relatively easy to digest: dark-square control (anchored by the g7-bishop), the central breakthrough with ...d7-d5 (often achievable in one move, a tempo up on the ordinary Dragon), queenside expansion (…a-file and …b7-b5 play), and a set of characteristic favourable and unfavourable endgames. A frequent Maroczy idea is that Black is happy to keep queens on to preserve dynamic chances, while White must avoid the exchange of dark-squared bishops (…Bxd4 or preventing Bh6) since that bishop underpins Black's whole structure. A well-known Accelerated Dragon dream is to prove that White's early d2-d4 has simply left Black with a healthy extra central pawn.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Introduction — My Favorite Sicilian (with themes echoed across Davies & Nielsen/Hansen)"
+    }
+  },
+  {
+    "opening": "Accelerated Dragon",
+    "topic": "maroczy",
+    "title": "The Maroczy Bind — the main concern, and Black's counterplay",
+    "text": "The reason the Accelerated Dragon is not even more popular is largely concern about the Maroczy Bind, 1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.c4, long regarded as the critical test because White obtains an annoying space advantage (the e4/c4 'clamp'). The old pre-1970s dogma held that Black must prevent this clamp at all costs. Modern practice has overturned that: Black has demonstrated real counterattacking prospects against the e4/c4 structure — as in the Hedgehog, Kalashnikov, Kan and Taimanov, and no less in the Accelerated Dragon. Davies notes Black gets excellent counterplay in the critical Gurgenidze System (5...Nf6 6.Nc3 d6) if he knows what he is doing. Far from being a mere drawing attempt, strong practitioners welcome the Maroczy even in must-win games with Black.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction (with the 'clamp' framing from Panjwani, Introduction)"
+    }
+  },
+  {
+    "opening": "Accelerated Dragon",
+    "topic": "transpositions",
+    "title": "Transpositions and repertoire fit",
+    "text": "The Accelerated Dragon fits neatly with several defences and can transpose from them, which makes it economical to learn alongside a 1.d4/1.c4/1.Nf3 repertoire. Examples: from a King's Indian move order (1.d4 Nf6 2.c4 g6 3.Nc3 Bg7 4.e4 d6 5.Nf3 0-0 6.Be2 c5 7.0-0 cxd4 8.Nxd4 Nc6); from Benoni/Benko move orders (1.d4 Nf6 2.c4 c5 3.Nf3 cxd4 4.Nxd4 Nc6 5.Nc3 g6 6.e4); and from the Symmetrical English (1.c4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.e4 Nc6). Because the Accelerated Dragon reversed is itself a respectable White opening (the English), the same piece arrangement is used a tempo up by many top players — so the ideas transfer in both directions.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Introduction — An Inclusive Opening"
+    }
+  },
+  {
+    "opening": "Accelerated Dragon",
+    "topic": "study-advice",
+    "title": "How to study and play the opening",
+    "text": "Suggested way to learn it (Davies): first play through all the illustrative games without dwelling on the deep theoretical notes; after gaining that overview, try the Accelerated Dragon at a faster time limit; then go back and check how you handled the critical lines, studying the theory more closely and verifying the variations for yourself. Panjwani's complementary advice: don't try to memorise the given moves as ultimate truth — actively seek out your own novelties and understand how the positional ideas fit together. For a rare sideline not covered in a book (e.g. 2.Na3), find a database, look up how a known Accelerated Dragon expert handled it, and remember the key ideas of a model game rather than memorising concrete moves.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction (with study advice from Panjwani, Introduction)"
+    }
+  },
+  {
+    "opening": "Accelerated Dragon",
+    "topic": "risk",
+    "title": "A realistic attitude toward risk (the Larsen course)",
+    "text": "If you play the Accelerated Dragon ambitiously — Panjwani's riskier recommendations are 'My System' against 7.Bc4 and the Breyer Variation of the Maroczy — do so with a realistic attitude toward the cost of risk-taking. By its mathematical nature, risk-taking increases the variability of outcomes, both good and bad; the mature risk-taker is mindful that their risk-taking is compatible with their aims. This was Larsen's attitude. Reshevsky described Larsen as a firm believer in the value of surprise, often resorting to dubious variations and readily complicating positions even at considerable risk — extremely effective against weaker opponents, less so against the very top. That is the risk-taker's predicament, but the risk-averse have the solid systems to fall back on instead.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Introduction — About This Book"
+    }
+  },
+  {
+    "opening": "Accelerated Dragon",
+    "topic": "philosophy",
+    "title": "The Classical (Be2) variation epitomises the philosophy",
+    "text": "The Classical variation with 6.Be2 (after 1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2) is said to epitomise the Accelerated Dragon philosophy. In most defences to 1.e4 — the Najdorf, Scheveningen, Taimanov, Pirc/Modern, Alekhine — a quiet Classical set-up with the light-squared bishop on e2 gives White serious chances of an opening edge. Against the Accelerated Dragon it is comparatively harmless: Accelerated Dragon players are even better placed than ordinary Dragon players here, because they can transpose to harmless lines of the Classical Dragon with a timely ...d7-d6, or strike immediately with ...d7-d5, saving a full tempo over the analogous Dragon lines. Despite offering White no advantage, the Be2 system still appears in about 15% of Accelerated Dragons (mostly at club level), the rest split between the Maroczy and 7.Bc4 variations.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 — Classical Variation (Be2), Part 1"
+    }
+  }
+]

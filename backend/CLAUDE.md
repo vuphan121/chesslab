@@ -46,9 +46,25 @@ internal/
     explorer.go     # FetchExplorer() — opening-explorer (requires LICHESS_TOKEN bearer auth)
   api/
     handlers.go     # HTTP handlers: CreateGame, GetGame, MakeMove, DeleteGame, AnalyzeGame, Explorer, GotoNode
+    coach_handler.go # HTTP handlers: ExplainMove (Path 1), CoachChat (Path 2)
     routes.go       # chi router setup + CORS middleware
   storage/
     memory.go       # Store interface + thread-safe in-memory implementation
+  coach/
+    index.go        # Chunk struct + Index — loads chunks.validated.json, groups by resolvedFen
+    overview.go      # OverviewChunk + OverviewIndex — opening-level prose, keyword (not FEN) search
+    prompt.go        # BuildExplainPrompt — grounded prompt for the per-move explanation path
+    service.go       # Service.ExplainMove — Path 1 (single grounded call; classifies move if prevFen)
+    llm.go           # LLMClient interface + OllamaClient (OpenAI-compatible /v1/chat/completions,
+                     #   with tool-calling support for Path 2)
+    agent.go         # Agent.Chat — Path 2 (freeform, agentic tool-calling loop) + tool definitions
+    tools.go         # Tools (shared by both paths, built via NewTools) — analyze_position/
+                     #   explorer_stats/retrieve_theory/retrieve_opening_context/classify_move/
+                     #   evaluate_move impls
+    classify.go      # rule-based, book-aware move-quality classifier (eval grade + Book override)
+    classify_test.go # unit tests for the eval grade + gambit/novelty book-override rules
+    evaluate_test.go # unit tests for EvaluateMove (legal SAN/UCI, illegal, annotation stripping)
+    overview_test.go # unit tests for the opening-overview keyword search
 ```
 
 ## REST API
@@ -62,6 +78,8 @@ internal/
 | GET | `/api/games/{id}/analysis` | Run Stockfish analysis on current position |
 | GET | `/api/games/{id}/explorer` | Lichess opening-explorer stats for current position |
 | POST | `/api/games/{id}/goto` | Navigate to a move-tree node by id (`{ "nodeId": "3" }`) — does not discard moves |
+| POST | `/api/games/{id}/coach/explain` | Grounded per-move explanation (Path 1) |
+| POST | `/api/games/{id}/coach/chat` | Freeform agentic coach chat (Path 2) |
 
 ### Move request body
 ```json
@@ -151,6 +169,145 @@ internal/
 - `openingName`/`openingEco` at the top level describe the **current** queried position; per-move fields describe the position **after** that candidate move — both come directly from Lichess (no extra lookups)
 - `sharePct` is that move's share of games from the current position; `whitePct`/`drawPct`/`blackPct` are that move's own W/D/L split
 - Returns 503 if `LICHESS_TOKEN` is unset or the upstream call fails
+
+### Coach explain request/response (Path 1)
+```json
+// POST /api/games/{id}/coach/explain
+{ "fen": "...", "prevFen": "...", "lastMoveSan": "Bd7", "analysis": { /* AnalysisJSON, optional */ }, "explorer": { /* ExplorerJSON, optional */ } }
+// -> { "explanation": "..." }
+```
+- `analysis`/`explorer` are optional passthroughs of what the frontend already fetched via
+  `refreshInsights` — no extra Stockfish/Lichess round trip on the backend for this path.
+- `prevFen` is the position *before* the move (frontend sends the parent tree node's FEN). When
+  present, the service runs the **book-aware move classifier** (`Tools.ClassifyMove(prevFen, fen)`)
+  and injects the verdict into the prompt, so the explanation opens by naming the move's quality —
+  and an established gambit reads as a playable "Book" move, not a mistake, even when the engine
+  dislikes it. Best-effort: if classification fails (no engine / cloud miss), the explanation just
+  proceeds without it.
+- Looks up `chunks.validated.json` by exact `fen` match; if nothing matches, the explanation still
+  proceeds on engine/explorer grounding + general principles alone.
+- Returns 503 if the coach isn't configured, 502 if the local LLM call fails.
+
+### Coach chat request/response (Path 2 — freeform, agentic)
+```json
+// POST /api/games/{id}/coach/chat
+{ "message": "Was my last move any good?", "history": [{ "role": "user", "content": "..." }, { "role": "assistant", "content": "..." }] }
+// -> { "reply": "..." }
+```
+- `history` is the full prior conversation (frontend keeps and resends it — the backend is
+  stateless between requests, no server-side session storage).
+- The handler reads the **current game's own state** from the store (via the `{id}` in the URL) —
+  current FEN, last move SAN, and the FEN before that move — and injects it as context, so the user
+  can ask "was my last move good?" without pasting any FEN.
+- The agent can call tools mid-turn (`analyze_position`, `explorer_stats`, `retrieve_theory`,
+  `retrieve_opening_context`, `classify_move`, `evaluate_move` — see below) against arbitrary FENs,
+  not just the current position — e.g. "what if I'd played Nf3 instead?" `retrieve_opening_context`
+  answers general "tell me about this opening" questions; `evaluate_move` answers "from this position,
+  can I play X?" (the injected current FEN + the named move → legality + book-aware verdict).
+- Returns 503 if unconfigured, 502 if the local LLM call fails, or if the tool-call loop exceeds
+  `maxToolIterations` (4) without a final answer.
+
+## AI coach design
+
+**Two paths** (see `docs/ai-coach-design.md` for full rationale): Path 1 (`coach.Service`) is a
+single grounded LLM call with no LLM tool-calling — analysis/explorer data is already known and is
+injected straight into the prompt, and the move classifier runs server-side (not as an LLM tool) when
+`prevFen` is supplied. Path 2 (`coach.Agent`) is agentic — the model decides which tools to call, in
+a loop, before answering. Both share one `coach.Tools` (built in `main.go` via `coach.NewTools`), so
+Path 1's classification and Path 2's tools use the same engine/index/overview/explorer plumbing.
+
+**LLM backend:** local, not the Anthropic API — `coach.OllamaClient` (`llm.go`) talks to an
+OpenAI-compatible `/v1/chat/completions` endpoint (Ollama by default, `http://localhost:11434`,
+model `llama3.1:8b`), overridable via `OLLAMA_BASE_URL`/`COACH_MODEL` env vars. `llama3.1` supports
+native tool-calling, which Ollama exposes through the same OpenAI-compatible `tools`/`tool_calls`
+wire format — swapping to another OpenAI-compatible runtime later is just a different base URL.
+
+**Path 2 tool-call loop** (`agent.go`): each iteration sends the full message history (including
+prior tool results) back to the LLM; if the response has no `tool_calls`, that's the final answer.
+Each tool call's JSON result (or a `{"error": "..."}` on failure) is appended as a `"tool"`-role
+message so the model can see and adapt to failures instead of the whole request aborting. Capped at
+`maxToolIterations` (4) to bound a confused model's loop.
+
+**Tools available to the agent** (`tools.go`):
+- `analyze_position(fen)` — Lichess cloud eval first, falling back to local Stockfish (same policy
+  as `AnalyzeGame`), returned with SAN lines from the mover's own perspective (no white/black
+  perspective flip — that's only done for the frontend's white-relative eval bar).
+- `explorer_stats(fen)` — wraps `lichess.FetchExplorer`.
+- `retrieve_theory(fen)` — exact-FEN lookup in `coach.Index` (same index Path 1 uses) —
+  position-specific move commentary.
+- `retrieve_opening_context(query)` — keyword search over the opening-overview corpus (see below) —
+  for general "tell me about this opening" questions, not position-specific ones.
+- `classify_move(fenBefore, fenAfter)` — see below.
+- `evaluate_move(fen, move)` — **the "from this position, can I play X?" tool.** Takes a FEN + a move
+  in SAN (`Nf3`, `O-O`, `exd5`) or UCI (`g1f3`), applies it with the Go engine (the legality
+  authority), and returns `{legal, move (canonical SAN), uci, resultingFen, quality}`. The LLM can't
+  reliably compute a resulting FEN itself, so this is how it evaluates a user-named move; the current
+  position FEN is already injected into the chat context (see below), so "can I play Nf3 here?"
+  resolves without the user pasting a FEN. Implemented in `tools.go` (`EvaluateMove`) via
+  `GenerateLegalMoves` + SAN/UCI matching + `MovesToSANAndFENs` for the resulting FEN, then reuses
+  `ClassifyMove` for the verdict. `evaluate_test.go` covers legal SAN/UCI, illegal, annotation
+  stripping.
+
+The FEN-keyed tools work on an arbitrary FEN, not tied to the current game, so the model can reason
+about hypothetical positions ("what if I'd played Nf3?").
+
+**Two corpora, two retrieval styles.** The move-commentary corpus (`chunks.validated.json` →
+`coach.Index`) is keyed by exact `resolvedFen` — it answers "what's the theory in *this position*".
+The opening-overview corpus (`overview.json` → `coach.OverviewIndex`) is opening-level prose —
+introductions, philosophy, typical plans, why-play-it, move-order/transposition notes — that isn't
+tied to any one position, so it's retrieved by natural-language keyword match instead
+(`OverviewIndex.Search`: weighted token overlap over opening/topic/title/text, stopword-filtered, no
+embeddings — consistent with the "well-tagged domain, exact/keyword lookup is enough" decision). Both
+are optional at startup; a missing/empty file just disables that retrieval path. The overview corpus
+was hand-extracted from the 3 source PDFs' introductions (mostly Panjwani's and Davies' — the
+Nielsen/Hansen excerpt on hand is only the column-bled Larsen games, no clean intro prose); each
+passage carries its source book + location. No FEN-validation step is needed for it (no moves to
+replay), unlike the move corpus.
+
+**Rule-based move classifier** (`classify.go`) — two axes, eval and book:
+
+1. *Eval grade* (`classifyByEval`): runs `analyze_position` before and after the move, converts each
+   side's centipawn/mate score to a win probability via the public Lichess sigmoid
+   (`winPercent = 50 + 50*(2/(1+e^(-0.00368208*cp))-1)`, mate → 0/100), and buckets the **drop** in
+   the mover's own win probability into Best (<1%) / Excellent (1–3.5%) / Good (3.5–7%) /
+   Inaccuracy (7–10%) / Mistake (10–20%) / Blunder (≥20%). Approximates chess.com/Lichess's
+   game-review categories (their real "Expected Points Model" is proprietary and rating-adjusted —
+   this is a reasonable public stand-in, not a reverse-engineering). The "after" position's raw
+   score is from the *opponent's* perspective (they're now on move), so it's negated before
+   comparing, keeping both sides of the swing in the mover's perspective.
+
+2. *Book context* (`applyBookContext`, applied by `Tools.ClassifyMove`): this is the fix for the
+   gambit problem — a real gambit (King's/Evans/Smith-Morra/Latvian/Danish/...) deliberately accepts
+   an eval/material deficit, so grading it on eval alone would mislabel established theory as a
+   Mistake. `Tools.ClassifyMove` queries the explorer for the resulting position's rated-game count
+   and named opening, and checks the theory corpus. `BookStatus` = established (≥25 rated games) /
+   rare (1–24) / novelty (0) / unknown (explorer unavailable). Rules:
+   - **established + eval grade Inaccuracy-or-worse → final `category` becomes `Book`** (a named,
+     playable line — the `note` tells the LLM to explain what the sacrifice buys, not scold the
+     eval). This is the override the whole feature exists for.
+   - established + eval grade fine → keep the (good) grade, note it's book.
+   - novelty (0 games) → keep the eval grade but note the move has *left* known theory and is
+     uncharted (new ≠ bad; the eval, not the novelty, drives the verdict there).
+   - unknown → fall back to the eval grade, note the DB couldn't be consulted.
+   `MoveQuality` carries both `engineCategory` (raw eval) and `category` (book-aware, human-facing)
+   on purpose, so the LLM can contrast them. The gambit/novelty framing is also baked into both
+   paths' system prompts (`gambitPhilosophy` in `prompt.go`) so even eval-only reasoning frames these
+   correctly. Verified end-to-end: the Latvian Gambit (2...f5) grades `engineCategory: Mistake` but
+   `category: Book` (established, 942k games).
+
+   **Used in both paths:** the freeform agent exposes it as the `classify_move` tool (and
+   `evaluate_move`, which applies a named move then classifies it — this is what powers "from this
+   position can I play X?"). Path 1 (per-move explanation) runs it server-side whenever the request
+   includes `prevFen`, injecting the verdict so the explanation opens by naming the move's quality —
+   e.g. an established gambit is introduced as a playable book move, not a blunder.
+
+   **Evaluation harness:** `docs/coach-eval/run_eval.py` drives this live backend + Ollama over a
+   ladder of test cases (in-corpus positions + a swing-based ladder from Best→Blunder + both gambit
+   directions) and writes `docs/coach-eval/results.md` (summary table + per-case detail). Its
+   classification columns replicate this package's win% formula/thresholds exactly, so they're an
+   objective check on the classifier; the explanation text is the model output to eval. First run:
+   classifier/book-override all correct; main weakness is `llama3.1:8b` misattributing retrieved book
+   commentary (model-size issue, not a pipeline bug).
 
 ## Chess engine design
 

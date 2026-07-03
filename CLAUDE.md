@@ -2,7 +2,8 @@
 
 AI-powered chess opening prep tool — an interactive "Opening Study" workspace combining a Lichess
 opening database, a chessboard with Stockfish analysis, move-tree navigation (with sidelines), and an
-AI coach chat (not yet wired to a real backend).
+AI coach (grounded per-move explanations + freeform tool-calling chat, backed by a local LLM via
+Ollama — see backend/CLAUDE.md).
 
 ## Monorepo structure
 
@@ -48,8 +49,8 @@ A single-screen 3-column workspace recreated from a Claude-designed hi-fi mock
   row to play that continuation.
 - **Caption row**: opening name + ECO chip (from Lichess), engine name + depth readout, flip-board button.
 - **Board + eval bar** (center): see below.
-- **Move order + Coach** (right): move-tree navigation with sidelines (see below); Coach is a static
-  placeholder chat — no AI backend yet.
+- **Move order + Coach** (right): move-tree navigation with sidelines (see below); Coach is the live
+  AI coach — auto per-move explanation + freeform tool-calling chat, backed by a local LLM (see below).
 
 ### Chess board UI
 - Custom board using chess.com icy sea board texture as a CSS sprite
@@ -108,6 +109,24 @@ Games are stored as a **tree**, not a linear move list — navigating backward n
 - Game state is a move tree (`chess.Node`), not a linear history — see backend/CLAUDE.md
 - REST API — see `backend/CLAUDE.md` for endpoints
 
+### AI coach (backend `internal/coach/`, frontend `components/coach/Coach.tsx`)
+Grounded chess coaching backed by a **local LLM** (Ollama + `llama3.1:8b` by default — no Anthropic
+key; overridable via `OLLAMA_BASE_URL`/`COACH_MODEL`). The LLM writes prose; it never invents chess
+facts — those come from Stockfish/Lichess and a curated opening-theory corpus. Two paths:
+- **Path 1 — per-move explanation** (`POST /coach/explain`): fires automatically after each
+  move/navigation. Retrieves book commentary for the exact position (FEN-keyed corpus), runs the
+  **book-aware move classifier** (so a gambit reads as a playable "Book" move, not a blunder even when
+  the engine dislikes it), and folds in the eval/explorer data the frontend already has → one grounded
+  explanation, shown pinned atop the Coach panel.
+- **Path 2 — freeform chat** (`POST /coach/chat`): an agentic tool-calling loop. Tools:
+  `analyze_position`, `explorer_stats`, `retrieve_theory` (position-specific book text),
+  `retrieve_opening_context` (opening-level prose — "what's the idea behind this opening?"),
+  `classify_move`, and `evaluate_move` (applies a named move via the engine → powers "from this
+  position, can I play X?"). The backend injects the live board position, so no FEN-pasting needed.
+- **Corpus**: hand-chunked, engine-validated opening theory (currently the Sicilian Accelerated
+  Dragon). See `backend/CLAUDE.md` and `docs/ai-coach-design.md`. Evaluation harness +
+  results in `docs/coach-eval/`.
+
 ### Frontend → Backend integration
 - On mount, `useChessGame` creates a new game via `POST /api/games`
 - Clicks/drags go through `selectSquare` / `move(from, to)` → `POST /api/games/{id}/moves`
@@ -117,7 +136,10 @@ Games are stored as a **tree**, not a linear move list — navigating backward n
   in parallel (`refreshInsights`)
 
 ## What's next (planned)
-- AI coach backend — Coach panel is currently a static placeholder conversation
+- Improve coach explanation quality — the eval run (`docs/coach-eval/`) shows `llama3.1:8b`
+  misattributes retrieved book commentary; try a larger local model or a stricter no-fabricated-sources
+  prompt
+- Expand the opening-context corpus beyond the Accelerated Dragon (see `docs/handoff.md`)
 - Repertoire builder: let user mark moves as their chosen responses
 - Real book-deviation tracking (currently approximated by explorer game count > 0)
 - Promotion dialog (currently auto-promotes to queen)

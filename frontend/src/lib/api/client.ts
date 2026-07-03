@@ -107,3 +107,75 @@ export const gotoNode = (id: string, nodeId: string): Promise<GameState> =>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nodeId }),
   })
+
+// --- AI coach ---
+
+export interface ExplainMoveRequest {
+  fen: string
+  prevFen: string
+  lastMoveSan: string
+  analysis: Analysis | null
+  explorer: Explorer | null
+}
+
+export interface ExplainMoveResponse {
+  explanation: string
+}
+
+export interface ChatTurn {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface CoachChatResponse {
+  reply: string
+}
+
+// CoachUnavailableError marks a 503 from the coach endpoints — i.e. the coach
+// isn't configured (no local model reachable). Callers use it to show a
+// distinct "coach offline" message rather than a generic failure.
+export class CoachUnavailableError extends Error {}
+
+// Local-model inference is slow (tens of seconds) and the agent chat can chain
+// several calls, so we allow a generous ceiling — but still bound it so a hung
+// request surfaces an error instead of freezing the coach panel forever.
+const COACH_TIMEOUT_MS = 120_000
+
+async function coachRequest<T>(path: string, body: unknown): Promise<T> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), COACH_TIMEOUT_MS)
+  let res: Response
+  try {
+    res = await fetch(`${API}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    })
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Coach timed out — the local model took too long to respond.')
+    }
+    throw err
+  } finally {
+    clearTimeout(timer)
+  }
+  if (!res.ok) {
+    const text = (await res.text()).trim()
+    if (res.status === 503) throw new CoachUnavailableError(text || 'coach not configured')
+    throw new Error(text || res.statusText)
+  }
+  return res.json() as Promise<T>
+}
+
+export const explainMove = (
+  id: string,
+  req: ExplainMoveRequest,
+): Promise<ExplainMoveResponse> => coachRequest(`/api/games/${id}/coach/explain`, req)
+
+export const coachChat = (
+  id: string,
+  message: string,
+  history: ChatTurn[],
+): Promise<CoachChatResponse> =>
+  coachRequest(`/api/games/${id}/coach/chat`, { message, history })

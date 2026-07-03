@@ -7,3 +7,7 @@
 *.env
 .claude/
 *.md
+
+# Python
+__pycache__/
+*.pyc

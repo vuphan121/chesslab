@@ -7,10 +7,38 @@ import {
   analyzeGame,
   getExplorer,
   gotoNode as apiGotoNode,
+  explainMove,
+  coachChat,
+  CoachUnavailableError,
 } from '@/lib/api/client'
-import type { GameState, Analysis, Explorer } from '@/lib/api/client'
+import type { GameState, Analysis, Explorer, ChatTurn } from '@/lib/api/client'
 import type { BoardState, Square } from '@/lib/chess/types'
 import { flatten, mainlineEnd, childrenOf } from '@/lib/chess/moveTree'
+
+// nodeMeta returns the SAN of the move that reached the given node and the FEN
+// of the position just before it (both empty at the root — no move played).
+// prevFen lets the coach classify the move (gambit-aware) without a store race.
+function nodeMeta(gs: GameState, nodeId: string): { san: string; prevFen: string } {
+  const map = flatten(gs.moveTree)
+  const entry = map.get(nodeId)
+  const san = entry?.node.san ?? ''
+  const parentId = entry?.parentId
+  const prevFen = parentId != null ? (map.get(parentId)?.node.fen ?? '') : ''
+  return { san, prevFen }
+}
+
+// coachErrorMessage turns a thrown coach error into a short, user-facing line.
+function coachErrorMessage(err: unknown): string {
+  if (err instanceof CoachUnavailableError) {
+    return 'Coach is offline — start a local model (Ollama) to enable it.'
+  }
+  return 'Coach is unavailable right now. Please try again.'
+}
+
+// EXPLAIN_DEBOUNCE_MS delays the per-move explanation so rapid move-tree
+// navigation (holding an arrow key) only explains the position you land on,
+// instead of firing a slow local-model call for every position passed through.
+const EXPLAIN_DEBOUNCE_MS = 350
 
 function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
   const pieces: BoardState['pieces'] = {}
@@ -52,45 +80,102 @@ export function useChessGame() {
   const [analyzing, setAnalyzing] = useState(false)
   const [explorer, setExplorer] = useState<Explorer | null>(null)
   const [explorerLoading, setExplorerLoading] = useState(false)
+  const [coachExplanation, setCoachExplanation] = useState<string | null>(null)
+  const [coachExplaining, setCoachExplaining] = useState(false)
+  const [coachError, setCoachError] = useState<string | null>(null)
   const moveSound = useRef<HTMLAudioElement | null>(null)
+  // Monotonic id so a slow per-move explanation from an earlier position can't
+  // overwrite the explanation for the position the user has since moved to.
+  const explainReqId = useRef(0)
+  const explainTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const runAnalysis = useCallback(async (gameId: string) => {
+  const runAnalysis = useCallback(async (gameId: string): Promise<Analysis | null> => {
     setAnalyzing(true)
     try {
       const a = await analyzeGame(gameId)
       setAnalysis(a)
+      return a
     } catch {
       // engine not configured or game over — leave previous analysis visible
+      return null
     } finally {
       setAnalyzing(false)
     }
   }, [])
 
-  const runExplorer = useCallback(async (gameId: string) => {
+  const runExplorer = useCallback(async (gameId: string): Promise<Explorer | null> => {
     setExplorerLoading(true)
     try {
       const e = await getExplorer(gameId)
       setExplorer(e)
+      return e
     } catch {
       // explorer not configured (e.g. missing LICHESS_TOKEN) — leave previous data visible
+      return null
     } finally {
       setExplorerLoading(false)
     }
   }, [])
 
-  const refreshInsights = useCallback(
-    (gameId: string) => {
-      runAnalysis(gameId)
-      runExplorer(gameId)
+  // Per-move explanation (coach Path 1). Fires after a move/navigation once the
+  // fresh analysis+explorer for the new position are in hand, so the coach has
+  // full grounding. Debounced + request-id-guarded against rapid navigation.
+  const runCoachExplain = useCallback(
+    (
+      gameId: string,
+      fen: string,
+      san: string,
+      prevFen: string,
+      a: Analysis | null,
+      e: Explorer | null,
+    ) => {
+      if (explainTimer.current) clearTimeout(explainTimer.current)
+
+      // At the root there's no move to explain — clear the panel back to idle.
+      if (!san) {
+        explainReqId.current++
+        setCoachExplaining(false)
+        setCoachError(null)
+        setCoachExplanation(null)
+        return
+      }
+
+      const reqId = ++explainReqId.current
+      setCoachError(null)
+      setCoachExplaining(true)
+      explainTimer.current = setTimeout(() => {
+        explainMove(gameId, { fen, prevFen, lastMoveSan: san, analysis: a, explorer: e })
+          .then((res) => {
+            if (reqId === explainReqId.current) setCoachExplanation(res.explanation)
+          })
+          .catch((err) => {
+            if (reqId === explainReqId.current) {
+              setCoachExplanation(null)
+              setCoachError(coachErrorMessage(err))
+            }
+          })
+          .finally(() => {
+            if (reqId === explainReqId.current) setCoachExplaining(false)
+          })
+      }, EXPLAIN_DEBOUNCE_MS)
     },
-    [runAnalysis, runExplorer],
+    [],
+  )
+
+  const refreshInsights = useCallback(
+    async (gameId: string, gsForMeta: GameState) => {
+      const { san, prevFen } = nodeMeta(gsForMeta, gsForMeta.currentNodeId)
+      const [a, e] = await Promise.all([runAnalysis(gameId), runExplorer(gameId)])
+      runCoachExplain(gameId, gsForMeta.fen, san, prevFen, a, e)
+    },
+    [runAnalysis, runExplorer, runCoachExplain],
   )
 
   useEffect(() => {
     moveSound.current = new Audio('/sounds/move.mp3')
     createGame().then((g) => {
       setGs(g)
-      refreshInsights(g.id)
+      refreshInsights(g.id, g)
     }).catch(console.error)
   }, [refreshInsights])
 
@@ -119,7 +204,7 @@ export function useChessGame() {
             setGs(next)
             setSelected(null)
             moveSound.current?.play().catch(() => {})
-            refreshInsights(next.id)
+            refreshInsights(next.id, next)
           } catch {
             setSelected(null)
           } finally {
@@ -152,7 +237,7 @@ export function useChessGame() {
         setGs(next)
         setSelected(null)
         moveSound.current?.play().catch(() => {})
-        refreshInsights(next.id)
+        refreshInsights(next.id, next)
       } catch {
         setSelected(null)
       } finally {
@@ -181,7 +266,7 @@ export function useChessGame() {
         setGs(next)
         setSelected(null)
         moveSound.current?.play().catch(() => {})
-        refreshInsights(next.id)
+        refreshInsights(next.id, next)
       } catch {
         // ignore
       } finally {
@@ -223,11 +308,27 @@ export function useChessGame() {
       setSelected(null)
       setAnalysis(null)
       setExplorer(null)
-      refreshInsights(next.id)
+      refreshInsights(next.id, next)
     } finally {
       setBusy(false)
     }
   }, [refreshInsights])
+
+  // Freeform coach chat (Path 2). The backend reads the live board position
+  // from the game store, so we only pass the message + prior turns. Throws a
+  // friendly Error the composer can surface; keeps the caller's history intact.
+  const sendCoachChat = useCallback(
+    async (message: string, history: ChatTurn[]): Promise<string> => {
+      if (!gs) throw new Error('Game not ready yet.')
+      try {
+        const res = await coachChat(gs.id, message, history)
+        return res.reply
+      } catch (err) {
+        throw new Error(coachErrorMessage(err))
+      }
+    },
+    [gs],
+  )
 
   return {
     boardState,
@@ -245,5 +346,9 @@ export function useChessGame() {
     analyzing,
     explorer,
     explorerLoading,
+    coachExplanation,
+    coachExplaining,
+    coachError,
+    sendCoachChat,
   }
 }

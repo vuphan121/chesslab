@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/chesslab/backend/internal/chess"
+	"github.com/chesslab/backend/internal/coach"
 	"github.com/chesslab/backend/internal/engine"
 	"github.com/chesslab/backend/internal/lichess"
 	"github.com/chesslab/backend/internal/storage"
@@ -15,12 +16,14 @@ import (
 )
 
 type Handler struct {
-	store  storage.Store
-	engine *engine.Engine
+	store      storage.Store
+	engine     *engine.Engine
+	coach      *coach.Service // Path 1 (per-move); nil if unconfigured — endpoint returns 503
+	coachAgent *coach.Agent   // Path 2 (freeform chat); nil if unconfigured — endpoint returns 503
 }
 
-func NewHandler(store storage.Store, eng *engine.Engine) *Handler {
-	return &Handler{store: store, engine: eng}
+func NewHandler(store storage.Store, eng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent) *Handler {
+	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent}
 }
 
 type PieceJSON struct {

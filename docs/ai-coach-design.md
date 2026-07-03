@@ -2,11 +2,12 @@
 
 ## Problem
 
-The Coach panel is currently a static placeholder chat. We want it to actually explain opening
-moves — *why* a move was played, not just *that* it's good or bad. A raw LLM API call isn't
+The Coach panel started as a static placeholder chat. The goal was to make it actually explain
+opening moves — *why* a move was played, not just *that* it's good or bad. A raw LLM API call isn't
 enough: LLMs don't reliably calculate chess and will hallucinate plausible-sounding but wrong
 tactical/positional claims. Chess "truth" needs to come from tools we already have (Stockfish,
-Lichess data) and curated opening theory text, not from the model's parametric memory.
+Lichess data) and curated opening theory text, not from the model's parametric memory. (Status: now
+built and wired end-to-end — see the Status section below.)
 
 ## Core idea
 
@@ -45,15 +46,82 @@ fetch it.
 
 For things like "what if I'd played Nf3 instead?" — a position we haven't already analyzed.
 
+**Status: built** (`backend/internal/coach/agent.go`, `POST /api/games/{id}/coach/chat`).
+
 ```
 user question
-  → LLM (agentic, tool-calling enabled)
-      tools available:
-        - analyze_position(fen)  → wraps existing /api/games/{id}/analysis
-        - explorer_stats(fen)    → wraps existing /api/games/{id}/explorer
-        - retrieve_theory(query) → RAG lookup, see below
-      LLM decides which tools it needs, calls them, then answers
+  → PositionContext injected (current FEN, FEN before the last move, last move SAN) — read from
+    the game store via the {id} in the URL, so the user never has to paste a FEN
+  → LLM (agentic, tool-calling enabled via Ollama/llama3.1's native tool-calling support)
+      tools available (backend/internal/coach/tools.go):
+        - analyze_position(fen)         → Lichess cloud eval → Stockfish fallback, any FEN
+        - explorer_stats(fen)           → wraps lichess.FetchExplorer
+        - retrieve_theory(fen)          → exact-FEN lookup in the same Index Path 1 uses
+        - classify_move(fenBefore, fenAfter) → rule-based move-quality verdict, see below
+      LLM decides which tools it needs, calls them (up to 4 iterations), then answers
 ```
+
+One deviation from the original plan: `retrieve_theory` takes a `fen`, not a free-text `query` —
+the corpus is indexed by exact FEN only (no embeddings/text search, see below), so a FEN is what
+the lookup actually needs. A future text-query interface would still have to resolve to a FEN
+internally before hitting the same index.
+
+### Rule-based, book-aware move-quality classifier
+
+Added per explicit request: chess.com/Lichess-style Best/Excellent/Good/Inaccuracy/Mistake/Blunder
+labels, as a tool the Path 2 agent can call (`classify_move`, `backend/internal/coach/classify.go`).
+
+**Two axes on purpose — eval AND book — because engine eval alone is the wrong yardstick for
+opening theory.** A raw eval grade would flag legitimate gambits (King's, Evans, Smith-Morra,
+Latvian, Danish, ...) as mistakes, since they deliberately accept a material/eval deficit for
+development, initiative, or attack. The user's point: a *real* gambit is playable, not a mistake, and
+a coach for humans has to say so.
+
+*Eval grade* — chess.com's actual algorithm ("Expected Points Model") is proprietary and
+rating-adjusted, so this is a public approximation (checked via web search — chess.com's support
+docs describe the categories in terms of win-probability lost, not raw centipawns, which is why this
+thresholds on win% not centipawn swing: the same numeric swing means very different things in a
+balanced vs. an already-lopsided position):
+
+1. Analyze the FEN before and after the move (two `analyze_position` calls).
+2. Convert both to win probability with the public Lichess sigmoid:
+   `winPercent = 50 + 50 * (2/(1+e^(-0.00368208*cp)) - 1)` (mate → 0 or 100).
+3. Express both in the *mover's* perspective — the "after" position's raw score is from the
+   opponent's perspective (they're now on move), so it's negated first.
+4. Bucket the win% drop: Best (<1%), Excellent (1–3.5%), Good (3.5–7%), Inaccuracy (7–10%),
+   Mistake (10–20%), Blunder (≥20%). This is `engineCategory`.
+
+*Book context* (the fix) — `Tools.ClassifyMove` then queries the explorer for the resulting
+position's rated-game count + named opening, and checks the theory corpus, producing a `BookStatus`
+(established ≥25 games / rare 1–24 / novelty 0 / unknown). The final human-facing `category`:
+
+- **established theory + eval grade Inaccuracy-or-worse → `Book`** (with a `note` telling the LLM to
+  explain what the sacrifice buys, not scold the eval). This is the whole point of the feature.
+- established + good eval → keep the good grade, note it's book.
+- novelty (0 games) → keep the eval grade, but note the move has *left* known theory — uncharted, and
+  "new ≠ bad", so let the eval (not the mere novelty) drive the verdict. This is the "move hasn't
+  existed" case the user raised.
+- unknown (explorer down) → fall back to eval grade, note the DB couldn't be consulted.
+
+The 25-game threshold and the win% buckets are heuristics, tunable in `classify.go`. The same
+gambit/novelty framing is also baked into both paths' system prompts (`gambitPhilosophy`), so even
+eval-only reasoning (no `classify_move` call) frames gambits correctly. **Now wired into both paths:**
+the agent exposes `classify_move`; Path 1 (per-move explanation) runs the classifier server-side when
+`prevFen` is provided and opens the explanation by naming the verdict (a gambit is introduced as a
+playable book move, not a blunder). Verified end-to-end: Latvian Gambit 2...f5 → `engineCategory:
+Mistake` but `category: Book` (established, 942k games); Path 1 opens with "This is the Latvian
+Gambit, an established opening theory…" instead of calling it a mistake.
+
+### "From this position, can I play X?" — the evaluate_move tool
+
+A gap surfaced once the chat was in real use: to answer "can I play Nf3 here?" the agent needs the
+FEN *after* the named move, but an LLM can't reliably generate a FEN. So `evaluate_move(fen, move)`
+(agent tool, `tools.go`) applies the move with the Go engine — the legality authority — and returns
+`{legal, canonical SAN, uci, resultingFen, quality}` where `quality` is the same book-aware verdict.
+The current board FEN is already injected into the chat context, so the user asks in plain language
+("from this position, can I play f5?") and the agent calls `evaluate_move(currentFen, "f5")`. Verified:
+from 1.e4 e5 2.Nf3, "can I play f5?" → the coach confirms it's legal, names the Latvian Gambit, and
+says to ignore the engine's "Mistake" tag since it's a known gambit line.
 
 ## RAG design
 
@@ -116,9 +184,26 @@ single-move explanation.
   matching misses too many near-identical positions (e.g. differing only in irrelevant flank
   pawns) and a fuzzier match is needed.
 
+**Opening-overview context** (`overview.json` → `coach.OverviewIndex`) — **built.** This is the
+second corpus: opening-*level* prose that isn't about any single position — introductions,
+strategic philosophy, typical plans, why-play-it, the "it feels like playing White / you get the
+initiative" framing, move-order/transposition notes, study advice, risk profiles. Move-keyed FEN
+lookup is the wrong tool for these (there's no one position they attach to), so:
+- Stored as a flat list of `{opening, topic, title, text, source{title,author,location}}`. No
+  `moveSequence`/`resolvedFen`, so no engine-validation step is needed (nothing to replay) — unlike
+  the move corpus. Hand-extracted from the 3 source PDFs' introductions (mostly Panjwani and Davies;
+  the Nielsen/Hansen excerpt on hand is only the column-bled Larsen games, no clean intro prose).
+- **Retrieved by natural-language keyword match**, not FEN — `OverviewIndex.Search` scores weighted
+  token overlap (opening/topic/title weighted above body text), stopword-filtered, returns top-K.
+  Still no embeddings — a well-tagged, single-opening corpus doesn't need them yet; revisit if the
+  corpus grows to many openings and keyword overlap starts returning near-misses.
+- Exposed to the Path 2 agent as the `retrieve_opening_context(query)` tool (distinct from the
+  FEN-keyed `retrieve_theory`). The agent picks it for general "what's the idea behind this opening?"
+  questions. Not used by Path 1 (per-move) at all — that path is inherently position-specific.
+
 **General principles** (center control, development, king safety, tempo, ...)
-- Small, finite set — not worth indexing/retrieving at all. Bake directly into the system prompt
-  or a static reference block.
+- Small, finite set — not worth indexing/retrieving at all. Baked directly into the system prompt
+  (`generalPrinciples` + `gambitPhilosophy` in `prompt.go`).
 
 ### Retrieval flow (per-move path)
 
@@ -133,16 +218,38 @@ positions, since the corpus only covers specific book lines), the prompt just pr
 eval/explorer grounding and no retrieved theory. That's fine — not every move has book commentary
 attached to it in real life either.
 
+## LLM backend: local model, not the Anthropic API
+
+**Decision:** the coach calls a locally-served, OpenAI-compatible chat endpoint (Ollama) instead
+of the Anthropic API — the user doesn't plan to get a billed `ANTHROPIC_API_KEY`.
+`backend/internal/coach/llm.go` defines an `LLMClient` interface so the concrete backend is
+swappable; `OllamaClient` is the only implementation so far, pointed at `http://localhost:11434`
+(`OLLAMA_BASE_URL`) running `llama3.1:8b` (`COACH_MODEL`) — a reasonable fit for the dev machine's
+Ryzen 7 / 16GB RAM / no GPU, and confirmed to support native tool-calling (needed for Path 2)
+through Ollama's OpenAI-compatible `tools`/`tool_calls` format. Moving to llama.cpp server or a
+hosted API later is just a different base URL/model, not a code change. **Installed and running**
+(Ollama v0.31.1 via winget, `llama3.1:8b` pulled — see `handoff.md`).
+
+## Status (see `handoff.md` for full detail)
+
+- **Both paths built and wired up.** Path 1: `coach.Service.ExplainMove`,
+  `POST /api/games/{id}/coach/explain`. Path 2: `coach.Agent.Chat`,
+  `POST /api/games/{id}/coach/chat`, with the tool-call loop and rule-based `classify_move`
+  classifier described above.
+- **Local LLM is installed and verified working end-to-end**, not just wired: Ollama + `llama3.1:8b`
+  running locally, both endpoints tested with real (non-mocked) requests through the full stack —
+  see `handoff.md` for the specific test transcripts.
+- **Frontend is wired up.** `Coach.tsx` shows the live per-move explanation + freeform chat thread;
+  see `handoff.md` / `frontend/CLAUDE.md`.
+- **Evaluation harness** (`docs/coach-eval/run_eval.py` → `results.md`): drives the live stack over a
+  ladder of test cases (in-corpus positions + a swing-based ladder), objectively scoring the classifier
+  (same math as `classify.go`) and capturing the explanation prose. First run confirms the classifier +
+  book-override are correct; the main quality gap is `llama3.1:8b` **misattributing** retrieved book
+  commentary (a model-size issue, not a retrieval bug) — a larger local model or a stricter
+  no-fabricated-sources prompt is the follow-up. See `handoff.md` item 10.
+
 ## Open questions / not yet decided
 
-- **Not yet built: the actual index structure.** `chunks.validated.json` is a flat list today —
-  nothing groups it by `resolvedFen` yet. Next concrete step (see `handoff.md`).
-- **Not yet built: the coach endpoint itself.** Where it lives in the monorepo — new package under
-  `backend/internal/coach/` calling the Claude API directly, vs. a separate service. Leaning
-  toward keeping it in the Go backend to reuse existing engine/lichess/storage packages.
-- **Not yet set up: Anthropic API key.** Separate from the Claude Code subscription used to build
-  this — needs its own key from console.anthropic.com, billed separately, stored in
-  `backend/.env` as `ANTHROPIC_API_KEY` (same pattern as `LICHESS_TOKEN`). See `handoff.md`.
 - How to handle documents disagreeing on why a move is played — current plan is to surface all
   sources and let the LLM synthesize/note disagreement rather than silently picking one. Not yet
   exercised in practice since we haven't built retrieval yet.

@@ -36,12 +36,13 @@ src/
     tree/
       OpeningTree.tsx   # "Opening Tree" left panel — real Lichess explorer data, click row to play
     coach/
-      Coach.tsx         # AI coach chat panel — placeholder seed conversation, local-only composer
+      Coach.tsx         # AI coach panel — live per-move explanation (pinned) + freeform chat thread
   hooks/
     useChessGame.ts     # all game state + analysis + explorer + move-tree nav; talks to Go backend
   lib/
     api/
-      client.ts         # typed fetch wrappers + Analysis/Explorer/GameState (moveTree) types
+      client.ts         # typed fetch wrappers + Analysis/Explorer/GameState (moveTree) types;
+                        #   coach: explainMove/coachChat (+ CoachUnavailableError, 120s abort timeout)
     chess/
       types.ts          # shared TS types: Piece, Square, MoveNode, BoardState
       moveTree.ts       # move-tree helpers: childrenOf (null-safe), flatten, mainlineEnd
@@ -141,15 +142,25 @@ move (see backend CLAUDE.md for the node model). `boardState.moveTree` is the ro
 - `navStart / navPrev / navNext / navEnd` — tree-aware nav computed from `flatten`/`mainlineEnd`
   (prev = parent, next = `children[0]`, start = root, end = current line's leaf). Used by the Move Order
   nav buttons and the `ArrowLeft`/`ArrowRight` keyboard handler in `page.tsx`.
-- `refreshInsights(gameId)` — runs `runAnalysis` and `runExplorer` in parallel; called after every
-  move/goto/reset instead of calling either individually
+- `refreshInsights(gameId, fen, san)` — awaits `runAnalysis` + `runExplorer` in parallel, then fires
+  the per-move coach explanation with the fresh values; called after every move/goto/reset. `san` is
+  the SAN of the move that reached the current node (`sanForNode`), empty at the root.
 - `runAnalysis(gameId)` — calls `GET /api/games/{id}/analysis`, updates `analysis`/`analyzing`
 - `runExplorer(gameId)` — calls `GET /api/games/{id}/explorer`, updates `explorer`/`explorerLoading`;
   silently keeps the previous value on failure (e.g. `LICHESS_TOKEN` unset)
 - `reset()` — starts a fresh game (`createGame()`), clearing the whole tree; wired to the Move Order reset button
 - Auto-promotes to queen (promotion dialog is a planned TODO)
 - Plays `public/sounds/move.mp3` after every successful move **and** on every tree navigation
-- Returns `{ boardState, selectSquare, move, legalMovesFor, gotoNode, navStart, navPrev, navNext, navEnd, reset, busy, analysis, analyzing, explorer, explorerLoading }`
+- **AI coach (Path 1 — per-move explanation):** after each move/goto, once fresh analysis+explorer
+  are in hand, calls `POST /coach/explain` with `{fen, lastMoveSan, analysis, explorer}` and exposes
+  `coachExplanation`/`coachExplaining`/`coachError`. Debounced (`EXPLAIN_DEBOUNCE_MS = 350`) so
+  holding an arrow key only explains the position you land on, and request-id-guarded (`explainReqId`)
+  so a slow explanation from an earlier position can't overwrite a newer one. At the root (`san===''`)
+  it clears the panel instead of calling the backend.
+- **AI coach (Path 2 — freeform chat):** `sendCoachChat(message, history)` wraps `POST /coach/chat`
+  (backend reads the live board position from the game store, so only `{message, history}` is sent).
+  The `Coach` component owns the chat thread state and passes prior turns as `history`.
+- Returns `{ boardState, selectSquare, move, legalMovesFor, gotoNode, navStart, navPrev, navNext, navEnd, reset, busy, analysis, analyzing, explorer, explorerLoading, coachExplanation, coachExplaining, coachError, sendCoachChat }`
 
 ### Page layout (page.tsx) — "Opening Study"
 Recreated from a Claude-designed hi-fi mock (`design_handoff_opening_study/`, gitignored). One outer
@@ -160,10 +171,13 @@ tall:
 ```
 `SQUARE_SIZE = 72`, `BOARD_SIZE = 576`.
 
-- `TopBar`, `Board`, `EvalBar`, `MoveHistory`, and `OpeningTree` are all wired to real backend state
-  (`useChessGame`'s `boardState`/`analysis`/`explorer`). `Coach` is still **placeholder/mock content** —
-  there's no AI backend yet, so it's a static seed conversation with a local-only composer (appends the
-  user's message, no reply).
+- `TopBar`, `Board`, `EvalBar`, `MoveHistory`, `OpeningTree`, and `Coach` are all wired to real backend
+  state (`useChessGame`). `Coach` shows the live per-move explanation pinned at the top of the message
+  area (updating as you move, with a "thinking" indicator during the slow local-model call) and the
+  freeform chat thread below it; the composer posts to `/coach/chat`. Both coach paths degrade
+  gracefully: a 503 (no local model) shows "Coach is offline…", other failures show a generic error,
+  and a hung request aborts after 120s (see `client.ts`) rather than freezing the panel. The coach
+  needs the Go backend's coach endpoints + a local LLM (Ollama) running — see backend docs.
 - Caption row: `openingName`/`openingEco` come from `explorer.openingName`/`openingEco` (the current
   position's named opening, straight from Lichess — falls back to "Starting Position"/"Custom Line" when
   null). `TopBar`'s "Book move" pill is `explorer.totalGames > 0` (i.e. some rated 2000+ game has reached
