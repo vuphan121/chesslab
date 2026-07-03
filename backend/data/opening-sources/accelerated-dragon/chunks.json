@@ -1,0 +1,2288 @@
+[
+  {
+    "moveSequence": "1.c4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.e4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7",
+    "commentaryText": "Now with the benefit of hindsight, I would probably use the 9...Nxd4 move-order, but at the time I stayed loyal to the book!",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Bonus Game 2 (Gulko - P.H. Nielsen, Esbjerg 2000)"
+    }
+  },
+  {
+    "moveSequence": "1.c4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.e4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2",
+    "commentaryText": "This is quite a luxurious version of the Nc2 system. White's bishop goes directly to e3, while Black has committed his bishop to d7.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Bonus Game 2 (Gulko - P.H. Nielsen, Esbjerg 2000)"
+    }
+  },
+  {
+    "moveSequence": "1.c4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.e4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2 a6 11.f3 Rc8 12.Qd2 Re8 13.Rac1 Qa5 14.Na3",
+    "commentaryText": "Back then, this move was a puzzling move, looking rather passive and without any apparent plan. This is just about as wrong as one can be in judging the opponent's motive as possible, but at least it does bring back the good memories of youthful optimism!",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Bonus Game 2 (Gulko - P.H. Nielsen, Esbjerg 2000)"
+    }
+  },
+  {
+    "moveSequence": "1.c4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.e4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2 a6 11.f3 Rc8 12.Qd2 Re8 13.Rac1 Qa5 14.Na3 Be6",
+    "commentaryText": "In hindsight, 14...Ne5 might have looked logical, preventing White's next move, as the c4-pawn would then be hanging. But... then 15.b3!! is possible, as 15...Qxa3 traps the black queen, which means that White can proceed in a similar fashion to the game anyway!",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Bonus Game 2 (Gulko - P.H. Nielsen, Esbjerg 2000)"
+    }
+  },
+  {
+    "moveSequence": "1.c4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.e4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2 a6 11.f3 Rc8 12.Qd2 Re8 13.Rac1 Qa5 14.Na3 Be6 15.Nab1 Ne5 16.b3 Rb8 17.a3",
+    "commentaryText": "White has been shuffling his knight backward as well as now weakening his pawn-structure. Yet, my position has turned from what I thought as completely fine to a state of now having absolutely nothing positive to say about it. After the text move, Black cannot play ...b7-b5 which loses a pawn due to 18.cxb5 axb5 19.b4. However, if he cannot play that, he cannot do much other than just sit and wait. The extra set of knights compared to the standard position might at first seem a bit clumsy for White, but as he controls more space, the white extra knights will have more room to manoeuvre, while Black's knights, on the other hand, will start tripping over each other.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Bonus Game 2 (Gulko - P.H. Nielsen, Esbjerg 2000)"
+    }
+  },
+  {
+    "moveSequence": "1.c4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.e4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2 a6 11.f3 Rc8 12.Qd2 Re8 13.Rac1 Qa5 14.Na3 Be6 15.Nab1 Ne5 16.b3 Rb8 17.a3 Rec8 18.b4",
+    "commentaryText": "Too soon! Here, 18.f4!? or 18.h3 first, preparing a later f3-f4 by covering the g4-square, would mean Black having to worry about both flanks, leaving him with a very unpleasant position.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Bonus Game 2 (Gulko - P.H. Nielsen, Esbjerg 2000)"
+    }
+  },
+  {
+    "moveSequence": "1.c4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.e4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2 a6 11.f3 Rc8 12.Qd2 Re8 13.Rac1 Qa5 14.Na3 Be6 15.Nab1 Ne5 16.b3 Rb8 17.a3 Rec8 18.b4 Qd8 19.Nd5 b6",
+    "commentaryText": "Here 19...b5!? would have created some much need counterplay, as 20.cxb5 axb5 21.Rxc8 Rxc8 22.Bxb5 Nxd5 23.exd5 Bd7 creates almost Benko-like counterplay for the pawn. After the text move, however, he is back to just being passive.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Bonus Game 2 (Gulko - P.H. Nielsen, Esbjerg 2000)"
+    }
+  },
+  {
+    "moveSequence": "1.c4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.e4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2 a6 11.f3 Rc8 12.Qd2 Re8 13.Rac1 Qa5 14.Na3 Be6 15.Nab1 Ne5 16.b3 Rb8 17.a3 Rec8 18.b4 Qd8 19.Nd5 b6 20.Rfd1 a5 21.h3 axb4 22.axb4 Bd7 23.Na3 Bc6 24.Bf1 Ned7 25.Nc2",
+    "commentaryText": "As Gulko explained to me after the game: not only did he provide me with half a point, but he also gave a lesson on the pawn structure: \"I spend the whole game showing the virtues of keeping four minor pieces on the board, but just like this, I allowed you to swap down to three!\" Many other moves would have preserved a white edge, basically anything not allowing Black those liberating exchanges!",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Bonus Game 2 (Gulko - P.H. Nielsen, Esbjerg 2000)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3",
+    "commentaryText": "White tries to get the same kind of position as in Game 19, but here she has wasted time on 10.Rc1. However, when Black plays the 9...Bd7 move order, there is nothing White can do about this. Black is ready to play ...a7-a5 with the standard dark-square strategy. Instead, White can also play 12.f3, with the exchange of the dark-squared bishops in mind. Here it is important for Black to respond with 12...a5 since 12...Nd7? was severely punished in Razuvaev-Honfi, Cienfuegos 1976. After the thematic 13.b4! Bxd4+ 14.Qxd4 Qb6 15.Qxb6! Nxb6 16.e5! dxe5 17.b5 Be8 18.c5 Nd7 19.Nd5 e6 20.Ne7+ Kg7 21.c6 Black was unable to stop the c-pawn. But if Black does play 12...a5 it seems that Rc1 is not a particularly useful move. For example, 13.b3 Nd7 14.Bxg7 Kxg7 15.Qd4+ Kg8 16.Rfd1 as in Andersson-Christiansen, Hastings 1978/79, and now Black could have obtained an equal ending with 16...Qb6, but who wants to play an ending against Andersson? In Dokhoian-Glek, Bonn 1994, Black instead played 15...f6!? in order to control the dark squares. After 16.Rfd1 Nc5 17.Rb1 Qb8 18.Bf1 Rd8 19.Qe3 e5 20.Rd2 Ne6 21.Rbd1 b6 22.g3 Ra7 23.Bh3 Ng5 24.Bg2 Ne6, a draw was agreed. Black has equalised with the standard dark-squared strategy.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3 a5",
+    "commentaryText": "The correct move order. 12...Nd7?! was punished by 13.Bxg7 Kxg7 14.b4! in Smyslov-Golz, Polanica Zdroj 1968, when White has achieved a typical advantage.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3 a5 13.f4",
+    "commentaryText": "The logical plan. It is now far more difficult for White to seize space on the queenside.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3 a5 13.f4 a4",
+    "commentaryText": "This is a very interesting idea. Normally, this move would be met by b2-b4, ...a4xb3, a2xb3, with an opening of the queenside favourable to White. But here the rook has left a1, which means that Black gets counterplay along the a-file. The 'standard' 13...Nd7 is also playable, which after 14.Bxg7 Kxg7 leads to structures very similar to the main lines where White takes on g7. Normally White must play his pawn to f4 in two moves, but here White has played Qd3, where it is not well placed in this kind of structure. Timman-Wedberg, Amsterdam 1984, continued 15.Kh1 f6 16.Rcd1 Qe8 17.Qd4 Qf7 with equality.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3 a5 13.f4 a4 14.Kh1 Qa5",
+    "commentaryText": "Black again delays ...Nd7, keeping White guessing, while making useful moves.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3 a5 13.f4 a4 14.Kh1 Qa5 15.Qe3",
+    "commentaryText": "15.Nd5 might be a better idea when Black has a choice of captures: a) White was successful in Dolmatov-Petursson, Reykjavik 1988, when after 15...Nxd5 16.exd5 Bxd4, Dolmatov played 17.dxc6!? 17...Bxb2 18.Rc2 Qb4 19.cxb7 and Black blundered with 19...Ra5?? 20.Rxb2 Qxb2 21.Rb1 with a lost position. It was probably better to play 18...a3 which seems okay for Black. It is noteworthy that White did not like the attractive 17.Qxd4 Bd7 18.Bd3 followed by f4-f5. b) Black had more success with 15...Bxd5 16.exd5 Nd7 in the game Petrakov-Mololkin, Moscow 1994, when after 17.Bxg7 Kxg7 18.Rfe1 Rfe8 19.Bf1 Nf6 20.Qd4 b6 21.h3 Qc5 22.Qd2 Ra7, Black had a solid position. White now mistakenly played the 'active' 23.b4 axb3 24.axb3, and Black took the a-file with 24...Rea8 and later won the game.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3 a5 13.f4 a4 14.Kh1 Qa5 15.Qe3 Nd7",
+    "commentaryText": "Now, finally, Black plays the standard plan.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3 a5 13.f4 a4 14.Kh1 Qa5 15.Qe3 Nd7 16.Bxg7 Kxg7 17.Bg4 Qc5",
+    "commentaryText": "Since this kind of ending is at least equal for Black due to White's bad bishop, Black wins time by threatening the exchange of queens.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3 a5 13.f4 a4 14.Kh1 Qa5 15.Qe3 Nd7 16.Bxg7 Kxg7 17.Bg4 Qc5 18.Qe2 Nf6 19.Bh3 e5",
+    "commentaryText": "A very strong move which probably gives Black the advantage. He now threatens ...e5xf4 followed by ...Rae8, attacking the e4-pawn, which will be difficult to protect with the bishop offside on h3.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3 a5 13.f4 a4 14.Kh1 Qa5 15.Qe3 Nd7 16.Bxg7 Kxg7 17.Bg4 Qc5 18.Qe2 Nf6 19.Bh3 e5 20.f5 g5",
+    "commentaryText": "Since the knight on f6 is a mighty defender, Black does not fear the possibility of a white kingside attack.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3 a5 13.f4 a4 14.Kh1 Qa5 15.Qe3 Nd7 16.Bxg7 Kxg7 17.Bg4 Qc5 18.Qe2 Nf6 19.Bh3 e5 20.f5 g5 21.Bg4 h6 22.h4 Rh8 23.Bh5 Kf8 24.Nd5 Bxd5 25.cxd5 Qa5 26.Rc4 b5 27.Rc3",
+    "commentaryText": "This is a very interesting position. Place the white h-pawn on h2 and the bishop on d3, and White would be winning. Yet here the pawn on h4 secures Black counterplay on the kingside since White will never be able to close it comfortably. It is difficult to say who is better, but Black seems to have more than sufficient counterplay.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3 a5 13.f4 a4 14.Kh1 Qa5 15.Qe3 Nd7 16.Bxg7 Kxg7 17.Bg4 Qc5 18.Qe2 Nf6 19.Bh3 e5 20.f5 g5 21.Bg4 h6 22.h4 Rh8 23.Bh5 Kf8 24.Nd5 Bxd5 25.cxd5 Qa5 26.Rc4 b5 27.Rc3 Ke7 28.Rfc1 Ra7 29.Bf3 Rd7 30.a3 Rb8 31.Rc6 Qd8 32.Qe1 Qg8",
+    "commentaryText": "Black defends c7, but White will break through eventually. The only question is: will Black be able to break through on the kingside? Black's last moves might seem passive, but now he is ready 33...gxh4 and 34...Qg5. White cannot find a way to meet this.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3 a5 13.f4 a4 14.Kh1 Qa5 15.Qe3 Nd7 16.Bxg7 Kxg7 17.Bg4 Qc5 18.Qe2 Nf6 19.Bh3 e5 20.f5 g5 21.Bg4 h6 22.h4 Rh8 23.Bh5 Kf8 24.Nd5 Bxd5 25.cxd5 Qa5 26.Rc4 b5 27.Rc3 Ke7 28.Rfc1 Ra7 29.Bf3 Rd7 30.a3 Rb8 31.Rc6 Qd8 32.Qe1 Qg8 33.Qb4 Rbd8 34.Be2 gxh4 35.R6c3 Qg5 36.Bxb5 Rg8 37.Bf1 Qf4 38.Rc7 Rgd8",
+    "commentaryText": "Finally, it is Black who is making the threats. 38...h3 was winning, but in time trouble Black plays it safe. He will win in the end because his knight is so much stronger than the white bishop.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Rc1 Nxd4 11.Bxd4 Bc6 12.Qd3 a5 13.f4 a4 14.Kh1 Qa5 15.Qe3 Nd7 16.Bxg7 Kxg7 17.Bg4 Qc5 18.Qe2 Nf6 19.Bh3 e5 20.f5 g5 21.Bg4 h6 22.h4 Rh8 23.Bh5 Kf8 24.Nd5 Bxd5 25.cxd5 Qa5 26.Rc4 b5 27.Rc3 Ke7 28.Rfc1 Ra7 29.Bf3 Rd7 30.a3 Rb8 31.Rc6 Qd8 32.Qe1 Qg8 33.Qb4 Rbd8 34.Be2 gxh4 35.R6c3 Qg5 36.Bxb5 Rg8 37.Bf1 Qf4 38.Rc7 Rgd8 39.Qe1 Nxe4 40.R7c4 Ng3+ 41.Kg1 Qxf5 42.Rxa4 Qg5 43.Rc2 f5 44.Bb5 Rb7 45.Ba6 Rb3 46.Qa5 Rxb2 47.Rc7+ Kf8 48.Rb4 Rd2 49.Rb1 h3",
+    "commentaryText": "A hard-fought battle, where Black defended well. His knight on f6 kept things under control and then he went onto the offensive. White's ideas with Qd3 are not particularly dangerous but lead to complicated struggles with mutual chances.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 29 (P.Cramling - Petursson, Reykjavik 1984)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 d6 7.Be2 Nh6",
+    "commentaryText": "The immediate 6...Nh6 has, of course, also been tried, but generally, it just transposes. A few exceptions are mentioned in the next game. First recommended by Simagin. Of course, Tarrasch's maxims teach that it is bad to place the knight on the edge of the board, but here it does have some use. The only other square for the knight is f6, where it temporarily hinders Black by blocking the g7-bishop and the f-pawn.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 50 (Geller - Larsen, Monte Carlo 1967)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 d6 7.Be2 Nh6 8.0-0 0-0 9.Qd2",
+    "commentaryText": "At the time of the game, this move was considered good for White, but now it is not very highly regarded. The game transposes to the Classical System with 9...Re8 without Black having played ...Re8! In that variation Black plays 9...Re8, waiting to counter 10.Qd2 with 10...Ng4 but here Black get a better version since the rook is not urgently needed on e8 with this structure. The standard 9.Nc3 is considered (by transposition) in the next game.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 50 (Geller - Larsen, Monte Carlo 1967)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 d6 7.Be2 Nh6 8.0-0 0-0 9.Qd2 Ng4 10.Bxg4 Bxg4 11.Nc3 Qa5",
+    "commentaryText": "Nowadays, this is regarded as the main line. The alternatives are: a) 11...Rc8 has been played on occasion. A horrible example is Bhend-Keres, Zurich 1959, when Black had a terrible position after 12.b3 a6 13.Rac1 Qa5 14.h3 Bd7 15.Nxc6 bxc6? 16.c5 Be6 17.Nd5! although Keres later managed to draw. Better was 15...Bxc6 16.Nd5 Qd8, followed by ...b7-b5 with reasonable play. b) Langeweg-Velimirovic, Amsterdam 1974, saw 11...Bd7 12.f4 Rc8 13.b3 Qa5 14.Rac1 f5 15.exf5 gxf5 16.Nde2 Be6 17.Ng3 Rfd8 18.Rfd1 Bf7 19.Nb5! Qxd2 20.Rxd2 a6 21.Nc3 e6 22.Bb6 Rd7 23.Na4 and Black has too many weaknesses. Normally Black is not afraid of endgames in the Maroczy, but if he has played ...f7-f5, they are generally dangerous for Black.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 50 (Geller - Larsen, Monte Carlo 1967)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 d6 7.Be2 Nh6 8.0-0 0-0 9.Qd2 Ng4 10.Bxg4 Bxg4 11.Nc3 Qa5 12.Rac1",
+    "commentaryText": "Interestingly, Geller has no confidence in 12.f4!?, which had brought Petrosian a quick victory against Heinicke 12 years earlier. In that game, Black had played 12...Nxd4 13.Bxd4 e5 14.fxe5 dxe5 15.Be3 Rad8 16.Qf2 f5? 17.Bc5 Rf7 18.h3 and White picked up a piece. 12...Bd7 followed by ...Rc8 seems more logical, after which Black has reasonable play. A sign that 12.f4!? cannot be so bad for Black is the fact that Larsen was ready for it - and Geller did not dare play it!",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 50 (Geller - Larsen, Monte Carlo 1967)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 d6 7.Be2 Nh6 8.0-0 0-0 9.Qd2 Ng4 10.Bxg4 Bxg4 11.Nc3 Qa5 12.Rac1 Rfc8 13.b3 a6 14.Rc2",
+    "commentaryText": "Played to prevent ...b7-b5, but this move misses its objective. Better is 14.Nxc6!, which was introduced by a young Kasparov against Ivanov, Daugavpils 1978, which continued 14...Rxc6 15.Bh6! Rac8 (trading Black's best piece, since 15...Bh8 16.Nd5 Qd8 17.Qg5! is winning) 16.Bxg7 Kxg7 17.f4 f6 18.Kh1 b5 19.f5 g5 with complex play. Kasparov writes that 17.Qb2 is preferable, giving White an edge after 17...f6 18.Nd5, though surely it is not a lot. This idea was tried out in Popovic-Abramovic, Novi Sad 1985, and after 15.Bd4 Be6 16.Bxg7 Kxg7 17.Qb2 f6 18.Nd5 Qd8 19.a4 Rac8 20.Rcd1 Rc5, Black's set-up was solid and he can try for ...b7-b5.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 50 (Geller - Larsen, Monte Carlo 1967)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 d6 7.Be2 Nh6 8.0-0 0-0 9.Qd2 Ng4 10.Bxg4 Bxg4 11.Nc3 Qa5 12.Rac1 Rfc8 13.b3 a6 14.Rc2 b5",
+    "commentaryText": "Very strong. After 15.cxb5, Black has the pleasant choice between 15...axb5 16.Ndxb5 Nb4 17.Rb2 Bd7 with fine compensation, 15...Nxd4 16.Bxd4 Bxd4 17.Qxd4 axb5, and the spectacular 15...Bxd4!? 16.Bxd4 axb5, since 17.Be3 Nb4 is annoying for White. It may seem odd to give up the dark-squared bishop, but White must defend his queenside and will not get a mating attack.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 50 (Geller - Larsen, Monte Carlo 1967)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 d6 7.Be2 Nh6 8.0-0 0-0 9.Qd2 Ng4 10.Bxg4 Bxg4 11.Nc3 Qa5 12.Rac1 Rfc8 13.b3 a6 14.Rc2 b5 15.Nd5 Qxd2 16.Rxd2 Bxd4 17.Bxd4 Rab8",
+    "commentaryText": "Black keeps things under control. If now 18.c5 Be6! 19.cxd6 Bxd5 20.exd5 Nxd4 21.Rxd4 exd6, he gains a huge advantage due to his control of the c-file.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 50 (Geller - Larsen, Monte Carlo 1967)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 d6 7.Be2 Nh6 8.0-0 0-0 9.Qd2 Ng4 10.Bxg4 Bxg4 11.Nc3 Qa5 12.Rac1 Rfc8 13.b3 a6 14.Rc2 b5 15.Nd5 Qxd2 16.Rxd2 Bxd4 17.Bxd4 Rab8 18.Rc1 Kf8 19.Bb2 bxc4 20.Rxc4 Ke8 21.Rdc2 Kd7",
+    "commentaryText": "Black enjoys a slight edge. He has more central pawns and a centralised king and can later play ...a5-a4. This may not be enough to win the game, but it is quite unpleasant for White.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 50 (Geller - Larsen, Monte Carlo 1967)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 d6 7.Be2 Nh6 8.0-0 0-0 9.Qd2 Ng4 10.Bxg4 Bxg4 11.Nc3 Qa5 12.Rac1 Rfc8 13.b3 a6 14.Rc2 b5 15.Nd5 Qxd2 16.Rxd2 Bxd4 17.Bxd4 Rab8 18.Rc1 Kf8 19.Bb2 bxc4 20.Rxc4 Ke8 21.Rdc2 Kd7 22.f3 Be6 23.Rd2 a5 24.h4 Rb5 25.Ra4 f6",
+    "commentaryText": "Seemingly a very innocent move, but it contains a little trap which Geller walks right into.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 50 (Geller - Larsen, Monte Carlo 1967)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 d6 7.Be2 Nh6 8.0-0 0-0 9.Qd2 Ng4 10.Bxg4 Bxg4 11.Nc3 Qa5 12.Rac1 Rfc8 13.b3 a6 14.Rc2 b5 15.Nd5 Qxd2 16.Rxd2 Bxd4 17.Bxd4 Rab8 18.Rc1 Kf8 19.Bb2 bxc4 20.Rxc4 Ke8 21.Rdc2 Kd7 22.f3 Be6 23.Rd2 a5 24.h4 Rb5 25.Ra4 f6 26.Kh2 Bxd5 27.Rxd5 Rxd5 28.exd5 Nb4 29.Rxa5 Rc2",
+    "commentaryText": "Now we see the idea behind 25...f6. Without it, White would have had a perpetual with Ra7+, but now the king hides on f7.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 50 (Geller - Larsen, Monte Carlo 1967)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 d6 7.Be2 Nh6 8.0-0 0-0 9.Qd2 Ng4 10.Bxg4 Bxg4 11.Nc3 Qa5 12.Rac1 Rfc8 13.b3 a6 14.Rc2 b5 15.Nd5 Qxd2 16.Rxd2 Bxd4 17.Bxd4 Rab8 18.Rc1 Kf8 19.Bb2 bxc4 20.Rxc4 Ke8 21.Rdc2 Kd7 22.f3 Be6 23.Rd2 a5 24.h4 Rb5 25.Ra4 f6 26.Kh2 Bxd5 27.Rxd5 Rxd5 28.exd5 Nb4 29.Rxa5 Rc2 30.a3",
+    "commentaryText": "Entering a difficult rook ending, but the alternatives were grim and in particular 30.Bd4 Rxa2 31.Rb5? Nxd5!! 32.Rxd5 Kc6 is beautiful.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 50 (Geller - Larsen, Monte Carlo 1967)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 d6 7.Be2 Nh6 8.0-0 0-0 9.Qd2 Ng4 10.Bxg4 Bxg4 11.Nc3 Qa5 12.Rac1 Rfc8 13.b3 a6 14.Rc2 b5 15.Nd5 Qxd2 16.Rxd2 Bxd4 17.Bxd4 Rab8 18.Rc1 Kf8 19.Bb2 bxc4 20.Rxc4 Ke8 21.Rdc2 Kd7 22.f3 Be6 23.Rd2 a5 24.h4 Rb5 25.Ra4 f6 26.Kh2 Bxd5 27.Rxd5 Rxd5 28.exd5 Nb4 29.Rxa5 Rc2 30.a3 Rxb2 31.axb4 Rxb3 32.Ra7+ Ke8 33.Ra8+ Kf7 34.Rb8 Rd3 35.Rb5 Rd4 36.Kg3 g5 37.hxg5 fxg5 38.Kf2 Rd2+ 39.Kg3 h5 40.Kh3 Rd3 41.Kg3 Kf6 42.Kf2 Rd2+ 43.Kg3 Rd4 44.Kh3 g4+ 45.fxg4 Rxg4 46.Rb8 Rd4 47.Rb5 Re4 48.Rb8 Re5 49.Rb5 e6 50.Rb8 Rxd5 51.b5 Rd4 52.Rh8 Rb4 53.Rh6+ Kf7 54.Rxh5 Kg6 55.g4 d5 56.Re5 Kf7 57.Kh4 Rxb5 58.Re1 d4 59.Ra1 Kf6 60.Ra8 Rd5 61.Kg3 d3 62.Ra1 Ke5 63.Kf2 Kd4 64.Ra7 e5 65.g5 e4 66.Ra4+ Ke5",
+    "commentaryText": "Nice play by Black, who managed to carry out the Sicilian dream: proving that 3.d4 leaves Black a central pawn up!",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Game 50 (Geller - Larsen, Monte Carlo 1967)"
+    }
+  },
+  {
+    "moveSequence": "1.Nf3 g6 2.d4 Nf6 3.c4 c5 4.Nc3 cxd4 5.Nxd4 Bg7 6.e4 0-0 7.Be2 d6 8.0-0 Nc6 9.Be3 Re8 10.f3 Nd7 11.Qd2 Nc5 12.Rfd1",
+    "commentaryText": "A novelty at the time of the game; like 12.Rad1, White now threatens 13.Nxc6 followed by Bxc5.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Game (30) Andersson - Larsen, Naestved 1985"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 d6 9.f3 Nd7",
+    "commentaryText": "We have entered a regular Dragon.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Game (31) Hjartarson - Larsen, Gausdal zt 1985"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 d6 9.f3 Nd7 10.Qd2 Nc5 11.0-0-0 Nxb3+ 12.cxb3 Qa5 13.Kb1 f5",
+    "commentaryText": "Aggressively played, Larsen wants to claim the initiative.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Game (31) Hjartarson - Larsen, Gausdal zt 1985"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 d6 9.f3 Nd7 10.Qd2 Nc5 11.0-0-0 Nxb3+ 12.cxb3 Qa5 13.Kb1 f5 14.exf5 Bxf5+",
+    "commentaryText": "Normal, but the surprising 14...Bxd4!? 15.Bxd4 Bxf5+ 16.Ka1 Rac8 gives Black the initiative.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Game (31) Hjartarson - Larsen, Gausdal zt 1985"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 d6 9.f3 Nd7 10.Qd2 Nc5 11.0-0-0 Nxb3+ 12.cxb3 Qa5 13.Kb1 f5 14.exf5 Bxf5+ 15.Nxf5 Qxf5+ 16.Ne4 Rad8",
+    "commentaryText": "Black has a pleasant position.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Game (31) Hjartarson - Larsen, Gausdal zt 1985"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 d6 9.f3 Nd7 10.Qd2 Nc5 11.0-0-0 Nxb3+ 12.cxb3 Qa5 13.Kb1 f5 14.exf5 Bxf5+ 15.Nxf5 Qxf5+ 16.Ne4 Rad8 17.Qd5+ Qxd5 18.Rxd5 Rf5 19.Rhd1 Rxd5 20.Rxd5 Rf8 21.a3 Rf5 22.Nc3 Rxd5 23.Nxd5",
+    "commentaryText": "With Black essentially being a pawn up, he has the better chances but converting it to a full point is anything but easy.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Game (31) Hjartarson - Larsen, Gausdal zt 1985"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Qd2 Nxd4 11.Bxd4 Bc6 12.f3 a5 13.b3 Nh5",
+    "commentaryText": "A rather bizarre novelty by Larsen; naturally, 13...Nd7 was normal and perfectly good for Black.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Game (32) Kavalek - Larsen, Nordic-USA (Reykjavik) 1986"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Qd2 Nxd4 11.Bxd4 Bc6 12.f3 a5 13.b3 Nh5 14.Be3 f5",
+    "commentaryText": "This was Larsen's idea behind the previous move, but the idea is not a good one!",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Game (32) Kavalek - Larsen, Nordic-USA (Reykjavik) 1986"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Qd2 Nxd4 11.Bxd4 Bc6 12.f3 a5 13.b3 Nh5 14.Be3 f5 15.exf5 gxf5 16.f4 Nf6 17.Rad1 Rf7 18.Bf3 Qf8 19.Nd5 Bxd5 20.Bxd5 Nxd5 21.Qxd5 Qc8 22.a4 Qc6",
+    "commentaryText": "White has a dominating position and therefore Larsen is trying to control White by encouraging him to exchange the queens; however, even without the queens on the board, White has a rather clear advantage.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Game (32) Kavalek - Larsen, Nordic-USA (Reykjavik) 1986"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Qd2 Nxd4 11.Bxd4 Bc6 12.f3 a5 13.b3 Nh5 14.Be3 f5 15.exf5 gxf5 16.f4 Nf6 17.Rad1 Rf7 18.Bf3 Qf8 19.Nd5 Bxd5 20.Bxd5 Nxd5 21.Qxd5 Qc8 22.a4 Qc6 23.Qe6 Qc8 24.Qxc8+ Rxc8 25.Rd3",
+    "commentaryText": "The immediate 25.Rd5 seems like a better choice.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Game (32) Kavalek - Larsen, Nordic-USA (Reykjavik) 1986"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Qd2 Nxd4 11.Bxd4 Bc6 12.f3 a5 13.b3 Nh5 14.Be3 f5 15.exf5 gxf5 16.f4 Nf6 17.Rad1 Rf7 18.Bf3 Qf8 19.Nd5 Bxd5 20.Bxd5 Nxd5 21.Qxd5 Qc8 22.a4 Qc6 23.Qe6 Qc8 24.Qxc8+ Rxc8 25.Rd3 Bb2 26.Bb6 Ra8 27.Rd5 Bc3 28.Rf3 Bb4 29.c5 dxc5 30.Bxc5 Bxc5+ 31.Rxc5 b6",
+    "commentaryText": "31...e6!? looks better, connecting the rook on f7 to the b7-pawn; the double rook endgame is very unpleasant for Black as White's rooks are far more active than Black's.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Game (32) Kavalek - Larsen, Nordic-USA (Reykjavik) 1986"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bg7 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Qd2 Nxd4 11.Bxd4 Bc6 12.f3 a5 13.b3 Nh5 14.Be3 f5 15.exf5 gxf5 16.f4 Nf6 17.Rad1 Rf7 18.Bf3 Qf8 19.Nd5 Bxd5 20.Bxd5 Nxd5 21.Qxd5 Qc8 22.a4 Qc6 23.Qe6 Qc8 24.Qxc8+ Rxc8 25.Rd3 Bb2 26.Bb6 Ra8 27.Rd5 Bc3 28.Rf3 Bb4 29.c5 dxc5 30.Bxc5 Bxc5+ 31.Rxc5 b6 32.Rb5 Rf6 33.Rg3+ Kh8 34.Re3 Ra7 35.Rbe5 Rf7 36.Re6 Rb7 37.R3e5 Kg7 38.Kf2 Rf6 39.Rxe7+ Rxe7 40.Rxe7+ Kg6 41.Ke3",
+    "commentaryText": "With a better rook, king and a pawn extra, White should win this endgame but some precision is still necessary.",
+    "source": {
+      "title": "The Sicilian Accelerated Dragon (20th Anniversary Edition)",
+      "author": "Peter Heine Nielsen & Carsten Hansen",
+      "location": "Bent Larsen chapter, Game (32) Kavalek - Larsen, Nordic-USA (Reykjavik) 1986"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6",
+    "commentaryText": "Question: Why did Black play this move rather than developing a knight with 2...Nc6? Answer: Perhaps because of the Rossolimo Variation with 3 Bb5. This is a line in which Black can struggle to get counterplay, especially if White captures on c6, doubling Black's pawns. This is also the reason I recommend that Black plays 2...g6 in this book.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7",
+    "commentaryText": "This was popular at the time of the game, but is very risky for Black because of 4 dxc5 or 4 d5. 3...cxd4 is a better move. White can then play 4 Qxd4, developing quickly and attacking the rook on h8, which is certainly playable, but Black has 4...Nf6, intending to develop his other knight and gaining time on White's queen.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3",
+    "commentaryText": "Allowing Black to transpose back into a main line of the Accelerated Dragon.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3 cxd4 5 Nxd4 Nc6 6 Be3 Nf6 7 f3",
+    "commentaryText": "A mistake by White. 7 Bc4 is the standard move and best, with 7 Qd2 another move frequently seen at club level. After 7...0-0 (7...Ng4!? 8 Nxc6 dxc6! 9 Qxd8+ Kxd8 is also quite interesting, echoing Larsen's play against the Qxd4 lines in Games 67 and 68) 8 f3 we're back in our main game, while the immediate 8 0-0-0 is well met by 8...Ng4, depriving White of his important dark-squared bishop. Here 8 Nb3 has been very rare, but may well be best, and against which Black should just go 8...d6 followed by ...Be6, as per our approach in Chapter Seven.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3 cxd4 5 Nxd4 Nc6 6 Be3 Nf6 7 f3 0-0 8 Qd2",
+    "commentaryText": "Question: If 8...d5 is such a problem, why does White not prevent it with 8 Bc4? Answer: He can certainly do that, though Black then has 8...Qb6, directly threatening the b2-pawn and with veiled threats against the knight on d4. After 9 Bb3 there might follow 9...Nxe4 10 Nd5! Qa5+ 11 c3 Nc5 12 Nxc6 dxc6 13 Nxe7+ Kh8 14 Nxc8 Raxc8, with Black having the more comfortable game already.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3 cxd4 5 Nxd4 Nc6 6 Be3 Nf6 7 f3 0-0 8 Qd2 d5 9 Nxc6 bxc6 10 exd5",
+    "commentaryText": "10 e5 Nd7 11 f4 Rb8 is very promising for Black.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3 cxd4 5 Nxd4 Nc6 6 Be3 Nf6 7 f3 0-0 8 Qd2 d5 9 Nxc6 bxc6 10 exd5 Nxd5 11 Bd4",
+    "commentaryText": "In his notes Velimirovic mentioned 11 0-0-0, but this looks very bad for White after 11...Bxc3 12 bxc3 Qa5, threatening 13...Qa3+.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3 cxd4 5 Nxd4 Nc6 6 Be3 Nf6 7 f3 0-0 8 Qd2 d5 9 Nxc6 bxc6 10 exd5 Nxd5 11 Bd4 e5",
+    "commentaryText": "Velimirovic was never reluctant to sacrifice material, and here he plays the sharpest move which leads to the sacrifice of the exchange. Question: Does Black have to play this way? Answer: No, there was a quieter route to an edge via 11...Bxd4 12 Qxd4 e5 13 Qd2 Nxc3 14 Qxc3 e4 15 Be2 exf3 16 Bxf3 Rb8 17 b3 (17 0-0 Qb6+ 18 Rf2 Qxb2 wins a pawn) 17...Re8+ 18 Kf2 Qb6+, with a strong initiative.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3 cxd4 5 Nxd4 Nc6 6 Be3 Nf6 7 f3 0-0 8 Qd2 d5 9 Nxc6 bxc6 10 exd5 Nxd5 11 Bd4 e5 12 Bc5 Nxc3 13 Bxf8",
+    "commentaryText": "13 bxc3 Re8 is just better for Black because his kingside pawn majority is healthy, whereas White's doubled c-pawns will be unable to create a passed pawn.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3 cxd4 5 Nxd4 Nc6 6 Be3 Nf6 7 f3 0-0 8 Qd2 d5 9 Nxc6 bxc6 10 exd5 Nxd5 11 Bd4 e5 12 Bc5 Nxc3 13 Bxf8 Qxf8 14 bxc3",
+    "commentaryText": "After 14 Qxc3 there follows 14...e4! 15 Qxc6 (15 Qa5 exf3 16 0-0-0 Bg4 is also very good for Black) 15...Qb4+ 16 c3 Qxb2 17 Qe8+ Bf8, which is winning for Black according to the engines.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3 cxd4 5 Nxd4 Nc6 6 Be3 Nf6 7 f3 0-0 8 Qd2 d5 9 Nxc6 bxc6 10 exd5 Nxd5 11 Bd4 e5 12 Bc5 Nxc3 13 Bxf8 Qxf8 14 bxc3 Qc5 15 Rd1 Be6 16 c4 e4",
+    "commentaryText": "Opening up the position to deadly effect. Besides activating the g7-bishop, Black's rook will soon be coming to the e-file.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3 cxd4 5 Nxd4 Nc6 6 Be3 Nf6 7 f3 0-0 8 Qd2 d5 9 Nxc6 bxc6 10 exd5 Nxd5 11 Bd4 e5 12 Bc5 Nxc3 13 Bxf8 Qxf8 14 bxc3 Qc5 15 Rd1 Be6 16 c4 e4 17 fxe4 Re8 18 Bd3 Bg4",
+    "commentaryText": "Question: What happens now after 19 Rb1? Answer: In that case Black wins with 19...Bc3! 20 Qxc3 Qe3+ 21 Kf1 Be2+ 22 Ke1 (or 22 Bxe2 Qxc3, etc) 22...Bxd3+ 23 Kd1 Be2+ 24 Ke1 Qxc3+, picking up White's queen and the game.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3 cxd4 5 Nxd4 Nc6 6 Be3 Nf6 7 f3 0-0 8 Qd2 d5 9 Nxc6 bxc6 10 exd5 Nxd5 11 Bd4 e5 12 Bc5 Nxc3 13 Bxf8 Qxf8 14 bxc3 Qc5 15 Rd1 Be6 16 c4 e4 17 fxe4 Re8 18 Bd3 Bg4 19 h3 Bc3",
+    "commentaryText": "Much stronger than taking the rook.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3 cxd4 5 Nxd4 Nc6 6 Be3 Nf6 7 f3 0-0 8 Qd2 d5 9 Nxc6 bxc6 10 exd5 Nxd5 11 Bd4 e5 12 Bc5 Nxc3 13 Bxf8 Qxf8 14 bxc3 Qc5 15 Rd1 Be6 16 c4 e4 17 fxe4 Re8 18 Bd3 Bg4 19 h3 Bc3 20 Qxc3 Qe3+ 21 Kf1 Rxe4",
+    "commentaryText": "A killer blow, threatening 22...Rf4+.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3 cxd4 5 Nxd4 Nc6 6 Be3 Nf6 7 f3 0-0 8 Qd2 d5 9 Nxc6 bxc6 10 exd5 Nxd5 11 Bd4 e5 12 Bc5 Nxc3 13 Bxf8 Qxf8 14 bxc3 Qc5 15 Rd1 Be6 16 c4 e4 17 fxe4 Re8 18 Bd3 Bg4 19 h3 Bc3 20 Qxc3 Qe3+ 21 Kf1 Rxe4 22 Qf6",
+    "commentaryText": "Or 22 Bxe4 Be2+ 23 Ke1 Bd3#.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 Bg7 4 Nc3 cxd4 5 Nxd4 Nc6 6 Be3 Nf6 7 f3 0-0 8 Qd2 d5 9 Nxc6 bxc6 10 exd5 Nxd5 11 Bd4 e5 12 Bc5 Nxc3 13 Bxf8 Qxf8 14 bxc3 Qc5 15 Rd1 Be6 16 c4 e4 17 fxe4 Re8 18 Bd3 Bg4 19 h3 Bc3 20 Qxc3 Qe3+ 21 Kf1 Rxe4 22 Qf6 Bxd1 23 g3 Be2+ 24 Kg2 Bxd3 25 Qd8+ Kg7 26 Qxd3 Qe2+ 27 Qxe2 Rxe2+ 28 Kf3 Rxc2",
+    "commentaryText": "The rook endgame is winning for Black, but still needs due care and attention.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 1 (Krnic - Velimirovic, 1971)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 cxd4 4 Nxd4 Nc6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8",
+    "commentaryText": "As noted in the game above, it is also possible for White to act against an early ...d7-d5 by playing 1 e4 c5 2 Nf3 g6 3 d4 cxd4 4 Nxd4 Nc6 5 Nc3 Bg7 6 Be3 Nf6 and now 7 Bc4, but here too there are unpleasant surprises in store. A recent discovery has been the line 7...0-0 8 Bb3 Re8!?, as pioneered by Vadim Zvjaginsev. When White's attempts to treat this as a standard Dragon with 9 f3, he runs into either 9...e6, intending 10...d5, or even the immediate 9...d5. This line is no joke for White as he will once again find himself facing ferocious counterplay.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, transition into Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0",
+    "commentaryText": "Threatening 8...Nxe4, and if 9 Nxe4 d5.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3",
+    "commentaryText": "A prudent retreat. We saw that 8 f3?! Qb6! is pretty effective for Black in our opening game, and 8 Qd2?! Ng4 is even worse for White.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8",
+    "commentaryText": "Question: What is the idea? Answer: There are several. Firstly, it prepares to meet 9 f3 with 9...e6 or even 9...d5. Secondly, the rook can be well placed on e8 because it defends e7 and can allow Black to sidestep White's attempts to exchange dark-squared bishops, via Qd2 and Bh6, with ...Bh8.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3",
+    "commentaryText": "A known idea, preventing Black from playing ...Nf6-g4 at an annoying moment. Zvjaginsev played this in an earlier game in the same tournament against Vavulin. That one proceeded 9 Nxc6 dxc6 10 Qxd8 Rxd8 11 f3 b6 12 Kf2 Ba6 13 Rhd1 Nd7 14 h3 Kf8, with very comfortable equality for Black and an eventual draw.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3 d6 10 0-0 Na5",
+    "commentaryText": "A strong move, looking to eliminate White's strong bishop.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3 d6 10 0-0 Na5 11 f4 b6 12 e5 Nxb3 13 exf6 Nxd4 14 fxe7",
+    "commentaryText": "Question: What does Black do after 14 fxg7? Answer: He can move his knight with 14...Nf5 and then take the g7-pawn at his leisure.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3 d6 10 0-0 Na5 11 f4 b6 12 e5 Nxb3 13 exf6 Nxd4 14 fxe7 Ne2+ 15 Qxe2 Qxe7 16 Rfe1 Bb7 17 Rad1 Qc7 18 Qf2 Qc6 19 Rd2",
+    "commentaryText": "Black has a weak pawn on d6 and there are vulnerable squares in front of it, but this is more than compensated for by the pressure on the a8-h1 diagonal. White would really like his f4-pawn back on f3 in order to counteract this.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3 d6 10 0-0 Na5 11 f4 b6 12 e5 Nxb3 13 exf6 Nxd4 14 fxe7 Ne2+ 15 Qxe2 Qxe7 16 Rfe1 Bb7 17 Rad1 Qc7 18 Qf2 Qc6 19 Rd2 Re6 20 Kh2",
+    "commentaryText": "Now White deteriorates rapidly. Best was 20 Nd5, after which 20...Rae8 (20...Bxb2 21 f5 is quite dangerous for Black) 21 f5 gxf5 22 c3 is still better for Black, but not decisively so.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3 d6 10 0-0 Na5 11 f4 b6 12 e5 Nxb3 13 exf6 Nxd4 14 fxe7 Ne2+ 15 Qxe2 Qxe7 16 Rfe1 Bb7 17 Rad1 Qc7 18 Qf2 Qc6 19 Rd2 Re6 20 Kh2 Rae8 21 Nd1",
+    "commentaryText": "This retreat does not help White's cause. 21 Rd3 was a better idea: for example, after 21...Ba6 22 Rdd1 Bxc3 23 bxc3 Bb7 White can start trying to exchange pieces with 24 Bd2.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3 d6 10 0-0 Na5 11 f4 b6 12 e5 Nxb3 13 exf6 Nxd4 14 fxe7 Ne2+ 15 Qxe2 Qxe7 16 Rfe1 Bb7 17 Rad1 Qc7 18 Qf2 Qc6 19 Rd2 Re6 20 Kh2 Rae8 21 Nd1 d5 22 c3 Re4 23 Rh1 Qc7 24 Qg3 h5 25 h4",
+    "commentaryText": "Creating even more weaknesses, though White would not have relished the thought of the black pawn coming to h4.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3 d6 10 0-0 Na5 11 f4 b6 12 e5 Nxb3 13 exf6 Nxd4 14 fxe7 Ne2+ 15 Qxe2 Qxe7 16 Rfe1 Bb7 17 Rad1 Qc7 18 Qf2 Qc6 19 Rd2 Re6 20 Kh2 Rae8 21 Nd1 d5 22 c3 Re4 23 Rh1 Qc7 24 Qg3 h5 25 h4 Bf6 26 Kg1 Qc4",
+    "commentaryText": "26...d4! wins immediately, but it would have to be calculated. After 27 Bxd4 there might follow 27...Bxd4+ 28 Rxd4 Rxd4 29 cxd4 Re2 30 Nf2 Qc2, leaving White helpless against the threat of...Qd2 followed by...Qe1+.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3 d6 10 0-0 Na5 11 f4 b6 12 e5 Nxb3 13 exf6 Nxd4 14 fxe7 Ne2+ 15 Qxe2 Qxe7 16 Rfe1 Bb7 17 Rad1 Qc7 18 Qf2 Qc6 19 Rd2 Re6 20 Kh2 Rae8 21 Nd1 d5 22 c3 Re4 23 Rh1 Qc7 24 Qg3 h5 25 h4 Bf6 26 Kg1 Qc4 27 Qf2 Qxa2 28 Bd4 R8e6",
+    "commentaryText": "Another inaccuracy, perhaps suggesting that one or both players might have been short of time. 28...Qc4 would have been more accurate, one of the points being that 29 Bxf6 is met by 29...Rxf4.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3 d6 10 0-0 Na5 11 f4 b6 12 e5 Nxb3 13 exf6 Nxd4 14 fxe7 Ne2+ 15 Qxe2 Qxe7 16 Rfe1 Bb7 17 Rad1 Qc7 18 Qf2 Qc6 19 Rd2 Re6 20 Kh2 Rae8 21 Nd1 d5 22 c3 Re4 23 Rh1 Qc7 24 Qg3 h5 25 h4 Bf6 26 Kg1 Qc4 27 Qf2 Qxa2 28 Bd4 R8e6 29 Rh3",
+    "commentaryText": "Missing a good chance to confuse matters with 29 f5: for example, 29...gxf5 30 Qg3+ Kh7 31 Bxf6 Rxf6 32 Nf2 intends to bring the knight to h3 then g5.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3 d6 10 0-0 Na5 11 f4 b6 12 e5 Nxb3 13 exf6 Nxd4 14 fxe7 Ne2+ 15 Qxe2 Qxe7 16 Rfe1 Bb7 17 Rad1 Qc7 18 Qf2 Qc6 19 Rd2 Re6 20 Kh2 Rae8 21 Nd1 d5 22 c3 Re4 23 Rh1 Qc7 24 Qg3 h5 25 h4 Bf6 26 Kg1 Qc4 27 Qf2 Qxa2 28 Bd4 R8e6 29 Rh3 Bxd4 30 cxd4 Qb1",
+    "commentaryText": "After this White gets counter-chances. Recentralizing the queen with 30...Qc4 would have been better.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3 d6 10 0-0 Na5 11 f4 b6 12 e5 Nxb3 13 exf6 Nxd4 14 fxe7 Ne2+ 15 Qxe2 Qxe7 16 Rfe1 Bb7 17 Rad1 Qc7 18 Qf2 Qc6 19 Rd2 Re6 20 Kh2 Rae8 21 Nd1 d5 22 c3 Re4 23 Rh1 Qc7 24 Qg3 h5 25 h4 Bf6 26 Kg1 Qc4 27 Qf2 Qxa2 28 Bd4 R8e6 29 Rh3 Bxd4 30 cxd4 Qb1 31 Kh2 Re1 32 f5 gxf5 33 Rg3+ Kf8 34 Qf4 Bc6 35 Qb8",
+    "commentaryText": "A wrong check. White should play 35 Nf2: for example, 35...Be8 36 Qg5 Rg6 37 Qxh5 keeps White very much in the game.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3 d6 10 0-0 Na5 11 f4 b6 12 e5 Nxb3 13 exf6 Nxd4 14 fxe7 Ne2+ 15 Qxe2 Qxe7 16 Rfe1 Bb7 17 Rad1 Qc7 18 Qf2 Qc6 19 Rd2 Re6 20 Kh2 Rae8 21 Nd1 d5 22 c3 Re4 23 Rh1 Qc7 24 Qg3 h5 25 h4 Bf6 26 Kg1 Qc4 27 Qf2 Qxa2 28 Bd4 R8e6 29 Rh3 Bxd4 30 cxd4 Qb1 31 Kh2 Re1 32 f5 gxf5 33 Rg3+ Kf8 34 Qf4 Bc6 35 Qb8 Be8 36 Qxa7 Qe4",
+    "commentaryText": "Black, in turn, misses his way. 36...f4 would have been very strong here.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 Nc6 3 d4 cxd4 4 Nxd4 g6 5 Nc3 Bg7 6 Be3 Nf6 7 Bc4 0-0 8 Bb3 Re8 9 h3 d6 10 0-0 Na5 11 f4 b6 12 e5 Nxb3 13 exf6 Nxd4 14 fxe7 Ne2+ 15 Qxe2 Qxe7 16 Rfe1 Bb7 17 Rad1 Qc7 18 Qf2 Qc6 19 Rd2 Re6 20 Kh2 Rae8 21 Nd1 d5 22 c3 Re4 23 Rh1 Qc7 24 Qg3 h5 25 h4 Bf6 26 Kg1 Qc4 27 Qf2 Qxa2 28 Bd4 R8e6 29 Rh3 Bxd4 30 cxd4 Qb1 31 Kh2 Re1 32 f5 gxf5 33 Rg3+ Kf8 34 Qf4 Bc6 35 Qb8 Be8 36 Qxa7 Qe4 37 Qa3+ Re7 38 Nf2",
+    "commentaryText": "A final blunder, which is highly suggestive of time trouble. 38 Qd6 would have left the issue very much in doubt.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 2 (Gabrielian - Zvjaginsev, 2013)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 cxd4 4 Nxd4 Nc6 5 c4",
+    "commentaryText": "At this point the reader may be wondering why the Accelerated Dragon is not more popular than it is, which is partly due to concern about the Maroczy Bind with 1 e4 c5 2 Nf3 g6 3 d4 cxd4 4 Nxd4 Nc6 5 c4. This has long been thought to be a critical test, with White obtaining an annoying space advantage. Yet here too it seems that Black can get excellent counterplay if he knows what he is doing in the critical Gurgenidze System, 5...Nf6 6 Nc3 d6. After either 7 f3 or 7 Be2 Black can take on d4 and draw the white queen into the open.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, transition into Game 3"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4",
+    "commentaryText": "Transposing into an Accelerated Dragon via a 1 Nf3 move order. This illustrates the transpositional advantages of this line, which can be used as the basis of a defence against both 1 Nf3 and 1 c4.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4",
+    "commentaryText": "Regarded as critical, forcing the exchange of queens and relying on White's extra space.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4 Qxd2+ 15 Kxd2 Nd7 16 g4",
+    "commentaryText": "This has been seen as the critical test for Black, cracking down on his attempts to play the freeing ...f7-f5.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4 Qxd2+ 15 Kxd2 Nd7 16 g4 Rcb8",
+    "commentaryText": "The key move, which changes the assessment of this line. Question: What is the idea? Answer: At the moment Black simply wants to play...b7-b5. Question: What had Black played previously? Answer: In earlier games attention was focussed on 16...f5, but Black was struggling after 17 exf5 gxf5 18 h3 Rf8 19 f4 Rad8 20 g5, despite the best efforts of expert practitioners. For example, 20...Bf7 was introduced by Gadir Guseinov, a noted Accelerated Dragon expert, but 21 Rhd1 (21 Bf3!?) 21...e5 22 Ke1 exf4 (22...Rfe8!? is a possible improvement) 23 Bxf4 Be5 24 Bxe5 Nxe5 25 Nc3 Be6 26 Kf2 was better for White in Bu Xiangzhi-G.Guseinov, Doha 2014. Although Black lost the featured game, it was certainly not because of the opening and the key move 16...Rcb8; in fact Black was better at certain stages of the game. From a theoretical point of view this move puts the ball firmly in White's court.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4 Qxd2+ 15 Kxd2 Nd7 16 g4 Rcb8 17 Nc3 b5 18 Nd5 Bxd5 19 cxd5 Nc5",
+    "commentaryText": "The key move, blocking the c-file at the cost of a pawn.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4 Qxd2+ 15 Kxd2 Nd7 16 g4 Rcb8 17 Nc3 b5 18 Nd5 Bxd5 19 cxd5 Nc5 20 b4",
+    "commentaryText": "White wants to penetrate with his c1-rook, but Black will get counterplay with...a6-a5. Black also gets play after the alternatives, for example: a) If White takes the pawn with 20 Bxc5 dxc5 21 Rxc5, Black gets a blockade on the dark squares with 21...Bh6+ 22 Kd3 Bf4, preventing White's pawns from moving and at the same time defending the c7-square. The engines still give White a plus at this point, but that is only because they value material in their assessment algorithms. b) 20 h4 Rc8 21 h5 e6 22 dxe6 Nxe6 23 h6 Be5 (23...Bb2! is even better) 24 Rxc8+ Rxc8 25 Rc1 Rxc1 26 Kxc1 Nd4 gave Black enough play to draw in G.Ilzig-J.De Mingo Matias, correspondence 2019.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4 Qxd2+ 15 Kxd2 Nd7 16 g4 Rcb8 17 Nc3 b5 18 Nd5 Bxd5 19 cxd5 Nc5 20 b4 Na4 21 Rc7 a5 22 Rb1",
+    "commentaryText": "22 bxa5 Rxa5 23 Rhc1 Nc5 24 Rc2 Kf8 is also good enough for Black.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4 Qxd2+ 15 Kxd2 Nd7 16 g4 Rcb8 17 Nc3 b5 18 Nd5 Bxd5 19 cxd5 Nc5 20 b4 Na4 21 Rc7 a5 22 Rb1 axb4 23 Rxb4 Nc5 24 Bxc5 dxc5 25 Rxc5 Rxa2+ 26 Ke3 g5",
+    "commentaryText": "26...Bh6+ may be an even better way to set up a dark-square blockade, 27 f4 being met by 27...Bxf4+ 28 Kxf4 Rxe2, with a drawish rook endgame.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4 Qxd2+ 15 Kxd2 Nd7 16 g4 Rcb8 17 Nc3 b5 18 Nd5 Bxd5 19 cxd5 Nc5 20 b4 Na4 21 Rc7 a5 22 Rb1 axb4 23 Rxb4 Nc5 24 Bxc5 dxc5 25 Rxc5 Rxa2+ 26 Ke3 g5 27 Rbxb5 Ra3+ 28 Kd2 Ra2+ 29 Kd3 Rba8 30 Bd1 Be5 31 h3 Bf4",
+    "commentaryText": "31...Rh2 seems to be Black's simplest move; he just wants to take the h-pawn. The game might then end in a draw by repetition after 32 Ra5 Rxa5 33 Rxa5 Rxh3 34 Ra7 Kf8 35 Ra8+ Kg7 36 Ra7 Kf8, etc.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4 Qxd2+ 15 Kxd2 Nd7 16 g4 Rcb8 17 Nc3 b5 18 Nd5 Bxd5 19 cxd5 Nc5 20 b4 Na4 21 Rc7 a5 22 Rb1 axb4 23 Rxb4 Nc5 24 Bxc5 dxc5 25 Rxc5 Rxa2+ 26 Ke3 g5 27 Rbxb5 Ra3+ 28 Kd2 Ra2+ 29 Kd3 Rba8 30 Bd1 Be5 31 h3 Bf4 32 Bb3",
+    "commentaryText": "In playing 'for a win', White puts himself in serious danger. He should have played 32 Rc2 when the game should be a draw.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4 Qxd2+ 15 Kxd2 Nd7 16 g4 Rcb8 17 Nc3 b5 18 Nd5 Bxd5 19 cxd5 Nc5 20 b4 Na4 21 Rc7 a5 22 Rb1 axb4 23 Rxb4 Nc5 24 Bxc5 dxc5 25 Rxc5 Rxa2+ 26 Ke3 g5 27 Rbxb5 Ra3+ 28 Kd2 Ra2+ 29 Kd3 Rba8 30 Bd1 Be5 31 h3 Bf4 32 Bb3 Rf2",
+    "commentaryText": "32...Rd2+! 33 Kc3 Ra1 would have put White in serious trouble because Black is going after the f3-pawn with one of his rooks.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4 Qxd2+ 15 Kxd2 Nd7 16 g4 Rcb8 17 Nc3 b5 18 Nd5 Bxd5 19 cxd5 Nc5 20 b4 Na4 21 Rc7 a5 22 Rb1 axb4 23 Rxb4 Nc5 24 Bxc5 dxc5 25 Rxc5 Rxa2+ 26 Ke3 g5 27 Rbxb5 Ra3+ 28 Kd2 Ra2+ 29 Kd3 Rba8 30 Bd1 Be5 31 h3 Bf4 32 Bb3 Rf2 33 d6 exd6",
+    "commentaryText": "Black might have been worried about 33...Rd2+ 34 Kc3 Rxd6 35 e5 Rh6 36 e6, but 36...f6 is solid enough here.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4 Qxd2+ 15 Kxd2 Nd7 16 g4 Rcb8 17 Nc3 b5 18 Nd5 Bxd5 19 cxd5 Nc5 20 b4 Na4 21 Rc7 a5 22 Rb1 axb4 23 Rxb4 Nc5 24 Bxc5 dxc5 25 Rxc5 Rxa2+ 26 Ke3 g5 27 Rbxb5 Ra3+ 28 Kd2 Ra2+ 29 Kd3 Rba8 30 Bd1 Be5 31 h3 Bf4 32 Bb3 Rf2 33 d6 exd6 34 Rc7 d5",
+    "commentaryText": "After this it should be equal, whereas 34...Rxf3+ 35 Ke2 Re3+ 36 Kf2 Rxh3 would have left Black with all the chances.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4 Qxd2+ 15 Kxd2 Nd7 16 g4 Rcb8 17 Nc3 b5 18 Nd5 Bxd5 19 cxd5 Nc5 20 b4 Na4 21 Rc7 a5 22 Rb1 axb4 23 Rxb4 Nc5 24 Bxc5 dxc5 25 Rxc5 Rxa2+ 26 Ke3 g5 27 Rbxb5 Ra3+ 28 Kd2 Ra2+ 29 Kd3 Rba8 30 Bd1 Be5 31 h3 Bf4 32 Bb3 Rf2 33 d6 exd6 34 Rc7 d5 35 Rd7 Rc8 36 exd5 Rd2+ 37 Ke4 Re8+ 38 Kf5 Rde2",
+    "commentaryText": "Only here does Black lose the game. 38...Rd3 is equal: for example, after 39 d6 Rxb3 40 Rxb3 Re5+ 41 Kf6 Re6+ it is a draw by perpetual check.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 Nf3 c5 2 c4 g6 3 d4 cxd4 4 Nxd4 Nc6 5 e4 Nf6 6 Nc3 d6 7 Be2 Nxd4 8 Qxd4 Bg7 9 Be3 0-0 10 Qd2 Be6 11 f3 Qa5 12 Rc1 Rfc8 13 b3 a6 14 Na4 Qxd2+ 15 Kxd2 Nd7 16 g4 Rcb8 17 Nc3 b5 18 Nd5 Bxd5 19 cxd5 Nc5 20 b4 Na4 21 Rc7 a5 22 Rb1 axb4 23 Rxb4 Nc5 24 Bxc5 dxc5 25 Rxc5 Rxa2+ 26 Ke3 g5 27 Rbxb5 Ra3+ 28 Kd2 Ra2+ 29 Kd3 Rba8 30 Bd1 Be5 31 h3 Bf4 32 Bb3 Rf2 33 d6 exd6 34 Rc7 d5 35 Rd7 Rc8 36 exd5 Rd2+ 37 Ke4 Re8+ 38 Kf5 Rde2 39 d6 Kh8 40 Kf6 Rf8 41 Bxf7 Re3 42 Rf5 Re2",
+    "commentaryText": "42...Rb3 would have been more tenacious.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Introduction, Game 3 (Korpa - Pescatore, Trieste Open 2015)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 cxd4 4 Nxd4 Nc6 5 Nc3 Bg7 6 Be3 Nf6 7 Nxc6 bxc6 8 e5",
+    "commentaryText": "The lines where White plays Nxc6 are not generally considered dangerous for Black. The most important one occurs after 1 e4 c5 2 Nf3 g6 3 d4 cxd4 4 Nxd4 Nc6 5 Nc3 Bg7 6 Be3 Nf6 7 Nxc6 as after 7...bxc6 8 e5 Black's knight on f6 should go back to g8. Even so it seems that White cannot make much out of his lead in development.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Chapter Five introduction, Lines with Nxc6"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nf3 g6 3 d4 cxd4 4 Nxd4 Nc6 5 Nc3",
+    "commentaryText": "The immediate 5 Nxc6 is sometimes played by GMs in blitz games, but after 5...bxc6 6 Qd4 Nf6 7 e5 Nd5 8 e6 Nf6 9 exf7+ Kxf7 Black stands very well (see Game 33, Bordais-Bailet, Rennes 2017). Note that this line is not possible if Black plays 4...Bg7 instead of 4...Nc6.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Chapter Five introduction, Lines with Nxc6"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nc3 Nc6 3 Nge2 g6 4 d4 cxd4 5 Nxd4 Bg7 6 Be3 Nf6 7 Nxc6 bxc6 8 e5 Ng8 9 f4 Nh6 10 Qd2 0-0 11 0-0-0 d6 12 exd6 exd6",
+    "commentaryText": "The human move, but not the only one. The engines also like the immediate 12...Nf5, with humans having played this way too. For example, 13 Bf2 (13 dxe7 Qxe7 14 Bf2 Be6 15 g4 Rab8 gave Black a powerful attack in Hong Xing-Lu Miaoyi, Shenzhen 2023) 13...Nxd6 (13...Rb8 does not work because of 14 d7 Bxd7 15 Qxd7 Qa5 16 Qxa7 Qb4 17 Qa3 Qxa3 18 bxa3 Bxc3 19 Rd3, with White emerging with the better endgame) 14 Bd4 Bh6!? (14...Bxd4 15 Qxd4 Bg4 16 Rd2 Qb6 is simple and equal, but Black will find it difficult to win games like this) 15 Bd3 Bg4 16 Rde1 Rb8 17 a3 Qd7 18 h4?! Rfd8! 19 g3 c5 20 Bxc5 Nc4 won quickly for Black in E.Tairova-N.Chadaev, Moscow 2006.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Chapter Five, Game 36 (Hong Xing - Wang Jue, 2016)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nc3 Nc6 3 Nge2 g6 4 d4 cxd4 5 Nxd4 Bg7 6 Be3 Nf6 7 Nxc6 bxc6 8 e5 Ng8 9 f4 Nh6 10 Qd2 0-0 11 0-0-0 d6 12 exd6 exd6 13 Bd4",
+    "commentaryText": "Exchanging the dark-squared bishops is good for both attack and defence.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Chapter Five, Game 36 (Hong Xing - Wang Jue, 2016)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nc3 Nc6 3 Nge2 g6 4 d4 cxd4 5 Nxd4 Bg7 6 Be3 Nf6 7 Nxc6 bxc6 8 e5 Ng8 9 f4 Nh6 10 Qd2 0-0 11 0-0-0 d6 12 exd6 exd6 13 Bd4 Bxd4 14 Qxd4 Nf5 15 Qd2 d5 16 g4 Nd6 17 f5",
+    "commentaryText": "The sharpest and strongest move. 17 Rg1 has been played in a couple of games: for example, 17...Rb8 (17...Qb6 18 Qd4 Qxd4 19 Rxd4 f5 20 g5 Ne4 was better for Black in R.Verstraeten-A.Genzling, Lille 2010) 18 Rg3 was D.Pruess-E.Perelshteyn, Peabody 2007 (18 Qd4 is relatively best, but still better for Black after 18...Qb6 19 b3 f5 20 Qxb6 axb6 21 g5 Ne4), and now 18...f5 (rather than Perelshteyn's 18...Qf6?!) 19 gxf5 Nxf5 would have given Black a clear advantage.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Chapter Five, Game 36 (Hong Xing - Wang Jue, 2016)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nc3 Nc6 3 Nge2 g6 4 d4 cxd4 5 Nxd4 Bg7 6 Be3 Nf6 7 Nxc6 bxc6 8 e5 Ng8 9 f4 Nh6 10 Qd2 0-0 11 0-0-0 d6 12 exd6 exd6 13 Bd4 Bxd4 14 Qxd4 Nf5 15 Qd2 d5 16 g4 Nd6 17 f5 Re8",
+    "commentaryText": "Question: Could Black accept the pawn sacrifice with 17...gxf5? Answer: That would leave Black's king badly exposed: for example, after 18 Qf4! (18 Bd3 Kh8 19 Qf4 is also good) 18...Ne4? (18...Re8 was relatively best) 19 gxf5 left Black in all sorts of trouble in J.Sindarov-J.Vakhidov, Uzbek Championship, Tashkent 2021.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Chapter Five, Game 36 (Hong Xing - Wang Jue, 2016)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nc3 Nc6 3 Nge2 g6 4 d4 cxd4 5 Nxd4 Bg7 6 Be3 Nf6 7 Nxc6 bxc6 8 e5 Ng8 9 f4 Nh6 10 Qd2 0-0 11 0-0-0 d6 12 exd6 exd6 13 Bd4 Bxd4 14 Qxd4 Nf5 15 Qd2 d5 16 g4 Nd6 17 f5 Re8 18 Bd3 Rb8",
+    "commentaryText": "Taking aim at b2. The engines also like 18...Qh4, which helps prevent White developing an attack on the kingside.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Chapter Five, Game 36 (Hong Xing - Wang Jue, 2016)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nc3 Nc6 3 Nge2 g6 4 d4 cxd4 5 Nxd4 Bg7 6 Be3 Nf6 7 Nxc6 bxc6 8 e5 Ng8 9 f4 Nh6 10 Qd2 0-0 11 0-0-0 d6 12 exd6 exd6 13 Bd4 Bxd4 14 Qxd4 Nf5 15 Qd2 d5 16 g4 Nd6 17 f5 Re8 18 Bd3 Rb8 19 Rde1 Rxe1+ 20 Rxe1 Qb6",
+    "commentaryText": "20...Qh4 is an objectively stronger move, with an approximately equal game.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Chapter Five, Game 36 (Hong Xing - Wang Jue, 2016)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nc3 Nc6 3 Nge2 g6 4 d4 cxd4 5 Nxd4 Bg7 6 Be3 Nf6 7 Nxc6 bxc6 8 e5 Ng8 9 f4 Nh6 10 Qd2 0-0 11 0-0-0 d6 12 exd6 exd6 13 Bd4 Bxd4 14 Qxd4 Nf5 15 Qd2 d5 16 g4 Nd6 17 f5 Re8 18 Bd3 Rb8 19 Rde1 Rxe1+ 20 Rxe1 Qb6 21 Qf4",
+    "commentaryText": "Presumably White missed something when she played this way. The correct move is 21 Nd1, simply defending b2 and getting ready to move over to the attack.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Chapter Five, Game 36 (Hong Xing - Wang Jue, 2016)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nc3 Nc6 3 Nge2 g6 4 d4 cxd4 5 Nxd4 Bg7 6 Be3 Nf6 7 Nxc6 bxc6 8 e5 Ng8 9 f4 Nh6 10 Qd2 0-0 11 0-0-0 d6 12 exd6 exd6 13 Bd4 Bxd4 14 Qxd4 Nf5 15 Qd2 d5 16 g4 Nd6 17 f5 Re8 18 Bd3 Rb8 19 Rde1 Rxe1+ 20 Rxe1 Qb6 21 Qf4 Qxb2+ 22 Kd2 Qb4 23 Qg5",
+    "commentaryText": "Perhaps White had originally calculated 23 Qh6 d4 24 f6, but only now realized that after 24...dxc3+ she would have to move his king to the e-file, allowing 25...Ne8.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Chapter Five, Game 36 (Hong Xing - Wang Jue, 2016)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nc3 Nc6 3 Nge2 g6 4 d4 cxd4 5 Nxd4 Bg7 6 Be3 Nf6 7 Nxc6 bxc6 8 e5 Ng8 9 f4 Nh6 10 Qd2 0-0 11 0-0-0 d6 12 exd6 exd6 13 Bd4 Bxd4 14 Qxd4 Nf5 15 Qd2 d5 16 g4 Nd6 17 f5 Re8 18 Bd3 Rb8 19 Rde1 Rxe1+ 20 Rxe1 Qb6 21 Qf4 Qxb2+ 22 Kd2 Qb4 23 Qg5 Bxf5",
+    "commentaryText": "23...d4 is even stronger, but you need nerves of steel to play this way. Black's king would manage to sidestep all the bullets after 24 Qd8+ Kg7 25 f6+ Kh6 26 Qf8+ (or 26 g5+ Kxg5) 26...Kg5 27 h4+ Kxg4 28 Rg1+ (or 28 Be2+ Kh3) 28...Kf3 29 Rf1+ Kg2 when White runs out of useful checks.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Chapter Five, Game 36 (Hong Xing - Wang Jue, 2016)"
+    }
+  },
+  {
+    "moveSequence": "1 e4 c5 2 Nc3 Nc6 3 Nge2 g6 4 d4 cxd4 5 Nxd4 Bg7 6 Be3 Nf6 7 Nxc6 bxc6 8 e5 Ng8 9 f4 Nh6 10 Qd2 0-0 11 0-0-0 d6 12 exd6 exd6 13 Bd4 Bxd4 14 Qxd4 Nf5 15 Qd2 d5 16 g4 Nd6 17 f5 Re8 18 Bd3 Rb8 19 Rde1 Rxe1+ 20 Rxe1 Qb6 21 Qf4 Qxb2+ 22 Kd2 Qb4 23 Qg5 Bxf5 24 Rb1 Ne4+ 25 Bxe4 Qd4+ 26 Bd3 Rxb1 27 Nxb1 Bxd3 28 Qd8+",
+    "commentaryText": "The point of Black's play is that after 28 cxd3 Qb2+ 29 Ke3 Qxb1 she reaches a winning queen endgame.",
+    "source": {
+      "title": "Opening Repertoire: The Accelerated Dragon",
+      "author": "Nigel Davies",
+      "location": "Chapter Five, Game 36 (Hong Xing - Wang Jue, 2016)"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Nb3",
+    "commentaryText": "This move tends to be played later on anyway in the Be2 system, in order to hinder Black from playing ...d7-d5 (note that the Maroczy and Bc4 variation both target the d5-square), so some players prefer to play 6.Nb3 directly without committing the Bishop to e3.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Nde2",
+    "commentaryText": "This is not part of the Be2 system so I just mention it in passing. Some people who like to fianchetto their light bishop in other Sicilians play this 'Chameleon' line; such variations are apt against tamer Sicilians like the Najdorf, not the unforgiving Accelerated Dragon.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Nb3 Nf6 7.Be2 0-0 8.0-0 d6 9.Bg5",
+    "commentaryText": "This is likely to be White's idea if they play 6.Nb3 directly.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Nb3 Nf6 7.Be2 0-0 8.0-0 d6 9.Kh1 Be6 10.f4 Qc8",
+    "commentaryText": "Preventing f4-f5.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Nb3 Nf6 7.Be2 0-0 8.0-0 d6 9.Bg5 Be6 10.Kh1 Rc8 11.f4 a6",
+    "commentaryText": "Black can take his time on the queenside because if White continues with f4-f5 then Black will happily take possession of the e5 square with his knight.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 d5",
+    "commentaryText": "Black is not supposed to be able to play this; the general rule is that, except in extraordinary circumstances, Black must castle before playing this. Obedience to that rule is likely why this move has never been played by a 2400+ player (at least according to the database). Computers are helpful for showing us the exceptions to our rule of thumb heuristics. Nevertheless, Black is not better off here than he is in the main line (7...0-0), it is just another path to easy equality.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.Nb3",
+    "commentaryText": "We previously considered this move coupled with Bc1-g5; here Black proceeds in essentially the same way.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.Nb3 d6",
+    "commentaryText": "As per our recipe, we transpose to the Classical Dragon when White commits to Nb3.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.Nb3 a5",
+    "commentaryText": "I used to follow Donaldson and Silman in playing this Accelerated Dragon-style move, but unfortunately I don't think it equalizes.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.Nb3 d6 9.f4 Be6 10.g4 Rc8",
+    "commentaryText": "This is the old 'Rabinovich Attack', popularized in the 1930s by Kan, Levenfish, Bondarevsky, and Alekhine.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.Nb3 d6 9.f4 Be6 10.g4 Rc8 11.f5 Bxb3! 12.cxb3",
+    "commentaryText": "Thank you to Daniel Vanheirzeele for informing me of this idea.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.Nb3 a5 9.a4 d5 10.exd5 Nb4 11.Bf3 b6",
+    "commentaryText": "This position has been defended on the Black side by such champions as Khalifman and Kramnik. White's attack is not to be underestimated, but Black's resilience and counterattacking chances are fully adequate.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.Nb3 d6 9.f4 Be6 10.g4 Rc8 11.f5 Bxb3 12.cxb3 d5 13.exd5 Nb4 14.Bf3 Nfxd5 15.Nxd5 Nc2+ 16.Kf2 Nxa1 17.Qxa1 e6 18.f6 exd5 19.fxg7 Re8",
+    "commentaryText": "Practically speaking, White is just lost here — computer level accuracy is required to only remain slightly worse.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.Nb3 d6 9.0-0 Be6 10.f4 Rc8 11.Bf3 Nd7",
+    "commentaryText": "The reader might have noticed this is a common way to meet Be2-f3. Black can temporarily remove the d7-retreat square from his bishop since White has relinquished control over c4, and if Black achieves ...Nd7-b6-c4 he will take over the initiative.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.0-0 d5",
+    "commentaryText": "If Black played 8...d6 instead, we would have a position from the Classical Dragon where Black would intend to play 9...d5 next. This is the sense in which we are effectively up a tempo in the Accelerated Dragon.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.0-0 d5 9.Nxc6",
+    "commentaryText": "Not the most popular but in my opinion White's best.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.0-0 d5 9.exd5 Nxd5 10.Nxd5 Nxd4",
+    "commentaryText": "The following choice is just a matter of taste: both lead to very dry, equal endgames. I tend to prefer 10...Nxd4 because it keeps Black's pawn structure in tact.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.0-0 d5 9.Nxc6 bxc6 10.e5",
+    "commentaryText": "This system is underrated, and Black needs to be a little careful here. Computers initially think every move is absolutely equal, but they are slow at grasping the positional pressure White can apply if Black does not act fast.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.0-0 d5 9.Nxc6 bxc6 10.e5 Ne4",
+    "commentaryText": "Liquidating the position is in my judgment the easiest path to equality for Black.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.0-0 d5 9.Nxc6 bxc6 10.e5 Ne8",
+    "commentaryText": "This (like 10...Nd7) is thematic but Black needs to play very energetically to cope with his static weaknesses and the requisite level of accuracy makes this a risky variation to enter into.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.0-0 d5 9.Nxc6 bxc6 10.e5 Nd7 11.f4 e6 12.Na4 a5 13.Qd2 Ba6 14.c4 Qb8 15.cxd5 Bxe2 16.Qxe2 cxd5 17.Rac1 g5",
+    "commentaryText": "These positions are just much easier to play for White, so I recommend avoiding them, even though Black must objectively be fine.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.0-0 d5 9.Nxc6 bxc6 10.e5 Ne4 11.Nxe4 dxe4 12.Qxd8 Rxd8 13.Rfd1 Be6 14.Bd4 c5",
+    "commentaryText": "Nigel Short demonstrates what can go wrong for Black if he isn't careful (in the 14...Rd7 sideline: 15.a4 f5?! 16.exf6 exf6 17.a5 Kf7 18.f3 exf3 19.Bxf3 Rc7 20.b4! was better for White, Short-Yrjola, Manila 1992).",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.Nc3 Nc6 6.Be3 Nf6 7.Be2 0-0 8.0-0 d5 9.Nxc6 bxc6 10.e5 Ne4 11.Nxe4 dxe4 12.Qxd8 Rxd8 13.Rfd1 Be6 14.Bd4 c5 15.Bc3 f5 16.b3 Kf7",
+    "commentaryText": "Neither side can make progress; Black should resort to waiting moves (...Bh6-g7, etc.) until White initiates exchanges.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 1 (Classical Be2), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5",
+    "commentaryText": "I follow Donaldson and Silman in referring to this system as the 'Anti-Yugoslav variation'. In their words, \"We call this system the Anti-Yugoslav because 7...Qa5 more or less forces White to castle kingside and thus avoids the dangers of the Yugoslav Attack in the Dragon.\" This concession from White is not without compromise from Black. In his repertoire book on the White side of 1.e4, Negi points out the defects in Black's position: \"...the queen on a5 is badly placed — it just gets in the way of Black's typical plans like ...Na5, or ...b5/...a5. Now ...b5 can always be met by a2-a3 without any worries. Black also has the typical plan of ...Nxd4 and ...Bc6 available but if White avoids playing f2-f4, the positions after Nd5 (intending to meet ...Bxd5 with exd5) seem quite pleasant for him. Moreover, it is not easy for Black to find a new square for the queen. Going to c7 will only encourage Bg5, with ideas of Bxf6 and Nd5, so the most common plan is ...Qh5. Although this may offer a few tactical tricks, it's hard to believe that the queen can be well placed there.\" I do not disagree with Negi — Black's queen usually does need to be relocated from a5, because the c6-Knight wants that square, and very often Black's maneuvers in this system are (in his words) \"hard to believe\". That being said, the fact that White players will be incredulous towards Black's maneuvers is a positive feature of Black's strategy (in this specific variation and more broadly in the Accelerated Dragon), not a reason to avoid this line. In my experience playing this system over the board for more than sixteen years, White players have real difficulty managing their position, because Black's Queen on a5 means that play neither resembles the Yugoslav Attack nor does it follow the usual paths in the Bc4/0-0 Dragon.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0",
+    "commentaryText": "Conventional wisdom dictates that this is basically forced, but in my opinion 8.f3 is not to be underestimated either.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.Qd2",
+    "commentaryText": "For White players who have never seen 7...Qa5, this blunder is not a rare occurrence.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.Qd2 Nxe4 9.Nxc6 Qxc3",
+    "commentaryText": "I've had the pleasure of playing this over the board many times. Black is up at least a pawn in all variations.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.Nb3",
+    "commentaryText": "Another frequent sighting when facing unprepared opposition.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.f3",
+    "commentaryText": "This move is highly underrated; for example, Donaldson and Silman, as well as Negi give the move a question mark.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.f3 Qb4",
+    "commentaryText": "Black must not allow White to play Qd2 and 0-0-0, establishing a Yugoslav setup. The 'Anti-Yugoslav variation' wouldn't be aptly named if it allowed this!",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.f3 Qb4 9.Ndb5",
+    "commentaryText": "White takes advantage of Black's queen being on b4, and therefore the c7 square being vulnerable. This move has surprisingly been overlooked by other commentators.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.f3 Qb4 9.Ndb5 Qxc4 10.Nc7+ Kd8 11.Nxa8 b6 12.a4 Bb7 13.Nxb6 axb6 14.Bxb6+ Kc8 15.a5",
+    "commentaryText": "A highly unusual position has arisen. If memory serves, it was Bent Larsen who claimed that in unusual positions the best moves are often unusual themselves. The following maneuever may appear unusual, but it will be a recurring theme in this book.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.f3 Qb4 9.Ndb5 Qxc4 10.Nc7+ Kd8 11.Nxa8 b6 12.a4 Bb7 13.Nxb6 axb6 14.Bxb6+ Kc8 15.a5 Ne8",
+    "commentaryText": "Black's knight unblocks the g7 bishop and heads to d6, targeting the c4 square.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0",
+    "commentaryText": "By far the most popular move for White here is 9.Bb3, which will be the subject of the next few chapters. Here we consider alternatives for White.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Nb3",
+    "commentaryText": "This is a clever line: if Black continues 9...Qa5-d8, White intends to accept the loss of a tempo with Bc4-e2, because Black has lost two tempi with ...Qd8-a5-d8. Thus, a position from the Classical Dragon is reached a full tempo up for White. This was reason enough for Donaldson and Silman to attribute a \"?\" to 9...Qd8, but in my judgment the Classical Dragon is 'so equal' that even a tempo down, Black has no problems.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Nd5",
+    "commentaryText": "White cannot hope for an advantage by releasing the central tension so quickly.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Nb3 Qd8",
+    "commentaryText": "I recommend calling White out on their cleverness. If White plays the 7.Bc4 variation against the Accelerated Dragon (as opposed to 7.Be2) in the hope that they will be able to favorably transpose into a 7.Be2 line, then they probably don't have much experience with Be2 systems, so we should welcome this transposition. Besides, it is no more correct to say that Black is down a tempo in this line than it is to say that Black is up a tempo in the Classical line as compared to this one! Retreating the queen to d8 is the simplest way for Black to handle the position; he intends to continue in the same fashion as I recommended in the Be2 chapter. It is worth mentioning that super GM Malakhov has adopted this move in more than one tournament game.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Nb3 Qh5",
+    "commentaryText": "I used to enjoy playing this when I was younger. It amazed me that Black's queen could get away with such tightrope acrobatics. Unfortunately I can't recommend this for anything other than, perhaps, blitz chess.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Nb3 Qc7 10.Bg5",
+    "commentaryText": "Perhaps it is a little harsh to evaluate this as +=, because the truth is, it is just an interesting game after, for example, 10...e6!?. In this opening, though, what matters is the level of counterplay, not objective assessment. With White threatening Bg5xf6 and Nc3-d5, Black's counterplay is put on hold in order to defend further, and so compared to 10...Qd8! which genuinely offers equal chances, I assess this as slightly preferable for White.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Bb3 d6",
+    "commentaryText": "White's options are limited, as Black threatens ...Nf6-g4.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Bb3 d6 10.Nd5",
+    "commentaryText": "Played in Grischuk-Ivanchuk, London Candidates 2013. After that game, I considered this move to be the critical test of this entire variation. However, I now consider it to be harmless, and not just because of 10...Qd8!.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Bb3 d6 10.Nd5 Qd8",
+    "commentaryText": "Black vacates the a5-square for his knight, leaving White with the only piece in 'no man's land' (the 5th rank).",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Bb3 d6 10.h3 Bd7",
+    "commentaryText": "The first major branching point for this variation. Black intends ...Nc6xd4, followed by ...Bd7-c6 and ...Nf6-d7. Ideally, Black will exchange dark squared bishops on d4, as well as queens (after ...Qa5-c5). Black seeks out an endgame for obvious reasons: Black's trumps include a central pawn majority and the prospect of a long term queenside minority attack coupled with play along the half-open c-file. White is banking on obtaining a middlegame initiative as compensation for these long term disadvantages, so White will try to avoid exchanges. The two most sensible moves here are 11.Re1, recommended by Negi, and the main line, 11.f4. These two moves will be covered in the next two subchapters.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Bb3 d6 10.h3 Bd7 11.Re1",
+    "commentaryText": "As I have mentioned, Black's main plan in this system begins with exchanging on d4 and playing ...Bd7-c6. The prophylactic 11.Nf3!? prevents this idea, but it is better for White to wait a move to ask Black to commit a piece before playing Nd4-f3, especially since on this move 11...Nxd4 is dubious.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Bb3 d6 10.h3 Bd7 11.Re1 Rfc8",
+    "commentaryText": "It was hard to decide which move to recommend in this line, but I am happy with this choice for two reasons: 1) Black's next few moves (except after 12.f4) can be pretty much played on autopilot (...Bd7-e8, ...Nf6-d7-c5) — one shouldn't underestimate the value of such conveniences. 2) In the other lines, play often liquidates into positions where Black is close to equal but without many winning chances.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Bb3 d6 10.h3 Bd7 11.Re1 Rad8",
+    "commentaryText": "A move not mentioned by Negi, but deserving of our attention if for no other reason than the fact that Korchnoi played it in 2003. In my judgment this is a serious alternative to our main line, and perhaps the place to go if our main line runs into theoretical problems.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Bb3 d6 10.h3 Bd7 11.Re1 Rad8 12.Nf3 Qh5",
+    "commentaryText": "This move is a recurring theme in this Nd4-f3 variation. Black intends to continue with ...h7-h6 and ...g6-g5, with counterplay against White's king.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Bb3 d6 10.h3 Bd7 11.Re1 Nxd4 12.f4",
+    "commentaryText": "I am a little surprised that Negi didn't recommend this in his book. This rare move is extremely underrated, and has only been played by one 2500+ player — none other than Negi himself (Negi-Khalifman 2007). The main upshot of this move from White's perspective is that it deters Black from his usual, comfortable course of ...Bd7-e8 and ...Nf6-d7, because White's f-file pressure can become overwhelming.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Bb3 d6 10.h3 Bd7 11.Re1 Nxd4 12.f4 Nh5",
+    "commentaryText": "In this particular variation Black is well advised to abandon the ...Be8/...Nd7 plan, because as we see in the alternatives White is able to build up pressure on f7 after f4-f5/Re1-f1/Qd1-f3. Instead, we take immediate advantage of the weakness White has created: Black threatens to win the f4 pawn, so White's options are limited.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Bb3 d6 10.h3 Bd7 11.f4",
+    "commentaryText": "The most popular move, though I suspect it may become overshadowed by 11.Re1, especially given the popularity of Negi's book which recommends it.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 5"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Bb3 d6 10.h3 Bd7 11.f4 Nxd4 12.Bxd4 Bc6",
+    "commentaryText": "Black proceeds with his usual plan. Next he'd like to play ...Nf6-d7, and ideally exchange dark squared bishops and queens.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 5"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 Qa5 8.0-0 0-0 9.Bb3 d6 10.h3 Bd7 11.f4 Nxd4 12.Bxd4 Bc6 13.Nd5 Rae8",
+    "commentaryText": "Abiding by the general rule that if we can avoid taking on d5 then we should — here White's weak e4 pawn more than compensates for the doubling of our f-pawns in the event that White takes on f6.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 2 (7.Bc4 Anti-Yugoslav), Part 5"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4",
+    "commentaryText": "The Anti-Yugoslav Variation (7...Qa5) seemed to me to be in trouble after Grischuk-Ivanchuk, Candidates 2013 (recall Grischuk's 10.Nd5!?). In the summer of 2013 I had not yet discovered the equalizing 10...Qd8! novelty, and I found myself struggling to meet the 7.Bc4 variation. I searched the database for some guidance, but to no avail. At the time I was simultaneously a Taimanov Sicilian player as well, and at some point it occurred to me that nobody plays Bc4 against the Taimanov, presumably because its scope on c4 is stunted by the e6 pawn. This led to the idea of meeting the Bc4 variation with an eventual ...e7-e6, and transporting ideas from the Taimanov such as ...a6-...Qc7-...b5-...Bb7-...Nc6-a5(e5), and even ...Nf6-e8-d6. The process of developing this system has been some of the most enjoyable chess research I have engaged in, and I am pleased to say it has resulted in a powerful and truly novel system. As the 'prime mover' of this project, my work is undoubtedly incomplete. There are reams of unexplored possibilities, and I encourage readers to attempt their own contributions. The following chapters are by no means the final — only the first — word on this system.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3",
+    "commentaryText": "Black's next few moves can almost be played automatically, irrespective of what White does: ...a6, ...Qc7, ...b5, ...Bb7. Although our main idea is to play ...e7-e6, the first priority is to complete our development and connect the rooks.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.f3 Qb6",
+    "commentaryText": "White must not be permitted to reach a Yugoslav Attack setup with Qd2 and 0-0-0.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6",
+    "commentaryText": "From my experience playing this system over the last few years, most players, never having seen this system before, follow a safe course of castling kingside as White usually does in the 7.Bc4 system. However, in this particular system, White castling kingside leads to easy equality for Black, which I take to be a significant practical upshot of this system. We will postpone our discussion of White's queenside castling until the next chapter.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 Qc7",
+    "commentaryText": "This move has been championed by Grandmasters Aronin, Pogorelov, and Balogh, also with the intention of expanding on the queenside, but they did without our core idea of ...e7-e6. It is a matter of taste which move (8...a6 or 8...Qc7) is played first; usually they will transpose. 8...Qc7 avoids 9.Nxc6 followed by 10.e5 since the e5 square is covered, but depending on your taste you might prefer to welcome the uncritical 9.Nxc6. When I came up with the idea of this system I was unaware of 8...Qc7, and for some (possibly arbitrary) reason went with 8...a6.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.0-0",
+    "commentaryText": "Although Black can choose whether to play 8...a6 or 8...Qc7, whichever he chooses on move 8 it is important to follow it up with the other on move 9 before embarking on 10...b7-b5.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.h3 Qc7 10.Nxc6 dxc6 11.0-0 b5 12.a3 c5 13.Nd5 Nxd5 14.Bxd5 Rb8",
+    "commentaryText": "Variations like this illustrate what I meant in the introduction when I claimed that it often feels like you're playing White when you play the Accelerated Dragon. A couple of careless moves by White and Black is not only equal, Black is already better. It is uncommon for White to be forced to play under such a slim margin of error as he must in this line.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.h3 Qc7 10.0-0 b5 11.a3 Na5 12.f4 d6 13.Qd3 Bb7 14.Rad1 Rac8",
+    "commentaryText": "White has nothing to do. Black will continue to build pressure, keeping an eye out for central counterplay with ...e7-e5.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.h3 Qc7",
+    "commentaryText": "Black will simply continue ...b7-b5, ...Bc8-b7, ...Nc6-a5, and if White plays f2-f4 Black will prevent e4-e5 with ...d7-d6.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3",
+    "commentaryText": "White signals his intention to play in Yugoslav Attack fashion with Qd2 and 0-0-0. This is the most critical continuation, but since White players are not prepared for this new system, over the board they tend to shy away from the challenge.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.0-0",
+    "commentaryText": "It makes no sense to combine f3 with kingside castling, as White's only constructive plan after 10.0-0 is to go for f4 anyway.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.g4",
+    "commentaryText": "Black must be accurate here.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.Qd2 b5 11.0-0-0 Bb7",
+    "commentaryText": "Although this position has only been reached 30 times in the database, it is the first critical position of our main line. Both sides have developed their pieces and connected their rooks, and it remains to be determined which of the opposing wing attacks will succeed. Black's sights aren't limited to the queenside though, because the central pawn majority offers prospects for counterplay with ...d7-d5 or even ...e7-e5.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.Qd2 b5 11.0-0-0 Bb7 12.h4",
+    "commentaryText": "By far the most common move.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.Qd2 b5 11.0-0-0 Bb7 12.Kb1",
+    "commentaryText": "This is the concession we induce by prolonging the Knight's stay on c6. White now threatens 13.h4 h5 14.Bh6, as after 14...Nxd4 15.Bxg7 Nxb3 is no longer check, allowing 16.Qh6+–.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.Qd2 b5 11.0-0-0 Bb7 12.Kb1 Na5",
+    "commentaryText": "Having induced White's Kb1, Black can now go for lines similar to those after 10...Na5 where White is effectively down a tempo in the critical variations because Kb1 turns out to be unnecessary.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.Qd2 b5 11.0-0-0 Bb7 12.g4",
+    "commentaryText": "A slight inaccuracy. White should start with 12.h4, so as to ensure that Black plays ...h7-h5; in this line Black can get away without it.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.Qd2 b5 11.0-0-0 Bb7 12.h4 h5",
+    "commentaryText": "A new move, but more importantly a new concept for this line: containment. Previously, Black would rush with queenside counterplay, hoping to mate White before getting mated himself. It turns out that Black can contain White's kingside attack and solidify the center with ...e7-e6, and only then proceed with queenside and/or central counterplay. For his part, White must keep the attack going with urgency, because Black's queenside counterplay is just a few moves away, and it will come with devastating effect (...Rac8, ...Rfd8, ...Na5, etc.).",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.Qd2 b5 11.0-0-0 Bb7 12.h4 h5 13.g4",
+    "commentaryText": "The character of the position demands that this be played. Timidity will not suffice; time is of the essence in the race to determine which of the flank attacks will succeed. My initial attitude towards this system was that I should delay ...e7-e6 for as long as possible, because I felt I would always have the option later on, and I thought there could be more useful attacking moves on the queenside such as 13...Na5 (which also guards the important d5-square). However, as I delved deeper into this variation, I realized that Black should keep the knight on c6 for a little longer to deter White's Be3-h6. The result is a rather peculiar middlegame 'standoff', where White cannot make progress with Be3-h6 until Black moves his knight from c6, but at the same time Black cannot make progress on the queenside until he does either.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.Qd2 b5 11.0-0-0 Bb7 12.h4 h5 13.Nxc6",
+    "commentaryText": "This may look unnatural — and it is — but the 'computer move' which it is based on (14.Bd4!) is not to be underestimated. Black's f6-knight is the MVP (most valuable piece) of his position, as without it, White's g2-g4xh5 would be decisive. Fortunately, the f6-knight is difficult to get at, as 13.Bg5?? loses to 13...Nxe4. White's 13.Nxc6 takes aim at Black's f6-knight by paving the way for 14.Bd4.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.Qd2 b5 11.0-0-0 Bb7 12.h4 h5 13.g4 e6",
+    "commentaryText": "Like 13...Na5, this move also prevents White's g4-g5 followed by Nc3-d5, but by keeping the knight on c6, White's Be3-h6 is hindered. What follows is somewhat a game of 'cat and mouse' — White's main resource of Be3-h6 is unavailable at present, and it is difficult to see how to continue the attack without that. Black would welcome White's g4-g5, which locks up the kingside and directs Black's knight to d6 via e8. On the other hand, Black's queenside attack is stalled by the fact that he can't play ...Nc6-a5 without allowing Be3-h6. That being said, whereas White is at a loss for ways to improve his position, Black can place his rooks on the d-and-c (or b-) files and threaten both central counterplay and a queenside pawn storm.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.Qd2 b5 11.0-0-0 Bb7 12.h4 h5 13.g4 e6 14.Kb1",
+    "commentaryText": "Small 'refinement' moves like this are useful prophylaxis for when the position (inevitably) explodes.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.Qd2 Na5",
+    "commentaryText": "This may (with further research) turn out to be playable (and if my mainline runs into problems this is a serious fallback to research further) but I prefer to continue developing before committing the knight. In the early stages of developing this system I tried out all kinds of move orders, and ultimately realized that Black should keep the knight on c6 so as to deter White's Be3-h6 as long as possible (when ...Nc6xd4 would win a piece).",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Appendix"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Nc6 5.Nc3 Bg7 6.Be3 Nf6 7.Bc4 0-0 8.Bb3 a6 9.f3 Qc7 10.Qd2 Na5 11.Bg5 e6",
+    "commentaryText": "The core theme of my system.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 3 (7.Bc4: My System), Appendix"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4",
+    "commentaryText": "We have here the starting position of the Maroczy Bind, named after Hungarian master Geza Maroczy (1870-1951). Maroczy was one of the best players in the world in the early 1900s, and was even set to play a World Championship match with Emanuel Lasker in 1906, but for various political reasons the match did not end up taking place. He was an engineer by training, and a financial auditor by profession. Capablanca, near the end of his life in the early 1940s, said of Maroczy that \"with the exception of Botvinnik and Keres, Maroczy in his time was superior to all the other young masters of today.\" Maroczy popularized White's setup in his capacity as a chess journalist, but there are no published games of his where he played the system with White. In fact, the first recorded game in the Maroczy Bind is Swiderski-Maroczy, 1904, where Maroczy defended the Black side of the Accelerated Dragon against the (to be named) Maroczy Bind. In order to combat the Maroczy Bind, Black must follow a dark-squares strategy. Notice that in asserting the central c4/e4 'clamp', White has forever denied the (dark) d4-square protection from a pawn. We will see in the subchapter 3 that the Breyer Variation is based on seizing this square from White's grip. In keeping with the dark-squares strategy, exchanging dark-squared bishops is in general congenial to Black. In fact, GM Tiviakov once highlighted the importance of this exchange by playing the highly creative, though slightly dubious, 1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6 5.c4 Bh6!?.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Nc2",
+    "commentaryText": "This is not the most challenging line for Black, but since it has been played by Keres, Tal, Korchnoi, and Carlsen, it has earned our serious attention. White usually waits for Black to play ...Bc8-d7 before retreating this Knight, because Black's two most common ways of countering Nc2 are either a) ...Nf6-d7-c5, often capturing on c3 with the g7 bishop.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Nc2 Nf6 7.Nc3 0-0 8.Be2 b6",
+    "commentaryText": "The double-fianchetto is particularly adept at meeting White's Nd4-c2. With the knight on d4, a reliable way to meet Black's double fianchetto is with Nd4xc6, which is not possible here.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Nc2 Nf6 7.Nc3 0-0 8.Be2 b6 9.0-0 Bb7",
+    "commentaryText": "Black intends to continue with the at first glance unbelievable, but in this book thematic, ...Nf6-e8-d6, followed by ...f7-f5.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Nc2 Nf6 7.Nc3 0-0 8.Be2 b6 9.0-0 Bb7 10.Bg5",
+    "commentaryText": "Not the most popular, but quite possibly White's best.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Nc2 Nf6 7.Nc3 0-0 8.Be2 b6 9.0-0 Bb7 10.Bg5 Ne8 11.Be3 Nd6",
+    "commentaryText": "A significant branching point for this variation. White's attempts in the database are not convincing, but I have found a new move (12.Nd4) which does present Black with some problems. Fortunately, they are not insurmountable.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Nc2 Nf6 7.Nc3 0-0 8.Be2 b6 9.0-0 Bb7 10.Bg5 Ne8 11.Be3 Nd6 12.Nd4",
+    "commentaryText": "As I mentioned before, White's knight belongs on d4 in these double-fianchetto systems, especially in the cases where Black's play revolves around ...f7-f5. White intends on eliminating Black's pesky d6 knight with Nd4-b5.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Nc2 e6",
+    "commentaryText": "This move is almost a novelty, but (to my dismay) not quite: it has been played a mere four times (and with different intentions to ours) in the recorded history of our game. The idea of this move occurred to me while I was analyzing the ...Ne8-d6 maneuver in the 6...Nf6 line, where Black often plays ...f7-f5 and recaptures on f5 with the knight. I wondered whether Black could reach similar positions and save some time by taking the route Ng8-e7-f5 rather than Ng8-f6-e8-d6-f5. I was also aware of similar ideas with colors reversed in the English opening, such as after 1.c4 e5 2.g3 Nf6 3.Bg2 d5 4.cxd5 Nxd5 5.Nc3 Nb6 6.e3!? or 1.c4 c5 2.Nc3 Nf6 3.g3 d5 4.cxd5 Nxd5 5.Bg2 Nc7 6.e3!?. Black's basic idea is to go for a quick ...f7-f5, and then recapture on f5 with the knight, from where it controls the important d4 square and also often pressurizes White's e3 bishop. White can take one of (at least) two strategies: either try to develop normally and hope that Black's offbeat play will lead to static positional weaknesses in the middlegame, or White can aim for a refutation of the system with an early h2-h4 or Bc1-f4-d6. According to my analysis, Black equalizes in all variations.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Nc2 e6 7.Nc3 Nge7 8.Bf4",
+    "commentaryText": "This is the most obvious way to counter Black's setup — planting a bishop on d6. It turns out, however, that Black need not be bothered by such an intruder.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3",
+    "commentaryText": "The Breyer variation of the Maroczy is characterized by Black's 7...Ng4. Unlike the Maroczy Bind (5.c4), which was never played by its namesake Geza Maroczy, the Breyer variation was indeed first played by Gyula Breyer in Kostic-Breyer, Gothenburg 1920. It has since been entrusted for important games by World Champions Botvinnik (Smyslov-Botvinnik, Alekhine Memorial 1956) and Kasparov (Ribli-Kasparov, World Cup 1988).",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5",
+    "commentaryText": "Bent Larsen used to prefer 9...Ne6, but I think 9...e5 offers more chances for counterplay based on Black's occupation of the center. Computers generally tend to prefer White in the Breyer, but from my experience even 2600+ GMs find it very uncomfortable to 'play around' Black's d4 knight, which (invariably) leads them to mishandle White's position. This line has a very Sveshnikov Sicilian feel to it. Fischer taught us that \"you have to give squares to get squares\"; Black has opted to relinquish control over the light squares (especially d5) in order to stake a claim over the all-important d4 square. This is the first significant branching point for White: he will either develop routinely with Bd3, 0-0, Qd2, etc., or he will attempt to immediately take advantage of Black's weaknesses with 10.Nb5.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5 10.Be2",
+    "commentaryText": "If this move is followed by routine development, then it lacks independent value, since White's bishop is better placed on d3. However, there are some idiosyncrasies to this line if White combines Bf1-e2 with Nc3-b5.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5 10.Nb5",
+    "commentaryText": "In the 1960s and 1970s, thanks to some masterpieces by World Champions Smyslov and Tal, this move was thought to be a near refutation of Black's setup. Over the years, preference of top players has vacillated between 10.Nb5 and 10.Bd3, their popularities remaining about equal to this day.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5 10.Nb5 0-0",
+    "commentaryText": "This is what everyone plays, but the positions Black tends to get are not inspiring, and White is scoring quite well (over 60%) after this move in the database. This is why I recommend instead the powerful novelty 10...d6! in the next subchapter.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5 10.Nb5 0-0 11.Qd2 Qh4 12.Nc3",
+    "commentaryText": "It may appear odd to retreat this knight to where it was just a couple of moves ago. White's idea is to castle queenside and pawn storm Black's king — punishment for castling too early, at least compared to the line I recommend in the next chapter. Black's queen is misplaced on h4, and if it retreats to d8 then White and Black's lost tempi 'cancel out'.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5 10.Nb5 d6",
+    "commentaryText": "It is remarkable that in the sixty year history of this position, which has been defended by such champions as Kasparov and Korchnoi, not a single game is in the database after 10...d6!. The following is arguably the most powerful novelty in this book.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 5"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5 10.Nb5 d6",
+    "commentaryText": "I refer to this as a novelty, even though (as we will see) I have played this move twice (and won both times!) in tournament play — in unpublished games against WGM Nemcova (2350) and IM Gorovets (2550). Black saves a crucial tempo by delaying ...0-0 which allows him to generate central counterplay one move sooner. This does not violate the laws of opening play; after all, White is not castled either. It is actually quite in line with the advice given by American legend GM William Lombardy in his recent book: \"Not only should one not rush to castle, but should delay that passive maneuver for as long as good judgment relates that there are more urgent, if only slightly better, tasks to accomplish\".",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 5"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5 10.Nb5 d6 11.Nxd4 exd4 12.Bxd4 Qa5+ 13.Ke2 Be5",
+    "commentaryText": "Our compensation becomes of a long-term nature with this move. White cannot exchange bishops without returning his extra pawn, so he has to look for ways to disentangle his pieces — starting with his king on e2. I suspect most players will not play the most critical lines for White here (it can't be easy to if you have never seen this position before), so Black may pragmatically opt to just remember 13...Be5! and figure things out over the board from here.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 5"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5 10.Nb5 d6 11.Qd2",
+    "commentaryText": "I dub this the main line because it was played in the only two tournament games of mine in this variation.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 6"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5 10.Nb5 d6 11.Qd2 Nxb5 12.cxb5 Be6",
+    "commentaryText": "We continue to delay castling — Lombardy would be proud. The importance of the saved tempo is already felt: if 12...0-0 then we transpose into the 10...0-0 line and White is allowed 13.Bc4+=. It amazes me how good Black's position is here: it is already 'zeroes' according to the computer, and if White makes the slightest inaccuracy (as both my strong opponents did) then Black is already better. Once again, this opening forces us to look past our intuitive, visceral response to each position, which might mislead us into thinking White is better here due to Black's backward d-pawn and apparent lack of counterplay.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 6"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5 10.Bd3",
+    "commentaryText": "In my opinion this is White's best move, but authors like Khalifman recommend 10.Nb5 because they claim that \"White should straighten out the situation with the black knight on d4 at once. Should it be left unmolested now, it will be much harder to contend with it later.\"",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 7"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5 10.Bd3 d6 11.0-0 0-0",
+    "commentaryText": "White has many possibilities here, but Black's play is fairly straightforward regardless. He will either play on the queenside with ...a7-a6 and ...b7-b5 or on the kingside with ...f7-f5 (and often he combines play on both sides). However, he should not rush with either of these plans, because that would give White something to respond to, while at present the onus is on White to reveal how he plans to improve his position.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 7"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5 10.Bd3 d6 11.0-0 0-0 12.Rc1 Be6",
+    "commentaryText": "It is worth dissecting this position a little, because it is one where general understanding of themes is more important than concrete knowledge of moves. Black's counterplay will take root in either (or both) ...f7-f5 or ...b7-b5, but suppose for a moment that Black 'does nothing' — what will White do? There are basically two plans at White's disposal that Black must constantly be prepared to meet: White will either aim for Nc3-e2 or go for f2-f4. Black generally has three ways of meeting Nc3-e2: capture on e2, ignore it and play ...b7-b5, or retreat ...Nd4-c6. Which of these Black plays will depend on the concrete timing of White's Nc3-e2; sometimes all three options are viable for Black. In response to f2-f4, Black will either (and not both this time) play ...f7-f5, or he will capture on f4 and re-route his knight from d4 to e5 via c6. Of course, Black should not 'do nothing'; he should remain flexible so as to be able to play either ...f7-f5 or ...b7-b5 depending on what White does. Black's a8 rook will either be placed on c8 or b8. Black's Queen usually goes to d7, but as we will see it can also find a home on e7, c7, or a5. An important disclaimer is in order before we continue: computers favor White by approximately +0.4 in most lines. However, when one presses the computer to formulate a plan, it is totally at a loss: while maintaining its += evaluation, it recommends shifting White's pieces back and forth aimlessly. So, my point is, do not be discouraged by the engine's prejudice — it has similar biases against the King's Indian and other respectable openings as well.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Part 7"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 Ng4 8.Qxg4 Nxd4 9.Qd1 e5 10.Bd3 0-0 11.0-0 b6",
+    "commentaryText": "I was pleasantly surprised to come across this very rare idea in a book on pawn structures by Andy Soltis. Soviet (grand)masters of the 1950s and 1960s like Simagin, Bagirov, Aronson, and Veresov developed some truly original ideas in this system. Even if their crafty maneuvers are ultimately 'too good to be true', it is instructive to play over their games to get a feel for this system. Black plans to continue with ...Bc8-b7, ...Rf8-e8, ...Ra8-c8, followed by ...Bf8-c5/...Nd4-e6, or ...Re8-e6-d6! I envy them for playing chess in the pre-computer era; the analysis of this variation must have brought them such joy. Computers do spoil the fun a little, but there is no clear refutation of the idea either.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 4 (Maroczy Bind: Breyer Variation), Appendix"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0",
+    "commentaryText": "This variation does not have an accepted name, but because it is the top choice of virtually all the top Accelerated Dragon players nowadays, I will refer to it as the 'main line'. Compared with the Breyer Variation, this line is far more nuanced and, frankly, difficult to play well (for both sides). As with all practical matters, the choice involves a tradeoff: the Breyer is easy to play for Black, but if White plays accurately (which very few are able to do in practice) then he can achieve a slightly more pleasant position (if you find this state of affairs to be unacceptable, I recommend abandoning the Sicilian altogether in favor of the Berlin or Marshall). In this line Black's counterplay is more reactive in nature — Black can't just 'wear a blindfold' and proceed with a plan on autopilot, but in return Black can count on dynamic equality and a tense struggle where all three results are on the table. There are many ways to play this position for Black, but the main tabiya involves Black playing (in various move orders) ...Bc8-d7, ...Nc6xd4, ...Bd7-c6, ...a7-a5, ...Nf6-d7-c5. The question of move order is an important one for Black here: should Black start with 9...Bd7 or first play 9...Nxd4 10.Bxd4 Bd7? In practice they usually transpose, because most White players are unwilling to play a different line against each of these, preferring instead to enter the Qd2 main line regardless of Black's move order. That being said, according to my research, 9...Bd7 is the significantly better move order, in light of 9...Nxd4 10.Bxd4 Bd7 11.Qd3!.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Nxd4 10.Bxd4 Bd7 11.Qd3",
+    "commentaryText": "This is not a new move, it was first played in Smyslov-Pirc 1956 (1-0); for some reason it has not caught on. I owe Kevin Spraggett for revealing its strength to me. White's basic idea is to prophylactically defend the e4-pawn so that ...Bd7-c6 can be met with b2-b4! White usually wants to wait for Black's bishop to be on c6 before playing b2-b4, because the weak c4-pawn is under less pressure when Black's bishop is on c6 as opposed to e6. In general Black wants to prevent White from playing b2-b4 (at least) until his knight has landed on c5, so the central theme of this variation is White trying to achieve b2-b4 and Black trying to either prevent it or render it premature. Unfortunately, nothing seems to work for Black. I will present the following lines without comment, because I am recommending we avoid this altogether, but I encourage the reader to try to find improvements on my analysis, and to at least skim through the ensuing variations to get a feel for which positions are playable for Black and which are to be avoided.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7",
+    "commentaryText": "The downside of this line is 10.Nc2, whereas the downside of the 9...Nxd4 move order is 11.Qd3! In my judgment we should prefer to allow White 10.Nc2 here. Let's first have a look at some side moves.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nb3",
+    "commentaryText": "The logic of this move is similar to 10.Nc2: since White has more space, he wants to avoid exchanges to keep Black's position cramped. Furthermore, the 'soft' c4-pawn can be defended by Nb3-d2, as it often is by Nc2-a3 in the 10.Nc2 line.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nb3 a5",
+    "commentaryText": "Black immediately targets White's b3 knight and threatens to gain further space on the queenside with ...a5-a4 and ...Qd8-a5.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nb3 a5 11.Nd2 Bc8",
+    "commentaryText": "Black's bishop is misplaced on d7 in both the 10.Nc2 and 10.Nb3 lines. Ordinarily Black would prefer to play ...Be6/...Nd7-c5 but there is no time for that here since White's f4-f5 comes too fast.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2",
+    "commentaryText": "This move was a real headache for me to deal with when preparing this book.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2",
+    "commentaryText": "This move was a real headache for me to deal with when preparing this book. I did not have the luxury of recommending the usual 9...Nxd4 because I was in on the secret of Smyslov's powerful 11.Qd3! The database games were not much help either; the consensus seems to be that Black must sit back passively and demonstrate resiliency in the face of White's b2-b4 or f4-f4/g2-g4 expansions. I analyzed all kinds of weird ideas for Black, like ...a7-a5/...Nc6-b4/...Bd7-c6/...Nf6-d7-c5, but I realized that White's position is too solid for Black to get away with unprincipled play. I concluded that if Black is going to be able to equalize in this line, it will be via 'healthy', thematic moves in the spirit of the opening.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2 Rc8",
+    "commentaryText": "Until around 2012 this was by far the most popular move, and it still is overall, but it has been absent from the top games in the last five years, particularly in favor of 10...Qa5. I find the positions after 10...Qa5 to be overly provocative: Black does not need to cede as much ground as he tends to in those lines.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2 Rc8 11.f3",
+    "commentaryText": "This is by far White's most popular choice. Against White's other moves Black plays ...Nc6-e5, but here since White has committed himself to f2-f3, Black can play 11...Be6! when White's best plan is to go for f4-f5, now at the cost of a tempo.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2 Rc8 11.Rc1 Ne5 12.b3 Qa5",
+    "commentaryText": "An important novelty. White is forced to make a decision of how to deal with the hanging c3-knight, and Black will respond accordingly.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2 Rc8 11.f3 Be6 12.f4 Qa5",
+    "commentaryText": "Black threatens a discovery attack on the c4-pawn with either ...Nc6-b4(b8), when White's usual b2-b3 is impossible because of the hanging c3 knight.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Nc2 Rc8 11.f3 Be6 12.f4 Qa5 13.Rc1 Qa6 14.b3 Ng4 15.Bxg4 Bxg4 16.Qd2 Bd7 17.f5 Qa5 18.Nd4 Rfe8 19.Rcd1 a6 20.a4 Ne5 21.h3 Bc6",
+    "commentaryText": "This is one of the few times in the book where I'll give White a slight advantage in a main recommendation. The reader should be suspicious of authors who claim pure equality in all lines in anything other than the most topical lines of the Ruy Lopez or perhaps the Najdorf Sicilian. This is the sort of += we have to live with as Accelerated Dragon players. White played very well to get here; he had to navigate his way around many landmines. After all that, we can seek consolation in the fact that objectively speaking, there are only three results in chess, and '+=' is just short-hand for '= after accurate play'. The onus is on White to improve his position; Black can shift his pieces around until White makes a concession. For example, if White goes for g4-g5, then Black may relocate his knight to c5 via d7, and place his bishop on e5, perhaps combined with ...Qa5-b4.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Qd2 Nxd4 11.Bxd4 Bc6",
+    "commentaryText": "Here White's main alternative to 12.f3 is 12.Bd3.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Qd2 Nxd4 11.Bxd4 Bc6 12.Bd3",
+    "commentaryText": "A move first played by GM (and now professor of economics at Harvard) Ken Rogoff against Bent Larsen in 1976. By abstaining from f2-f3, White intends to meet ...Nf6-d7 with the exchange of dark squared bishops, followed by the rook lift Ra1(f1)-e1-e3-h3, threatening Qd2-h6.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Qd2 Nxd4 11.Bxd4 Bc6 12.Bd3 a5",
+    "commentaryText": "By far Black's most popular choice.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Qd2 Nxd4 11.Bxd4 Bc6 12.Bd3 a5 13.Rae1 a4 14.Nd5 Nd7 15.Bxg7 Kxg7 16.Re3 e5",
+    "commentaryText": "Not only does this move take firm grip over the d4-square, Black also uncovers his Queen's defense of the important g5-square which in many variations prevents Qd2-g5.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Qd2 Nxd4 11.Bxd4 Bc6 12.f3 Nd7 13.Bf2",
+    "commentaryText": "This is only played about 6% of the time, 13.Be3 being by far the most popular (80%), and 13.Bxg7 second most (13%). However, this move has at least two clear advantages over 13.Be3: 1) As we will see, it is helpful for the bishop to be less vulnerable on f2 than it is on e3 in the ...Qb6 lines. 2) In the ...e6/...Be5 lines, a common idea for Black is to play ...Qd8-h4, which is now impossible.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 5"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Nxd4 Bg7 5.c4 Nc6 6.Be3 Nf6 7.Nc3 0-0 8.Be2 d6 9.0-0 Bd7 10.Qd2 Nxd4 11.Bxd4 Bc6 12.f3 Nd7 13.Be3 a5",
+    "commentaryText": "Most people automatically play 14.b3 here, but it isn't technically necessary to do so immediately. If White wants to expand on the queenside, though, b2-b3 is inevitable, as a direct a2-a3 will invariably be met by ...a5-a4!",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 5 (Maroczy Bind: Main Line), Part 6"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Qxd4 Nf6",
+    "commentaryText": "The Hyper Accelerated Dragon move order (2...g6) avoids the Bb5 Sicilian at the cost of allowing 4.Qxd4 here. In my opinion, the tradeoff is very much worth it: the Bb5 Sicilian is a real buzzkill for the dynamic and ambitious Black player, whereas the 4.Qxd4 line is for the most part rich in dynamical possibilities and offers Black real chances to play for a win.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 6 (4.Qxd4 Variation), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Qxd4 Nf6 5.Nc3",
+    "commentaryText": "We cover White's main move, 5.e5, in the next subchapter. This line has some venom, and in my judgment Black does not equalize in the most popular way of dealing with it.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 6 (4.Qxd4 Variation), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Qxd4 Nf6 5.Bb5",
+    "commentaryText": "I have faced this move several times in online blitz but never over the board. It's basically just a cheapo attempt: if Black plays 5...Bg7 then 6.e5! is strong for White. However, this unrespectable move actually has, according to Donaldson and Silman, a highly respectable originator — David Bronstein.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 6 (4.Qxd4 Variation), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Qxd4 Nf6 5.e5",
+    "commentaryText": "If White is going to seek an advantage in this line, this is his best hope.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 6 (4.Qxd4 Variation), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.Qxd4 Nf6 5.e5 Nc6 6.Qa4 Nd5 7.Qe4 Nb6",
+    "commentaryText": "Black's knight is less vulnerable on b6 than it is on b4 in the 7...Ndb4 line, and it is also better placed on b6 than c7 because it deters White's Bf1-c4. What I like most about this line for Black is that White has to be extremely accurate to not immediately be worse — there are a lot of ways to go astray.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 6 (4.Qxd4 Variation), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5",
+    "commentaryText": "In these final chapters we turn to White's most popular anti-Sicilian options after 1.e4 c5 2.Nf3 g6: the Alapin, also known as the c3-Sicilian, and the Morra Gambit, also known as the Esserman Gambit. The Alapin can be played on move two (1.e4 c5 2.c3) or on move three (1.e4 c5 2.Nf3 g6 3.c3), so for convenience and consistency I recommend a line for Black which works against either of these. The Morra Gambit (1.e4 c5 2.d4 cxd4 3.c3 or 1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.c3), a sister to the Alapin, has recently seen a revival, especially at the club level, thanks to the publication of IM Esserman's masterpiece \"Mayhem in the Morra\".",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6",
+    "commentaryText": "Here we have the Morra Gambit, a system emblematic of the Romantic Era in chess — not chronologically, but in spirit: \"The masters of that time found a sound and fruitful plan: disregarding pawns, achieve a rapid development of the pieces for a swift attack on the enemy king.\" (World Champion Emanuel Lasker). On Steinitzian grounds one might insist that the principled continuation for Black is to accept the gambit — \"the best way to refute a gambit is to accept it\". However, there is a hidden premise in this assertion: the gambit must be refutable! It is not at all clear to me that the Morra Gambit is refutable; on the contrary, Esserman's aforementioned book is a convincing defense of its soundness. Furthermore, as Hyper Accelerated Dragon players we offer White the option of a 'delayed' Morra Gambit 1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.c3 after which our options are far more limited. As best I can tell, Black cannot safely accept the delayed Morra Gambit, so for the sake of consistency I recommend declining after 1.e4 c5 2.d4 cxd4 3.c3 as well. The usual way to decline the gambit is to transpose to the Alapin with ...Ng8-f6, but this is not in keeping with my recommended Alapin repertoire. Fortunately, the ...d4-d3 line is a reliable way of transposing into Maroczy-structures which we are familiar with and happy to play as Black. I cannot overstate how frustrating it is for Morra Gambit players to be denied their Romantic fantasies and instead be lulled into a slow, maneuvering Maroczy structure.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7",
+    "commentaryText": "In a similar position, Esserman cautions that White should not allow \"the queen's knight to be lopped off by the swooping ...Bxc3 wrecking the pristine Maroczy structure...Black's dark squared deficiencies are overshadowed by White's mangled formation.\" Here, however, White does not have much of a choice: Black is ready to capture on c3 and White's only ways to prevent it are rather contrived.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Be3",
+    "commentaryText": "I think if White wants to attempt an opening advantage then this is his best hope. Allow the doubled pawns, and hope there is enough dynamic compensation. In researching this structure I have come to regard White's attacking potential as quite formidable, even though computers tend to think that Black is equal 'no matter what'. I recommend immediately aiming for simplifications with 11...Ne5! to neutralize White's initiative.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Bg5 Bxc3 11.bxc3 Ne5",
+    "commentaryText": "Computers take some time to appreciate this idea, but from a human perspective it is clear that exchanging pieces benefits Black. This is because White's compensation for his static pawn weaknesses must be predicated on dynamic piece play.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Bd2 Bxc3 11.bxc3 Ne5",
+    "commentaryText": "I recall an interview with Aronian where he said (paraphrasing) that the greatest joy in chess preparation nowadays comes from finding ideas the computer is unable to immediately appreciate. That was certainly the case with this move. The computer's suggestions all enabled White to develop a dangerous kingside attack, but I was looking for something requiring less accuracy from Black. The engine initially thinks that White is += after the exchange on e5, but the human realizes that either Black is getting into immediate trouble or he'll successfully develop his pieces and be fine. If it is the latter, which it fortunately is, then '+=' is not a very meaningful assessment.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Bd2 Bxc3 11.bxc3 Na6",
+    "commentaryText": "This move fits with Nimzowitsch's philosophy of blockade: \"First restrain, next blockade, lastly destroy\". Unfortunately, the ideal blockade is not always the most relevant aspect of a position, and I believe Black's first priority should be to avoid a kingside onslaught by liquidating with 11...Ne5!",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Bd2 Bxc3 11.bxc3 Na6 12.Nd4 f6",
+    "commentaryText": "This move is prophylaxis against 13.Bh6 Re8 14.f4?? when 14...Nf7! wins a piece. It also bolsters the all-important e5 square.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.c3",
+    "commentaryText": "In keeping with our theme of ...g7-g6, Black has three options: 1) 2...g6 3.d4 cxd4 4.cxd4 d5!? as recommended by Alburt, Dzindzichashvili, and Perelshteyn in their \"Chess Openings for Black, Explained\". 2) 2...Nf6 3.e5 Nd5 4.d4 cxd4 5.Nf3 g6!? as in Adams-Kramnik, Dortmund 2013 (1/2-1/2). 3) My recommendation 2...d5 3.exd5 Qxd5 4.d4 g6!? which was also recommended by Ftacnik in his \"Grandmaster Repertoire\" book on the Sicilian.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.c3 d5 3.exd5 Qxd5 4.Na3 Nc6 5.Nf3 Bg4 6.Be2 e5",
+    "commentaryText": "It is unusual for Black to be able to assert central dominance so early in the Alapin. I do not think he should fear ghosts in doing so: Black is effectively calling White's provocation in delaying d2-d4 a bluff.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.c3 d5 3.exd5 Qxd5 4.Na3 Nc6 5.Nf3 Bg4 6.Be2 e5 7.h3 Bh5 8.d3 f6 9.0-0 Nge7 10.Nc4 0-0-0 11.a3 Bg6 12.Ne3 Qg8 13.Qa4 Bxd3 14.Bxd3 Rxd3 15.b4 e4 16.Ne1 Rxc3 17.b5 Nd4 18.Bd2 Nd5",
+    "commentaryText": "If we accept Euler's estimation of the value of the pieces, then the material is numerically equal (three pieces for a queen). However, in chess (and in many spheres of life) there is a phenomenon whereby the whole is greater than the sum of its parts. My father used to refer to this as 'cooperation points': for every combination of pieces, add a point, so two pieces are worth 3+3+1, ie. more than a rook+pawn (pawns don't count as pieces). Similarly, three pieces are worth 3+3+3+1+1+1. This may be a bit of an exaggeration, but it's not a bad first approximation. I suspect my father thought of this himself (in the context of a variation in the Pirc where three pieces outshine a Queen and two pawns), but I also came across the idea in Lasker's Chess Manual.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.c3 d5 3.exd5 Qxd5 4.d4 g6",
+    "commentaryText": "The first strong player to consistently play this move was Yugoslavian Grandmaster Ognjen Cvitan, who played it several times throughout the 1990s. Since then, the move has found a brigade of supporters, most notably Radjabov, Karjakin, Dreev, and Almasi. It was also played several times by a young Magnus Carlsen.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.c3 d5 3.exd5 Qxd5 4.d4 g6 5.dxc5 Qxd1+ 6.Kxd1 Nf6",
+    "commentaryText": "Black needn't rush to win back his sacrificed pawn. Sometimes he will even play ...b7-b6, abandoning hopes to regain the pawn in favor of opening up lines for his pieces. Even with queens off the board, White's king is not safe in the center.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 2"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.c3 d5 3.exd5 Qxd5 4.d4 g6 5.Nf3 Nc6",
+    "commentaryText": "In this book I have tried, where possible, to present novel ideas, even where the accepted wisdom is perfectly adequate. There is value in exploring new terrain, both from a scientific perspective of enriching the literature on an opening, but also from the practical, 'surprise value' perspective. 5...Nc6 is an extremely rare move, about fifty(!) times less common than the main move, 5...Bg7. I am not sure, nor do I frankly care very much, which of 5...Bg7 or 5...Nc6 is 'objectively' the better move. It seems to me though, that the new ideas which follow lead to rich, unexplored positions where a well-prepared Black player can pose serious problems for their opponent. Praxis and the test of time will determine whether these ideas have wings, or whether Black is better off adhering to the usual 5...Bg7. Before continuing I would like to mention that the following is joint analysis between myself and Canadian (exiled by marriage to America) IM Dave Ross.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.c3 d5 3.exd5 Qxd5 4.d4 g6 5.Nf3 Nc6 6.Na3 Bg4 7.Nb5 0-0-0",
+    "commentaryText": "One of the nice things about this 5...Nc6 system is that it is particularly well-suited to meet 6.Na3, which is the most popular move against 5...Bg7. Indeed, when I was practicing this line in online blitz I came across Alapin specialist GM A. Zhigalko and 6.Na3 was his choice as well. As we see, though, Black's 5...Nc6 enables him to quickly castle queenside and pose White with immediate problems. White is suddenly caught off guard — Black isn't supposed to be able to castle queenside in this opening! Reap the rewards of 5...Nc6. Black has taken over the initiative and White needs to be extremely accurate to not lose outright in the next few moves.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.c3 d5 3.exd5 Qxd5 4.d4 g6 5.Nf3 Nc6 6.Nbd2 Qe6+ 7.Be2 cxd4 8.Nxd4 Nxd4 9.cxd4 Nh6 10.0-0 Bg7 11.Bb5+ Bd7 12.Re1 Qg4",
+    "commentaryText": "Black is fine after the mass exchanges in this line.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.c3 d5 3.exd5 Qxd5 4.d4 g6 5.Nf3 Nc6 6.Be3 Bg7 7.dxc5 Qxd1+ 8.Kxd1 Nf6 9.Bc4 0-0 10.Nbd2 Rd8 11.Ke2 Na5 12.Bd3 Nd5 13.Nb3 Nc6",
+    "commentaryText": "Black is happy to 'just play' this position down a pawn, without feeling any urgency to regain it. Petrosian once said (paraphrasing) that 'too often players sacrifice a pawn and then go on to play as if they blundered it'.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 3"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.c3 d5 3.exd5 Qxd5 4.d4 g6 5.Nf3 Nc6 6.Be2 Bg7 7.c4 Qd8",
+    "commentaryText": "The queen turns out to be happier on d8 than d6 because it won't come under attack from White's Nb1-a3-b5 or Nf3-g5-e4.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 4"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.c3",
+    "commentaryText": "This move order is recommended by GM Sveshnikov in his book 'The Complete c3 Sicilian' as particularly effective against the system I am recommending against 2.c3. White's idea is to delay d2-d4, so that after 3...d5 4.exd5 Qxd5 White has the option of 5.Na3, considered better for White by Sveshnikov. Black has two ways to transpose to the main line of this chapter: either play 3...d5 and allow Sveshnikov's 5.Na3, or play 3...Nc6 and allow a 'delayed' Rossolimo (4.Bb5). According to my analysis, either of these is fine for Black, but 3...Nc6 is more in keeping with my recommended repertoire for reasons I will make clear in this subchapter.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 5"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.c3 Nc6",
+    "commentaryText": "I prefer this move order, because I quite like the delayed Rossolimo (4.Bb5) for Black, especially if it is an Alapin player on the White side.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 6"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.c3 Nc6 4.Bb5 Bg7 5.0-0 a6",
+    "commentaryText": "I very much like this move, which grew up in the 1960s in the arsenals of grandmasters Mednis, Taimanov, and Pirc. Black demands a decision from White, and the 'wasted' tempo on ...a7-a6 is not really a waste when we consider that White rarely couples Bb5xc6 with c2-c3 in the Rossolimo.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 6"
+    }
+  },
+  {
+    "moveSequence": "1.e4 c5 2.Nf3 g6 3.c3 Nc6 4.Bb5 Bg7 5.0-0 a6 6.Bxc6 dxc6 7.d3 Bg4 8.h3 Bxf3 9.Qxf3 Nf6 10.Rd1 0-0 11.d4 cxd4 12.cxd4 Ne8 13.Be3 Nd6 14.Nd2 e6",
+    "commentaryText": "All of Black's pawns are on light squares; as such, he plans to occupy the light squared to-be hole on d5. For his part, White will seek dark-squared holes like d6 and c5 for his knight, but Black's dark squared bishop can protect these squares, whereas White's dark-bishop cannot protect White's corresponding weaknesses on the light squares.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 6"
+    }
+  }
+]
