@@ -1,3 +1,7 @@
 .idea/
 .vscode/
 *.DS_Store
+.design_handoff/
+*.zip
+.env
+*.env

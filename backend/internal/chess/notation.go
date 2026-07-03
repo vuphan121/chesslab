@@ -79,10 +79,9 @@ func suffix(base string, pos *Position, m Move) string {
 	return base + "+"
 }
 
-// MovesToSAN converts a slice of UCI move strings to SAN, playing from pos.
-func MovesToSAN(pos *Position, uciMoves []string) []string {
+// MovesToSANAndFENs converts UCI moves to SAN and also returns the FEN after each move.
+func MovesToSANAndFENs(pos *Position, uciMoves []string) (sans []string, fens []string) {
 	cur := pos
-	out := make([]string, 0, len(uciMoves))
 	for _, uci := range uciMoves {
 		if len(uci) < 4 {
 			break
@@ -116,8 +115,15 @@ func MovesToSAN(pos *Position, uciMoves []string) []string {
 		if !found {
 			break
 		}
-		out = append(out, SAN(cur, matched))
+		sans = append(sans, SAN(cur, matched))
 		cur = applyMove(cur, matched)
+		fens = append(fens, FEN(cur))
 	}
-	return out
+	return
+}
+
+// MovesToSAN converts a slice of UCI move strings to SAN, playing from pos.
+func MovesToSAN(pos *Position, uciMoves []string) []string {
+	sans, _ := MovesToSANAndFENs(pos, uciMoves)
+	return sans
 }

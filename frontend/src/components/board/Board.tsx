@@ -10,6 +10,8 @@ import type { BoardState } from '@/lib/chess/types'
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1']
 
+const ANNOTATION_COLOR = 'rgba(255, 152, 0, 0.8)'
+
 interface Props {
   boardState: BoardState
   onSquareClick: (square: string) => void
@@ -41,6 +43,33 @@ export default function Board({
   const [dragOver, setDragOver] = useState<string | null>(null)
   const [hasMoved, setHasMoved] = useState(false)
 
+  const rightDownSquare = useRef<string | null>(null)
+  const [rightDragTo, setRightDragTo] = useState<string | null>(null)
+  const [arrows, setArrows] = useState<{ from: string; to: string }[]>([])
+  const [circles, setCircles] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    setArrows([])
+    setCircles(new Set())
+  }, [boardState.fen])
+
+  const toggleAnnotation = (from: string, to: string) => {
+    if (from === to) {
+      setCircles((prev) => {
+        const next = new Set(prev)
+        if (next.has(from)) next.delete(from)
+        else next.add(from)
+        return next
+      })
+    } else {
+      setArrows((prev) =>
+        prev.some((a) => a.from === from && a.to === to)
+          ? prev.filter((a) => !(a.from === from && a.to === to))
+          : [...prev, { from, to }],
+      )
+    }
+  }
+
   const dragTargets = useMemo(
     () => new Set(dragFrom ? legalMovesFor(dragFrom) : []),
     [dragFrom, legalMovesFor],
@@ -70,6 +99,15 @@ export default function Board({
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     const sq = squareFromPoint(e.clientX, e.clientY)
     if (!sq) return
+
+    if (e.button === 2) {
+      e.preventDefault()
+      boardRef.current?.setPointerCapture(e.pointerId)
+      rightDownSquare.current = sq
+      setRightDragTo(sq)
+      return
+    }
+
     const piece = boardState.pieces[sq]
     if (piece && piece.color === boardState.turn) {
       e.preventDefault()
@@ -84,6 +122,10 @@ export default function Board({
   }
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (rightDownSquare.current) {
+      setRightDragTo(squareFromPoint(e.clientX, e.clientY))
+      return
+    }
     if (!dragFrom) return
     const dx = e.clientX - downPos.current.x
     const dy = e.clientY - downPos.current.y
@@ -93,6 +135,14 @@ export default function Board({
   }
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (rightDownSquare.current) {
+      const from = rightDownSquare.current
+      const to = squareFromPoint(e.clientX, e.clientY)
+      rightDownSquare.current = null
+      setRightDragTo(null)
+      if (to) toggleAnnotation(from, to)
+      return
+    }
     if (!dragFrom) return
     const target = squareFromPoint(e.clientX, e.clientY)
     const from = dragFrom
@@ -122,11 +172,12 @@ export default function Board({
             borderRadius: 4,
             overflow: 'hidden',
             boxShadow:
-              '0 4px 24px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(0,0,0,0.08)',
+              '0 6px 28px rgba(30,50,70,0.16), inset 0 0 0 1px rgba(0,0,0,0.1)',
           }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+          onContextMenu={(e) => e.preventDefault()}
         >
           {ranks.map((rank) => (
             <div key={rank} className="flex">
@@ -189,6 +240,44 @@ export default function Board({
               to={bestMove.slice(2, 4)}
               squareSize={squareSize}
               flipped={flipped}
+            />
+          )}
+
+          {[...circles].map((sq) => {
+            const fi = files.indexOf(sq[0])
+            const ri = ranks.indexOf(sq[1])
+            if (fi < 0 || ri < 0) return null
+            return (
+              <circle
+                key={sq}
+                cx={(fi + 0.5) * squareSize}
+                cy={(ri + 0.5) * squareSize}
+                r={squareSize * 0.44}
+                fill="none"
+                stroke={ANNOTATION_COLOR}
+                strokeWidth={squareSize * 0.07}
+              />
+            )
+          })}
+
+          {arrows.map((a) => (
+            <Arrow
+              key={`${a.from}-${a.to}`}
+              from={a.from}
+              to={a.to}
+              squareSize={squareSize}
+              flipped={flipped}
+              color={ANNOTATION_COLOR}
+            />
+          ))}
+
+          {rightDownSquare.current && rightDragTo && rightDownSquare.current !== rightDragTo && (
+            <Arrow
+              from={rightDownSquare.current}
+              to={rightDragTo}
+              squareSize={squareSize}
+              flipped={flipped}
+              color={ANNOTATION_COLOR}
             />
           )}
         </svg>

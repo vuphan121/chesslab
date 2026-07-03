@@ -1,9 +1,16 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { createGame, makeMove, analyzeGame } from '@/lib/api/client'
-import type { GameState, Analysis } from '@/lib/api/client'
+import {
+  createGame,
+  makeMove,
+  analyzeGame,
+  getExplorer,
+  gotoNode as apiGotoNode,
+} from '@/lib/api/client'
+import type { GameState, Analysis, Explorer } from '@/lib/api/client'
 import type { BoardState, Square } from '@/lib/chess/types'
+import { flatten, mainlineEnd, childrenOf } from '@/lib/chess/moveTree'
 
 function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
   const pieces: BoardState['pieces'] = {}
@@ -16,6 +23,7 @@ function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState 
     : []
 
   return {
+    fen: gs.fen,
     pieces,
     turn: gs.turn,
     fullMove: gs.fullMove,
@@ -31,6 +39,8 @@ function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState 
         : gs.isDraw
           ? gs.gameOverReason
           : null,
+    moveTree: gs.moveTree,
+    currentNodeId: gs.currentNodeId,
   }
 }
 
@@ -40,6 +50,8 @@ export function useChessGame() {
   const [busy, setBusy] = useState(false)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
+  const [explorer, setExplorer] = useState<Explorer | null>(null)
+  const [explorerLoading, setExplorerLoading] = useState(false)
   const moveSound = useRef<HTMLAudioElement | null>(null)
 
   const runAnalysis = useCallback(async (gameId: string) => {
@@ -54,13 +66,33 @@ export function useChessGame() {
     }
   }, [])
 
+  const runExplorer = useCallback(async (gameId: string) => {
+    setExplorerLoading(true)
+    try {
+      const e = await getExplorer(gameId)
+      setExplorer(e)
+    } catch {
+      // explorer not configured (e.g. missing LICHESS_TOKEN) — leave previous data visible
+    } finally {
+      setExplorerLoading(false)
+    }
+  }, [])
+
+  const refreshInsights = useCallback(
+    (gameId: string) => {
+      runAnalysis(gameId)
+      runExplorer(gameId)
+    },
+    [runAnalysis, runExplorer],
+  )
+
   useEffect(() => {
     moveSound.current = new Audio('/sounds/move.mp3')
     createGame().then((g) => {
       setGs(g)
-      runAnalysis(g.id)
+      refreshInsights(g.id)
     }).catch(console.error)
-  }, [runAnalysis])
+  }, [refreshInsights])
 
   const boardState: BoardState | null = gs ? toBoardState(gs, selected) : null
 
@@ -87,7 +119,7 @@ export function useChessGame() {
             setGs(next)
             setSelected(null)
             moveSound.current?.play().catch(() => {})
-            runAnalysis(next.id)
+            refreshInsights(next.id)
           } catch {
             setSelected(null)
           } finally {
@@ -104,7 +136,7 @@ export function useChessGame() {
         setSelected(null)
       }
     },
-    [gs, selected, busy, runAnalysis],
+    [gs, selected, busy, refreshInsights],
   )
 
   const move = useCallback(
@@ -120,14 +152,14 @@ export function useChessGame() {
         setGs(next)
         setSelected(null)
         moveSound.current?.play().catch(() => {})
-        runAnalysis(next.id)
+        refreshInsights(next.id)
       } catch {
         setSelected(null)
       } finally {
         setBusy(false)
       }
     },
-    [gs, busy, runAnalysis],
+    [gs, busy, refreshInsights],
   )
 
   const legalMovesFor = useCallback(
@@ -138,6 +170,51 @@ export function useChessGame() {
     [gs],
   )
 
+  // Navigate to any node in the move tree. Plays the move sound so stepping
+  // backward/forward is audible, and keeps every move (no truncation).
+  const gotoNodeId = useCallback(
+    async (nodeId: string) => {
+      if (!gs || busy || nodeId === gs.currentNodeId) return
+      setBusy(true)
+      try {
+        const next = await apiGotoNode(gs.id, nodeId)
+        setGs(next)
+        setSelected(null)
+        moveSound.current?.play().catch(() => {})
+        refreshInsights(next.id)
+      } catch {
+        // ignore
+      } finally {
+        setBusy(false)
+      }
+    },
+    [gs, busy, refreshInsights],
+  )
+
+  const navPrev = useCallback(() => {
+    if (!gs) return
+    const parentId = flatten(gs.moveTree).get(gs.currentNodeId)?.parentId
+    if (parentId != null) gotoNodeId(parentId)
+  }, [gs, gotoNodeId])
+
+  const navNext = useCallback(() => {
+    if (!gs) return
+    const cur = flatten(gs.moveTree).get(gs.currentNodeId)?.node
+    const child = cur ? childrenOf(cur)[0] : undefined
+    if (child) gotoNodeId(child.id)
+  }, [gs, gotoNodeId])
+
+  const navStart = useCallback(() => {
+    if (!gs) return
+    gotoNodeId(gs.moveTree.id)
+  }, [gs, gotoNodeId])
+
+  const navEnd = useCallback(() => {
+    if (!gs) return
+    const cur = flatten(gs.moveTree).get(gs.currentNodeId)?.node
+    if (cur) gotoNodeId(mainlineEnd(cur).id)
+  }, [gs, gotoNodeId])
+
   const reset = useCallback(async () => {
     setBusy(true)
     try {
@@ -145,11 +222,28 @@ export function useChessGame() {
       setGs(next)
       setSelected(null)
       setAnalysis(null)
-      runAnalysis(next.id)
+      setExplorer(null)
+      refreshInsights(next.id)
     } finally {
       setBusy(false)
     }
-  }, [runAnalysis])
+  }, [refreshInsights])
 
-  return { boardState, selectSquare, move, legalMovesFor, reset, busy, analysis, analyzing }
+  return {
+    boardState,
+    selectSquare,
+    move,
+    legalMovesFor,
+    gotoNode: gotoNodeId,
+    navStart,
+    navPrev,
+    navNext,
+    navEnd,
+    reset,
+    busy,
+    analysis,
+    analyzing,
+    explorer,
+    explorerLoading,
+  }
 }

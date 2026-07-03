@@ -1,3 +1,5 @@
+import type { MoveNode } from '@/lib/chess/types'
+
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
 
 export interface PieceJSON {
@@ -26,6 +28,8 @@ export interface GameState {
   isDraw: boolean
   isGameOver: boolean
   gameOverReason: string
+  moveTree: MoveNode
+  currentNodeId: string
 }
 
 export interface AnalysisLine {
@@ -33,6 +37,7 @@ export interface AnalysisLine {
   mate: number
   depth: number
   moves: string[]
+  fens: string[]
 }
 
 export interface Analysis {
@@ -42,6 +47,25 @@ export interface Analysis {
   depth: number
   engineName: string
   lines: AnalysisLine[]
+}
+
+export interface ExplorerMove {
+  san: string
+  uci: string
+  games: number
+  sharePct: number
+  whitePct: number
+  drawPct: number
+  blackPct: number
+  openingName?: string
+  openingEco?: string
+}
+
+export interface Explorer {
+  totalGames: number
+  openingName?: string
+  openingEco?: string
+  moves: ExplorerMove[]
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -73,3 +97,13 @@ export const makeMove = (
 
 export const analyzeGame = (id: string): Promise<Analysis> =>
   request(`/api/games/${id}/analysis`)
+
+export const getExplorer = (id: string): Promise<Explorer> =>
+  request(`/api/games/${id}/explorer`)
+
+export const gotoNode = (id: string, nodeId: string): Promise<GameState> =>
+  request(`/api/games/${id}/goto`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nodeId }),
+  })

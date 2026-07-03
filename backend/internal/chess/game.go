@@ -1,6 +1,9 @@
 package chess
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 func applyMove(pos *Position, m Move) *Position {
 	next := pos.Clone()
@@ -85,22 +88,79 @@ func updateCastling(c *CastlingRights, from, to Square) {
 	}
 }
 
-type Game struct {
+// Node is one position in the game's move tree. The root holds the starting
+// position (with a zero Move and empty SAN); every other node holds the move
+// that reached it plus the resulting position. Children[0] is the main line;
+// Children[1:] are sidelines (alternative continuations from the same parent).
+type Node struct {
 	ID       string
+	Move     Move
+	SAN      string
 	Pos      *Position
-	History  []Move
+	Parent   *Node
+	Children []*Node
+}
+
+type Game struct {
+	ID      string
+	Root    *Node
+	Current *Node
+	// Pos and LastMove mirror Current for convenient access from handlers.
+	Pos      *Position
 	LastMove *Move
+	counter  int
 }
 
 func NewGame(id string) *Game {
 	pos, _ := ParseFEN(StartFEN)
-	return &Game{ID: id, Pos: pos}
+	root := &Node{ID: "0", Pos: pos}
+	return &Game{ID: id, Root: root, Current: root, Pos: pos}
+}
+
+func (g *Game) nextID() string {
+	g.counter++
+	return strconv.Itoa(g.counter)
+}
+
+// setCurrent points the game at node n and syncs the mirrored fields.
+func (g *Game) setCurrent(n *Node) {
+	g.Current = n
+	g.Pos = n.Pos
+	if n.Parent != nil {
+		g.LastMove = &n.Move
+	} else {
+		g.LastMove = nil
+	}
+}
+
+// GotoNode navigates to an existing node without discarding any moves.
+func (g *Game) GotoNode(id string) error {
+	if n := findNode(g.Root, id); n != nil {
+		g.setCurrent(n)
+		return nil
+	}
+	return fmt.Errorf("node not found: %s", id)
+}
+
+func findNode(n *Node, id string) *Node {
+	if n.ID == id {
+		return n
+	}
+	for _, ch := range n.Children {
+		if found := findNode(ch, id); found != nil {
+			return found
+		}
+	}
+	return nil
 }
 
 func (g *Game) LegalMoves() []Move {
 	return GenerateLegalMoves(g.Pos)
 }
 
+// ApplyMove plays m from the current node. Replaying an existing continuation
+// just navigates onto it; a new move from a node that already has children
+// creates a sideline.
 func (g *Game) ApplyMove(m Move) error {
 	legal := g.LegalMoves()
 
@@ -118,9 +178,21 @@ func (g *Game) ApplyMove(m Move) error {
 			}
 		}
 		matched := legal[i]
-		g.Pos = applyMove(g.Pos, matched)
-		g.History = append(g.History, matched)
-		g.LastMove = &g.History[len(g.History)-1]
+		for _, ch := range g.Current.Children {
+			if ch.Move == matched {
+				g.setCurrent(ch)
+				return nil
+			}
+		}
+		node := &Node{
+			ID:     g.nextID(),
+			Move:   matched,
+			SAN:    SAN(g.Pos, matched),
+			Pos:    applyMove(g.Pos, matched),
+			Parent: g.Current,
+		}
+		g.Current.Children = append(g.Current.Children, node)
+		g.setCurrent(node)
 		return nil
 	}
 

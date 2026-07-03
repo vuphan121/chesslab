@@ -8,4 +8,31 @@
 
 body {
   background: #e8e8e6;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #1c1b18;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #d4eef9;
+}
+
+.mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.serif {
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+.lbl {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+}
+
+.coach-input::placeholder {
+  color: #b4b1a8;
 }
