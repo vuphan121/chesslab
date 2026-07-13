@@ -4,12 +4,6 @@ interface Props {
   height: number
 }
 
-function readout(score: number, mate: number): string {
-  if (mate !== 0) return `#${mate}`
-  const v = (Math.abs(score) / 100).toFixed(1)
-  return score >= 0 ? `+${v}` : `-${v}`
-}
-
 export default function EvalBar({ score, mate, height }: Props) {
   let whitePct: number
   if (mate !== 0) {
@@ -52,21 +46,6 @@ export default function EvalBar({ score, mate, height }: Props) {
           background: 'rgba(0,0,0,0.22)',
         }}
       />
-      <div
-        className="mono"
-        style={{
-          position: 'absolute',
-          bottom: 4,
-          left: 0,
-          right: 0,
-          textAlign: 'center',
-          fontSize: 8,
-          fontWeight: 700,
-          color: '#37383a',
-        }}
-      >
-        {readout(score, mate)}
-      </div>
     </div>
   )
 }

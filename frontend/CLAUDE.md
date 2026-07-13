@@ -25,24 +25,26 @@ src/
       Piece.tsx         # renders a piece PNG via next/image
       Arrow.tsx         # SVG polygon arrow overlay (best-move + right-click annotations)
     analysis/
-      EvalBar.tsx       # vertical eval bar (white fills from bottom) + mono readout
+      EvalBar.tsx       # vertical eval bar (white fills from bottom) — no number (readout moved to caption)
       TopLines.tsx      # engine score, depth, 3 lines with per-move hover preview (not on main page — see below)
       MiniBoard.tsx     # small 8×8 board used in hover popup; parses FEN on frontend
     history/
-      MoveHistory.tsx   # "Move order" box — flowing PGN notation with sidelines, nav + reset buttons
+      MoveHistory.tsx   # "Move order" panel — opening-name header, Lichess-style row move list
+                        #   (figurines + per-move eval, even columns), nav/reset, PGN paste box
     layout/
-      TopBar.tsx        # logo + wordmark + book-move/turn status pills
-      Logo.tsx           # 34×34 SVG logo mark
+      TopBar.tsx        # wordmark + book-move/turn status pills (logo mark removed)
+      Logo.tsx           # 34×34 SVG logo mark (no longer used on the page)
     tree/
-      OpeningTree.tsx   # "Opening Tree" left panel — real Lichess explorer data, click row to play
+      OpeningTree.tsx   # "Opening Tree" panel (now under the board) — real Lichess explorer data, click row to play
     coach/
-      Coach.tsx         # AI coach panel — live per-move explanation (pinned) + freeform chat thread
+      Coach.tsx         # AI coach panel (left column) — live per-move explanation (pinned) + freeform chat thread
   hooks/
-    useChessGame.ts     # all game state + analysis + explorer + move-tree nav; talks to Go backend
+    useChessGame.ts     # all game state + analysis + explorer + move-tree nav + loadPgn; talks to Go backend
   lib/
     api/
       client.ts         # typed fetch wrappers + Analysis/Explorer/GameState (moveTree) types;
-                        #   coach: explainMove/coachChat (+ CoachUnavailableError, 120s abort timeout)
+                        #   loadPGN, evalFen (per-move eval), coach: explainMove (incl. viewerColor)/coachChat
+                        #   (+ CoachUnavailableError, 120s abort timeout)
     chess/
       types.ts          # shared TS types: Piece, Square, MoveNode, BoardState
       moveTree.ts       # move-tree helpers: childrenOf (null-safe), flatten, mainlineEnd
@@ -107,7 +109,10 @@ SVG polygon: 7-point shape (shaft + triangular head) rendered as `position: abso
 - `whitePct = 50 + 50 * Math.tanh(score / 400)`, clamped 3–97%
 - For mate: `whitePct = mate > 0 ? 97 : 3`
 - White section: `position: absolute; bottom: 0; height: ${whitePct}%` with 0.35s transition
-- Bottom mono readout (e.g. `+0.3`) below the midline hairline
+- No number in the bar itself — the readout (`Lichess Cloud · depth 55 · +0.3`) is in the caption row,
+  right-aligned, left of the flip-board button (see Page layout). `formatEval` lives in `page.tsx`.
+- The bar does **not** reorient when the board is flipped (white fill stays at the bottom); the score
+  value is White-relative and unaffected by flip.
 
 ### TopLines + MiniBoard (hover preview)
 - Each move in an engine line is a `<span>` token with `onMouseEnter`/`onMouseLeave`
@@ -124,11 +129,27 @@ move (see backend CLAUDE.md for the node model). `boardState.moveTree` is the ro
   (`children[1:]`); replaying the existing move just navigates onto it.
 - `lib/chess/moveTree.ts`: `childrenOf(node)` normalizes Go's `null` leaf children to `[]`; `flatten(root)`
   builds an `id → { node, parentId }` map; `mainlineEnd(node)` follows `children[0]` to the leaf.
-- `MoveHistory.tsx` renders flowing PGN notation: main line inline, sidelines recursively in
-  parentheses/muted (`renderContinuation` / `renderMove`). Numbers: white = odd `ply` (`ceil(ply/2)`);
-  black shows a number only after a variation. Current move gets the `#d4eef9` highlight (no per-move
-  eval — that's what the eval bar is for). Header has a **reset** button (leftmost) + `⟨⟨ ⟨ ⟩ ⟩⟩` nav
-  buttons; nav disables at root (prev/start) and leaves (next/end).
+- `MoveHistory.tsx` renders a **Lichess-style move list** (`renderRows` / `renderCell`): one full move
+  per row — `[number] [white cell] [black cell]`, the two move cells `flex: 1` so the columns fill the
+  width evenly. Each cell shows the move in **figurine notation** (`toFigurine` maps `KQRBN` → `♚♛♜♝♞`;
+  pawn moves/castling unchanged) with a **per-move eval** on the right (`formatMoveEval`, White-relative).
+  The current move is a full **blue cell** highlight (`#4a90d9`, white text). Sidelines are still
+  rendered inline in parentheses as an indented row under their branch move (the old `renderContinuation`
+  / `renderMove` inline path, reused).
+- **Per-move eval:** `MoveHistory` keeps a `Record<fen, FenEval>` in state and a `useEffect` on
+  `moveTree` walks the mainline FENs, fetching any missing one via `evalFen(fen)` (`GET /api/eval`)
+  **sequentially** (to avoid hammering the endpoint) and caching by FEN so navigation never refetches.
+- Header (top of the panel): the **full opening name + ECO** (`openingName`/`openingEco` props from
+  `page.tsx`), allowed to **wrap** to multiple lines so a long name is never truncated (this is why it
+  was moved out of the caption row — wrapping there pushed the board down). Below it: the **Move order**
+  label + a **reset** button (leftmost) + `⟨⟨ ⟨ ⟩ ⟩⟩` nav buttons; nav disables at root (prev/start) and
+  leaves (next/end).
+- **PGN paste** (bottom of the panel, `flexShrink: 0`): a textarea + "Load PGN" button → `onLoadPgn` →
+  `useChessGame.loadPgn` → `POST /api/games/{id}/pgn`. On a partial/illegal paste it throws with a
+  "Loaded N/M moves — …" message shown inline under the box; the valid prefix still loads. The backend
+  fully discards whatever was on the board first (`Game.Reset()`) before replaying the paste, so a line
+  that diverges from the current position replaces the game outright rather than becoming a sideline
+  off the old tree — see backend `CLAUDE.md` (was a real bug, fixed this session).
 
 ### useChessGame hook
 - Creates a game on mount (`createGame()`)
@@ -149,27 +170,50 @@ move (see backend CLAUDE.md for the node model). `boardState.moveTree` is the ro
 - `runExplorer(gameId)` — calls `GET /api/games/{id}/explorer`, updates `explorer`/`explorerLoading`;
   silently keeps the previous value on failure (e.g. `LICHESS_TOKEN` unset)
 - `reset()` — starts a fresh game (`createGame()`), clearing the whole tree; wired to the Move Order reset button
+- `loadPgn(pgn)` — replaces the whole game with a pasted PGN move list (`POST /api/games/{id}/pgn`),
+  replayed from the start; plays the move sound + `refreshInsights`. Throws with a "Loaded N/M moves — …"
+  message if the paste didn't fully parse (valid prefix still loads). Wired to the Move Order PGN box.
 - Auto-promotes to queen (promotion dialog is a planned TODO)
 - Plays `public/sounds/move.mp3` after every successful move **and** on every tree navigation
+- **Board orientation (`flipped`/`toggleFlipped`) now lives in this hook**, not `page.tsx` — moved here
+  because flipping is also which side the coach addresses (see below), so the hook needs to own it to
+  trigger a recompute. `page.tsx` just destructures `flipped`/`toggleFlipped` from the hook and passes
+  `flipped` straight to `Board` as before; the flip button's `onClick` calls `toggleFlipped`.
 - **AI coach (Path 1 — per-move explanation):** after each move/goto, once fresh analysis+explorer
-  are in hand, calls `POST /coach/explain` with `{fen, lastMoveSan, analysis, explorer}` and exposes
-  `coachExplanation`/`coachExplaining`/`coachError`. Debounced (`EXPLAIN_DEBOUNCE_MS = 350`) so
-  holding an arrow key only explains the position you land on, and request-id-guarded (`explainReqId`)
-  so a slow explanation from an earlier position can't overwrite a newer one. At the root (`san===''`)
-  it clears the panel instead of calling the backend.
+  are in hand, calls `POST /coach/explain` with `{fen, lastMoveSan, viewerColor, analysis, explorer}`
+  (`viewerColor` = `flipped ? 'b' : 'w'`) and exposes `coachExplanation`/`coachExplaining`/`coachError`.
+  Debounced (`EXPLAIN_DEBOUNCE_MS = 350`) so holding an arrow key only explains the position you land
+  on, and request-id-guarded (`explainReqId`) so a slow explanation from an earlier position can't
+  overwrite a newer one. At the root (`san===''`) it clears the panel instead of calling the backend.
+  `refreshInsights` reads `flipped` through a ref (`flippedRef`), not as a direct dependency — it must
+  stay referentially stable across flips, since the mount effect that calls `createGame()` depends on
+  it; an earlier version made `refreshInsights` depend on `flipped` directly, which re-ran that mount
+  effect on every flip and created a brand-new game, wiping the board (caught in browser verification,
+  not by `tsc`/build — this class of bug only shows up by actually clicking the flip button).
+- **Flip-triggered coach recompute:** a dedicated `useEffect` keyed only on `flipped` re-explains the
+  *current* move (no new move, no re-fetch of analysis/explorer — those don't depend on viewer side)
+  whenever the board is flipped, so the coach re-frames whose perspective it's writing from. It reads
+  `gs`/`analysis`/`explorer` through a `latestRef` mirror (kept fresh by a no-dependency-array
+  `useEffect`) specifically so the effect's dependency array can be just `[flipped]` — depending on
+  `gs`/`analysis`/`explorer` directly would fire a recompute on every ordinary move too, not just flips.
 - **AI coach (Path 2 — freeform chat):** `sendCoachChat(message, history)` wraps `POST /coach/chat`
   (backend reads the live board position from the game store, so only `{message, history}` is sent).
   The `Coach` component owns the chat thread state and passes prior turns as `history`.
-- Returns `{ boardState, selectSquare, move, legalMovesFor, gotoNode, navStart, navPrev, navNext, navEnd, reset, busy, analysis, analyzing, explorer, explorerLoading, coachExplanation, coachExplaining, coachError, sendCoachChat }`
+- Returns `{ boardState, selectSquare, move, legalMovesFor, gotoNode, navStart, navPrev, navNext, navEnd, reset, loadPgn, busy, analysis, analyzing, explorer, explorerLoading, coachExplanation, coachExplaining, coachError, sendCoachChat, flipped, toggleFlipped }`
 
 ### Page layout (page.tsx) — "Opening Study"
-Recreated from a Claude-designed hi-fi mock (`design_handoff_opening_study/`, gitignored). One outer
-panel (`1432px`, bg `#e4e3df`, radius 16) containing a `TopBar` and a 3-column row, each column `620px`
-tall:
+Originally from a Claude-designed hi-fi mock (`design_handoff_opening_study/`, gitignored), since
+reworked into a **Coach | Board | Move order** layout. One outer panel (`1432px`, bg `#e8e8e6` — same
+as the page, so no visible frame; no drop shadow) containing a `TopBar` and a 3-column row:
 ```
-[OpeningTree 366px] [caption + Board 576px + EvalBar 15px] [MoveHistory + Coach, 388px]
+[Coach, SIDE_WIDTH 371px]  [caption + Board 576px + EvalBar 15px + OpeningTree]  [MoveHistory, 371px]
 ```
-`SQUARE_SIZE = 72`, `BOARD_SIZE = 576`.
+`SQUARE_SIZE = 72`, `BOARD_SIZE = 576`. The two **side columns** are pinned to `height: BOARD_SIZE` and
+pushed down by `BOARD_TOP_OFFSET` (= caption-row height 30 + column gap 14 = 44/45) so their tops and
+bottoms line up with the board (not the caption above it). The **caption row** holds only the engine
+readout (`{engineName} · depth {N} · {formatEval}`) + flip button, right-aligned; the opening name/ECO
+moved into the `MoveHistory` header. The **OpeningTree** sits under the board (fixed `height: 260`,
+scrolls internally).
 
 - `TopBar`, `Board`, `EvalBar`, `MoveHistory`, `OpeningTree`, and `Coach` are all wired to real backend
   state (`useChessGame`). `Coach` shows the live per-move explanation pinned at the top of the message
@@ -178,12 +222,17 @@ tall:
   gracefully: a 503 (no local model) shows "Coach is offline…", other failures show a generic error,
   and a hung request aborts after 120s (see `client.ts`) rather than freezing the panel. The coach
   needs the Go backend's coach endpoints + a local LLM (Ollama) running — see backend docs.
-- Caption row: `openingName`/`openingEco` come from `explorer.openingName`/`openingEco` (the current
+- Opening name/ECO: `openingName`/`openingEco` come from `explorer.openingName`/`openingEco` (the current
   position's named opening, straight from Lichess — falls back to "Starting Position"/"Custom Line" when
-  null). `TopBar`'s "Book move" pill is `explorer.totalGames > 0` (i.e. some rated 2000+ game has reached
-  this exact position) rather than real book-deviation tracking, but is a reasonable proxy. The row's
-  right side shows `{engineName} · depth {N}` (from `analysis`, hidden when depth is 0) and a **flip
-  board** icon button (`flipped` state, passed straight to `Board`).
+  null) and are passed to `MoveHistory`, which renders them (full, wrapping) in its header. `TopBar`'s
+  "Book move" pill is `explorer.totalGames > 0` (i.e. some rated 2000+ game has reached this exact
+  position) rather than real book-deviation tracking, but is a reasonable proxy. The caption row above
+  the board shows `{engineName} · depth {N} · {formatEval}` (from `analysis`, hidden when depth is 0)
+  and a **flip board** icon button (`onClick={toggleFlipped}`, from the hook — see `useChessGame`
+  above). `flipped` is passed straight to `Board` for the visual flip and does not affect the eval bar
+  (still White-relative either way), but it **does** re-frame the coach: flipping re-explains the
+  current move from whichever side is now at the bottom, addressing that side as "you/we" even when
+  the other side made the move (see the backend's "Viewer perspective" design note).
 - `OpeningTree` row click calls `onPlay(uci)` → `move(uci.slice(0,2), uci.slice(2,4))`, playing that
   continuation on the board like a normal move (triggers the same `refreshInsights` refresh).
 - Design reference lives in `.design_handoff/design_handoff_opening_study/` (unzipped from the design

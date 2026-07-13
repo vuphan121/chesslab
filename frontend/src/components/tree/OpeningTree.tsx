@@ -98,9 +98,9 @@ export default function OpeningTree({ moves, totalGames, loading, onPlay }: Prop
   return (
     <div
       style={{
-        width: 366,
+        width: '100%',
+        height: 260,
         flexShrink: 0,
-        height: 620,
         background: '#fff',
         borderRadius: 11,
         boxShadow: '0 1px 3px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.05)',

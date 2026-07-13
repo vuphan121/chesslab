@@ -98,6 +98,17 @@ export const makeMove = (
 export const analyzeGame = (id: string): Promise<Analysis> =>
   request(`/api/games/${id}/analysis`)
 
+export interface FenEval {
+  score: number // centipawns, White-relative
+  mate: number
+  depth: number
+}
+
+// evalFen returns a White-relative eval for an arbitrary position — used to
+// annotate each move in the move list.
+export const evalFen = (fen: string): Promise<FenEval> =>
+  request(`/api/eval?fen=${encodeURIComponent(fen)}`)
+
 export const getExplorer = (id: string): Promise<Explorer> =>
   request(`/api/games/${id}/explorer`)
 
@@ -108,12 +119,35 @@ export const gotoNode = (id: string, nodeId: string): Promise<GameState> =>
     body: JSON.stringify({ nodeId }),
   })
 
+export interface LoadPGNResponse extends GameState {
+  appliedPlies: number
+  totalTokens: number
+  error?: string
+}
+
+// loadPGN replays a pasted PGN move list from the start position. Unlike the
+// other requests, a 422 (partial parse — hit an illegal/unrecognized token)
+// still carries a usable body, so it's read and returned rather than thrown.
+export const loadPGN = async (id: string, pgn: string): Promise<LoadPGNResponse> => {
+  const res = await fetch(`${API}/api/games/${id}/pgn`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pgn }),
+  })
+  if (!res.ok && res.status !== 422) {
+    const text = await res.text()
+    throw new Error(text || res.statusText)
+  }
+  return res.json() as Promise<LoadPGNResponse>
+}
+
 // --- AI coach ---
 
 export interface ExplainMoveRequest {
   fen: string
   prevFen: string
   lastMoveSan: string
+  viewerColor?: 'w' | 'b'
   analysis: Analysis | null
   explorer: Explorer | null
 }

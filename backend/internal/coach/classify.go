@@ -177,35 +177,33 @@ func (mq *MoveQuality) applyBookContext(status BookStatus, games int, openingNam
 	case established && worseThanGood(mq.EngineCategory):
 		mq.Category = CategoryBook
 		mq.Note = fmt.Sprintf(
-			"Established opening theory%s — reached in %d rated games (plus curated book coverage: %v). "+
-				"The engine grades this %s on raw evaluation, but this is a recognized line. If it's a gambit, "+
-				"the eval/material deficit is a deliberate trade for development, initiative, open lines, or an "+
-				"attack — not an error. Present it to the player as a real, playable choice, NOT as a mistake; "+
-				"explain what the sacrifice buys rather than scolding the eval drop.",
-			named, games, inCorpus, mq.EngineCategory)
+			"Established opening theory%s. The engine's raw eval alone would call this %s, but it's a recognized "+
+				"line — if it's a gambit, the deficit is a deliberate trade for development/initiative/attack, not "+
+				"an error. Present it as a real, playable choice and briefly say what the trade buys; don't scold "+
+				"the eval, and don't cite the game count unless it's genuinely striking.",
+			named, mq.EngineCategory)
 
 	case established:
 		mq.Note = fmt.Sprintf(
-			"A solid book move%s — established theory (%d rated games) and the engine agrees it's fine (%s).",
-			named, games, mq.EngineCategory)
+			"A solid, well-known book move%s; the engine agrees. One short sentence is enough — don't cite the "+
+				"game count for a move this ordinary.", named)
 
 	case status == BookRare:
 		mq.Note = fmt.Sprintf(
-			"Rarely played%s but not unheard of (%d rated games) — mostly judged on the engine evaluation (%s). "+
-				"Offbeat is not the same as bad, but there's little practical data to lean on.",
-			named, games, mq.EngineCategory)
+			"Rarely played%s but not unheard of — judge it mostly on engine evaluation (%s). Offbeat isn't "+
+				"automatically bad; mention it's an uncommon try, but there's little data to lean on.",
+			named, mq.EngineCategory)
 
 	case status == BookNovelty:
 		mq.Note = fmt.Sprintf(
-			"This move is not in the opening database (0 rated games) — it leaves known theory. With no book to "+
-				"lean on, judge it on the engine evaluation (%s). A novelty is not automatically bad; note that "+
-				"it's uncharted and let the eval, not the mere fact that it's new, drive the assessment.",
+			"Leaves known theory entirely (a novelty) — no book to lean on, so judge it on the engine evaluation "+
+				"(%s). New is not automatically bad; say it's uncharted and let the eval drive the verdict.",
 			mq.EngineCategory)
 
 	default: // BookUnknown — explorer couldn't be consulted
 		mq.Note = fmt.Sprintf(
-			"Opening database was unavailable, so this is graded on engine evaluation alone (%s). Can't confirm "+
-				"whether it's established theory; avoid calling an offbeat-looking move a mistake with high confidence.",
+			"Opening database unavailable, so this is graded on engine evaluation alone (%s). Don't call an "+
+				"offbeat-looking move a mistake with high confidence.",
 			mq.EngineCategory)
 	}
 }

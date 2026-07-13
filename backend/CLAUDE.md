@@ -37,7 +37,8 @@ internal/
     fen.go          # ParseFEN / FEN — full FEN serialisation
     attacks.go      # IsAttacked, InCheck — per-piece attack detection
     movegen.go      # GenerateLegalMoves, generatePseudo, per-piece generators
-    game.go         # Game = move tree (Node root/current), ApplyMove, GotoNode, applyMove, game-over detection
+    game.go         # Game = move tree (Node root/current), ApplyMove, GotoNode, Reset, applyMove, game-over detection
+    game_test.go    # unit test for Reset (must discard the tree, not leave stale sidelines — see PGN paste below)
     notation.go     # SAN(), MovesToSAN(), MovesToSANAndFENs()
   engine/
     stockfish.go    # Engine struct: spawns Stockfish subprocess, UCI protocol, Analyze()
@@ -46,6 +47,7 @@ internal/
     explorer.go     # FetchExplorer() — opening-explorer (requires LICHESS_TOKEN bearer auth)
   api/
     handlers.go     # HTTP handlers: CreateGame, GetGame, MakeMove, DeleteGame, AnalyzeGame, Explorer, GotoNode
+    pgn.go          # HTTP handler: LoadPGN — tokenizes + replays a pasted PGN, resets the tree first (Game.Reset)
     coach_handler.go # HTTP handlers: ExplainMove (Path 1), CoachChat (Path 2)
     routes.go       # chi router setup + CORS middleware
   storage/
@@ -53,7 +55,10 @@ internal/
   coach/
     index.go        # Chunk struct + Index — loads chunks.validated.json, groups by resolvedFen
     overview.go      # OverviewChunk + OverviewIndex — opening-level prose, keyword (not FEN) search
-    prompt.go        # BuildExplainPrompt — grounded prompt for the per-move explanation path
+    prompt.go        # BuildExplainPrompt — grounded prompt for the per-move explanation path;
+                     #   also moverAndPly/viewerName/perspectiveLine (viewer-perspective framing) and
+                     #   showEngineEval (opening eval-suppression gate) — see AI coach design below
+    prompt_test.go   # unit tests for perspective framing + opening eval-suppression gate
     service.go       # Service.ExplainMove — Path 1 (single grounded call; classifies move if prevFen)
     llm.go           # LLMClient interface + OllamaClient (OpenAI-compatible /v1/chat/completions,
                      #   with tool-calling support for Path 2)
@@ -78,8 +83,36 @@ internal/
 | GET | `/api/games/{id}/analysis` | Run Stockfish analysis on current position |
 | GET | `/api/games/{id}/explorer` | Lichess opening-explorer stats for current position |
 | POST | `/api/games/{id}/goto` | Navigate to a move-tree node by id (`{ "nodeId": "3" }`) — does not discard moves |
+| POST | `/api/games/{id}/pgn` | Load a pasted PGN move list — replays from the start position, rebuilding the tree |
+| GET | `/api/eval?fen=<fen>` | Light White-relative eval for an arbitrary FEN (game-independent) — drives per-move eval in the move list |
 | POST | `/api/games/{id}/coach/explain` | Grounded per-move explanation (Path 1) |
 | POST | `/api/games/{id}/coach/chat` | Freeform agentic coach chat (Path 2) |
+
+### Load PGN request/response
+```json
+// POST /api/games/{id}/pgn
+{ "pgn": "1. e4 c5 2. Nf3 g6 3. d4" }
+// -> full game state (same shape as below) + { "appliedPlies": N, "totalTokens": M, "error"?: "..." }
+```
+- Calls `Game.Reset()` first — discards the **entire** move tree (mainline + every sideline) and
+  starts from a brand-new root — then replays the pasted move list through the same `Game.ApplyMove`
+  normal play uses. **Was a bug:** the handler used to only `GotoNode(root)`, which moves the cursor
+  but leaves the old root's `Children` in place, so pasting a line that diverged from whatever was
+  already on the board silently became a *sideline* off the stale tree instead of replacing it. `Reset`
+  gives the root a clean `Children` slice so a paste always replaces the game outright (`game_test.go`
+  covers this). Tokenizer strips comments/NAGs/result markers/move numbers and drops parenthetical
+  sidelines (mainline only), tolerates `0-0`/annotations.
+- A malformed/illegal token stops the load but keeps whatever prefix applied cleanly; `error` is set and
+  the status is `422` (body still carries the usable partial state). No moves parsed → `400`.
+
+### Eval-by-FEN request/response
+```json
+// GET /api/eval?fen=<url-encoded FEN>
+// -> { "score": 18, "mate": 0, "depth": 70 }
+```
+- `score`/`mate` are **White-relative** (positive = White better), consistent with the eval bar. Cloud
+  eval first (already White-relative, no flip), local Stockfish fallback (side-to-move, flipped on
+  Black). Light — no PV lines. Game-independent; the move list fetches it per node and caches by FEN.
 
 ### Move request body
 ```json
@@ -173,7 +206,7 @@ internal/
 ### Coach explain request/response (Path 1)
 ```json
 // POST /api/games/{id}/coach/explain
-{ "fen": "...", "prevFen": "...", "lastMoveSan": "Bd7", "analysis": { /* AnalysisJSON, optional */ }, "explorer": { /* ExplorerJSON, optional */ } }
+{ "fen": "...", "prevFen": "...", "lastMoveSan": "Bd7", "viewerColor": "w", "analysis": { /* AnalysisJSON, optional */ }, "explorer": { /* ExplorerJSON, optional */ } }
 // -> { "explanation": "..." }
 ```
 - `analysis`/`explorer` are optional passthroughs of what the frontend already fetched via
@@ -184,6 +217,11 @@ internal/
   and an established gambit reads as a playable "Book" move, not a mistake, even when the engine
   dislikes it. Best-effort: if classification fails (no engine / cloud miss), the explanation just
   proceeds without it.
+- `viewerColor` (`"w"`/`"b"`, optional) is which side the human is currently studying from — the
+  frontend derives it from the board-flip toggle and resends it on every flip (see frontend
+  `useChessGame.ts`). It reframes whose perspective the explanation is written from, independent of
+  who actually made the move — see "Viewer perspective" under AI coach design below. Empty defaults to
+  the side that made the move (the pre-flip-feature behavior).
 - Looks up `chunks.validated.json` by exact `fen` match; if nothing matches, the explanation still
   proceeds on engine/explorer grounding + general principles alone.
 - Returns 503 if the coach isn't configured, 502 if the local LLM call fails.
@@ -309,6 +347,44 @@ replay), unlike the move corpus.
    classifier/book-override all correct; main weakness is `llama3.1:8b` misattributing retrieved book
    commentary (model-size issue, not a pipeline bug).
 
+**Prompt-quality fixes (Path 1, `prompt.go`)** — addressed the eval run's findings above plus two
+longstanding "next session" TODOs:
+
+- **Viewer perspective** (`moverAndPly`, `viewerName`, `perspectiveLine`): the coach used to always
+  narrate from whichever side actually made the move, with no way to address the human as the *other*
+  side. `ExplainRequest.ViewerColor` (`"w"`/`"b"`, sent by the frontend from its board-flip toggle) is
+  who the human is currently studying as; `perspectiveLine` compares it against the mover (derived from
+  the FEN's side-to-move field, since `moverAndPly` also returns the ply for the eval-suppression gate
+  below) and picks one of two framings: same side → describe the move as something "you/we" did; other
+  side → describe the mover's move in the third person by name, then give only *forward-looking*
+  suggestions to the viewer, explicitly forbidding the model from narrating a move for the viewer that
+  hasn't been played yet (an earlier wording — "address follow-up guidance as you/we" — let the model
+  invent a fictional reply move; caught by manual browser verification, not the unit tests, which is why
+  the phrasing is now deliberately blunt about "has NOT moved yet"). `ViewerColor` empty defaults the
+  viewer to the mover (the plain "explain whoever moved" behavior, for callers that don't track a flip
+  state). The frontend recomputes the explanation for the *current* move (not a new one) every time the
+  board is flipped — see `useChessGame.ts`'s flip-triggered effect.
+- **Suppress engine eval in the opening** (`openingEvalPly`, `isSeriousError`, `showEngineEval`): within
+  the first `openingEvalPly` (10) plies, the engine-evaluation block and the win%-lost figure are
+  omitted from the prompt entirely unless the move-quality verdict is a genuine Mistake/Blunder — early
+  moves are theory/development, and tiny eval swings are noise the model would otherwise narrate as
+  "+0.3, the engine slightly prefers...". An unparseable ply is treated as "not the opening" so the
+  gate never over-suppresses past a real position.
+- **Attribution fabrication fix:** the theory-excerpt label used to be `(Title, Location)` with no
+  `Author` field shown at all — and a real chunk's `Location` read *"Bent Larsen chapter, Bonus Game 2
+  (Gulko - P.H. Nielsen, Esbjerg 2000)"* (the actual author is Nielsen & Hansen; the book just has a
+  chapter of Larsen's own games). With the author never shown and a person's name sitting right next to
+  the commentary, the model reliably invented "Bent Larsen" as the source of a fabricated quote. Fixed
+  by labeling every field explicitly — `Author: ... | Book: ... | Location: ...` — and telling the
+  model in the system prompt that only the `Author` field may be credited, `Location` is never a person
+  to cite unless it's identical to `Author`.
+- **General brevity:** the system prompt now caps a plain book move at one short sentence and
+  explicitly bans citing raw game counts/percentages, quoting a source just to say "stay consistent
+  with theory," and meta-commentary about "following a deliberate plan" — the eval run's explanations
+  were accurate but padded with this kind of filler. `classify.go`'s `applyBookContext` notes were
+  trimmed to match (no more raw game counts baked into the "How to frame it" text the model tends to
+  parrot back verbatim).
+
 ## Chess engine design
 
 **Square encoding:** `rank*8 + file` (a1=0, h1=7, a8=56, h8=63)
@@ -323,10 +399,22 @@ replay), unlike the move corpus.
 
 **Promotion default:** If client sends a pawn move to the back rank without a promotion flag, `ApplyMove` defaults to queen.
 
-**Move tree** (`game.go`): a `Game` is a tree of `Node`s, not a linear list. Each node caches the move that reached it, its SAN, and the resulting `*Position`; `Game.Current` is the viewed node (with `Pos`/`LastMove` mirrored for handler convenience). `ApplyMove` from the current node: if the move already exists as a child it just navigates onto it (no duplicate — replaying the mainline is a no-op branch), otherwise it appends a new child. `children[0]` is the main line; playing a *different* move from a node that already has children creates a **sideline** (`children[1:]`). `GotoNode(id)` moves `Current` without discarding anything, so stepping back and exploring never loses the original line. Node ids are per-game sequential strings (`"0"` = root). Reset is client-side (creates a fresh game).
+**Move tree** (`game.go`): a `Game` is a tree of `Node`s, not a linear list. Each node caches the move that reached it, its SAN, and the resulting `*Position`; `Game.Current` is the viewed node (with `Pos`/`LastMove` mirrored for handler convenience). `ApplyMove` from the current node: if the move already exists as a child it just navigates onto it (no duplicate — replaying the mainline is a no-op branch), otherwise it appends a new child. `children[0]` is the main line; playing a *different* move from a node that already has children creates a **sideline** (`children[1:]`). `GotoNode(id)` moves `Current` without discarding anything, so stepping back and exploring never loses the original line. Node ids are per-game sequential strings (`"0"` = root). A brand-new game (the frontend's reset button) is client-side (`createGame()`); within an *existing* game, `Reset()` discards the whole tree and starts over from a fresh root — used by PGN paste (see above) so a diverging paste replaces the game outright instead of leaving the old tree's children behind as a stale sideline.
 
 **SAN generation** (`notation.go`): `SAN(pos, move)` handles piece prefix, disambiguation (file/rank/both), capture `x`, promotion `=Q`, and check/checkmate suffix by applying the move and checking the resulting position. `MovesToSANAndFENs` steps through a sequence of UCI moves, returning both SAN strings and the FEN after each move.
 
-**Stockfish integration** (`engine/stockfish.go`): `Engine` struct spawns the process, sends `uci` and waits for `uciok`, then for each `Analyze` call sets `MultiPV`, sends `position fen` + `go depth N`, and reads `info` lines until `bestmove`. A `sync.Mutex` serializes concurrent calls. Score from Stockfish is always from the side-to-move perspective; `AnalyzeGame` handler negates score and mate when it's black's turn.
+**Stockfish integration** (`engine/stockfish.go`): `Engine` struct spawns the process, sends `uci` and waits for `uciok`, then for each `Analyze` call sets `MultiPV`, sends `position fen` + `go depth N`, and reads `info` lines until `bestmove`. A `sync.Mutex` serializes concurrent calls. Score from Stockfish is always from the side-to-move perspective; the `AnalyzeGame`/`EvalFEN` handlers negate score and mate when it's black's turn to produce a White-relative value.
+
+**Eval sign convention (was a bug — get this right):** the two engine sources report differently. Local
+Stockfish (UCI) is **side-to-move relative**. Lichess **cloud-eval `cp`/`mate` are White-relative**
+(positive = White better) *regardless of side to move* — NOT side-to-move relative (verified against the
+live API; a Black-to-move position where Black mates returns `mate: -1`). Consumers therefore flip
+differently:
+- **White-relative consumers** — `AnalyzeGame` (eval bar) and `EvalFEN` (move-list per-move eval): do
+  NOT flip cloud; flip Stockfish on Black.
+- **Side-to-move consumer** — the coach's `Tools.AnalyzePosition` (feeds `classifyByEval`, which negates
+  the "after" position as the opponent's view): flip cloud on Black; do NOT flip Stockfish.
+
+Getting this backwards flips the eval/verdict on every Black-to-move position (half of all positions).
 
 **Storage:** In-memory map with `sync.RWMutex`. Swap for a DB by implementing the `storage.Store` interface.

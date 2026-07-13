@@ -1,4 +1,3 @@
-import Logo from './Logo'
 import type { Color } from '@/lib/chess/types'
 
 interface Props {
@@ -21,7 +20,6 @@ export default function TopBar({ turn, isBookMove }: Props) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-        <Logo />
         <span style={{ fontWeight: 600, fontSize: 17, letterSpacing: '-0.3px' }}>
           Chess<span style={{ color: '#2f6db0' }}>lab</span>
         </span>

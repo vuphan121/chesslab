@@ -43,6 +43,11 @@ func NewTools(eng *engine.Engine, index *Index, overview *OverviewIndex) *Tools 
 func (t *Tools) AnalyzePosition(fen string) (*PositionEval, error) {
 	if cloud, err := lichess.Fetch(fen, 3); err == nil && cloud != nil {
 		pos, perr := chess.ParseFEN(fen)
+		// Lichess cloud eval reports cp/mate White-relative, but PositionEval's
+		// contract (and classifyByEval, which consumes it) is side-to-move
+		// relative — matching the local Stockfish path below. So negate when
+		// Black is to move to convert White-relative → side-to-move.
+		flip := perr == nil && pos.Turn == chess.Black
 		result := &PositionEval{EngineName: "Lichess Cloud", Depth: cloud.Depth}
 		for i, pv := range cloud.PVs {
 			score, mate := 0, 0
@@ -51,6 +56,9 @@ func (t *Tools) AnalyzePosition(fen string) (*PositionEval, error) {
 			}
 			if pv.Mate != nil {
 				mate = *pv.Mate
+			}
+			if flip {
+				score, mate = -score, -mate
 			}
 			var sans []string
 			if perr == nil {

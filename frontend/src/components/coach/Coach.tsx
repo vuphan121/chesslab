@@ -118,22 +118,6 @@ export default function Coach({
           gap: 10,
         }}
       >
-        <div
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: 9,
-            background: '#1c1b18',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#7ecae8',
-            fontSize: 16,
-            lineHeight: 1,
-          }}
-        >
-          ♞
-        </div>
         <div>
           <div style={{ fontSize: 14, fontWeight: 600 }}>Coach</div>
           <div style={{ fontSize: 11, color: '#a3a099' }}>
@@ -167,12 +151,7 @@ export default function Coach({
           >
             {explanation}
           </div>
-        ) : (
-          <div style={{ fontSize: 13, lineHeight: 1.5, color: '#a3a099' }}>
-            Play a move and I&apos;ll explain the idea behind it — or ask me anything about this
-            position or opening.
-          </div>
-        )}
+        ) : null}
 
         {/* Path 2 — freeform chat thread */}
         {messages.map((m, i) =>

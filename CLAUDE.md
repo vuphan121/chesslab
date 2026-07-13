@@ -40,17 +40,26 @@ Claude Code.
 ## What's built
 
 ### Opening Study page (frontend/src/app/page.tsx)
-A single-screen 3-column workspace recreated from a Claude-designed hi-fi mock
-(`.design_handoff/design_handoff_opening_study/`, gitignored):
+A single-screen 3-column workspace, originally from a Claude-designed hi-fi mock
+(`.design_handoff/design_handoff_opening_study/`, gitignored), since reworked into a
+**Coach | Board | Move order** layout:
 ```
-[Opening Tree] [caption row + Board + Eval bar] [Move order + Coach]
+[Coach]  [caption row + Board + Eval bar]   [Move order]
+         [Opening Tree, under the board]
 ```
-- **Opening Tree** (left): live Lichess opening-explorer stats — per-move games/share%/W-D-L, click a
-  row to play that continuation.
-- **Caption row**: opening name + ECO chip (from Lichess), engine name + depth readout, flip-board button.
-- **Board + eval bar** (center): see below.
-- **Move order + Coach** (right): move-tree navigation with sidelines (see below); Coach is the live
-  AI coach — auto per-move explanation + freeform tool-calling chat, backed by a local LLM (see below).
+- **Coach** (left column): the live AI coach — auto per-move explanation + freeform tool-calling chat,
+  backed by a local LLM (see below). Narrow and tall; its panel height is pinned to the board height.
+- **Board + eval bar** (center): see below. Below the board sits the **Opening Tree** (live Lichess
+  opening-explorer stats — per-move games/share%/W-D-L, click a row to play that continuation), a
+  compact fixed-height scrollable panel.
+- **Caption row** (above the board): engine name + depth + eval readout (right-aligned, left of the
+  flip-board button). The opening name/ECO used to live here but moved to the Move order header so a
+  long name can wrap without pushing the board down.
+- **Move order** (right column): move-tree navigation with sidelines (see below). Header shows the full
+  opening name + ECO (wraps, never truncated) and a **PGN paste** box at the bottom. Narrow and tall;
+  panel height pinned to the board height.
+- The outer card background matches the page background (no visible frame/border) and the two side
+  columns are offset down by the caption-row height so their tops/bottoms line up with the board.
 
 ### Chess board UI
 - Custom board using chess.com icy sea board texture as a CSS sprite
@@ -58,7 +67,8 @@ A single-screen 3-column workspace recreated from a Claude-designed hi-fi mock
 - Rank/file coordinates rendered inside squares (top-left and bottom-right)
 - Highlights: selected square, legal move dots, last move, check (red radial gradient)
 - Move sound plays on every move **and every move-tree navigation** (`frontend/public/sounds/move.mp3`)
-- Board supports `flipped` (wired to a toolbar button) and `squareSize` props
+- Board supports `flipped` (wired to a toolbar button, state lives in `useChessGame` — flipping also
+  re-frames the AI coach's perspective, see below) and `squareSize` props
 
 ### Drag-and-drop piece movement
 - Pointer Events API (`onPointerDown` / `onPointerMove` / `onPointerUp`) on the board div
@@ -79,10 +89,19 @@ drag/move logic above):
 Games are stored as a **tree**, not a linear move list — navigating backward never discards moves.
 - Playing a different move from an already-visited position creates a **sideline** (variation);
   replaying an existing continuation just navigates onto it, no duplicates
-- Move Order panel renders flowing PGN-style notation, with sidelines shown inline in parentheses
+- Move Order panel renders a **Lichess-style move list**: one full move per row (`N. white  black`),
+  the two move columns filling the width evenly, each move shown in **figurine notation** (`♞f3`) with
+  a **per-move eval** to its right (White-relative, from `GET /api/eval?fen=` — cloud-first, cached by
+  FEN). The current move is highlighted with a full blue cell. Sidelines are still rendered inline in
+  parentheses as an indented row under the move they branch from.
 - `⟨⟨ ⟨ ⟩ ⟩⟩` nav buttons (start/prev/next/end) plus a **reset** button that starts a fresh game
 - `ArrowLeft`/`ArrowRight` keyboard shortcuts step through the tree the same way (ignored while typing
   in the Coach composer)
+- **PGN paste** (box at the bottom of the Move order panel): paste a move list → `POST
+  /api/games/{id}/pgn` discards whatever's currently on the board (`Game.Reset()`, not just a cursor
+  move — a paste that diverges from the current line used to silently become a sideline off the old
+  tree, a bug fixed this session) and replays the new list from the start position; a partial/illegal
+  paste loads the valid prefix and reports how far it got.
 
 ### Stockfish + Lichess cloud eval integration
 - Stockfish 18 runs as a subprocess (UCI protocol), managed by `backend/internal/engine/`
@@ -90,8 +109,14 @@ Games are stored as a **tree**, not a linear move list — navigating backward n
   falling back to local Stockfish if the position isn't cached
 - After every move and navigation, frontend calls `GET /api/games/{id}/analysis`
 - **Eval bar**: vertical bar next to the board; white section fills from bottom using a `tanh` curve
-  clamped 3–97%, with a small mono score readout
-- **Engine name + depth**: shown in the caption row (e.g. "Lichess Cloud · depth 55")
+  clamped 3–97% (no number in the bar itself)
+- **Engine name + depth + eval readout**: shown in the caption row, right-aligned (e.g. "Lichess
+  Cloud · depth 55 · +0.3")
+- **Sign convention (important, was a bug):** Lichess cloud-eval `cp`/`mate` are **White-relative**
+  (positive = White better), *regardless of side to move* — NOT side-to-move relative. Local Stockfish
+  (UCI) IS side-to-move relative. So the two consumers flip differently: the eval bar / `AnalyzeGame` /
+  `EvalFEN` want White-relative (no flip on cloud, flip Stockfish on Black), while the coach's
+  `AnalyzePosition` wants side-to-move (flip cloud on Black, no flip Stockfish). See Tech decisions.
 
 ### Lichess Opening Explorer integration
 - `GET /api/games/{id}/explorer` proxies `explorer.lichess.ovh` (rated 2000+ games), requires
@@ -126,6 +151,14 @@ facts — those come from Stockfish/Lichess and a curated opening-theory corpus.
 - **Corpus**: hand-chunked, engine-validated opening theory (currently the Sicilian Accelerated
   Dragon). See `backend/CLAUDE.md` and `docs/ai-coach-design.md`. Evaluation harness +
   results in `docs/coach-eval/`.
+- **Viewer perspective:** flipping the board (see above) re-explains the current move addressing
+  whichever side is now at the bottom as "you/we" — even if the other side made the move, in which case
+  the move is described in the third person and only forward-looking suggestions are given (the coach
+  never claims a move was played that wasn't). Independent of who actually moved; see backend
+  `CLAUDE.md`'s "Prompt-quality fixes" for the framing logic and a fabrication bug this caught.
+- **Opening-eval suppression:** in the first ~10 plies, the per-move explanation omits the engine
+  evaluation entirely unless the move is a genuine Mistake/Blunder — early moves are theory/development
+  and a tiny eval swing is noise, not something to quote at the player.
 
 ### Frontend → Backend integration
 - On mount, `useChessGame` creates a new game via `POST /api/games`
@@ -136,9 +169,10 @@ facts — those come from Stockfish/Lichess and a curated opening-theory corpus.
   in parallel (`refreshInsights`)
 
 ## What's next (planned)
-- Improve coach explanation quality — the eval run (`docs/coach-eval/`) shows `llama3.1:8b`
-  misattributes retrieved book commentary; try a larger local model or a stricter no-fabricated-sources
-  prompt
+- Improve coach explanation quality further — the attribution-fabrication fix (see backend
+  `CLAUDE.md`) addressed the cheap prompt-level cause, but `llama3.1:8b` may still occasionally
+  misattribute or confuse details; a larger local model would tighten this further if it's still an
+  issue after the fix. Re-run `docs/coach-eval/run_eval.py` to check.
 - Expand the opening-context corpus beyond the Accelerated Dragon (see `docs/handoff.md`)
 - Repertoire builder: let user mark moves as their chosen responses
 - Real book-deviation tracking (currently approximated by explorer game count > 0)
@@ -148,5 +182,12 @@ facts — those come from Stockfish/Lichess and a curated opening-theory corpus.
 - FEN is the universal position identifier across frontend and backend
 - Chess logic lives entirely in Go — frontend has no chess logic
 - Board texture is used as a CSS sprite (`background-position`) for pixel-perfect squares
-- Stockfish score is reported from side-to-move perspective; backend negates when it's black's turn to give a consistent white-positive eval bar
+- **Eval sign:** Stockfish/UCI reports side-to-move relative; Lichess cloud-eval reports White-relative
+  (verified against the live API). The backend normalizes per consumer: the eval bar / `AnalyzeGame` /
+  `EvalFEN` emit White-relative (flip Stockfish on Black, never flip cloud); the coach's
+  `AnalyzePosition` emits side-to-move for `classifyByEval` (flip cloud on Black, never flip Stockfish).
+  Getting this wrong flips the eval on every Black-to-move position — it was a real bug, see git history.
 - Game state is a tree of positions, not a linear list — enables sidelines and non-destructive backward navigation
+- Per-move eval in the move list comes from a game-independent `GET /api/eval?fen=` endpoint, fetched
+  lazily and cached by FEN on the frontend (design note: the app previously had *no* per-move eval on
+  purpose — "that's what the eval bar is for" — but the Lichess-style move list reintroduced it)

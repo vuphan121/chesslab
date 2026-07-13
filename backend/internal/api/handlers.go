@@ -194,6 +194,9 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 	flipScore := g.Pos.Turn == chess.Black
 
 	// Try Lichess cloud eval first (deep precomputed analysis, free).
+	// NOTE: cloud-eval cp/mate are already White-relative (positive = White
+	// better / White mates), regardless of side to move — so, unlike the local
+	// Stockfish path below, we must NOT apply flipScore here.
 	if cloud, err := lichess.Fetch(fen, 3); err == nil && cloud != nil {
 		result := AnalysisJSON{EngineName: "Lichess Cloud", Depth: cloud.Depth}
 		for i, pv := range cloud.PVs {
@@ -203,9 +206,6 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 			}
 			if pv.Mate != nil {
 				mate = *pv.Mate
-			}
-			if flipScore {
-				score, mate = -score, -mate
 			}
 			moves := strings.Fields(pv.Moves)
 			sans, fens := chess.MovesToSANAndFENs(g.Pos, moves)
@@ -262,6 +262,58 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	respondJSON(w, http.StatusOK, result)
+}
+
+// EvalFENResponse is a light per-position eval (no PV lines) used to annotate
+// each move in the move list. Score/Mate are White-relative, consistent with
+// the eval bar.
+type EvalFENResponse struct {
+	Score int `json:"score"`
+	Mate  int `json:"mate"`
+	Depth int `json:"depth"`
+}
+
+// EvalFEN returns a White-relative score for an arbitrary FEN (cloud eval
+// first, local Stockfish fallback). Used by the move list to show an eval after
+// each move without replaying the whole game through a stored game object.
+func (h *Handler) EvalFEN(w http.ResponseWriter, r *http.Request) {
+	fen := r.URL.Query().Get("fen")
+	pos, err := chess.ParseFEN(fen)
+	if err != nil {
+		http.Error(w, "invalid fen", http.StatusBadRequest)
+		return
+	}
+	flipScore := pos.Turn == chess.Black
+
+	// Cloud eval is already White-relative (no flip); Stockfish is
+	// side-to-move relative (flip on Black) — same policy as AnalyzeGame.
+	if cloud, cerr := lichess.Fetch(fen, 1); cerr == nil && cloud != nil && len(cloud.PVs) > 0 {
+		pv := cloud.PVs[0]
+		out := EvalFENResponse{Depth: cloud.Depth}
+		if pv.CP != nil {
+			out.Score = *pv.CP
+		}
+		if pv.Mate != nil {
+			out.Mate = *pv.Mate
+		}
+		respondJSON(w, http.StatusOK, out)
+		return
+	}
+
+	if h.engine == nil {
+		http.Error(w, "engine not configured", http.StatusServiceUnavailable)
+		return
+	}
+	raw, aerr := h.engine.Analyze(fen, 1, 16)
+	if aerr != nil || len(raw.Lines) == 0 {
+		http.Error(w, "analysis failed", http.StatusInternalServerError)
+		return
+	}
+	score, mate := raw.Lines[0].Score, raw.Lines[0].Mate
+	if flipScore {
+		score, mate = -score, -mate
+	}
+	respondJSON(w, http.StatusOK, EvalFENResponse{Score: score, Mate: mate, Depth: raw.Lines[0].Depth})
 }
 
 func (h *Handler) Explorer(w http.ResponseWriter, r *http.Request) {

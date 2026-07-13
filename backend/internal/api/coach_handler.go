@@ -16,6 +16,7 @@ type ExplainMoveRequest struct {
 	FEN         string        `json:"fen"`
 	PrevFEN     string        `json:"prevFen"` // position before the move, for move classification
 	LastMoveSAN string        `json:"lastMoveSan"`
+	ViewerColor string        `json:"viewerColor"` // "w"/"b" — which side the human is currently viewing from
 	Analysis    *AnalysisJSON `json:"analysis"`
 	Explorer    *ExplorerJSON `json:"explorer"`
 }
@@ -44,6 +45,7 @@ func (h *Handler) ExplainMove(w http.ResponseWriter, r *http.Request) {
 		FEN:         req.FEN,
 		PrevFEN:     req.PrevFEN,
 		LastMoveSAN: req.LastMoveSAN,
+		ViewerColor: req.ViewerColor,
 		Analysis:    toAnalysisInput(req.Analysis),
 		Explorer:    toExplorerInput(req.Explorer),
 	}

@@ -21,9 +21,13 @@ func NewRouter(h *Handler) http.Handler {
 		r.Get("/{id}/analysis", h.AnalyzeGame)
 		r.Get("/{id}/explorer", h.Explorer)
 		r.Post("/{id}/goto", h.GotoNode)
+		r.Post("/{id}/pgn", h.LoadPGN)
 		r.Post("/{id}/coach/explain", h.ExplainMove)
 		r.Post("/{id}/coach/chat", h.CoachChat)
 	})
+
+	// Game-independent: eval an arbitrary FEN (drives per-move eval in the list).
+	r.Get("/api/eval", h.EvalFEN)
 
 	return r
 }

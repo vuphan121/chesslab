@@ -133,6 +133,20 @@ func (g *Game) setCurrent(n *Node) {
 	}
 }
 
+// Reset discards the entire move tree (all mainline moves and sidelines) and
+// starts over from a fresh starting position, as a brand-new root. Unlike
+// GotoNode(g.Root.ID), which only moves the cursor and leaves old children in
+// place (so replaying a diverging line becomes a sideline off the stale root),
+// this actually clears the tree — used by PGN paste, which should replace the
+// game outright, not branch off whatever was there before.
+func (g *Game) Reset() {
+	pos, _ := ParseFEN(StartFEN)
+	root := &Node{ID: "0", Pos: pos}
+	g.Root = root
+	g.counter = 0
+	g.setCurrent(root)
+}
+
 // GotoNode navigates to an existing node without discarding any moves.
 func (g *Game) GotoNode(id string) error {
 	if n := findNode(g.Root, id); n != nil {

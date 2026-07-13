@@ -7,10 +7,25 @@ import TopBar from '@/components/layout/TopBar'
 import OpeningTree from '@/components/tree/OpeningTree'
 import Coach from '@/components/coach/Coach'
 import { useChessGame } from '@/hooks/useChessGame'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 
 const SQUARE_SIZE = 72
 const BOARD_SIZE = SQUARE_SIZE * 8 // 576
+const SIDE_WIDTH = 371
+// The board sits below a caption row (opening name / engine / flip button) in
+// the center column. Offset the side panels by the same amount so their tops
+// and bottoms line up with the board, not the caption above it.
+const CAPTION_ROW_HEIGHT = 30
+const COLUMN_GAP = 14
+const BOARD_TOP_OFFSET = CAPTION_ROW_HEIGHT + COLUMN_GAP // 45
+
+// formatEval renders the white-relative engine score as a signed pawn value
+// (e.g. +0.3, -1.2) or mate (#3 / #-2), for the caption readout.
+function formatEval(score: number, mate: number): string {
+  if (mate !== 0) return `#${mate}`
+  const v = (Math.abs(score) / 100).toFixed(1)
+  return score >= 0 ? `+${v}` : `-${v}`
+}
 
 export default function Home() {
   const {
@@ -24,6 +39,7 @@ export default function Home() {
     navNext,
     navEnd,
     reset,
+    loadPgn,
     analysis,
     explorer,
     explorerLoading,
@@ -31,8 +47,9 @@ export default function Home() {
     coachExplaining,
     coachError,
     sendCoachChat,
+    flipped,
+    toggleFlipped,
   } = useChessGame()
-  const [flipped, setFlipped] = useState(false)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -64,21 +81,31 @@ export default function Home() {
       <div
         style={{
           width: 1432,
-          background: '#e4e3df',
+          background: '#e8e8e6',
           borderRadius: 16,
           padding: 24,
-          boxShadow: '0 10px 50px rgba(40,55,70,0.15), inset 0 0 0 1px rgba(0,0,0,0.05)',
         }}
       >
         <TopBar turn={boardState.turn} isBookMove={isBookMove} />
 
         <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-          <OpeningTree
-            moves={explorer?.moves ?? []}
-            totalGames={explorer?.totalGames ?? 0}
-            loading={explorerLoading}
-            onPlay={playContinuation}
-          />
+          <div
+            style={{
+              width: SIDE_WIDTH,
+              height: BOARD_SIZE,
+              marginTop: BOARD_TOP_OFFSET,
+              flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <Coach
+              explanation={coachExplanation}
+              explaining={coachExplaining}
+              explainError={coachError}
+              onSendChat={sendCoachChat}
+            />
+          </div>
 
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div
@@ -91,37 +118,17 @@ export default function Home() {
                 width: BOARD_SIZE + 11 + 15,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, minWidth: 0 }}>
-                <span
-                  className="serif"
-                  style={{ fontSize: 27, fontWeight: 500, letterSpacing: '-0.3px', lineHeight: 1 }}
-                >
-                  {openingName}
-                </span>
-                {explorer?.openingEco && (
-                  <span
-                    className="mono"
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: '#2f6db0',
-                      background: '#ecf3fb',
-                      padding: '3px 8px',
-                      borderRadius: 5,
-                    }}
-                  >
-                    {explorer.openingEco}
-                  </span>
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                 {!!analysis?.depth && (
                   <span className="mono" style={{ fontSize: 12, color: '#a3a099' }}>
-                    {analysis.engineName} · depth {analysis.depth}
+                    {analysis.engineName} · depth {analysis.depth} ·{' '}
+                    <span style={{ fontWeight: 700, color: '#37352f' }}>
+                      {formatEval(analysis.score, analysis.mate)}
+                    </span>
                   </span>
                 )}
                 <button
-                  onClick={() => setFlipped((f) => !f)}
+                  onClick={toggleFlipped}
                   title="Flip board"
                   style={{
                     width: 26,
@@ -167,10 +174,28 @@ export default function Home() {
               />
               <EvalBar score={analysis?.score ?? 0} mate={analysis?.mate ?? 0} height={BOARD_SIZE} />
             </div>
+
+            <OpeningTree
+              moves={explorer?.moves ?? []}
+              totalGames={explorer?.totalGames ?? 0}
+              loading={explorerLoading}
+              onPlay={playContinuation}
+            />
           </div>
 
-          <div style={{ width: 388, flexShrink: 0, height: 620, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div
+            style={{
+              width: SIDE_WIDTH,
+              height: BOARD_SIZE,
+              marginTop: BOARD_TOP_OFFSET,
+              flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
             <MoveHistory
+              openingName={openingName}
+              openingEco={explorer?.openingEco}
               moveTree={boardState.moveTree}
               currentNodeId={boardState.currentNodeId}
               onGotoNode={gotoNode}
@@ -179,12 +204,7 @@ export default function Home() {
               onNavNext={navNext}
               onNavEnd={navEnd}
               onReset={reset}
-            />
-            <Coach
-              explanation={coachExplanation}
-              explaining={coachExplaining}
-              explainError={coachError}
-              onSendChat={sendCoachChat}
+              onLoadPgn={loadPgn}
             />
           </div>
         </div>
