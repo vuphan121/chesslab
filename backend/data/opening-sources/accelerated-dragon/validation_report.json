@@ -2569,9 +2569,9 @@
       "author": "Raja Panjwani",
       "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
     },
-    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6",
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3",
     "status": "PASS",
-    "eco": null
+    "eco": "B21"
   },
   {
     "index": 234,
@@ -2580,7 +2580,7 @@
       "author": "Raja Panjwani",
       "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
     },
-    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7",
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6",
     "status": "PASS",
     "eco": null
   },
@@ -2591,7 +2591,7 @@
       "author": "Raja Panjwani",
       "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
     },
-    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Be3",
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7",
     "status": "PASS",
     "eco": null
   },
@@ -2602,7 +2602,7 @@
       "author": "Raja Panjwani",
       "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
     },
-    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Bg5 Bxc3 11.bxc3 Ne5",
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Be3",
     "status": "PASS",
     "eco": null
   },
@@ -2613,7 +2613,7 @@
       "author": "Raja Panjwani",
       "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
     },
-    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Bd2 Bxc3 11.bxc3 Ne5",
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Bg5 Bxc3 11.bxc3 Ne5",
     "status": "PASS",
     "eco": null
   },
@@ -2624,7 +2624,7 @@
       "author": "Raja Panjwani",
       "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
     },
-    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Bd2 Bxc3 11.bxc3 Na6",
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Bd2 Bxc3 11.bxc3 Ne5",
     "status": "PASS",
     "eco": null
   },
@@ -2635,12 +2635,23 @@
       "author": "Raja Panjwani",
       "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
     },
-    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Bd2 Bxc3 11.bxc3 Na6 12.Nd4 f6",
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Bd2 Bxc3 11.bxc3 Na6",
     "status": "PASS",
     "eco": null
   },
   {
     "index": 240,
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
+    },
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6 8.0-0 0-0 9.Nc3 Nfd7 10.Bd2 Bxc3 11.bxc3 Na6 12.Nd4 f6",
+    "status": "PASS",
+    "eco": null
+  },
+  {
+    "index": 241,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",
@@ -2651,7 +2662,7 @@
     "eco": "B22"
   },
   {
-    "index": 241,
+    "index": 242,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",
@@ -2662,7 +2673,7 @@
     "eco": null
   },
   {
-    "index": 242,
+    "index": 243,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",
@@ -2673,7 +2684,7 @@
     "eco": null
   },
   {
-    "index": 243,
+    "index": 244,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",
@@ -2684,7 +2695,7 @@
     "eco": null
   },
   {
-    "index": 244,
+    "index": 245,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",
@@ -2695,7 +2706,7 @@
     "eco": null
   },
   {
-    "index": 245,
+    "index": 246,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",
@@ -2706,7 +2717,7 @@
     "eco": null
   },
   {
-    "index": 246,
+    "index": 247,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",
@@ -2717,7 +2728,7 @@
     "eco": null
   },
   {
-    "index": 247,
+    "index": 248,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",
@@ -2728,7 +2739,7 @@
     "eco": null
   },
   {
-    "index": 248,
+    "index": 249,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",
@@ -2739,7 +2750,7 @@
     "eco": null
   },
   {
-    "index": 249,
+    "index": 250,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",
@@ -2750,7 +2761,7 @@
     "eco": null
   },
   {
-    "index": 250,
+    "index": 251,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",
@@ -2761,7 +2772,7 @@
     "eco": null
   },
   {
-    "index": 251,
+    "index": 252,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",
@@ -2772,7 +2783,7 @@
     "eco": null
   },
   {
-    "index": 252,
+    "index": 253,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",
@@ -2783,7 +2794,7 @@
     "eco": null
   },
   {
-    "index": 253,
+    "index": 254,
     "source": {
       "title": "The Hyper Accelerated Dragon",
       "author": "Raja Panjwani",

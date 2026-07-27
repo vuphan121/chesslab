@@ -40,6 +40,8 @@ internal/
     game.go         # Game = move tree (Node root/current), ApplyMove, GotoNode, Reset, applyMove, game-over detection
     game_test.go    # unit test for Reset (must discard the tree, not leave stale sidelines — see PGN paste below)
     notation.go     # SAN(), MovesToSAN(), MovesToSANAndFENs()
+    pgn.go          # TokenizePGNMoves, FindLegalMoveBySAN, ReplayLine — shared by api's PGN-paste
+                     #   handler and coach's prefix-position theory indexing (see coach/index.go)
   engine/
     stockfish.go    # Engine struct: spawns Stockfish subprocess, UCI protocol, Analyze()
   lichess/
@@ -47,13 +49,28 @@ internal/
     explorer.go     # FetchExplorer() — opening-explorer (requires LICHESS_TOKEN bearer auth)
   api/
     handlers.go     # HTTP handlers: CreateGame, GetGame, MakeMove, DeleteGame, AnalyzeGame, Explorer, GotoNode
-    pgn.go          # HTTP handler: LoadPGN — tokenizes + replays a pasted PGN, resets the tree first (Game.Reset)
+    pgn.go          # HTTP handler: LoadPGN — resets the tree first (Game.Reset), replays via chess.TokenizePGNMoves/FindLegalMoveBySAN
     coach_handler.go # HTTP handlers: ExplainMove (Path 1), CoachChat (Path 2)
     routes.go       # chi router setup + CORS middleware
   storage/
     memory.go       # Store interface + thread-safe in-memory implementation
+  repertoire/       # Opening Trainer: parses a Lichess study PGN into drillable cards.
+                     #   See "Repertoire parsing" below and docs/opening-trainer/.
+    types.go        # Node/Chapter/Card/Answer/ExcludedAnswer/Reply/Repertoire
+    pgn.go           # ParsePGN — multi-game tokenizer/parser (tag blocks, [FEN]/[SetUp],
+                     #   nested variations preserved, comments, NAGs, !/? suffix annotations)
+    config.go        # sidecar <name>.config.json (side, exclusions by chapter+SAN-path)
+    build.go         # BuildRepertoire — exclusion resolution + card/reply derivation, CardKey
+    load.go          # LoadDir — globs *.pgn + paired sidecar, skips (doesn't fail) on parse errors
+    store.go         # in-memory read-only registry (loaded once at startup)
+    pgn_test.go      # parses the demo Catalan study; asserts tree structure (custom start FEN,
+                     #   intro comment placement, depth-3 nested variation)
+    build_test.go    # asserts the exact 60-card enumeration, exclusion propagation, cross-chapter
+                     #   reply-pool merge (see docs/opening-trainer/data-format.md §2.3)
   coach/
-    index.go        # Chunk struct + Index — loads chunks.validated.json, groups by resolvedFen
+    index.go        # Chunk/TheoryMatch/LookupResult + Index — loads chunks.validated.json; indexes
+                     #   both exact resolvedFen and, via chess.ReplayLine, every earlier position along
+                     #   each chunk's own line, for "transposes toward known theory" prefix hints
     overview.go      # OverviewChunk + OverviewIndex — opening-level prose, keyword (not FEN) search
     prompt.go        # BuildExplainPrompt — grounded prompt for the per-move explanation path;
                      #   also moverAndPly/viewerName/perspectiveLine (viewer-perspective framing) and
@@ -76,7 +93,7 @@ internal/
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/games` | Create new game, returns full game state |
+| POST | `/api/games` | Create new game, returns full game state. Optional `{"fen": "..."}` body roots it at an arbitrary position (used by the trainer + the "Analyze this line" handoff); empty/absent body is the initial position, unchanged behavior |
 | GET | `/api/games/{id}` | Get current game state |
 | POST | `/api/games/{id}/moves` | Make a move |
 | DELETE | `/api/games/{id}` | Delete a game |
@@ -84,7 +101,10 @@ internal/
 | GET | `/api/games/{id}/explorer` | Lichess opening-explorer stats for current position |
 | POST | `/api/games/{id}/goto` | Navigate to a move-tree node by id (`{ "nodeId": "3" }`) — does not discard moves |
 | POST | `/api/games/{id}/pgn` | Load a pasted PGN move list — replays from the start position, rebuilding the tree |
+| POST | `/api/games/{id}/position` | Re-point an existing game at an arbitrary FEN (`{"fen": "..."}`), discarding its tree — same contract as `Game.Reset()`/`ResetTo()`. The opening trainer reuses one game object across a whole drill session instead of creating one per card |
 | GET | `/api/eval?fen=<fen>` | Light White-relative eval for an arbitrary FEN (game-independent) — drives per-move eval in the move list |
+| GET | `/api/repertoires` | List loaded opening-trainer repertoires (id, name, side, chapters + card counts) |
+| GET | `/api/repertoires/{id}` | Full repertoire: chapters (with trees), derived cards, opponent reply pools |
 | POST | `/api/games/{id}/coach/explain` | Grounded per-move explanation (Path 1) |
 | POST | `/api/games/{id}/coach/chat` | Freeform agentic coach chat (Path 2) |
 
@@ -271,8 +291,8 @@ message so the model can see and adapt to failures instead of the whole request 
   as `AnalyzeGame`), returned with SAN lines from the mover's own perspective (no white/black
   perspective flip — that's only done for the frontend's white-relative eval bar).
 - `explorer_stats(fen)` — wraps `lichess.FetchExplorer`.
-- `retrieve_theory(fen)` — exact-FEN lookup in `coach.Index` (same index Path 1 uses) —
-  position-specific move commentary.
+- `retrieve_theory(fen)` — lookup in `coach.Index` (same index Path 1 uses) — position-specific move
+  commentary for this exact FEN, or, failing that, `nearby` transposition hints (see below).
 - `retrieve_opening_context(query)` — keyword search over the opening-overview corpus (see below) —
   for general "tell me about this opening" questions, not position-specific ones.
 - `classify_move(fenBefore, fenAfter)` — see below.
@@ -301,6 +321,46 @@ was hand-extracted from the 3 source PDFs' introductions (mostly Panjwani's and 
 Nielsen/Hansen excerpt on hand is only the column-bled Larsen games, no clean intro prose); each
 passage carries its source book + location. No FEN-validation step is needed for it (no moves to
 replay), unlike the move corpus.
+
+**Prefix ("transposes toward known theory") hints, on top of exact-FEN lookup.** Most chunks are
+hand-authored commentary anchored to the position at the END of a move sequence the author was
+discussing — e.g. a chunk's `commentaryText` explains *why* to play `3...d3`, but its `resolvedFen`
+is the position 4 moves later, because the passage kept going. Exact-FEN `Index.Lookup` therefore
+came up completely empty for any position earlier in that same line — a user asking the coach about
+`d3` itself got a generic, ungrounded answer even though the corpus had the exact reasoning, just
+filed under a different FEN. (Found and fixed live: `3...d3` in the Smith-Morra Gambit Declined had
+no chunk of its own at all — a genuine corpus gap, patched by hand-adding one, engine-validated
+against the running backend like every other chunk. But the *general* version of this problem —
+every other chunk being similarly under-anchored — can't be fixed one FEN at a time.)
+
+Fixed at the retrieval layer instead of by re-authoring the whole corpus: `LoadIndex` now also
+replays every chunk's own `moveSequence` via `chess.ReplayLine` (SAN-token replay from the start
+position, shared with the PGN-paste handler — see `chess/pgn.go`) and indexes every INTERMEDIATE
+FEN along the way, not just the final one, into a second map (`prefixByFEN`) keyed by
+`TheoryMatch{Chunk, PliesAhead}`. `Index.Lookup(fen)` returns a `LookupResult{Exact, Prefix}`: an
+exact hit if one exists (unchanged behavior), otherwise up to `maxPrefixMatches` (3) prefix hits,
+nearest-first, capped to `maxPrefixLookaheadPlies` (8) — a chunk 20 plies ahead isn't a useful signal
+for the move just played. `dedupePrefix` keeps only the nearest hit per source book (Author+Title),
+since a single long annotated game is chunked move-by-move and would otherwise flood the result with
+near-duplicate "same game, a bit further on" hits. Because indexing is FEN-keyed (not
+move-sequence-text-keyed), a real transposition — the same position reached via a different move
+order, possibly from a different book entirely — collides into the same map entry, which is exactly
+what surfaces multiple distinct "this can continue toward variation A (Panjwani) or variation B
+(Nielsen & Hansen)" hints from one lookup (verified live: the position after `7...O-O` in one
+Accelerated Dragon move order returned two prefix hits from two different books, 3 and 4 plies
+ahead).
+
+Both consumers were updated for the new `LookupResult` return type: Path 1's `BuildExplainPrompt`
+renders prefix hits under an explicit "no excerpt covers this EXACT position, but it continues into
+..." heading (never the "covering this exact position" heading used for real exact hits), and the
+system prompt has a dedicated rule forbidding the model from presenting prefix-hint commentary as
+being about the current move, or narrating any of the further-ahead moves as already played. Path
+2's `retrieve_theory` tool mirrors this with a `nearby`/`note` field instead of `chunks` when only
+prefix hits exist. **Known limitation, not fixed by this change:** the local `llama3.1:8b` can still
+hallucinate details belonging to neither the exact nor prefix commentary it was given (observed live:
+one response invented "the queen sidestepped to a safe square" for a position where the last move was
+actually `O-O` — the retrieved chunks were verified correct and mentioned no queen move at all). This
+is the same model-size grounding weakness noted in `docs/coach-eval/results.md`, not a retrieval bug.
 
 **Rule-based move classifier** (`classify.go`) — two axes, eval and book:
 
@@ -362,8 +422,9 @@ longstanding "next session" TODOs:
   invent a fictional reply move; caught by manual browser verification, not the unit tests, which is why
   the phrasing is now deliberately blunt about "has NOT moved yet"). `ViewerColor` empty defaults the
   viewer to the mover (the plain "explain whoever moved" behavior, for callers that don't track a flip
-  state). The frontend recomputes the explanation for the *current* move (not a new one) every time the
-  board is flipped — see `useChessGame.ts`'s flip-triggered effect.
+  state). The frontend clears the pinned explanation on flip rather than auto-refetching it — the "Ask
+  Coach" button is a manual, not automatic, trigger (see frontend `CLAUDE.md`); asking again after a
+  flip sends the updated `viewerColor` for the *current* move (not a new one).
 - **Suppress engine eval in the opening** (`openingEvalPly`, `isSeriousError`, `showEngineEval`): within
   the first `openingEvalPly` (10) plies, the engine-evaluation block and the win%-lost figure are
   omitted from the prompt entirely unless the move-quality verdict is a genuine Mistake/Blunder — early
@@ -418,3 +479,41 @@ differently:
 Getting this backwards flips the eval/verdict on every Black-to-move position (half of all positions).
 
 **Storage:** In-memory map with `sync.RWMutex`. Swap for a DB by implementing the `storage.Store` interface.
+
+## Repertoire parsing (`internal/repertoire/`)
+
+Parses a Lichess study PGN export for the opening trainer. Deliberately **not** built on top of
+`chess.TokenizePGNMoves`/`ReplayLine` (the PGN-paste path above), because the two features want the
+opposite behavior on both points that matter here:
+
+- **Custom start position, independent per chapter.** A study chapter is exported with its own
+  `[FEN]`/`[SetUp "1"]` tags, and chapters need not share one — the demo repertoire's first two
+  chapters both start from the Open Catalan after `1.d4 Nf6 2.c4 e6 3.g3 d5 4.Nf3 dxc4 5.Bg2 a6`,
+  but its third chapter starts from a different branch entirely (`5...Nc6` instead of `5...a6`).
+  Neither is the initial position. `ReplayLine` hardcodes `chess.StartFEN`.
+- **Variations must survive.** `chess.stripParenVariations` throws sidelines away on purpose (PGN
+  paste only ever wants the mainline). The trainer's whole card set comes from walking every
+  variation, so `repertoire.ParsePGN` builds the **full tree**, recursively: a `(` opens an
+  alternative to the *previous* move (a sibling subtree rooted at that move's own parent, not a
+  child of it — this is standard PGN semantics and easy to get backwards), parsed via a call to the
+  same recursive function that doesn't disturb the outer sequence's cursor.
+
+Both parsers do share the underlying chess primitives (`chess.FindLegalMoveBySAN`, `chess.SAN`,
+`chess.ParseFEN`/`FEN`) — plus one small addition, `chess.ApplyMove` (an exported wrapper around the
+package-private `applyMove`), added because the repertoire package needed a pure position-transition
+function and `chess.Game.ApplyMove` is a stateful method on the move-tree type, not a plain function.
+
+Multi-game splitting (`splitGames`): a study export is one PGN file with one `[Tag ...]` block +
+movetext per chapter, no other delimiter — a new tag line encountered after movetext has already
+started for the current game ends the previous one. Move-number labels (`1.`, `2...`) and result
+markers (`1-0`/`*`) are stripped by the tokenizer, never emitted as tokens; `!`/`?` suffix
+annotations (`Nf3!?`) are converted to the equivalent NAG (`$5`) rather than kept as literal
+characters, so both NAG spellings of an annotation land on the node the same way.
+
+**Exclusion** (`build.go`): a move can be recorded in the study but not accepted as a repertoire
+answer — e.g. the demo's `1. a4` in the "Open, a6 b5" chapter, annotated in the study's own prose as
+inferior. Resolved from two sources: `$2`/`$4`/`$6` NAGs (automatic) and the sidecar
+`<name>.config.json`'s `excluded` list (chapter name + SAN path from that chapter's root — explicit,
+never inferred from comment text). `ExcludedSubtree` propagates down from an excluded move to every
+descendant, so **no cards are generated anywhere inside an excluded line** — verified in
+`build_test.go` for the `1. a4 Nc6` subtree specifically.

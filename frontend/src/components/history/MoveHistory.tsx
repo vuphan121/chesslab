@@ -4,22 +4,7 @@ import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { MoveNode } from '@/lib/chess/types'
 import { childrenOf, flatten } from '@/lib/chess/moveTree'
 import { evalFen, type FenEval } from '@/lib/api/client'
-
-// figurineMap replaces a SAN's leading piece letter with a chess glyph, matching
-// Lichess's move list. Pawn moves (no piece letter) and castling are unchanged.
-const figurineMap: Record<string, string> = {
-  K: '♚',
-  Q: '♛',
-  R: '♜',
-  B: '♝',
-  N: '♞',
-}
-
-function toFigurine(san: string): string {
-  const first = san[0]
-  if (figurineMap[first]) return figurineMap[first] + san.slice(1)
-  return san
-}
+import { toFigurine } from '@/lib/chess/figurine'
 
 // formatMoveEval renders a White-relative score as a compact signed pawn value
 // (e.g. +0.2, −0.6) or mate (#3 / #-2).
@@ -498,7 +483,9 @@ export default function MoveHistory({
           rows={2}
           style={{
             resize: 'vertical',
-            fontSize: 12,
+            // 16px minimum — iOS Safari auto-zooms the page on focusing any
+            // text input/textarea with a smaller computed font-size.
+            fontSize: 16,
             fontFamily: 'var(--font-mono, monospace)',
             padding: '6px 8px',
             border: '1px solid #eae8e2',

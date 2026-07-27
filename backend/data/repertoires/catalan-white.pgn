@@ -1,0 +1,57 @@
+[Event "Catalan: Open, a6 b5"]
+[Date "2026.07.25"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "Catalan"]
+[ChapterName "Open, a6 b5"]
+[ChapterURL "https://lichess.org/study/pYmWdR27/KXWPZNBT"]
+[Annotator "https://lichess.org/@/vuphan121"]
+[FEN "rnbqkb1r/1pp2ppp/p3pn2/8/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 0 1"]
+[SetUp "1"]
+[UTCDate "2026.07.25"]
+[UTCTime "08:37:53"]
+
+{ Black wants to play b5 to keep the pawn.
+White's compensation is the center and lead in development. }
+1. O-O { a4 is not a great move.
+Nc6 after and b4 square is weak. } (1. a4 Nc6) 1... b5 2. Ne5 Nd5 (2... c6 3. b3 cxb3 4. Nxc6 Qb6 5. Na5 Ra7 6. Nxb3) 3. a4 Bb7 4. b3 c3 (4... cxb3 5. axb5 axb5 6. Rxa8 Bxa8 7. Qxb3 { More pleasant for white } 7... Nc6) 5. e4 b4 (5... Nf6 6. Nxc3) 6. exd5 Bxd5 7. Qh5 g6 8. Qh3 *
+
+
+[Event "Catalan: Open, a6 Nc6"]
+[Date "2026.07.25"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "Catalan"]
+[ChapterName "Open, a6 Nc6"]
+[ChapterURL "https://lichess.org/study/pYmWdR27/06Q5PTVN"]
+[Annotator "https://lichess.org/@/vuphan121"]
+[FEN "rnbqkb1r/1pp2ppp/p3pn2/8/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 0 1"]
+[SetUp "1"]
+[UTCDate "2026.07.25"]
+[UTCTime "09:03:53"]
+
+1. O-O Nc6 2. e3 (2. Nc3 Rb8 3. e4 Be7 4. Qe2 Nxd4 5. Nxd4 Qxd4 6. Rd1 Qc5 7. e5 Nd7 8. Ne4 { Nc3 is also an idea.
+An aggresive line but quite difficult to play. }) 2... Bd7 (2... Rb8 3. Nfd2 e5 (3... Qd7 4. Nxc4 b5 5. Ncd2) 4. Bxc6+ bxc6 5. dxe5 Ng4 6. Nxc4 Be6 { Remember Nfd2 after Rb8 and white have a nice position }) 3. Qe2 b5 (3... Bd6 4. Qxc4 O-O 5. Rd1) 4. b3 cxb3 5. axb3 Bd6 6. Bb2 O-O 7. Rc1 Nb4 *
+
+
+[Event "Catalan: Open, Nc6"]
+[Date "2026.07.26"]
+[Result "*"]
+[Variant "From Position"]
+[FEN "r1bqkb1r/ppp2ppp/2n1pn2/8/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 0 1"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "Catalan"]
+[ChapterName "Open, Nc6"]
+[ChapterURL "https://lichess.org/study/pYmWdR27/yrIJMxCW"]
+[Annotator "https://lichess.org/@/vuphan121"]
+[FEN "r1bqkb1r/ppp2ppp/2n1pn2/8/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 0 1"]
+[SetUp "1"]
+[UTCDate "2026.07.26"]
+[UTCTime "08:55:04"]
+
+1. Qa4 Bb4+ (1... Nd5 2. Qxc4 Nb6 3. Qd3) (1... Nd7 2. Qxc4 Nb6 3. Qd3) (1... Bd6 2. Ne5) (1... Bd7 2. Qxc4 Na5 3. Qd3 c5 4. O-O) 2. Bd2 Nd5 (2... Bxd2+ 3. Nbxd2) (2... Bd6 3. Na3 Ne4 (3... Bxa3 4. Qxa3 Nxd4 5. Nxd4 Qxd4 6. Rd1) 4. Nxc4 Nxd2 5. Nfxd2 { Try to prevent d5 to make it harder for black to develop white bishop }) 3. Bxb4 Nxb4 4. O-O Rb8 5. Na3 { Preventing b5 } 5... O-O 6. Qb5 b6 7. Qxc4 Ba6 8. Nb5 Qd5 9. Qxd5 Nxd5 10. a4 *

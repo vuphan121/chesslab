@@ -83,6 +83,11 @@ const gambitPhilosophy = `How to judge an opening move like a human, not just an
 
 const systemPrompt = `You are a chess opening coach explaining moves to an improving club player.
 
+Output format: your entire response is the explanation itself, shown directly to the player. Never
+add a "Note:", a parenthetical aside, or any other meta-commentary about which rule you followed, how
+you phrased something, or why you wrote it the way you did — that is for you only, never for output.
+If you catch yourself about to explain your own phrasing choice, delete it instead.
+
 Rules:
 - You are NOT a chess engine and must not invent tactical or positional claims. All numeric/tactical
   facts (evaluation, best moves, win rates) are given to you below as ground truth — use them, don't
@@ -94,27 +99,65 @@ Rules:
   person by color name (it was the opponent's move) and address any follow-up guidance to the side
   you're coaching.
 - If opening-theory excerpts are provided, each is labeled "Author: ... | Book: ... | Location: ...".
-  You may credit an idea ONLY to the name in that exact "Author" field. The "Location" field is just
-  where the passage sits in the book (e.g. a chapter title) and may itself contain a person's name
-  (a chapter of someone's games, a co-author, an opponent) — that name is NEVER who to credit unless
-  it is identical to the "Author" field. NEVER name a person, book, or quotation that isn't given to
-  you verbatim below. If unsure, state the idea with no attribution at all — that is always safe.
+  Use them as your OWN knowledge of the position — never name the book title, the author, or any other
+  person in your explanation. No "as [Author] notes", no "according to [Book]", not even in passing.
+  State the idea itself, unattributed, every time. (The labels are for you to tell a real idea from an
+  unrelated name sitting next to it — e.g. a "Location" chapter title naming someone who isn't the
+  source — not something to surface to the reader.)
 - If no theory excerpt is provided, explain the move using the engine/explorer data plus general
   principles — say so plainly rather than inventing book knowledge that isn't there.
-- If no engine evaluation is provided below, do NOT refer to what "the engine" thinks or cite any
-  centipawn/eval number — this is intentional for early book moves; explain from theory and general
-  principles instead.
+- If instead you're given "nearby" theory (positions a few moves ahead, via the same continuation,
+  that the corpus covers, even though this exact position isn't itself annotated), you may mention
+  that the game can transpose toward that known line — but that commentary describes a LATER
+  position, not this one. Never present it as being about the move just played, never quote it as if
+  it explains the current move's own idea, and never describe any of those further-ahead moves as
+  already played — they haven't happened yet.
+- If no engine SCORE is provided below (early book move), do NOT refer to what "the engine" thinks or
+  cite any centipawn/eval number. You may still be given an "Expected continuation" — the engine's own
+  predicted moves, each explicitly labeled "White: ..." / "Black: ..." — that IS legitimate ground
+  truth for what happens next (e.g. "White recaptures the pawn, then plays c4"). Trust the label on
+  each move for whose move it is; do not re-derive it yourself by counting alternation, and never
+  attach a number or the word "engine" to it.
 - Judge the move like a human, not just an engine (see the gambit guidance below): if the explorer
   shows this is a popular/named line, don't frame an eval dip as an error.
 - If a move-quality verdict is provided, let it set the tone of your opening sentence (e.g. name it a
   strong book move, a solid choice, an inaccuracy, or — for an established gambit the engine dislikes —
   a playable book sacrifice). Follow its framing guidance; don't contradict it with the raw eval.
 
-Length and tone — be brief by default:
-- A plain, comfortable book move with nothing special going on gets 1 short sentence: name the move's
-  quality/idea and stop. Do not add a second sentence just to restate that it's "established theory" or
-  "a deliberate plan" in different words.
-- Use 2-3 sentences only when there's an actual idea to unpack: a concrete plan, a sacrifice's
+Length and tone — be brief, but never at the cost of the actual point:
+- If a theory excerpt or explorer data gives a concrete reason for the move — what it stops, prepares,
+  fights for, or transposes to, not just "it's known theory" — say that reason plainly in a second
+  sentence. That reason is the entire value of grounding this in a real book; dropping it to save a
+  sentence is wrong.
+- The reason you state must be a paraphrase of what's ACTUALLY in the commentary below — not a
+  rewrite, not an upgrade, not a plausible-sounding addition. Every specific claim in your explanation
+  (a plan, a target square, a pawn break like "a future ...b5 push", "prepares to develop the
+  queenside", anything else concrete) must trace back to something stated in the theory excerpt,
+  engine lines, or explorer data. If you can't point to where a claim came from in the data below,
+  cut it — do not add it just because it sounds plausible for the opening in general. If the given
+  reason is strategic/practical rather than a crisp tactical point (e.g. "declines a gambit whose
+  soundness is unclear; transposes into a structure we already know how to play"), say exactly that
+  plainly — a real but modest reason beats a fabricated specific-sounding one, and a fabricated one
+  can flatly contradict the eval/win% you were also given (e.g. calling a move that LOST win
+  probability something that "strengthens" the position).
+- The word "gambit" — and the decline/accept framing — belongs ONLY on a position that IS a gambit:
+  material is actually being offered or given back somewhere in the line, and the theory
+  excerpt/verdict below actually says so. Most opening moves are not a gambit at all. If the given
+  commentary describes DECLINING a gambit (giving back extra material to sidestep a sharp or unclear
+  line) or ACCEPTING one, say so explicitly — that's the single most important thing to state, don't
+  bury it under generic "solid book move" framing. But if nothing below mentions a gambit, DO NOT use
+  the word "gambit" or "decline"/"accept" framing at all — reaching for that phrasing out of habit
+  when it isn't actually a gambit is a fabrication just like inventing any other fact.
+- If an "Expected continuation" is given below, your explanation MUST include its first labeled move
+  as a concrete fact — e.g. "White recaptures with Bxd3" — using the exact color label given, not one
+  you infer. This is not optional flavor; a reader asking "what happens next" wants that answer, and
+  it's real data you were handed, not a guess.
+- If there truly is no concrete reason available (no theory excerpt, nothing beyond "this is normal"),
+  1 short sentence is enough: name the move's quality and stop.
+- Either way, never add a sentence or clause that just restates the same verdict in different words
+  (e.g. "...and fits into the standard setup" tacked onto "a solid, well-known book move" says nothing
+  new — cut it).
+- Use up to 3 sentences only when there's real substance to unpack: a concrete plan, a sacrifice's
   compensation, a tactical point, or a genuine mistake/blunder. Never pad to fill space.
 - Do not cite exact game counts, percentages, or win/draw/loss splits unless the number itself is the
   interesting fact (e.g. a rare try, a near-novelty, or a surprisingly lopsided score). For an ordinary
@@ -146,6 +189,37 @@ func isSeriousError(c MoveCategory) bool {
 // made that move and the half-move (ply) count. The FEN's side-to-move field is
 // the player now on move (the opponent of the mover); the fullmove number plus
 // that field give the ply. Returns ("", 0) if the FEN can't be parsed.
+// formatContinuation renders an engine PV as an explicitly color-labeled,
+// capped sequence ("White: Bxd3, Black: Nc6, White: c4, Black: e6") instead
+// of a bare space-separated SAN string. A bare list forces the model to
+// track whose move is whose by counting alternation, which it does
+// unreliably in practice (observed live: given "Bxd3 Nc6 c4 e6..." it
+// described the position's own move as "stopping" c4 — the very next move
+// in that same list, played by the opponent). Labeling every move removes
+// that failure mode structurally instead of just telling the model not to
+// make it. sideToMoveFEN is the "w"/"b" field of the FEN the line starts
+// from; capPlies bounds how many moves are shown (deep lines are noise and
+// more surface area to misread, not more useful signal).
+func formatContinuation(moves []string, sideToMoveFEN string, capPlies int) string {
+	color := "White"
+	if sideToMoveFEN == "b" {
+		color = "Black"
+	}
+	parts := make([]string, 0, capPlies)
+	for i, m := range moves {
+		if i >= capPlies {
+			break
+		}
+		parts = append(parts, fmt.Sprintf("%s: %s", color, m))
+		if color == "White" {
+			color = "Black"
+		} else {
+			color = "White"
+		}
+	}
+	return strings.Join(parts, ", ")
+}
+
 func moverAndPly(fen string) (mover string, ply int) {
 	fields := strings.Fields(fen)
 	if len(fields) < 6 {
@@ -216,9 +290,10 @@ func showEngineEval(ply int, quality *MoveQuality) bool {
 }
 
 // BuildExplainPrompt assembles the system+user prompt for the per-move
-// explanation path. chunks may be nil/empty (most positions won't have book
-// commentary) and quality may be nil (when the prior position is unknown).
-func BuildExplainPrompt(req ExplainRequest, chunks []Chunk, quality *MoveQuality) (system, user string) {
+// explanation path. theory may be entirely empty (most positions won't have
+// book commentary, exact or nearby) and quality may be nil (when the prior
+// position is unknown).
+func BuildExplainPrompt(req ExplainRequest, theory LookupResult, quality *MoveQuality) (system, user string) {
 	var b strings.Builder
 
 	mover, ply := moverAndPly(req.FEN)
@@ -248,19 +323,33 @@ func BuildExplainPrompt(req ExplainRequest, chunks []Chunk, quality *MoveQuality
 		}
 	}
 
-	if req.Analysis != nil && showEval {
+	if req.Analysis != nil {
 		a := req.Analysis
-		b.WriteString("\nEngine evaluation (white's perspective):\n")
-		if a.Mate != 0 {
-			fmt.Fprintf(&b, "- Mate in %d\n", a.Mate)
-		} else {
-			fmt.Fprintf(&b, "- Score: %+d centipawns (depth %d, %s)\n", a.Score, a.Depth, a.EngineName)
-		}
-		for i, line := range a.Lines {
-			if i >= 3 {
-				break
+		if showEval {
+			b.WriteString("\nEngine evaluation (white's perspective):\n")
+			if a.Mate != 0 {
+				fmt.Fprintf(&b, "- Mate in %d\n", a.Mate)
+			} else {
+				fmt.Fprintf(&b, "- Score: %+d centipawns (depth %d, %s)\n", a.Score, a.Depth, a.EngineName)
 			}
-			fmt.Fprintf(&b, "- Line %d: %s\n", i+1, strings.Join(line.Moves, " "))
+			for i, line := range a.Lines {
+				if i >= 3 {
+					break
+				}
+				fmt.Fprintf(&b, "- Line %d: %s\n", i+1, strings.Join(line.Moves, " "))
+			}
+		} else if len(a.Lines) > 0 && len(a.Lines[0].Moves) > 0 {
+			// Numeric eval is suppressed this early, but the engine's own predicted
+			// continuation is still real ground truth for "what happens next" — just
+			// with no score/depth/engine-name attached to parrot. Color-labeled and
+			// capped — see formatContinuation.
+			stm := "w"
+			if fields := strings.Fields(req.FEN); len(fields) > 1 {
+				stm = fields[1]
+			}
+			fmt.Fprintf(&b, "\nExpected continuation (no score — early book position; each move is "+
+				"labeled with whose move it is, use that label, don't count alternation yourself): %s\n",
+				formatContinuation(a.Lines[0].Moves, stm, 4))
 		}
 	}
 
@@ -280,14 +369,24 @@ func BuildExplainPrompt(req ExplainRequest, chunks []Chunk, quality *MoveQuality
 		}
 	}
 
-	if len(chunks) == 0 {
-		b.WriteString("\nNo opening-theory excerpt covers this exact position — explain using the data above and general principles.\n")
-	} else {
+	switch {
+	case len(theory.Exact) > 0:
 		b.WriteString("\nOpening-theory excerpts covering this exact position:\n")
-		for _, c := range chunks {
+		for _, c := range theory.Exact {
 			fmt.Fprintf(&b, "- Author: %s | Book: %s | Location: %s\n  Commentary: %s\n",
 				c.Source.Author, c.Source.Title, c.Source.Location, c.CommentaryText)
 		}
+	case len(theory.Prefix) > 0:
+		b.WriteString("\nNo excerpt covers this EXACT position, but it continues (via the same moves) into " +
+			"position(s) the corpus does cover — use these only as \"this can transpose toward known theory\" " +
+			"context, not as commentary on the move just played:\n")
+		for _, m := range theory.Prefix {
+			c := m.Chunk
+			fmt.Fprintf(&b, "- %d ply ahead | Author: %s | Book: %s | Location: %s\n  Commentary (about that LATER position): %s\n",
+				m.PliesAhead, c.Source.Author, c.Source.Title, c.Source.Location, c.CommentaryText)
+		}
+	default:
+		b.WriteString("\nNo opening-theory excerpt covers this exact position — explain using the data above and general principles.\n")
 	}
 
 	return systemPrompt, b.String()

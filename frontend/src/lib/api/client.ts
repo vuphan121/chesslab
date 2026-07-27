@@ -1,4 +1,5 @@
 import type { MoveNode } from '@/lib/chess/types'
+import type { Repertoire, RepertoireSummary } from '@/lib/trainer/types'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
 
@@ -77,8 +78,25 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export const createGame = (): Promise<GameState> =>
-  request('/api/games', { method: 'POST' })
+// createGame with no arguments keeps the original behavior (initial
+// position). Passing a FEN roots the game at an arbitrary position — used
+// by the opening trainer and the analysis-board handoff.
+export const createGame = (fen?: string): Promise<GameState> =>
+  request('/api/games', {
+    method: 'POST',
+    ...(fen
+      ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fen }) }
+      : {}),
+  })
+
+// setPosition re-points an existing game at an arbitrary FEN, discarding its
+// tree — the trainer reuses one game object across a whole drill session.
+export const setPosition = (id: string, fen: string): Promise<GameState> =>
+  request(`/api/games/${id}/position`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fen }),
+  })
 
 export const getGame = (id: string): Promise<GameState> =>
   request(`/api/games/${id}`)
@@ -213,3 +231,10 @@ export const coachChat = (
   history: ChatTurn[],
 ): Promise<CoachChatResponse> =>
   coachRequest(`/api/games/${id}/coach/chat`, { message, history })
+
+// --- Opening trainer ---
+
+export const listRepertoires = (): Promise<RepertoireSummary[]> => request('/api/repertoires')
+
+export const getRepertoire = (id: string): Promise<Repertoire> =>
+  request(`/api/repertoires/${id}`)

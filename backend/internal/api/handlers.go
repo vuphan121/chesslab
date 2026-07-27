@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -10,20 +11,22 @@ import (
 	"github.com/chesslab/backend/internal/coach"
 	"github.com/chesslab/backend/internal/engine"
 	"github.com/chesslab/backend/internal/lichess"
+	"github.com/chesslab/backend/internal/repertoire"
 	"github.com/chesslab/backend/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
 type Handler struct {
-	store      storage.Store
-	engine     *engine.Engine
-	coach      *coach.Service // Path 1 (per-move); nil if unconfigured — endpoint returns 503
-	coachAgent *coach.Agent   // Path 2 (freeform chat); nil if unconfigured — endpoint returns 503
+	store       storage.Store
+	engine      *engine.Engine
+	coach       *coach.Service // Path 1 (per-move); nil if unconfigured — endpoint returns 503
+	coachAgent  *coach.Agent   // Path 2 (freeform chat); nil if unconfigured — endpoint returns 503
+	repertoires *repertoire.Store
 }
 
-func NewHandler(store storage.Store, eng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent) *Handler {
-	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent}
+func NewHandler(store storage.Store, eng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent, repertoires *repertoire.Store) *Handler {
+	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires}
 }
 
 type PieceJSON struct {
@@ -113,11 +116,66 @@ type ExplorerJSON struct {
 	Moves       []ExplorerMoveJSON `json:"moves"`
 }
 
+type CreateGameRequest struct {
+	FEN string `json:"fen"`
+}
+
+// CreateGame creates a new game, optionally rooted at an arbitrary FEN (used
+// by the opening trainer and the analysis-board handoff). An empty or
+// absent body keeps the existing behavior: a game from the initial position.
 func (h *Handler) CreateGame(w http.ResponseWriter, r *http.Request) {
+	var req CreateGameRequest
+	if r.ContentLength != 0 {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil && err != io.EOF {
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+	}
+
 	id := uuid.New().String()
-	g := chess.NewGame(id)
+	var g *chess.Game
+	if req.FEN != "" {
+		var err error
+		g, err = chess.NewGameFromFEN(id, req.FEN)
+		if err != nil {
+			http.Error(w, "invalid fen: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+	} else {
+		g = chess.NewGame(id)
+	}
+
 	h.store.Save(g)
 	respondJSON(w, http.StatusCreated, toGameState(g))
+}
+
+type SetPositionRequest struct {
+	FEN string `json:"fen"`
+}
+
+// SetPosition re-points an existing game at an arbitrary FEN, discarding its
+// tree — the opening trainer reuses one game object across a whole drill
+// session instead of creating one per card.
+func (h *Handler) SetPosition(w http.ResponseWriter, r *http.Request) {
+	g, ok := h.store.Get(chi.URLParam(r, "id"))
+	if !ok {
+		http.Error(w, "game not found", http.StatusNotFound)
+		return
+	}
+
+	var req SetPositionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := g.ResetTo(req.FEN); err != nil {
+		http.Error(w, "invalid fen: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	h.store.Save(g)
+	respondJSON(w, http.StatusOK, toGameState(g))
 }
 
 func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {

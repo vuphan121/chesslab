@@ -67,6 +67,13 @@ func applyMove(pos *Position, m Move) *Position {
 	return next
 }
 
+// ApplyMove returns the position after playing m in pos. It does not check
+// legality — callers (e.g. repertoire PGN parsing) are expected to have
+// already validated m via GenerateLegalMoves/FindLegalMoveBySAN.
+func ApplyMove(pos *Position, m Move) *Position {
+	return applyMove(pos, m)
+}
+
 func updateCastling(c *CastlingRights, from, to Square) {
 	if from == NewSquare(4, 0) {
 		c.WK, c.WQ = false, false
@@ -112,9 +119,20 @@ type Game struct {
 }
 
 func NewGame(id string) *Game {
-	pos, _ := ParseFEN(StartFEN)
+	g, _ := NewGameFromFEN(id, StartFEN)
+	return g
+}
+
+// NewGameFromFEN creates a game rooted at an arbitrary position instead of
+// the initial one — used by the opening trainer, whose repertoire lines
+// start wherever the source study's chapter does.
+func NewGameFromFEN(id string, fen string) (*Game, error) {
+	pos, err := ParseFEN(fen)
+	if err != nil {
+		return nil, err
+	}
 	root := &Node{ID: "0", Pos: pos}
-	return &Game{ID: id, Root: root, Current: root, Pos: pos}
+	return &Game{ID: id, Root: root, Current: root, Pos: pos}, nil
 }
 
 func (g *Game) nextID() string {
@@ -145,6 +163,24 @@ func (g *Game) Reset() {
 	g.Root = root
 	g.counter = 0
 	g.setCurrent(root)
+}
+
+// ResetTo is the FEN variant of Reset: discards the entire move tree and
+// starts over from a fresh root at an arbitrary position, rather than the
+// initial one. Same contract as Reset (a brand-new root with empty
+// Children) — used by the opening trainer to re-point one game object at
+// each new card's position without leaking the previous card's moves into
+// the next as a stale sideline.
+func (g *Game) ResetTo(fen string) error {
+	pos, err := ParseFEN(fen)
+	if err != nil {
+		return err
+	}
+	root := &Node{ID: "0", Pos: pos}
+	g.Root = root
+	g.counter = 0
+	g.setCurrent(root)
+	return nil
 }
 
 // GotoNode navigates to an existing node without discarding any moves.
@@ -213,11 +249,11 @@ func (g *Game) ApplyMove(m Move) error {
 	return fmt.Errorf("illegal move: %s→%s", m.From, m.To)
 }
 
-func (g *Game) IsCheck() bool      { return InCheck(g.Pos, g.Pos.Turn) }
+func (g *Game) IsCheck() bool       { return InCheck(g.Pos, g.Pos.Turn) }
 func (g *Game) HasLegalMoves() bool { return len(g.LegalMoves()) > 0 }
-func (g *Game) IsCheckmate() bool  { return g.IsCheck() && !g.HasLegalMoves() }
-func (g *Game) IsStalemate() bool  { return !g.IsCheck() && !g.HasLegalMoves() }
-func (g *Game) Is50MoveRule() bool { return g.Pos.HalfClock >= 100 }
+func (g *Game) IsCheckmate() bool   { return g.IsCheck() && !g.HasLegalMoves() }
+func (g *Game) IsStalemate() bool   { return !g.IsCheck() && !g.HasLegalMoves() }
+func (g *Game) Is50MoveRule() bool  { return g.Pos.HalfClock >= 100 }
 
 func (g *Game) IsInsufficientMaterial() bool {
 	var pieces int
@@ -229,7 +265,9 @@ func (g *Game) IsInsufficientMaterial() bool {
 	return pieces == 2
 }
 
-func (g *Game) IsDraw() bool    { return g.IsStalemate() || g.Is50MoveRule() || g.IsInsufficientMaterial() }
+func (g *Game) IsDraw() bool {
+	return g.IsStalemate() || g.Is50MoveRule() || g.IsInsufficientMaterial()
+}
 func (g *Game) IsGameOver() bool { return g.IsCheckmate() || g.IsDraw() }
 
 func (g *Game) GameOverReason() string {

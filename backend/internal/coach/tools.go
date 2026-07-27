@@ -102,10 +102,12 @@ func (t *Tools) ExplorerStats(fen string) (*lichess.ExplorerResponse, error) {
 	return lichess.FetchExplorer(fen)
 }
 
-// RetrieveTheory looks up curated opening-theory chunks for an exact FEN.
-func (t *Tools) RetrieveTheory(fen string) []Chunk {
+// RetrieveTheory looks up curated opening-theory for a FEN — an exact hit if
+// the corpus covers this precise position, otherwise nearby "transposes
+// toward known theory" hints. See Index.Lookup.
+func (t *Tools) RetrieveTheory(fen string) LookupResult {
 	if t.Index == nil {
-		return nil
+		return LookupResult{}
 	}
 	return t.Index.Lookup(fen)
 }
@@ -159,7 +161,7 @@ func (t *Tools) classifyWithBook(fenBefore, fenAfter string, before, after *Posi
 		}
 		status = bookStatusFromGames(games)
 	}
-	inCorpus := len(t.RetrieveTheory(fenAfter)) > 0
+	inCorpus := len(t.RetrieveTheory(fenAfter).Exact) > 0
 	mq.applyBookContext(status, games, openingName, inCorpus)
 
 	return mq, nil

@@ -6,11 +6,21 @@
   padding: 0;
 }
 
+html {
+  /* Belt-and-suspenders against any residual sub-pixel overflow from the
+     responsive layout math — the page itself should never side-scroll. */
+  overflow-x: hidden;
+}
+
 body {
   background: #e8e8e6;
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, sans-serif;
   color: #1c1b18;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  /* Removes the grey flash Android/iOS show on tap for non-text elements —
+     buttons/board squares already have their own hover/active feedback. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 ::selection {

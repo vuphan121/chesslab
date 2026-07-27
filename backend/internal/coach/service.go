@@ -19,9 +19,9 @@ func NewService(tools *Tools, llm LLMClient) *Service {
 }
 
 func (s *Service) ExplainMove(ctx context.Context, req ExplainRequest) (string, error) {
-	var chunks []Chunk
+	var theory LookupResult
 	if s.Tools != nil && s.Tools.Index != nil {
-		chunks = s.Tools.Index.Lookup(req.FEN)
+		theory = s.Tools.Index.Lookup(req.FEN)
 	}
 
 	// Classify the move that was just played, when we know the prior position —
@@ -36,6 +36,6 @@ func (s *Service) ExplainMove(ctx context.Context, req ExplainRequest) (string, 
 		}
 	}
 
-	system, user := BuildExplainPrompt(req, chunks, quality)
+	system, user := BuildExplainPrompt(req, theory, quality)
 	return s.LLM.Chat(ctx, system, user)
 }

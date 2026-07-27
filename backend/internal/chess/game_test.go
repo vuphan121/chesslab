@@ -42,6 +42,41 @@ func TestGameResetDiscardsTree(t *testing.T) {
 	}
 }
 
+// TestGameResetToDiscardsTree covers the same contract as
+// TestGameResetDiscardsTree, for the FEN variant used by the opening
+// trainer to re-point one game at each new card's position.
+func TestGameResetToDiscardsTree(t *testing.T) {
+	g := NewGame("test")
+
+	e4 := findMove(t, g, "e2", "e4")
+	if err := g.ApplyMove(e4); err != nil {
+		t.Fatalf("applying e4: %v", err)
+	}
+
+	catalanFEN := "rnbqkb1r/1pp2ppp/p3pn2/8/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 0 1"
+	if err := g.ResetTo(catalanFEN); err != nil {
+		t.Fatalf("ResetTo: %v", err)
+	}
+
+	if len(g.Root.Children) != 0 {
+		t.Fatalf("ResetTo() left %d stale children on the root, want 0", len(g.Root.Children))
+	}
+	if g.Current != g.Root {
+		t.Fatalf("ResetTo() did not move Current back to the (new) root")
+	}
+	if FEN(g.Pos) != catalanFEN {
+		t.Fatalf("ResetTo() root FEN = %q, want %q", FEN(g.Pos), catalanFEN)
+	}
+
+	oo := findMove(t, g, "e1", "g1")
+	if err := g.ApplyMove(oo); err != nil {
+		t.Fatalf("applying O-O after ResetTo: %v", err)
+	}
+	if len(g.Root.Children) != 1 {
+		t.Fatalf("after ResetTo + one move, root should have exactly 1 child, got %d", len(g.Root.Children))
+	}
+}
+
 func findMove(t *testing.T, g *Game, from, to string) Move {
 	t.Helper()
 	fromSq := ParseSquare(from)

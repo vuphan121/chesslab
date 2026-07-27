@@ -1,0 +1,11 @@
+.git
+.env
+*.env
+*.md
+
+# Authoring-time inputs for the opening-theory corpus — not read at runtime
+# (main.go only loads chunks.validated.json / overview.json).
+data/opening-sources/**/*.pdf
+data/opening-sources/**/*.py
+data/opening-sources/**/chunks.json
+data/opening-sources/**/validation_report.json

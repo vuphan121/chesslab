@@ -137,7 +137,21 @@
       "Bash(ollama serve *)",
       "Bash(gofmt -l internal/coach/prompt_test.go)",
       "Bash(gofmt -w internal/coach/prompt_test.go)",
-      "Bash(gofmt -l internal/coach/prompt.go)"
+      "Bash(gofmt -l internal/coach/prompt.go)",
+      "Bash(curl -s -o /dev/null -w \"ollama http_code: %{http_code}\\\\n\" http://localhost:11434 --max-time 3)",
+      "Bash(curl -s -m 3 http://localhost:11434/api/tags)",
+      "Bash(python3 -c ' *)",
+      "Bash(where python *)",
+      "Bash(grep -n \"Returns \\\\`{\" frontend/CLAUDE.md)",
+      "Bash(python -c \"import chess, requests; print\\('ok', chess.__version__\\)\")",
+      "Bash(gofmt -l .)",
+      "Bash(gofmt -l cmd/server/main.go internal/coach/index.go internal/coach/agent.go internal/coach/prompt.go internal/coach/tools.go internal/coach/service.go internal/coach/prompt_test.go internal/chess/pgn.go internal/api/pgn.go)",
+      "Bash(STOCKFISH_PATH=\"C:/Users/vupha/AppData/Local/Microsoft/WinGet/Packages/Stockfish.Stockfish_Microsoft.Winget.Source_8wekyb3d8bbwe/stockfish/stockfish-windows-x86-64-avx2.exe\" go run ./cmd/debugtheory/)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(echo \"HOME: $HOME\"; ls -la ~/.claude/settings.json 2>&1; echo \"---\"; ls -la D:/chesslab/.claude/settings.local.json 2>&1; echo \"---project---\"; ls -la D:/chesslab/.claude/settings.json 2>&1)",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('/c/Users/vupha/.claude/settings.json'\\)\\); print\\(d\\)\")",
+      "Bash(python -c \"import json; d=json.load\\(open\\('/c/Users/vupha/.claude/settings.json'\\)\\); print\\(d\\)\")"
     ]
   }
 }

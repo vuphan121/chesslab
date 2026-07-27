@@ -1,20 +1,24 @@
+import type { ReactNode } from 'react'
 import type { Color } from '@/lib/chess/types'
+import PageSwitcher from './PageSwitcher'
 
 interface Props {
-  turn: Color
-  isBookMove: boolean
+  turn?: Color
+  isBookMove?: boolean
+  // Overrides the default turn/book-move pills entirely — pages with a
+  // different right-hand status (e.g. the opening trainer) pass their own.
+  right?: ReactNode
 }
 
-export default function TopBar({ turn, isBookMove }: Props) {
+export default function TopBar({ turn, isBookMove, right }: Props) {
   return (
     <div
+      className="flex-wrap gap-3 px-4 py-3 sm:gap-[22px] sm:px-[22px] sm:py-4"
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 22,
         background: '#fff',
         borderRadius: 11,
-        padding: '16px 22px',
         marginBottom: 20,
         boxShadow: '0 1px 3px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.05)',
       }}
@@ -25,8 +29,12 @@ export default function TopBar({ turn, isBookMove }: Props) {
         </span>
       </div>
 
-      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 9 }}>
-        {isBookMove ? (
+      <PageSwitcher />
+
+      <div className="gap-2 sm:gap-[9px]" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+        {right !== undefined ? (
+          right
+        ) : isBookMove ? (
           <span
             style={{
               display: 'flex',
@@ -64,18 +72,20 @@ export default function TopBar({ turn, isBookMove }: Props) {
             Deviation
           </span>
         )}
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: '#6a675f',
-            background: '#f0efe9',
-            padding: '6px 13px',
-            borderRadius: 8,
-          }}
-        >
-          {turn === 'w' ? 'White to move' : 'Black to move'}
-        </span>
+        {right === undefined && turn && (
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: '#6a675f',
+              background: '#f0efe9',
+              padding: '6px 13px',
+              borderRadius: 8,
+            }}
+          >
+            {turn === 'w' ? 'White to move' : 'Black to move'}
+          </span>
+        )}
       </div>
     </div>
   )

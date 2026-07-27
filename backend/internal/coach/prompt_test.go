@@ -66,7 +66,7 @@ func TestBuildExplainPromptSuppressesOpeningEval(t *testing.T) {
 		LastMoveSAN: "e4",
 		Analysis:    &AnalysisInput{EngineName: "Test", Depth: 20, Score: 30},
 	}
-	_, user := BuildExplainPrompt(req, nil, &MoveQuality{Category: CategoryBest})
+	_, user := BuildExplainPrompt(req, LookupResult{}, &MoveQuality{Category: CategoryBest})
 
 	if strings.Contains(user, "Engine evaluation") {
 		t.Errorf("expected no engine-evaluation section for an early book move, got:\n%s", user)
@@ -132,7 +132,7 @@ func TestBuildExplainPromptViewerDiffersFromMover(t *testing.T) {
 		LastMoveSAN: "e5",
 		ViewerColor: "w",
 	}
-	_, user := BuildExplainPrompt(req, nil, nil)
+	_, user := BuildExplainPrompt(req, LookupResult{}, nil)
 	if !strings.Contains(user, "coaching White") || !strings.Contains(user, "played by Black") {
 		t.Errorf("expected viewer(White)/mover(Black) framing in prompt, got:\n%s", user)
 	}

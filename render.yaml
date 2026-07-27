@@ -1,0 +1,44 @@
+# Render Blueprint — deploys the backend (Go + Stockfish, Docker web service)
+# and frontend (Next.js static export) as two services from this one repo.
+# Import via the Render dashboard: New > Blueprint > select this repo.
+#
+# NEXT_PUBLIC_API_URL / ALLOWED_ORIGIN below assume the service names stay
+# "chesslab-backend" / "chesslab-frontend" (Render URLs are
+# https://<service-name>.onrender.com). If Render asks you to rename either
+# service (name already taken), update both values to match after deploy —
+# see the deploy instructions for the manual dashboard equivalent.
+#
+# The AI coach (Ollama-backed /coach/explain, /coach/chat) is intentionally
+# NOT deployed here — no local LLM runs on Render. Those two endpoints will
+# return 503 in production, same as when Stockfish is unavailable; the rest
+# of the app is unaffected. Wire OLLAMA_BASE_URL below only if you're pointing
+# at an LLM server you host elsewhere.
+
+services:
+  - type: web
+    name: chesslab-backend
+    env: docker
+    plan: starter
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /healthz
+    envVars:
+      - key: ALLOWED_ORIGIN
+        value: https://chesslab-frontend.onrender.com
+      - key: LICHESS_TOKEN
+        sync: false # set manually in the dashboard — free token, see backend/.env.example
+      - key: OLLAMA_BASE_URL
+        value: "" # left empty on purpose — see note above
+
+  # Both pages are fully client-rendered with no API routes/middleware, so
+  # this deploys as a static export (next.config.ts: output: 'export') —
+  # a real static site (free tier, CDN, no cold start) rather than a paid
+  # Node web service.
+  - type: static
+    name: chesslab-frontend
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./out
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://chesslab-backend.onrender.com

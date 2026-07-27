@@ -1,9 +1,12 @@
 # Chesslab
 
-AI-powered chess opening prep tool — an interactive "Opening Study" workspace combining a Lichess
-opening database, a chessboard with Stockfish analysis, move-tree navigation (with sidelines), and an
-AI coach (grounded per-move explanations + freeform tool-calling chat, backed by a local LLM via
-Ollama — see backend/CLAUDE.md).
+AI-powered chess opening prep tool. Two pages, switchable via a dropdown in the top bar:
+- **Analysis Board** (`/`) — a Lichess opening database, a chessboard with Stockfish analysis,
+  move-tree navigation (with sidelines), and an AI coach (grounded per-move explanations + freeform
+  tool-calling chat, backed by a local LLM via Ollama — see backend/CLAUDE.md).
+- **Opening Study** (`/opening-study`) — spaced-repetition drilling of a repertoire parsed from a
+  Lichess study (Chessbook/Lotus style). See `docs/opening-trainer/` for the full design; summarized
+  below under "Opening Trainer".
 
 ## Monorepo structure
 
@@ -39,7 +42,7 @@ Claude Code.
 
 ## What's built
 
-### Opening Study page (frontend/src/app/page.tsx)
+### Analysis Board page (frontend/src/app/page.tsx)
 A single-screen 3-column workspace, originally from a Claude-designed hi-fi mock
 (`.design_handoff/design_handoff_opening_study/`, gitignored), since reworked into a
 **Coach | Board | Move order** layout:
@@ -47,8 +50,9 @@ A single-screen 3-column workspace, originally from a Claude-designed hi-fi mock
 [Coach]  [caption row + Board + Eval bar]   [Move order]
          [Opening Tree, under the board]
 ```
-- **Coach** (left column): the live AI coach — auto per-move explanation + freeform tool-calling chat,
-  backed by a local LLM (see below). Narrow and tall; its panel height is pinned to the board height.
+- **Coach** (left column): the AI coach — an "Ask Coach" button for a per-move explanation (manual, not
+  automatic — see below) + freeform tool-calling chat, backed by a local LLM (see below). Narrow and
+  tall; its panel height is pinned to the board height.
 - **Board + eval bar** (center): see below. Below the board sits the **Opening Tree** (live Lichess
   opening-explorer stats — per-move games/share%/W-D-L, click a row to play that continuation), a
   compact fixed-height scrollable panel.
@@ -138,11 +142,13 @@ Games are stored as a **tree**, not a linear move list — navigating backward n
 Grounded chess coaching backed by a **local LLM** (Ollama + `llama3.1:8b` by default — no Anthropic
 key; overridable via `OLLAMA_BASE_URL`/`COACH_MODEL`). The LLM writes prose; it never invents chess
 facts — those come from Stockfish/Lichess and a curated opening-theory corpus. Two paths:
-- **Path 1 — per-move explanation** (`POST /coach/explain`): fires automatically after each
-  move/navigation. Retrieves book commentary for the exact position (FEN-keyed corpus), runs the
-  **book-aware move classifier** (so a gambit reads as a playable "Book" move, not a blunder even when
-  the engine dislikes it), and folds in the eval/explorer data the frontend already has → one grounded
-  explanation, shown pinned atop the Coach panel.
+- **Path 1 — per-move explanation** (`POST /coach/explain`): triggered by an **"Ask Coach" button**,
+  not automatic — an earlier version fired on every move/navigation, but that queued up several slow
+  local-LLM calls when scrubbing through a game (Ollama serves one request at a time), which was felt
+  as UI lag. Retrieves book commentary for the exact position (FEN-keyed corpus), runs the **book-aware
+  move classifier** (so a gambit reads as a playable "Book" move, not a blunder even when the engine
+  dislikes it), and folds in the eval/explorer data the frontend already has → one grounded explanation,
+  shown pinned atop the Coach panel. Cleared back to idle on navigation/flip (see frontend `CLAUDE.md`).
 - **Path 2 — freeform chat** (`POST /coach/chat`): an agentic tool-calling loop. Tools:
   `analyze_position`, `explorer_stats`, `retrieve_theory` (position-specific book text),
   `retrieve_opening_context` (opening-level prose — "what's the idea behind this opening?"),
@@ -161,22 +167,140 @@ facts — those come from Stockfish/Lichess and a curated opening-theory corpus.
   and a tiny eval swing is noise, not something to quote at the player.
 
 ### Frontend → Backend integration
-- On mount, `useChessGame` creates a new game via `POST /api/games`
+- On mount, `useChessGame` creates a new game via `POST /api/games` (or adopts an existing one via
+  `?gameId=` — see "Opening Trainer" below, "Analyze this line" handoff)
 - Clicks/drags go through `selectSquare` / `move(from, to)` → `POST /api/games/{id}/moves`
 - Tree navigation goes through `gotoNode(id)` → `POST /api/games/{id}/goto`
 - All game state (pieces, legal moves, turn, check, move tree, etc.) comes from the backend response
 - After every move/navigation, frontend calls `GET /api/games/{id}/analysis` and `GET /api/games/{id}/explorer`
   in parallel (`refreshInsights`)
 
+### Top bar page switcher (`components/layout/PageSwitcher.tsx`)
+A dropdown next to the wordmark on every page, listing Analysis Board / Opening Study with the
+current page checked; `next/link` navigation, closes on outside click/Escape. `TopBar` takes an
+optional `right` prop that replaces its default turn/book-move pills entirely — the trainer page
+passes its own (the repertoire name), the analysis page still passes `turn`/`isBookMove` as before.
+
+### Opening Trainer page (`/opening-study` — `frontend/src/app/opening-study/page.tsx`)
+Spaced-repetition drilling of a repertoire parsed from a Lichess study (Chessbook/Lotus style).
+Full design in `docs/opening-trainer/` (read `design.md` first); this section covers what's
+actually built and where the implementation diverged from or extended that design.
+
+**Backend** (`backend/internal/repertoire/`): `ParsePGN` parses a multi-chapter study export (each
+chapter rooted at its own `[FEN]`/`[SetUp]`, full variation tree preserved — this is a *new* parser,
+deliberately not sharing code with `chess.TokenizePGNMoves`, which is single-game and strips
+variations by design for the PGN-paste feature). `BuildRepertoire` resolves exclusions (sidecar
+`.config.json` + `$2/$4/$6` NAGs) and derives the card set + opponent reply pools, keyed by
+`CardKey(fen)` (clock-stripped FEN) so the same position reached via different chapters/move-orders
+merges into one card. Demo repertoire: `backend/data/repertoires/catalan-white.{pgn,config.json}` —
+fetched from `https://lichess.org/study/pYmWdR27`, 60 cards across 3 chapters (verified by
+`internal/repertoire/*_test.go`, including the exact expected card enumeration in
+`docs/opening-trainer/data-format.md` §2.3). New endpoints: `GET /api/repertoires`,
+`GET /api/repertoires/{id}`, `POST /api/games/{id}/position` (re-points an existing game at an
+arbitrary FEN, discarding its tree — same contract as `Game.Reset()`, see backend `CLAUDE.md`).
+`POST /api/games` gained an optional `{fen}` body (defaults to the initial position, unchanged for
+the analysis page).
+
+**Frontend scheduler** (`frontend/src/lib/trainer/scheduler.ts`): pure TypeScript, seeded RNG
+(`rng.ts`, `mulberry32`), no chess knowledge — a Leitner-box ladder (`BASE_GAP = [2,4,8,16,32,64]`)
+with lapse-based gap decay (`0.8 ** lapses`) so a card you've failed keeps returning sooner
+*permanently*, not just on the next rep. Fully covered by `scheduler.test.ts` (10 cases: promotion
+gaps, demotion floor, lapse decay, retirement, determinism under a fixed seed, etc.) — this is the
+one part of the feature whose correctness isn't visible by looking at the screen. `persistence.ts`
+saves per-card `{box, lapses, seen, correct, lastSeenISO}` to `localStorage`
+(`chesslab.trainer.v1.<repertoireId>`), with crude cross-session day-based box decay at session
+start (`createSession`).
+
+**Session hook** (`hooks/useTrainerSession.ts`) — deliberately does *not* reuse `useChessGame` (which
+fires analysis/explorer/coach after every move — would both leak the answer and be slow). Owns the
+scheduler session, the current run, and the actual drill flow, which is stricter than the original
+design doc's "no retry" decision (superseded — see below):
+
+- **Correct answer** (primary or alternate): grades the card correct, shows a brief "✓ Correct" /
+  "✓ Also in your repertoire" flash, then plays the opponent's reply (weighted toward whichever
+  continuation has more lapses recorded against cards in its subtree — approximated here as the
+  *immediate* next card's lapse count, not a full subtree walk) and advances into the next card in
+  the same run, or ends the run if there's no further recorded continuation (out of book).
+- **Wrong answer** (including a recognized-but-excluded move): grades the card incorrect *once* per
+  presentation, shows the expected move + any study comment, **undoes the move and re-prompts the
+  same position** — the user must retry until they play a recognized answer before the run
+  continues. This replaces design.md §7.3/§12's original "no retry" decision; the user asked for
+  undo-show-retry explicitly and it's what's implemented.
+- **Run completion**: if the run had *any* mistake (even one later corrected via retry), the only
+  way forward is **"Do it again"** (replays the exact same run from its starting card) — no "Next
+  line" option is offered until a clean pass. A clean run offers **"Next line"** (advances the
+  scheduler via `pickNext`). Both states also offer **"Analyze"**.
+- **"Analyze this line"**: builds a fresh game at the run's starting FEN, replays every move
+  actually played this run (both sides, via sequential `POST /moves` calls) on a **new** backend game
+  object, then navigates to `/?gameId=<newId>` — `useChessGame` picks up an existing game via that
+  query param (see above) instead of creating a fresh one, handing the exact line to the full
+  Analysis Board (eval bar, coach, explorer, everything — none of which the trainer itself shows,
+  since they'd give away the answer).
+
+**A real bug found and fixed during manual verification**: the played move's SAN was originally read
+via `gs.moveTree.children[0]`, which is only "the move just played" immediately after a tree reset.
+Within a run the tree accumulates every ply (the game object is reused across the whole session, per
+design), so by the second move in a run this was reading the *wrong* node's SAN entirely — it would
+have silently misgraded correct answers as wrong past the first move of every line. Fixed by looking
+the played node up via `flatten(gs.moveTree).get(gs.currentNodeId)?.node`, the same pattern
+`useChessGame`'s `nodeMeta` already uses.
+
+**UI components** (`components/trainer/`): `RepertoirePicker` (setup screen — repertoire/chapter
+selection, session length/new-cards/mode options), `LinePanel` (chapter name + intro comment + line
+so far, reusing `toFigurine`, now extracted to `lib/chess/figurine.ts` so both this and
+`MoveHistory` share one implementation), `FeedbackStrip` (correct/incorrect/excluded states,
+`aria-live="polite"`), `SessionSummary` (end-of-session stats + "Drill mistakes"/"Same
+again"/"Change repertoire"). No eval bar, engine readout, or opening tree on this page — see
+`docs/opening-trainer/design.md` §10 for why.
+
 ## What's next (planned)
-- Improve coach explanation quality further — the attribution-fabrication fix (see backend
-  `CLAUDE.md`) addressed the cheap prompt-level cause, but `llama3.1:8b` may still occasionally
-  misattribute or confuse details; a larger local model would tighten this further if it's still an
-  issue after the fix. Re-run `docs/coach-eval/run_eval.py` to check.
+- **Coach explanation quality — decision: accept current state, rely on human verification, stop
+  chasing this with more prompt rules.** A single session iteratively tightened `prompt.go`'s system
+  prompt against `llama3.1:8b` roughly a dozen times (see backend `CLAUDE.md`'s "Prompt-quality
+  fixes" — fabricated sources, meta-commentary leaking into output, invented tactical/strategic
+  claims, gambit language on non-gambit positions, wrong side attribution), and each fix closed the
+  specific case caught while the model found a new failure — trending toward *more* basic errors, not
+  fewer (misnaming which piece was moved; describing an entirely different move than the one played,
+  despite it being stated verbatim in the prompt). That's a capability ceiling, not a prompt-wording
+  gap — further iteration here has a low expected return. If explanation *quality* becomes a priority
+  again, the first thing to try is swapping `COACH_MODEL` for a larger local model and re-running
+  `docs/coach-eval/run_eval.py`, not more system-prompt edits. Until then, treat Path 1's free-text
+  explanation as "directionally useful, needs a human reading it critically," not ground truth — the
+  verdict/book-status/eval data it's grounded in is trustworthy (that's rule-based), the prose
+  wrapped around it isn't reliably so.
+- **Cache per-move coach explanations.** `askCoach` currently re-calls the LLM every time, even for a
+  position it's already explained this session (e.g. clicking "Ask again" with nothing changed, or
+  navigating away and back). Since Path 1's grounding inputs are deterministic per (FEN, prevFEN,
+  lastMoveSan, viewerColor) — not per request — the explanation could be cached keyed on those,
+  turning a repeat ask into an instant cache hit instead of another 15-30s local-LLM call. Open
+  question: where the cache lives (in-memory in the Go backend, keyed like `coach.Index`; or
+  frontend-side like `MoveHistory`'s per-FEN eval cache) and whether flipping the board (which
+  changes `viewerColor`) should count as a cache-key change (yes) or invalidate/reuse the same-side
+  explanation (no — different viewer means different prose).
 - Expand the opening-context corpus beyond the Accelerated Dragon (see `docs/handoff.md`)
 - Repertoire builder: let user mark moves as their chosen responses
 - Real book-deviation tracking (currently approximated by explorer game count > 0)
 - Promotion dialog (currently auto-promotes to queen)
+
+## Deployment (Render)
+
+`render.yaml` (repo root) is a Render Blueprint deploying two services: `chesslab-backend` (Go +
+Stockfish, `backend/Dockerfile` — Render's native Go runtime can't `apt-get install stockfish`, hence
+Docker) and `chesslab-frontend` (Next.js **static export** — both pages are fully client-rendered
+with no API routes/middleware, so `next.config.ts` sets `output: 'export'` and it deploys as a plain
+static site, not a Node service). See `backend/.env.example` / `frontend/.env.example` for the env
+vars each service needs.
+
+**The AI coach is deliberately not deployed.** There's no Ollama instance on Render; `/coach/explain`
+and `/coach/chat` return 503 in production exactly like the existing "Stockfish unavailable" /
+"`LICHESS_TOKEN` unset" degradation paths already handle — no code branch exists for this specifically,
+it falls out of `newCoachDeps` wiring an `OllamaClient` that just fails to connect. Everything else
+(board, engine analysis, opening explorer, opening trainer) is unaffected.
+
+`ALLOWED_ORIGIN` (backend) restricts CORS to the deployed frontend's origin instead of the local-dev
+default of `*`. `PORT` is read from the environment (Render sets it automatically) instead of the old
+hardcoded `:8080`. `GET /healthz` exists purely for Render's health check, which otherwise probes `/`
+and gets chi's default 404.
 
 ## Tech decisions
 - FEN is the universal position identifier across frontend and backend

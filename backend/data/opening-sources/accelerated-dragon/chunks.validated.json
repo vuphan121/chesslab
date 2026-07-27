@@ -2796,6 +2796,18 @@
     "openingName": "Sicilian Defense"
   },
   {
+    "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3",
+    "commentaryText": "It is not at all clear to me that the Morra Gambit is refutable; on the contrary, Esserman's aforementioned book is a convincing defense of its soundness. Furthermore, as Hyper Accelerated Dragon players we offer White the option of a 'delayed' Morra Gambit 1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.c3 after which our options are far more limited. As best I can tell, Black cannot safely accept the delayed Morra Gambit, so for the sake of consistency I recommend declining after 1.e4 c5 2.d4 cxd4 3.c3 as well. The usual way to decline the gambit is to transpose to the Alapin with ...Ng8-f6, but this is not in keeping with my recommended Alapin repertoire. Fortunately, the ...d4-d3 line is a reliable way of transposing into Maroczy-structures which we are familiar with and happy to play as Black.",
+    "source": {
+      "title": "The Hyper Accelerated Dragon",
+      "author": "Raja Panjwani",
+      "location": "Chapter 7 (Anti-Sicilians: Alapin and Morra), Part 1"
+    },
+    "resolvedFen": "rnbqkbnr/pp1ppppp/8/8/4P3/2Pp4/PP3PPP/RNBQKBNR w KQkq - 0 4",
+    "eco": "B21",
+    "openingName": "Sicilian Defense: Smith-Morra Gambit Declined, Push Variation"
+  },
+  {
     "moveSequence": "1.e4 c5 2.d4 cxd4 3.c3 d3 4.Bxd3 g6 5.c4 Bg7 6.Nf3 d6 7.h3 Nf6",
     "commentaryText": "Here we have the Morra Gambit, a system emblematic of the Romantic Era in chess — not chronologically, but in spirit: \"The masters of that time found a sound and fruitful plan: disregarding pawns, achieve a rapid development of the pieces for a swift attack on the enemy king.\" (World Champion Emanuel Lasker). On Steinitzian grounds one might insist that the principled continuation for Black is to accept the gambit — \"the best way to refute a gambit is to accept it\". However, there is a hidden premise in this assertion: the gambit must be refutable! It is not at all clear to me that the Morra Gambit is refutable; on the contrary, Esserman's aforementioned book is a convincing defense of its soundness. Furthermore, as Hyper Accelerated Dragon players we offer White the option of a 'delayed' Morra Gambit 1.e4 c5 2.Nf3 g6 3.d4 cxd4 4.c3 after which our options are far more limited. As best I can tell, Black cannot safely accept the delayed Morra Gambit, so for the sake of consistency I recommend declining after 1.e4 c5 2.d4 cxd4 3.c3 as well. The usual way to decline the gambit is to transpose to the Alapin with ...Ng8-f6, but this is not in keeping with my recommended Alapin repertoire. Fortunately, the ...d4-d3 line is a reliable way of transposing into Maroczy-structures which we are familiar with and happy to play as Black. I cannot overstate how frustrating it is for Morra Gambit players to be denied their Romantic fantasies and instead be lulled into a slow, maneuvering Maroczy structure.",
     "source": {

@@ -10,6 +10,7 @@ import (
 	"github.com/chesslab/backend/internal/api"
 	"github.com/chesslab/backend/internal/coach"
 	"github.com/chesslab/backend/internal/engine"
+	"github.com/chesslab/backend/internal/repertoire"
 	"github.com/chesslab/backend/internal/storage"
 )
 
@@ -60,10 +61,20 @@ func main() {
 	coachSvc := coach.NewService(coachTools, llm)
 	coachAgent := coach.NewAgent(coachTools, llm)
 
-	handler := api.NewHandler(store, eng, coachSvc, coachAgent)
+	repDir := os.Getenv("REPERTOIRES_PATH")
+	if repDir == "" {
+		repDir = "data/repertoires"
+	}
+	repertoires := repertoire.NewStore(repertoire.LoadDir(repDir))
+
+	handler := api.NewHandler(store, eng, coachSvc, coachAgent, repertoires)
 	router := api.NewRouter(handler)
 
-	addr := ":8080"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	addr := ":" + port
 	log.Printf("chesslab backend listening on %s", addr)
 	if err := http.ListenAndServe(addr, router); err != nil {
 		log.Fatal(err)
@@ -86,7 +97,7 @@ func newCoachDeps() (*coach.Index, *coach.OverviewIndex, *coach.OllamaClient) {
 		log.Printf("coach: theory index unavailable (%v) — explanations will skip book grounding", err)
 		index = nil
 	} else {
-		log.Printf("coach: loaded theory index (%d positions)", index.Len())
+		log.Printf("coach: loaded theory index (%d exact positions, %d with nearby transposition hints)", index.Len(), index.PrefixLen())
 	}
 
 	overviewPath := os.Getenv("COACH_OVERVIEW_PATH")

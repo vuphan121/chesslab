@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import {
   createGame,
+  getGame,
   makeMove,
   analyzeGame,
   getExplorer,
@@ -36,11 +37,6 @@ function coachErrorMessage(err: unknown): string {
   return 'Coach is unavailable right now. Please try again.'
 }
 
-// EXPLAIN_DEBOUNCE_MS delays the per-move explanation so rapid move-tree
-// navigation (holding an arrow key) only explains the position you land on,
-// instead of firing a slow local-model call for every position passed through.
-const EXPLAIN_DEBOUNCE_MS = 350
-
 function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
   const pieces: BoardState['pieces'] = {}
   for (const [sq, p] of Object.entries(gs.pieces)) {
@@ -73,7 +69,11 @@ function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState 
   }
 }
 
-export function useChessGame() {
+// initialGameId lets a caller adopt an already-existing game instead of
+// always creating a fresh one — used by the opening trainer's "Analyze this
+// line" handoff (?gameId=... on the analysis page) so the exact line just
+// drilled opens with full engine/explorer/coach access.
+export function useChessGame(initialGameId?: string) {
   const [gs, setGs] = useState<GameState | null>(null)
   const [selected, setSelected] = useState<Square | null>(null)
   const [busy, setBusy] = useState(false)
@@ -85,30 +85,12 @@ export function useChessGame() {
   const [coachExplaining, setCoachExplaining] = useState(false)
   const [coachError, setCoachError] = useState<string | null>(null)
   // Board orientation. Lives here (not just in page.tsx) because flipping is
-  // also which side the coach is currently addressing — see the effect below
-  // that re-explains the current move for the new viewer on every flip.
+  // also which side the coach is currently addressing (see toggleFlipped).
   const [flipped, setFlipped] = useState(false)
   const moveSound = useRef<HTMLAudioElement | null>(null)
-  // Monotonic id so a slow per-move explanation from an earlier position can't
-  // overwrite the explanation for the position the user has since moved to.
+  // Monotonic id so a slow explanation request the user has since navigated
+  // away from (or re-asked) can't overwrite what's currently shown.
   const explainReqId = useRef(0)
-  const explainTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Always-fresh snapshot of state the flip-triggered recompute effect needs,
-  // read without making the effect re-fire on every ordinary move/analysis
-  // update (it should only fire when `flipped` itself changes).
-  const latestRef = useRef<{ gs: GameState | null; analysis: Analysis | null; explorer: Explorer | null }>({
-    gs: null,
-    analysis: null,
-    explorer: null,
-  })
-  // Mirrors `flipped` for refreshInsights to read without depending on it —
-  // refreshInsights must stay referentially stable across flips because the
-  // mount effect below depends on it; if its identity changed on every flip,
-  // that effect would re-fire and create a brand-new game on every flip.
-  const flippedRef = useRef(false)
-  useEffect(() => {
-    flippedRef.current = flipped
-  }, [flipped])
 
   const runAnalysis = useCallback(async (gameId: string): Promise<Analysis | null> => {
     setAnalyzing(true)
@@ -138,90 +120,81 @@ export function useChessGame() {
     }
   }, [])
 
-  // Per-move explanation (coach Path 1). Fires after a move/navigation once the
-  // fresh analysis+explorer for the new position are in hand, so the coach has
-  // full grounding. Debounced + request-id-guarded against rapid navigation.
-  // viewerColor is which side the human is currently studying from (derived
-  // from `flipped`) — it re-frames whose perspective the explanation is
-  // written from, independent of who actually made the move.
-  const runCoachExplain = useCallback(
-    (
-      gameId: string,
-      fen: string,
-      san: string,
-      prevFen: string,
-      a: Analysis | null,
-      e: Explorer | null,
-      viewerColor: 'w' | 'b',
-    ) => {
-      if (explainTimer.current) clearTimeout(explainTimer.current)
-
-      // At the root there's no move to explain — clear the panel back to idle.
-      if (!san) {
-        explainReqId.current++
-        setCoachExplaining(false)
-        setCoachError(null)
-        setCoachExplanation(null)
-        return
-      }
-
-      const reqId = ++explainReqId.current
-      setCoachError(null)
-      setCoachExplaining(true)
-      explainTimer.current = setTimeout(() => {
-        explainMove(gameId, { fen, prevFen, lastMoveSan: san, viewerColor, analysis: a, explorer: e })
-          .then((res) => {
-            if (reqId === explainReqId.current) setCoachExplanation(res.explanation)
-          })
-          .catch((err) => {
-            if (reqId === explainReqId.current) {
-              setCoachExplanation(null)
-              setCoachError(coachErrorMessage(err))
-            }
-          })
-          .finally(() => {
-            if (reqId === explainReqId.current) setCoachExplaining(false)
-          })
-      }, EXPLAIN_DEBOUNCE_MS)
-    },
-    [],
-  )
-
+  // Fetches analysis + explorer for the new position after every
+  // move/navigation. The coach explanation (Path 1) is NOT fetched here —
+  // it's a manual action (askCoach, below) triggered by the "Ask Coach"
+  // button, not automatic: firing an explanation on every position passed
+  // through while scrubbing a game would queue up slow local-LLM calls one
+  // after another. Any pinned explanation belongs to the position that's now
+  // behind us, so it's cleared back to idle.
   const refreshInsights = useCallback(
-    async (gameId: string, gsForMeta: GameState) => {
-      const { san, prevFen } = nodeMeta(gsForMeta, gsForMeta.currentNodeId)
-      const [a, e] = await Promise.all([runAnalysis(gameId), runExplorer(gameId)])
-      runCoachExplain(gameId, gsForMeta.fen, san, prevFen, a, e, flippedRef.current ? 'b' : 'w')
+    async (gameId: string) => {
+      explainReqId.current++
+      setCoachExplanation(null)
+      setCoachError(null)
+      setCoachExplaining(false)
+      await Promise.all([runAnalysis(gameId), runExplorer(gameId)])
     },
-    [runAnalysis, runExplorer, runCoachExplain],
+    [runAnalysis, runExplorer],
   )
 
   useEffect(() => {
     moveSound.current = new Audio('/sounds/move.mp3')
-    createGame().then((g) => {
+    const load = initialGameId ? getGame(initialGameId) : createGame()
+    load.then((g) => {
       setGs(g)
-      refreshInsights(g.id, g)
+      refreshInsights(g.id)
     }).catch(console.error)
+    // initialGameId is only meant to be consulted on mount (adopting a game
+    // handed off from elsewhere); it intentionally isn't a dependency here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshInsights])
 
-  // Keep a ref mirror of state the flip-recompute effect below needs, so that
-  // effect can depend on `flipped` alone (not gs/analysis/explorer, which
-  // change on every move — that would defeat "only recompute on flip").
-  useEffect(() => {
-    latestRef.current = { gs, analysis, explorer }
-  })
+  // Explains the move at the current position (coach Path 1) — reads the
+  // latest gs/analysis/explorer/flipped from state, so it always asks about
+  // wherever the user currently is, however they navigated there.
+  // viewerColor is which side the human is currently studying from (derived
+  // from `flipped`) — it re-frames whose perspective the explanation is
+  // written from, independent of who actually made the move.
+  const askCoach = useCallback(async () => {
+    if (!gs) return
+    const { san, prevFen } = nodeMeta(gs, gs.currentNodeId)
+    if (!san) return // at the root, no move to explain
 
-  // Flipping the board changes which side the coach addresses as "you/we" —
-  // re-explain the current move for the new viewer without refetching
-  // analysis/explorer (those don't depend on viewer side, only the prose does).
-  useEffect(() => {
-    const { gs: g, analysis: a, explorer: e } = latestRef.current
-    if (!g) return
-    const { san, prevFen } = nodeMeta(g, g.currentNodeId)
-    runCoachExplain(g.id, g.fen, san, prevFen, a, e, flipped ? 'b' : 'w')
-  }, [flipped, runCoachExplain])
+    const reqId = ++explainReqId.current
+    setCoachError(null)
+    setCoachExplaining(true)
+    setCoachExplanation(null)
+    try {
+      const res = await explainMove(gs.id, {
+        fen: gs.fen,
+        prevFen,
+        lastMoveSan: san,
+        viewerColor: flipped ? 'b' : 'w',
+        analysis,
+        explorer,
+      })
+      if (reqId === explainReqId.current) setCoachExplanation(res.explanation)
+    } catch (err) {
+      if (reqId === explainReqId.current) {
+        setCoachExplanation(null)
+        setCoachError(coachErrorMessage(err))
+      }
+    } finally {
+      if (reqId === explainReqId.current) setCoachExplaining(false)
+    }
+  }, [gs, analysis, explorer, flipped])
 
-  const toggleFlipped = useCallback(() => setFlipped((f) => !f), [])
+  // Flipping changes which side "you/we" refers to, so a pinned explanation
+  // (written for the old perspective) is now stale — clear it back to idle
+  // rather than show mismatched framing; hit "Ask Coach" again for the new side.
+  const toggleFlipped = useCallback(() => {
+    setFlipped((f) => !f)
+    explainReqId.current++
+    setCoachExplanation(null)
+    setCoachError(null)
+    setCoachExplaining(false)
+  }, [])
 
   const boardState: BoardState | null = gs ? toBoardState(gs, selected) : null
 
@@ -248,7 +221,7 @@ export function useChessGame() {
             setGs(next)
             setSelected(null)
             moveSound.current?.play().catch(() => {})
-            refreshInsights(next.id, next)
+            refreshInsights(next.id)
           } catch {
             setSelected(null)
           } finally {
@@ -281,7 +254,7 @@ export function useChessGame() {
         setGs(next)
         setSelected(null)
         moveSound.current?.play().catch(() => {})
-        refreshInsights(next.id, next)
+        refreshInsights(next.id)
       } catch {
         setSelected(null)
       } finally {
@@ -310,7 +283,7 @@ export function useChessGame() {
         setGs(next)
         setSelected(null)
         moveSound.current?.play().catch(() => {})
-        refreshInsights(next.id, next)
+        refreshInsights(next.id)
       } catch {
         // ignore
       } finally {
@@ -352,7 +325,7 @@ export function useChessGame() {
       setSelected(null)
       setAnalysis(null)
       setExplorer(null)
-      refreshInsights(next.id, next)
+      refreshInsights(next.id)
     } finally {
       setBusy(false)
     }
@@ -370,7 +343,7 @@ export function useChessGame() {
         setGs(next)
         setSelected(null)
         moveSound.current?.play().catch(() => {})
-        refreshInsights(next.id, next)
+        refreshInsights(next.id)
         if (next.error) {
           throw new Error(
             `Loaded ${next.appliedPlies}/${next.totalTokens} moves — ${next.error}`,
@@ -419,6 +392,7 @@ export function useChessGame() {
     coachExplanation,
     coachExplaining,
     coachError,
+    askCoach,
     flipped,
     toggleFlipped,
     sendCoachChat,

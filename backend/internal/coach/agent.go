@@ -19,7 +19,10 @@ memory. Use the tools available to you to get real data:
 - explorer_stats: Lichess opening-explorer game stats (win rates, popularity) for any FEN.
 - retrieve_theory: curated book commentary for an exact FEN (position-specific), if the corpus
   covers it (currently just the Sicilian Accelerated Dragon — most positions won't match, which is
-  fine).
+  fine). If there's no exact match, the result may still include "nearby" hints — positions a few
+  moves ahead, via the same continuation, that ARE covered. Use those only to say this position can
+  transpose toward known theory; never present them as commentary on the position you asked about,
+  and never describe those further-ahead moves as already played.
 - retrieve_opening_context: curated book prose ABOUT an opening as a whole — its introduction,
   strategic philosophy, typical plans, why players choose it, move-order notes. Use this (not
   retrieve_theory) when the user asks a general question about the opening rather than about one
@@ -36,7 +39,11 @@ memory. Use the tools available to you to get real data:
 Call tools whenever the question needs current facts about a position you don't already have in
 this conversation. Don't call a tool for something you already know from earlier in the
 conversation. Once you have what you need, answer in 2-5 sentences, coach voice: direct and
-concrete, no filler.
+concrete, no filler — but never trade away the actual substance to stay short. If a tool result
+gives you a concrete reason (what a move stops, prepares, fights for, or transposes to; a tactical
+point; a plan), state that reason plainly rather than a generic verdict like "this is a solid book
+move." Only stay to 1-2 sentences when there genuinely is nothing concrete beyond the verdict itself.
+Never restate the same point twice in different words just to fill space.
 ` + generalPrinciples
 
 // ChatTurn is one message in the conversation history the frontend maintains
@@ -208,13 +215,27 @@ func (a *Agent) executeTool(name, argsJSON string) string {
 		if err := json.Unmarshal([]byte(argsJSON), &fenArgs); err != nil {
 			return toolError(err)
 		}
-		chunks := a.Tools.RetrieveTheory(fenArgs.FEN)
-		if len(chunks) == 0 {
-			return `{"chunks": [], "note": "no book commentary covers this exact position"}`
+		theory := a.Tools.RetrieveTheory(fenArgs.FEN)
+		if len(theory.Exact) > 0 {
+			return toolJSON(struct {
+				Chunks []Chunk `json:"chunks"`
+			}{Chunks: theory.Exact})
 		}
-		return toolJSON(struct {
-			Chunks []Chunk `json:"chunks"`
-		}{Chunks: chunks})
+		if len(theory.Prefix) > 0 {
+			return toolJSON(struct {
+				Chunks []Chunk       `json:"chunks"`
+				Nearby []TheoryMatch `json:"nearby"`
+				Note   string        `json:"note"`
+			}{
+				Chunks: nil,
+				Nearby: theory.Prefix,
+				Note: "no commentary covers this exact position, but 'nearby' lists positions a few plies " +
+					"ahead (via the same continuation) that the corpus DOES cover — pliesAhead is how many " +
+					"half-moves from now. Use these only as directional/transposition hints (\"this can " +
+					"continue toward...\"), never as commentary on the current position or as moves already played.",
+			})
+		}
+		return `{"chunks": [], "note": "no book commentary covers this exact position or anything nearby"}`
 
 	case "retrieve_opening_context":
 		var args struct {

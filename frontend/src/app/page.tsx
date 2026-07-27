@@ -7,14 +7,19 @@ import TopBar from '@/components/layout/TopBar'
 import OpeningTree from '@/components/tree/OpeningTree'
 import Coach from '@/components/coach/Coach'
 import { useChessGame } from '@/hooks/useChessGame'
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useViewportWidth, clamp } from '@/hooks/useViewportWidth'
 
-const SQUARE_SIZE = 72
-const BOARD_SIZE = SQUARE_SIZE * 8 // 576
+const DESKTOP_SQUARE_SIZE = 72
 const SIDE_WIDTH = 371
+const NARROW_BREAKPOINT = 1040 // below this, the 3-column row no longer fits
+const OUTER_PADDING_DESKTOP = 24
+const OUTER_PADDING_NARROW = 14
 // The board sits below a caption row (opening name / engine / flip button) in
 // the center column. Offset the side panels by the same amount so their tops
-// and bottoms line up with the board, not the caption above it.
+// and bottoms line up with the board, not the caption above it (desktop only
+// — panels stack under the board on narrow screens, so no offset is needed).
 const CAPTION_ROW_HEIGHT = 30
 const COLUMN_GAP = 14
 const BOARD_TOP_OFFSET = CAPTION_ROW_HEIGHT + COLUMN_GAP // 45
@@ -28,6 +33,19 @@ function formatEval(score: number, mate: number): string {
 }
 
 export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeInner />
+    </Suspense>
+  )
+}
+
+function HomeInner() {
+  // ?gameId=... lets the opening trainer hand off an exact just-drilled line
+  // to this page (Analysis Board) instead of always starting a fresh game.
+  const searchParams = useSearchParams()
+  const initialGameId = searchParams.get('gameId') ?? undefined
+
   const {
     boardState,
     selectSquare,
@@ -46,10 +64,22 @@ export default function Home() {
     coachExplanation,
     coachExplaining,
     coachError,
+    askCoach,
     sendCoachChat,
     flipped,
     toggleFlipped,
-  } = useChessGame()
+  } = useChessGame(initialGameId)
+
+  const viewportWidth = useViewportWidth()
+  // Treat "not yet measured" (SSR/first paint) as desktop, so the initial
+  // render matches the server and there's no layout flash on mobile either
+  // (the resize listener fires immediately on mount and corrects it).
+  const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
+  const outerPadding = isNarrow ? OUTER_PADDING_NARROW : OUTER_PADDING_DESKTOP
+  const squareSize = isNarrow
+    ? clamp(Math.floor(((viewportWidth ?? NARROW_BREAKPOINT) - outerPadding * 2 - 15 - 11) / 8), 30, DESKTOP_SQUARE_SIZE)
+    : DESKTOP_SQUARE_SIZE
+  const boardSize = squareSize * 8
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -77,37 +107,57 @@ export default function Home() {
   const playContinuation = (uci: string) => move(uci.slice(0, 2), uci.slice(2, 4))
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[#e8e8e6] py-10">
+    <main className="min-h-screen flex items-center justify-center bg-[#e8e8e6] py-6 sm:py-10">
       <div
         style={{
-          width: 1432,
+          width: isNarrow ? '100%' : 1432,
+          maxWidth: '100vw',
           background: '#e8e8e6',
           borderRadius: 16,
-          padding: 24,
+          padding: outerPadding,
         }}
       >
         <TopBar turn={boardState.turn} isBookMove={isBookMove} />
 
-        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: isNarrow ? 'column' : 'row',
+            gap: isNarrow ? 16 : 20,
+            alignItems: isNarrow ? 'stretch' : 'flex-start',
+          }}
+        >
           <div
             style={{
-              width: SIDE_WIDTH,
-              height: BOARD_SIZE,
-              marginTop: BOARD_TOP_OFFSET,
+              width: isNarrow ? '100%' : SIDE_WIDTH,
+              height: isNarrow ? 420 : boardSize,
+              marginTop: isNarrow ? 0 : BOARD_TOP_OFFSET,
               flexShrink: 0,
               display: 'flex',
               flexDirection: 'column',
+              order: isNarrow ? 3 : 0,
             }}
           >
             <Coach
               explanation={coachExplanation}
               explaining={coachExplaining}
               explainError={coachError}
+              onAskCoach={askCoach}
+              canAsk={!atStart}
               onSendChat={sendCoachChat}
             />
           </div>
 
-          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div
+            style={{
+              flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+              order: isNarrow ? 1 : 0,
+              alignItems: isNarrow ? 'center' : undefined,
+            }}
+          >
             <div
               style={{
                 display: 'flex',
@@ -115,7 +165,7 @@ export default function Home() {
                 justifyContent: 'space-between',
                 gap: 12,
                 padding: '0 2px 2px',
-                width: BOARD_SIZE + 11 + 15,
+                width: boardSize + 11 + 15,
               }}
             >
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
@@ -131,8 +181,8 @@ export default function Home() {
                   onClick={toggleFlipped}
                   title="Flip board"
                   style={{
-                    width: 26,
-                    height: 26,
+                    width: 30,
+                    height: 30,
                     border: '1px solid #eae8e2',
                     background: '#fff',
                     borderRadius: 6,
@@ -169,28 +219,31 @@ export default function Home() {
                 onSquareClick={selectSquare}
                 onMove={move}
                 legalMovesFor={legalMovesFor}
-                squareSize={SQUARE_SIZE}
+                squareSize={squareSize}
                 flipped={flipped}
               />
-              <EvalBar score={analysis?.score ?? 0} mate={analysis?.mate ?? 0} height={BOARD_SIZE} />
+              <EvalBar score={analysis?.score ?? 0} mate={analysis?.mate ?? 0} height={boardSize} />
             </div>
 
-            <OpeningTree
-              moves={explorer?.moves ?? []}
-              totalGames={explorer?.totalGames ?? 0}
-              loading={explorerLoading}
-              onPlay={playContinuation}
-            />
+            <div style={{ width: boardSize + 11 + 15 }}>
+              <OpeningTree
+                moves={explorer?.moves ?? []}
+                totalGames={explorer?.totalGames ?? 0}
+                loading={explorerLoading}
+                onPlay={playContinuation}
+              />
+            </div>
           </div>
 
           <div
             style={{
-              width: SIDE_WIDTH,
-              height: BOARD_SIZE,
-              marginTop: BOARD_TOP_OFFSET,
+              width: isNarrow ? '100%' : SIDE_WIDTH,
+              height: isNarrow ? 360 : boardSize,
+              marginTop: isNarrow ? 0 : BOARD_TOP_OFFSET,
               flexShrink: 0,
               display: 'flex',
               flexDirection: 'column',
+              order: isNarrow ? 2 : 0,
             }}
           >
             <MoveHistory

@@ -8,6 +8,7 @@ Next.js 16 app (App Router, TypeScript, Tailwind CSS).
 npm run dev      # dev server on :3000
 npm run build    # production build
 npx tsc --noEmit # type check only
+npm run test     # vitest (currently just lib/trainer/scheduler.test.ts)
 ```
 
 ## Folder structure
@@ -16,7 +17,10 @@ npx tsc --noEmit # type check only
 src/
   app/
     layout.tsx          # root layout; loads Newsreader/Space Grotesk/JetBrains Mono via next/font/google
-    page.tsx            # main page — "Opening Study" 3-column layout (see below)
+    page.tsx            # Analysis Board page — 3-column layout (see below); wraps in <Suspense> for
+                        #   useSearchParams (?gameId= adoption, see Opening Trainer below)
+    opening-study/
+      page.tsx          # Opening Trainer page — setup / drilling / line-complete / summary states
     globals.css         # reset, background colour, .mono/.serif/.lbl tokens, ::selection
   components/
     board/
@@ -32,22 +36,45 @@ src/
       MoveHistory.tsx   # "Move order" panel — opening-name header, Lichess-style row move list
                         #   (figurines + per-move eval, even columns), nav/reset, PGN paste box
     layout/
-      TopBar.tsx        # wordmark + book-move/turn status pills (logo mark removed)
+      TopBar.tsx        # wordmark + PageSwitcher + turn/book-move pills, OR an arbitrary `right` node
+                        #   (the trainer page passes its own) — logo mark removed
       Logo.tsx           # 34×34 SVG logo mark (no longer used on the page)
+      PageSwitcher.tsx  # top-bar dropdown: Analysis Board / Opening Study, current page checked
     tree/
       OpeningTree.tsx   # "Opening Tree" panel (now under the board) — real Lichess explorer data, click row to play
     coach/
-      Coach.tsx         # AI coach panel (left column) — live per-move explanation (pinned) + freeform chat thread
+      Coach.tsx         # AI coach panel (left column) — "Ask Coach" button for a per-move explanation
+                        #   (pinned, manual not automatic) + freeform chat thread
+    trainer/
+      RepertoirePicker.tsx  # setup screen — repertoire/chapter pick, session length/new-cards/mode
+      LinePanel.tsx         # chapter name + intro comment + line-so-far + answer comment
+      FeedbackStrip.tsx     # correct / correct-alt / incorrect / excluded / line-end states
+      SessionSummary.tsx    # end-of-session stats + Drill mistakes / Same again / Change repertoire
   hooks/
-    useChessGame.ts     # all game state + analysis + explorer + move-tree nav + loadPgn; talks to Go backend
+    useChessGame.ts     # all game state + analysis + explorer + move-tree nav + loadPgn; talks to Go backend.
+                        #   Optional `initialGameId` param adopts an existing game (via `getGame`) instead
+                        #   of always `createGame()` — used by the trainer's "Analyze this line" handoff.
+    useTrainerSession.ts # Opening Trainer session/run state machine — see below; deliberately does NOT
+                        #   reuse useChessGame (analysis/explorer/coach calls would leak the answer)
   lib/
     api/
       client.ts         # typed fetch wrappers + Analysis/Explorer/GameState (moveTree) types;
                         #   loadPGN, evalFen (per-move eval), coach: explainMove (incl. viewerColor)/coachChat
-                        #   (+ CoachUnavailableError, 120s abort timeout)
+                        #   (+ CoachUnavailableError, 120s abort timeout); createGame(fen?), setPosition,
+                        #   listRepertoires, getRepertoire for the trainer
     chess/
       types.ts          # shared TS types: Piece, Square, MoveNode, BoardState
       moveTree.ts       # move-tree helpers: childrenOf (null-safe), flatten, mainlineEnd
+      figurine.ts       # toFigurine (SAN → figurine glyph) — extracted from MoveHistory so the
+                        #   trainer's LinePanel can share it rather than duplicate it
+    trainer/
+      types.ts          # Repertoire/Chapter/RepNode/Card/Answer/Reply wire types (mirror the Go API),
+                        #   plus CardState/SessionState/SessionOptions/SessionSummary
+      rng.ts            # mulberry32 seeded PRNG + weightedChoice/uniform — scheduler never uses Math.random
+      scheduler.ts      # pure Leitner-box scheduler: createSession/pickNext/grade/isComplete/summarise
+      scheduler.test.ts # vitest — 10 cases per docs/opening-trainer/scheduler.md §9
+      persistence.ts    # localStorage load/save/merge (chesslab.trainer.v1.<repertoireId>)
+      cardKey.ts        # cardKey(fen) — mirrors Go's CardKey (strip halfmove/fullmove FEN fields)
 ```
 
 ## Key conventions
@@ -175,33 +202,36 @@ move (see backend CLAUDE.md for the node model). `boardState.moveTree` is the ro
   message if the paste didn't fully parse (valid prefix still loads). Wired to the Move Order PGN box.
 - Auto-promotes to queen (promotion dialog is a planned TODO)
 - Plays `public/sounds/move.mp3` after every successful move **and** on every tree navigation
-- **Board orientation (`flipped`/`toggleFlipped`) now lives in this hook**, not `page.tsx` — moved here
-  because flipping is also which side the coach addresses (see below), so the hook needs to own it to
-  trigger a recompute. `page.tsx` just destructures `flipped`/`toggleFlipped` from the hook and passes
-  `flipped` straight to `Board` as before; the flip button's `onClick` calls `toggleFlipped`.
-- **AI coach (Path 1 — per-move explanation):** after each move/goto, once fresh analysis+explorer
-  are in hand, calls `POST /coach/explain` with `{fen, lastMoveSan, viewerColor, analysis, explorer}`
-  (`viewerColor` = `flipped ? 'b' : 'w'`) and exposes `coachExplanation`/`coachExplaining`/`coachError`.
-  Debounced (`EXPLAIN_DEBOUNCE_MS = 350`) so holding an arrow key only explains the position you land
-  on, and request-id-guarded (`explainReqId`) so a slow explanation from an earlier position can't
-  overwrite a newer one. At the root (`san===''`) it clears the panel instead of calling the backend.
-  `refreshInsights` reads `flipped` through a ref (`flippedRef`), not as a direct dependency — it must
-  stay referentially stable across flips, since the mount effect that calls `createGame()` depends on
-  it; an earlier version made `refreshInsights` depend on `flipped` directly, which re-ran that mount
-  effect on every flip and created a brand-new game, wiping the board (caught in browser verification,
-  not by `tsc`/build — this class of bug only shows up by actually clicking the flip button).
-- **Flip-triggered coach recompute:** a dedicated `useEffect` keyed only on `flipped` re-explains the
-  *current* move (no new move, no re-fetch of analysis/explorer — those don't depend on viewer side)
-  whenever the board is flipped, so the coach re-frames whose perspective it's writing from. It reads
-  `gs`/`analysis`/`explorer` through a `latestRef` mirror (kept fresh by a no-dependency-array
-  `useEffect`) specifically so the effect's dependency array can be just `[flipped]` — depending on
-  `gs`/`analysis`/`explorer` directly would fire a recompute on every ordinary move too, not just flips.
+- **Board orientation (`flipped`/`toggleFlipped`) lives in this hook**, not `page.tsx` — flipping is
+  also which side the coach addresses (see below), so the hook needs to own it. `page.tsx` just
+  destructures `flipped`/`toggleFlipped` from the hook and passes `flipped` straight to `Board` as
+  before; the flip button's `onClick` calls `toggleFlipped`.
+- **AI coach (Path 1 — per-move explanation) is manually triggered, not automatic.** An earlier version
+  fired `POST /coach/explain` after every move/goto once fresh analysis+explorer were in hand, debounced
+  350ms. That meant scrubbing through a game (holding an arrow key, or just reviewing move by move at a
+  normal pace) could queue up several real local-LLM calls back-to-back — the debounce only filtered
+  navigations *within* the window, it didn't cancel a call already in flight, and Ollama serves one
+  request at a time, so the queue was felt as UI lag. Replaced with an explicit **`askCoach()`** the
+  "Ask Coach" button (`Coach.tsx`) calls: reads the *current* `gs`/`analysis`/`explorer`/`flipped` from
+  state (not passed-in snapshots) and posts `{fen, prevFen, lastMoveSan, viewerColor, analysis,
+  explorer}` (`viewerColor` = `flipped ? 'b' : 'w'`) to `POST /coach/explain`, exposing
+  `coachExplanation`/`coachExplaining`/`coachError`. No-ops at the root (no move to explain — `Coach`
+  disables the button via `canAsk={!atStart}`, passed from `page.tsx`). Still request-id-guarded
+  (`explainReqId`) so a stale response from a position/perspective the user has since left can't
+  overwrite what's shown; there's no `AbortController`/backend cancellation, since a *manual* action is
+  never queued the way automatic-on-every-navigation was.
+- **`refreshInsights(gameId)`** (analysis + explorer only, called after every move/goto/reset/PGN load)
+  clears any pinned coach explanation/error back to idle instead of re-fetching one — the old
+  explanation belongs to the position that's now behind you; hit "Ask Coach" again for the new one.
+- **Flipping also clears the pinned explanation** (`toggleFlipped`) — it was framed for the old
+  perspective ("you/we" meant the other side), so it's now stale; re-ask for the new side rather than
+  silently re-fetching (which is exactly the automatic-call pattern this design moved away from).
 - **AI coach (Path 2 — freeform chat):** `sendCoachChat(message, history)` wraps `POST /coach/chat`
   (backend reads the live board position from the game store, so only `{message, history}` is sent).
   The `Coach` component owns the chat thread state and passes prior turns as `history`.
-- Returns `{ boardState, selectSquare, move, legalMovesFor, gotoNode, navStart, navPrev, navNext, navEnd, reset, loadPgn, busy, analysis, analyzing, explorer, explorerLoading, coachExplanation, coachExplaining, coachError, sendCoachChat, flipped, toggleFlipped }`
+- Returns `{ boardState, selectSquare, move, legalMovesFor, gotoNode, navStart, navPrev, navNext, navEnd, reset, loadPgn, busy, analysis, analyzing, explorer, explorerLoading, coachExplanation, coachExplaining, coachError, askCoach, sendCoachChat, flipped, toggleFlipped }`
 
-### Page layout (page.tsx) — "Opening Study"
+### Page layout (page.tsx) — "Analysis Board"
 Originally from a Claude-designed hi-fi mock (`design_handoff_opening_study/`, gitignored), since
 reworked into a **Coach | Board | Move order** layout. One outer panel (`1432px`, bg `#e8e8e6` — same
 as the page, so no visible frame; no drop shadow) containing a `TopBar` and a 3-column row:
@@ -216,12 +246,14 @@ moved into the `MoveHistory` header. The **OpeningTree** sits under the board (f
 scrolls internally).
 
 - `TopBar`, `Board`, `EvalBar`, `MoveHistory`, `OpeningTree`, and `Coach` are all wired to real backend
-  state (`useChessGame`). `Coach` shows the live per-move explanation pinned at the top of the message
-  area (updating as you move, with a "thinking" indicator during the slow local-model call) and the
-  freeform chat thread below it; the composer posts to `/coach/chat`. Both coach paths degrade
-  gracefully: a 503 (no local model) shows "Coach is offline…", other failures show a generic error,
-  and a hung request aborts after 120s (see `client.ts`) rather than freezing the panel. The coach
-  needs the Go backend's coach endpoints + a local LLM (Ollama) running — see backend docs.
+  state (`useChessGame`). `Coach`'s per-move explanation is pinned at the top of the message area but
+  manually triggered — an "Ask Coach" button (idle prompt if nothing's asked yet, "Ask again"/"Try
+  again" once something is, disabled at the root and while a request is in flight, with a "thinking"
+  indicator during the slow local-model call) — plus the freeform chat thread below it; the composer
+  posts to `/coach/chat`. Both coach paths degrade gracefully: a 503 (no local model) shows "Coach is
+  offline…", other failures show a generic error, and a hung request aborts after 120s (see `client.ts`)
+  rather than freezing the panel. The coach needs the Go backend's coach endpoints + a local LLM
+  (Ollama) running — see backend docs.
 - Opening name/ECO: `openingName`/`openingEco` come from `explorer.openingName`/`openingEco` (the current
   position's named opening, straight from Lichess — falls back to "Starting Position"/"Custom Line" when
   null) and are passed to `MoveHistory`, which renders them (full, wrapping) in its header. `TopBar`'s
@@ -230,13 +262,39 @@ scrolls internally).
   the board shows `{engineName} · depth {N} · {formatEval}` (from `analysis`, hidden when depth is 0)
   and a **flip board** icon button (`onClick={toggleFlipped}`, from the hook — see `useChessGame`
   above). `flipped` is passed straight to `Board` for the visual flip and does not affect the eval bar
-  (still White-relative either way), but it **does** re-frame the coach: flipping re-explains the
-  current move from whichever side is now at the bottom, addressing that side as "you/we" even when
-  the other side made the move (see the backend's "Viewer perspective" design note).
+  (still White-relative either way), but it **does** re-frame the coach: `viewerColor` on the next "Ask
+  Coach" request addresses whichever side is now at the bottom as "you/we", even when the other side
+  made the move (see the backend's "Viewer perspective" design note). Flipping clears any pinned
+  explanation rather than auto-refetching it for the new side — see `useChessGame` above.
 - `OpeningTree` row click calls `onPlay(uci)` → `move(uci.slice(0,2), uci.slice(2,4))`, playing that
   continuation on the board like a normal move (triggers the same `refreshInsights` refresh).
 - Design reference lives in `.design_handoff/design_handoff_opening_study/` (unzipped from the design
   handoff bundle, gitignored) — see its `README.md` for full token/spacing/interaction spec.
+
+### Page layout (opening-study/page.tsx) — "Opening Trainer"
+Same outer-panel styling as the Analysis Board (`1432px`, `#e8e8e6`, `TopBar` on top), but a state
+machine over `useTrainerSession().phase`: `setup` (just `RepertoirePicker`, centered) →
+`drilling`/`line-complete` (the 3-column `LinePanel | Board+FeedbackStrip | (empty)` layout — no
+eval bar, no `OpeningTree`, no `Coach`, since any of those would show the answer) → `summary`
+(`SessionSummary`, centered). `TopBar`'s `right` prop shows the repertoire name instead of the usual
+turn/book-move pills.
+
+- The caption row above the board shows `{turn} to move — play your repertoire move` (left) and
+  `step {n}[ / {sessionLength}]` + the flip button (right, same SVG as the Analysis Board's).
+  `flipped` defaults to the repertoire's own side (`rep.side === 'b'`) at session start, so a Black
+  repertoire opens with Black at the bottom.
+- Board interaction (`selectSquare`/`move`/`legalMovesFor`) is hand-rolled in `useTrainerSession`,
+  mirroring `useChessGame`'s click-to-move/drag pattern exactly — **`boardState` must be a value
+  derived fresh every render from the raw `GameState` + current `selected`**
+  (`gameState ? toBoardState(gameState, selected) : null`), never stored as its own state snapshot.
+  An earlier version stored `boardState` directly (always computed with `selectedSquare=null`),
+  which made `legalMoves` permanently empty and silently broke click-to-move after the very first
+  square-select — caught during manual browser verification, not by `tsc`/lint, since it type-checks
+  fine either way.
+- `FeedbackStrip` sits directly under the board; when `phase === 'line-complete'` a row below it
+  shows **Analyze** (always available) plus either **"Do it again"** (the run had a mistake) or
+  **"Next line"** (clean run) — never both — per `useTrainerSession`'s run-completion rule (see the
+  root `CLAUDE.md`'s "Opening Trainer page" section for the full flow rationale).
 
 ## Environment
 `NEXT_PUBLIC_API_URL` — backend URL, defaults to `http://localhost:8080`
