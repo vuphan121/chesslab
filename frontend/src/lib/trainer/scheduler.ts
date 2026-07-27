@@ -14,11 +14,9 @@ export const RETIRE_STREAK = 2
 export const PICK_WINDOW = 4
 export const LAPSE_W = 1.0
 export const OVERDUE_W = 0.25
-export const NEW_RATE = 0.3
 
 export const defaultSessionOptions: SessionOptions = {
   sessionLength: 40,
-  newLimit: 8,
   mode: 'mixed',
 }
 
@@ -31,7 +29,6 @@ function freshCardState(cardId: string): CardState {
     seen: 0,
     correct: 0,
     lastSeenISO: null,
-    introduced: false,
     retired: false,
     dueStep: 0,
   }
@@ -43,6 +40,14 @@ function freshCardState(cardId: string): CardState {
 // useTrainerSession.ts) — not wrapped in the old localStorage-era
 // PersistedState envelope, which carried nothing this function used besides
 // `.cards`.
+//
+// Every included card is immediately eligible for picking (no more
+// "introduce new cards gradually" drip-feed, which used to be gated by a
+// newLimit option) — the scheduler doesn't distinguish material you've
+// already learned from material you haven't; both are just cards with a
+// dueStep, and pickNext treats them identically. mode still filters *which*
+// cards are included ('review-only'/'mistakes' skip never-seen cards), just
+// not how fast they're introduced once included.
 export function createSession(
   cards: RepCard[],
   opts: SessionOptions,
@@ -53,11 +58,10 @@ export function createSession(
   const order: string[] = []
 
   // Shuffled once up front — `cards` arrives in whatever order the backend
-  // built the repertoire in (chapter by chapter), and both new-card
-  // introduction (pickNext's `newPool[0]`) and due-list tie-breaking walk
-  // `order` positionally. Left unshuffled, a session felt like "chapter 1's
-  // lines, then chapter 2's, in order" instead of drilling across the whole
-  // repertoire.
+  // built the repertoire in (chapter by chapter), and due-list tie-breaking
+  // walks `order` positionally. Left unshuffled, a session felt like
+  // "chapter 1's lines, then chapter 2's, in order" instead of drilling
+  // across the whole repertoire.
   for (const card of shuffle(cards, rng)) {
     if (opts.mode === 'mistakes' && !(saved?.[card.id]?.lapses)) continue
 
@@ -74,7 +78,6 @@ export function createSession(
         const days = Math.floor((Date.now() - Date.parse(persisted.lastSeenISO)) / 86_400_000)
         if (days > st.box) st.box = Math.max(0, st.box - 1)
       }
-      st.introduced = opts.mode !== 'review-only' || st.box > 0 || st.seen > 0
       if (opts.mode === 'review-only' && st.seen === 0) continue
     } else {
       if (opts.mode === 'review-only' || opts.mode === 'mistakes') continue
@@ -96,7 +99,7 @@ export function createSession(
 }
 
 function activeCards(s: SessionState): CardState[] {
-  return s.order.map((id) => s.cards.get(id)!).filter((c) => c.introduced && !c.retired)
+  return s.order.map((id) => s.cards.get(id)!).filter((c) => !c.retired)
 }
 
 // pickNext returns the next card to present, or null if the session is
@@ -104,17 +107,6 @@ function activeCards(s: SessionState): CardState[] {
 export function pickNext(s: SessionState): CardState | null {
   const active = activeCards(s)
   let due = active.filter((c) => c.dueStep <= s.step)
-  const newPool = s.order.map((id) => s.cards.get(id)!).filter((c) => !c.introduced)
-  const inFlight = active.filter((c) => c.box < 2).length
-
-  if (newPool.length > 0 && inFlight < s.opts.newLimit) {
-    if (due.length === 0 || s.rng() < NEW_RATE) {
-      const c = newPool[0]
-      c.introduced = true
-      c.dueStep = s.step
-      return c
-    }
-  }
 
   if (due.length === 0) {
     if (active.length === 0) return null
@@ -141,9 +133,6 @@ export function grade(s: SessionState, cardId: string, correct: boolean): void {
   s.step += 1
   c.seen += 1
   c.lastSeenISO = new Date().toISOString()
-  // A card reached inside a run (not picked by pickNext) is still graded —
-  // mark it introduced so it isn't later treated as fresh "new" material.
-  c.introduced = true
 
   let gap: number
   if (correct) {
@@ -170,8 +159,7 @@ export function grade(s: SessionState, cardId: string, correct: boolean): void {
 
 export function isComplete(s: SessionState): boolean {
   const active = activeCards(s)
-  const newPool = s.order.map((id) => s.cards.get(id)!).filter((c) => !c.introduced)
-  if (active.length === 0 && newPool.length === 0) return true
+  if (active.length === 0) return true
   if (s.opts.sessionLength != null && s.step >= s.opts.sessionLength) return true
   return false
 }

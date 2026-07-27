@@ -12,7 +12,7 @@ import {
 import type { GameState } from '@/lib/api/client'
 import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
 import { flatten } from '@/lib/chess/moveTree'
-import type { Repertoire, RepCard, SessionOptions, SessionState, PersistedCardState } from '@/lib/trainer/types'
+import type { Repertoire, RepCard, RepNode, SessionOptions, SessionState, PersistedCardState } from '@/lib/trainer/types'
 import { createSession, pickNext, grade, isComplete, summarise } from '@/lib/trainer/scheduler'
 import { newRng, weightedChoice } from '@/lib/trainer/rng'
 import { cardKey } from '@/lib/trainer/cardKey'
@@ -26,6 +26,24 @@ function sleep(ms: number) {
 
 function promotionFromUci(uci: string): string | undefined {
   return uci.length >= 5 ? uci[4] : undefined
+}
+
+// findPathInChapterTree walks a chapter's own tree (DFS) for the node whose
+// position matches targetKey, returning the SAN path from that chapter's
+// root to it — or null if the position isn't reachable in this chapter at
+// all. Used instead of trusting a card's own `pathSan` (recorded relative
+// to whichever chapter *first* contributed it — see the Go backend's
+// PathSAN comment) because resolveRunStartCard can resolve a due card to a
+// *different* chapter than that, whenever the card is reachable via more
+// than one (e.g. two chapters sharing an opening before diverging) — see
+// resolveRunStartCard's comment for why that mismatch matters.
+function findPathInChapterTree(node: RepNode, targetKey: string, path: string[] = []): string[] | null {
+  if (cardKey(node.fen) === targetKey) return path
+  for (const child of node.children ?? []) {
+    const found = findPathInChapterTree(child, targetKey, [...path, child.san])
+    if (found) return found
+  }
+  return null
 }
 
 function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
@@ -111,7 +129,8 @@ export function useTrainerSession() {
   const selectedChapterIdsRef = useRef<Set<string>>(new Set()) // chapters selected for this session
   const runStartCardIdRef = useRef<string | null>(null)
   const runMovesRef = useRef<RunMove[]>([])
-  // The pathSan of the specific card the scheduler picked as "due" when this
+  // The SAN path (within the run's own chapter — see resolveRunStartCard's
+  // targetPath) to the specific card the scheduler picked as "due" when this
   // run began (set in startSession/nextLine, deliberately left untouched by
   // redoLine/beginRun so a redo retraces the same path). A run starts at its
   // *chapter's* beginning, not at the due card itself (see
@@ -156,16 +175,32 @@ export function useTrainerSession() {
   // replays from the true beginning of the chapter and walks forward
   // naturally from there, so the due card (and everything before it) gets
   // graded as it's actually reached, not jumped to directly.
+  // Also returns `targetPath` — the SAN path from *this* chapter's root to
+  // the due card, derived by walking the chapter's own tree rather than
+  // trusting the card's stored `pathSan`. A card reachable via more than one
+  // chapter (e.g. two chapters sharing an opening before diverging — true of
+  // this demo repertoire's chapters 1/2) only has ONE `pathSan`, recorded
+  // relative to whichever chapter first contributed it; if that's a
+  // *different* chapter than the one picked here, forcing pickOpponentReply
+  // along the wrong chapter's SANs would silently stop matching right at the
+  // divergence point and fall back to random — meaning the run could wander
+  // off and never actually reach the due card, leaving it "due" and handing
+  // it right back out on the next pick. Walking the resolved chapter's own
+  // tree is correct regardless of which chapter the card's `pathSan` came
+  // from. Falls back to `pathSan` only if the position genuinely isn't in
+  // this chapter's tree at all (shouldn't happen, since `chapterId` was
+  // chosen from the due card's own `chapterIds`).
   // Takes `rep` explicitly (rather than closing over the `repertoire` state)
   // because startSession needs to call this synchronously right after
   // setRepertoireState, before that state update has actually committed.
   const resolveRunStartCard = useCallback(
-    (rep: Repertoire, dueCard: RepCard): RepCard => {
+    (rep: Repertoire, dueCard: RepCard): { card: RepCard; targetPath: string[] } => {
       const chapterId = dueCard.chapterIds.find((id) => selectedChapterIdsRef.current.has(id)) ?? dueCard.chapterIds[0]
       const chapter = rep.chapters.find((c) => c.id === chapterId)
-      if (!chapter) return dueCard
+      if (!chapter) return { card: dueCard, targetPath: dueCard.pathSan }
       const startCard = cardById(cardKey(chapter.startFen))
-      return startCard ?? dueCard
+      const targetPath = findPathInChapterTree(chapter.tree, cardKey(dueCard.fen)) ?? dueCard.pathSan
+      return { card: startCard ?? dueCard, targetPath }
     },
     [cardById],
   )
@@ -356,8 +391,8 @@ export function useTrainerSession() {
           return
         }
         const dueCard = cards.find((c) => c.id === first.cardId)!
-        const firstCard = resolveRunStartCard(rep, dueCard)
-        dueTargetPathRef.current = dueCard.pathSan
+        const { card: firstCard, targetPath } = resolveRunStartCard(rep, dueCard)
+        dueTargetPathRef.current = targetPath
 
         const gs = await createGame(firstCard.fen)
         gameIdRef.current = gs.id
@@ -550,8 +585,8 @@ export function useTrainerSession() {
     }
     const dueCard = cardById(next.cardId)
     if (!dueCard || !repertoire) return
-    const card = resolveRunStartCard(repertoire, dueCard)
-    dueTargetPathRef.current = dueCard.pathSan
+    const { card, targetPath } = resolveRunStartCard(repertoire, dueCard)
+    dueTargetPathRef.current = targetPath
     setBusy(true)
     try {
       const gs = await apiSetPosition(gid, card.fen)

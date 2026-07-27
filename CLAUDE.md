@@ -285,12 +285,18 @@ retraces the same forced path. Not covered by an automated test (it's fundamenta
 behavior across many runs) — verify by actually drilling a multi-branch chapter.
 
 **UI components** (`components/trainer/`): `RepertoirePicker` (setup screen — repertoire/chapter
-selection, new-cards/mode options — a session-length control existed early on but was removed as
-unneeded; sessions always run "until done" now), `LinePanel` (chapter name + intro comment + line
-so far, reusing `toFigurine`, now extracted to `lib/chess/figurine.ts` so both this and
-`MoveHistory` share one implementation), `FeedbackStrip` (correct/incorrect/excluded states,
-`aria-live="polite"`), `SessionSummary` (end-of-session stats + "Drill mistakes"/"Same
-again"/"Change repertoire"). No eval bar, engine readout, or opening tree on this page — see
+selection + mode; a session-length control and a "new cards" concurrency limit both existed early on
+but were removed as unneeded — sessions always run "until done," and the scheduler no longer
+distinguishes never-drilled cards from ones you've already learned, see `scheduler.ts`'s
+`createSession` — every card is eligible from the start, weighted purely by due-ness/lapses. Each
+chapter shows its line count, not its card count — "how many distinct variations" reads more useful
+here than the scheduler's internal per-position unit, and excluded lines (annotated in the source
+study as inferior) are left out of that count and the preview entirely rather than shown struck
+through), `LinePanel` (chapter name + intro comment + line so far, reusing `toFigurine`, now
+extracted to `lib/chess/figurine.ts` so both this and `MoveHistory` share one implementation),
+`FeedbackStrip` (correct/incorrect/excluded states, `aria-live="polite"`), `SessionSummary`
+(end-of-session stats + "Drill mistakes"/"Same again"/"Change repertoire"). No eval bar, engine
+readout, or opening tree on this page — see
 `docs/opening-trainer/design.md` §10 for why.
 
 ### Auth + server-side trainer sync

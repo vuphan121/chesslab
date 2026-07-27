@@ -93,14 +93,12 @@ export interface CardState {
   seen: number
   correct: number
   lastSeenISO: string | null
-  introduced: boolean
   retired: boolean
   dueStep: number
 }
 
 export interface SessionOptions {
   sessionLength: number | null // null = "until done"
-  newLimit: number
   mode: 'mixed' | 'review-only' | 'mistakes'
 }
 

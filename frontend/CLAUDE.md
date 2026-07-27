@@ -54,8 +54,9 @@ src/
       Coach.tsx         # AI coach panel (left column) — "Ask Coach" button for a per-move explanation
                         #   (pinned, manual not automatic) + freeform chat thread
     trainer/
-      RepertoirePicker.tsx  # setup screen — repertoire/chapter pick, new-cards/mode, a small
-                        #     "Today" analytics panel (getAnalytics — line count + by chapter)
+      RepertoirePicker.tsx  # setup screen — repertoire/chapter pick, mode, a small "Today" analytics
+                        #     panel (getAnalytics — line count + by chapter). Each chapter shows its
+                        #     line count (enumerateLines, excluded lines filtered out), not a card count
       LinePanel.tsx         # chapter name + intro comment + line-so-far + answer comment
       FeedbackStrip.tsx     # correct / correct-alt / incorrect / excluded / line-end states
       SessionSummary.tsx    # end-of-session stats + Drill mistakes / Same again / Change repertoire
@@ -89,8 +90,11 @@ src/
                         #   plus CardState/SessionState/SessionOptions/SessionSummary
       rng.ts            # mulberry32 seeded PRNG + weightedChoice/uniform/shuffle — scheduler never uses Math.random
       scheduler.ts      # pure Leitner-box scheduler: createSession/pickNext/grade/isComplete/summarise;
-                        #   createSession shuffles its input cards (seeded) so new-card introduction
-                        #   and due-list tie-breaking aren't stuck in repertoire-build (chapter) order
+                        #   createSession shuffles its input cards (seeded) so due-list tie-breaking
+                        #   isn't stuck in repertoire-build (chapter) order. No more "introduced"/
+                        #   newLimit concept — every included card is eligible from step 0, not
+                        #   drip-fed in gradually; the scheduler doesn't care whether you've already
+                        #   learned a card, only whether it's due
       scheduler.test.ts # vitest — 10 cases per docs/opening-trainer/scheduler.md §9
       persistence.ts    # mergeSessionCards — pure card-state merge logic only; no I/O of its own
                         #   since trainer progress moved server-side (see lib/api/client.ts, above)

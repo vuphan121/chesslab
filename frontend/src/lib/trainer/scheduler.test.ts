@@ -18,7 +18,7 @@ function makeCard(id: string): RepCard {
 const noJitterRng = () => 0.5 // uniform(1-J,1+J, rng)=1.0 at rng()=0.5
 
 function session(cards: RepCard[], opts?: Partial<SessionOptions>, rng: () => number = noJitterRng) {
-  return createSession(cards, { sessionLength: null, newLimit: 99, mode: 'mixed', ...opts }, null, rng)
+  return createSession(cards, { sessionLength: null, mode: 'mixed', ...opts }, null, rng)
 }
 
 describe('scheduler', () => {
@@ -90,11 +90,7 @@ describe('scheduler', () => {
   })
 
   it('fast-forwards step to the minimum dueStep without skipping a card', () => {
-    const s = session([makeCard('A'), makeCard('B')], { newLimit: 0 })
-    // introduce both manually (newLimit 0 disables auto-introduce path)
-    for (const c of s.cards.values()) {
-      c.introduced = true
-    }
+    const s = session([makeCard('A'), makeCard('B')])
     grade(s, 'A', true) // A due later
     grade(s, 'B', true) // B due later too, both retired? no just box1
     const before = s.step
@@ -103,22 +99,19 @@ describe('scheduler', () => {
     expect(picked).not.toBeNull()
   })
 
-  it('new-card introduction respects newLimit and stops when the pool is exhausted', () => {
+  it('every card is immediately eligible — no gradual new-card introduction', () => {
     const cards = [makeCard('A'), makeCard('B'), makeCard('C')]
-    const s = session(cards, { newLimit: 1 })
-    const first = pickNext(s)
-    expect(first).not.toBeNull()
-    // only 1 concurrent unlearned card allowed; grading it to box>=2 unlocks the next
-    grade(s, first!.cardId, true)
-    grade(s, first!.cardId, true)
-    const introducedCount = () => [...s.cards.values()].filter((c) => c.introduced).length
-    expect(introducedCount()).toBeLessThanOrEqual(2)
+    const s = session(cards)
+    // all three should already be "active" (pickable) from step 0, not
+    // drip-fed in one at a time
+    const active = s.order.map((id) => s.cards.get(id)!).filter((c) => !c.retired)
+    expect(active).toHaveLength(3)
   })
 
   it('is deterministic: same seed + same answers -> same pick order', () => {
     const cards = [makeCard('A'), makeCard('B'), makeCard('C'), makeCard('D')]
     const run = () => {
-      const s = createSession(cards, { sessionLength: 12, newLimit: 8, mode: 'mixed' }, null, mulberry32(42))
+      const s = createSession(cards, { sessionLength: 12, mode: 'mixed' }, null, mulberry32(42))
       const picks: string[] = []
       for (let i = 0; i < 12 && !isComplete(s); i++) {
         const c = pickNext(s)
@@ -133,7 +126,7 @@ describe('scheduler', () => {
 
   it('a consistently-wrong card ends with the lowest box and highest presentation count', () => {
     const cards = [makeCard('A'), makeCard('B'), makeCard('C')]
-    const s = createSession(cards, { sessionLength: 40, newLimit: 8, mode: 'mixed' }, null, mulberry32(7))
+    const s = createSession(cards, { sessionLength: 40, mode: 'mixed' }, null, mulberry32(7))
     let steps = 0
     while (!isComplete(s) && steps < 200) {
       const c = pickNext(s)

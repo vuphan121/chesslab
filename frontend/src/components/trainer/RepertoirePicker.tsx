@@ -89,7 +89,6 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
   const [listError, setListError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [selectedChapters, setSelectedChapters] = useState<Set<string>>(new Set())
-  const [newLimit, setNewLimit] = useState(8)
   const [mode, setMode] = useState<SessionOptions['mode']>('mixed')
 
   // Full repertoire (chapters + trees) — only needed to preview a chapter's
@@ -171,7 +170,7 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
 
   const handleStart = () => {
     if (!selectedId || selectedChapters.size === 0) return
-    onStart(selectedId, [...selectedChapters], { sessionLength: null, newLimit, mode })
+    onStart(selectedId, [...selectedChapters], { sessionLength: null, mode })
   }
 
   const panelStyle: React.CSSProperties = {
@@ -311,7 +310,11 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
               const isExpanded = expandedChapters.has(ch.id)
               const chapterTree =
                 fullRep?.id === selectedId ? fullRep.chapters.find((c) => c.id === ch.id)?.tree : undefined
-              const lines = chapterTree ? enumerateLines(chapterTree) : []
+              // Excluded lines (e.g. the demo repertoire's "1. a4" — annotated
+              // in the study as inferior) are dropped here rather than shown
+              // struck through — the count and preview below should only
+              // reflect what's actually part of the repertoire.
+              const lines = chapterTree ? enumerateLines(chapterTree).filter((l) => !l.hasExcluded) : []
               return (
                 <div key={ch.id}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
@@ -322,7 +325,11 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
                         onChange={() => toggleChapter(ch.id)}
                       />
                       {ch.name}
-                      <span style={{ fontSize: 11, color: '#a3a099' }}>{ch.cardCount} positions</span>
+                      {chapterTree && (
+                        <span style={{ fontSize: 11, color: '#a3a099' }}>
+                          {lines.length} line{lines.length === 1 ? '' : 's'}
+                        </span>
+                      )}
                     </label>
                     <button
                       onClick={() => toggleExpanded(ch.id)}
@@ -373,26 +380,8 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
                         <p style={{ fontSize: 12, color: '#a3a099' }}>No lines to show.</p>
                       ) : (
                         lines.map((line, i) => (
-                          <p
-                            key={i}
-                            className="mono"
-                            style={{
-                              fontSize: 12,
-                              lineHeight: 1.7,
-                              color: line.hasExcluded ? '#c0392b' : '#4a4740',
-                              opacity: line.hasExcluded ? 0.75 : 1,
-                              textDecoration: line.hasExcluded ? 'line-through' : undefined,
-                            }}
-                          >
+                          <p key={i} className="mono" style={{ fontSize: 12, lineHeight: 1.7, color: '#4a4740' }}>
                             {formatLine(line.sans)}
-                            {line.hasExcluded && (
-                              <span
-                                className="sans-serif"
-                                style={{ marginLeft: 6, textDecoration: 'none', fontSize: 11, color: '#c0392b' }}
-                              >
-                                (not part of the repertoire)
-                              </span>
-                            )}
                           </p>
                         ))
                       )}
@@ -409,19 +398,6 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
         Session
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, color: '#6a675f', width: 80 }}>New cards</span>
-          <Segmented
-            options={[
-              { label: '4', value: 4 },
-              { label: '8', value: 8 },
-              { label: '16', value: 16 },
-              { label: 'None', value: 0 },
-            ]}
-            value={newLimit}
-            onChange={setNewLimit}
-          />
-        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 12, color: '#6a675f', width: 80 }}>Mode</span>
           <Segmented
