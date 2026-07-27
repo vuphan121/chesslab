@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { listRepertoires, getRepertoire } from '@/lib/api/client'
+import { listRepertoires, getRepertoire, getAnalytics } from '@/lib/api/client'
+import type { AnalyticsResponse } from '@/lib/api/client'
 import { toFigurine } from '@/lib/chess/figurine'
 import type { RepertoireSummary, Repertoire, RepNode } from '@/lib/trainer/types'
 import type { SessionOptions } from '@/lib/trainer/types'
@@ -98,6 +99,11 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
   const [fullRepLoading, setFullRepLoading] = useState(false)
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
 
+  // Simple drilling-activity stats (today's count, by chapter) — fetched
+  // once, best-effort; if analytics isn't configured/reachable the panel
+  // just doesn't render rather than blocking the setup screen.
+  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null)
+
   const fullRepReqId = useRef(0)
 
   // selectRepertoire is the single place a repertoire gets selected — from
@@ -135,6 +141,12 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
         if (list.length > 0) selectRepertoire(list[0].id, list[0].chapters.map((c) => c.id))
       })
       .catch((err) => setListError(err instanceof Error ? err.message : 'Failed to reach the backend.'))
+    getAnalytics()
+      .then(setAnalytics)
+      .catch(() => {
+        // analytics unavailable (DB not configured, or a network hiccup) —
+        // the panel just stays hidden, doesn't block anything else
+      })
   }, [])
 
   const selected = reps?.find((r) => r.id === selectedId) ?? null
@@ -209,6 +221,42 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
       <h1 className="serif" style={{ fontSize: 22, fontWeight: 500, marginBottom: 18 }}>
         Opening Study
       </h1>
+
+      {analytics && analytics.todayTotal > 0 && (
+        <div
+          style={{
+            marginBottom: 18,
+            padding: '10px 14px',
+            background: '#fbfaf7',
+            border: '1px solid #eae8e2',
+            borderRadius: 8,
+          }}
+        >
+          <div className="lbl" style={{ color: '#b4b1a8', marginBottom: 4 }}>
+            Today
+          </div>
+          <div style={{ fontSize: 13, color: '#37352f' }}>
+            <strong>{analytics.todayTotal}</strong> line{analytics.todayTotal === 1 ? '' : 's'} drilled
+            {analytics.todayByChapter.length > 0 && (
+              <span style={{ color: '#7a776f' }}>
+                {' — '}
+                {analytics.todayByChapter.map((c, i) => (
+                  <span key={c.chapterId}>
+                    {i > 0 && ', '}
+                    {c.chapterName} ({c.count})
+                  </span>
+                ))}
+              </span>
+            )}
+            {analytics.last7Days.length > 0 && (
+              <span style={{ color: '#a3a099' }}>
+                {' · '}
+                {analytics.last7Days.reduce((sum, d) => sum + d.total, 0)} this week
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="lbl" style={{ color: '#b4b1a8', marginBottom: 8 }}>
         Choose a repertoire

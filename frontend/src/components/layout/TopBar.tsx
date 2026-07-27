@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { Color } from '@/lib/chess/types'
 import PageSwitcher from './PageSwitcher'
+import { clearToken } from '@/lib/auth/token'
 
 interface Props {
   turn?: Color
@@ -86,6 +87,21 @@ export default function TopBar({ turn, isBookMove, right }: Props) {
             {turn === 'w' ? 'White to move' : 'Black to move'}
           </span>
         )}
+        <button
+          onClick={() => clearToken()}
+          title="Sign out"
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: '#a3a099',
+            background: 'transparent',
+            border: 'none',
+            padding: '6px 4px',
+            cursor: 'pointer',
+          }}
+        >
+          Sign out
+        </button>
       </div>
     </div>
   )

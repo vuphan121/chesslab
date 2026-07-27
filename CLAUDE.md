@@ -25,6 +25,12 @@ STOCKFISH_PATH="C:/Users/vupha/AppData/Local/Microsoft/WinGet/Packages/Stockfish
 ```
 `STOCKFISH_PATH` defaults to `stockfish` in PATH (works in any new terminal after winget install).
 
+**`AUTH_USERNAME`/`AUTH_PASSWORD` are required** (`backend/.env`, gitignored) — the server refuses to
+start without them, since they gate the whole site. `DATABASE_URL` is optional (trainer progress
+sync/analytics 503 without it, everything else still works) and `JWT_SECRET` falls back to a random
+value generated at boot if unset (fine locally — just means restarting logs you out). See backend
+`CLAUDE.md`'s "Auth + trainer sync (Postgres)" section and `backend/.env.example`.
+
 The Opening Tree panel needs a Lichess API token — see `backend/CLAUDE.md` for how to get one and set
 `LICHESS_TOKEN` in `backend/.env` (gitignored). Without it, `/explorer` returns 503 and the tree panel
 just stays empty; everything else still works.
@@ -237,10 +243,12 @@ design doc's "no retry" decision (superseded — see below):
   same position** — the user must retry until they play a recognized answer before the run
   continues. This replaces design.md §7.3/§12's original "no retry" decision; the user asked for
   undo-show-retry explicitly and it's what's implemented.
-- **Run completion**: if the run had *any* mistake (even one later corrected via retry), the only
-  way forward is **"Do it again"** (replays the same run from its starting card) — no "Next line"
-  option is offered until a clean pass. A clean run offers **"Next line"** (advances the scheduler
-  via `pickNext`). Both states also offer **"Analyze"**.
+- **Run completion**: always offers all three of **"Analyze"**, **"Do it again"** (replays the same
+  run from its starting card), and **"Next line"** (advances the scheduler via `pickNext`) —
+  regardless of whether the run was clean or had a mistake, so a clean run can still be repeated for
+  extra reps and a missed line can still be skipped past without forcing a redo. Which of "Do it
+  again"/"Next line" is visually primary (blue) still follows whether the run had a mistake, as a
+  suggestion, not a restriction — an earlier version only showed one or the other.
 - **"Analyze this line"**: builds a fresh game at the run's starting FEN, replays every move
   actually played this run (both sides, via sequential `POST /moves` calls) on a **new** backend game
   object, then navigates to `/?gameId=<newId>` — `useChessGame` picks up an existing game via that
@@ -285,6 +293,49 @@ so far, reusing `toFigurine`, now extracted to `lib/chess/figurine.ts` so both t
 again"/"Change repertoire"). No eval bar, engine readout, or opening tree on this page — see
 `docs/opening-trainer/design.md` §10 for why.
 
+### Auth + server-side trainer sync
+
+The whole app now sits behind a single login (**not** per-page — one gate in front of both the
+Analysis Board and Opening Study) and trainer progress is synced through the backend to Postgres
+instead of living only in the browser. Full design/rationale is in backend `CLAUDE.md`'s "Auth +
+trainer sync (Postgres)" section; this is the frontend half.
+
+- **Login** (`components/auth/Login.tsx`): a username/password form styled to match the rest of the
+  app (same white-card-on-`#e8e8e6`, `#4a90d9` primary button, `.lbl`/`.serif` conventions as
+  `RepertoirePicker`'s setup screen) rather than looking like a bolted-on auth page. On success,
+  stores the returned JWT via `lib/auth/token.ts`'s `setToken` (`localStorage`, key
+  `chesslab.auth.token`).
+- **`AuthGate`** (`components/auth/AuthGate.tsx`) wraps `{children}` in `app/layout.tsx` — the one
+  gate for the whole site. Checks `getToken()` in a `useEffect` (not during render, so first
+  paint/SSR is consistent and there's no hydration mismatch) and re-checks whenever
+  `token.ts`'s `onAuthChange` fires — a login, an explicit "Sign out" (small button in `TopBar`,
+  present on every page), or `client.ts` clearing the token after a 401 from the backend (expired or
+  invalid session). Renders nothing until the first check resolves, `<Login/>` if unauthenticated,
+  otherwise the real page.
+- **`lib/api/client.ts`**: every request now attaches `Authorization: Bearer <token>` (via a shared
+  `authHeader()` helper) and treats a 401 response as "session invalid" — clears the token, which
+  `AuthGate`'s subscription picks up and flips back to the login screen, no page reload, no special
+  handling needed at each call site.
+- **Trainer progress moved from `localStorage` to the server** (`useTrainerSession.ts`): `startSession`
+  fetches prior progress via `client.ts`'s `getProgress(repertoireId)` (empty map on failure — not
+  logged in yet, database unconfigured, network hiccup — same "degrade, don't block" pattern as
+  everywhere else in this app) instead of the old `persistence.ts`'s `loadPersisted`. `endRun` merges
+  the session's current per-card state into that snapshot (`lib/trainer/persistence.ts`'s
+  `mergeSessionCards` — now a pure function with no localStorage I/O of its own) and fire-and-forgets
+  the merged whole map to `saveProgress`, along with a `lineAttempt` (chapter + card + whether the run
+  had a mistake) for the analytics log — resolved from `runStartCardIdRef`, not the `runStartCard`
+  React state, to avoid a stale-closure risk. This also **replaced the old
+  `persistSessionEnd`/session-log concept entirely** — since progress now syncs on every run boundary
+  (not just at session end) and the backend's `line_attempts` table already covers what the
+  localStorage-era `PersistedSessionLog` array existed for, `nextLine`'s and `endSession`'s
+  session-end branches now just compute the summary and transition phase, nothing left to persist
+  there. `scheduler.ts`'s `createSession` signature changed accordingly — it now takes a flat
+  `Record<cardId, PersistedCardState> | null` instead of the old localStorage-era `PersistedState`
+  envelope, which carried nothing the scheduler used besides that map.
+- **Simple analytics** (`RepertoirePicker.tsx`): a small "Today" panel — line count + per-chapter
+  breakdown + a weekly total — fetched once via `getAnalytics()` on the setup screen, rendered only
+  when there's actually something to show (no empty-state noise for a first-time session).
+
 ## What's next (planned)
 - **Coach explanation quality — decision: accept current state, rely on human verification, stop
   chasing this with more prompt rules.** A single session iteratively tightened `prompt.go`'s system
@@ -318,10 +369,18 @@ again"/"Change repertoire"). No eval bar, engine readout, or opening tree on thi
 
 `render.yaml` (repo root) is a Render Blueprint deploying two services: `chesslab-backend` (Go +
 Stockfish, `backend/Dockerfile` — Render's native Go runtime can't `apt-get install stockfish`, hence
-Docker) and `chesslab-frontend` (Next.js **static export** — both pages are fully client-rendered
-with no API routes/middleware, so `next.config.ts` sets `output: 'export'` and it deploys as a plain
-static site, not a Node service). See `backend/.env.example` / `frontend/.env.example` for the env
-vars each service needs.
+Docker) and `chesslab-frontend` (Next.js, plain **Node web service** — `npm run build` / `next start
+-p $PORT`; an earlier attempt at a static export didn't work because `next start` refuses to run
+against an `output: 'export'` build, so that config was reverted). See `backend/.env.example` /
+`frontend/.env.example` for the env vars each service needs.
+
+**The whole site requires login and a database for full functionality** (see backend `CLAUDE.md`'s
+"Auth + trainer sync (Postgres)"). `AUTH_USERNAME`/`AUTH_PASSWORD`/`JWT_SECRET`/`DATABASE_URL` are
+all marked `sync: false` in `render.yaml`, meaning Render prompts for them at Blueprint-apply time
+and stores them outside the repo — nothing here or in git holds an actual credential.
+`DATABASE_URL` is the one truly optional piece: without it the backend still starts and everything
+except trainer progress sync/analytics works (falls back to the env-var login check too, see backend
+`CLAUDE.md`).
 
 **The AI coach is deliberately not deployed.** There's no Ollama instance on Render; `/coach/explain`
 and `/coach/chat` return 503 in production exactly like the existing "Stockfish unavailable" /

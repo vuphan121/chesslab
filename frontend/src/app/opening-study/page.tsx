@@ -257,15 +257,12 @@ export default function OpeningStudyPage() {
                   <button onClick={analyzeLine} disabled={busy} style={endBtn(false)}>
                     Analyze
                   </button>
-                  {runHadMistake ? (
-                    <button onClick={redoLine} disabled={busy} style={endBtn(true)}>
-                      Do it again
-                    </button>
-                  ) : (
-                    <button onClick={nextLine} disabled={busy} style={endBtn(true)}>
-                      Next line
-                    </button>
-                  )}
+                  <button onClick={redoLine} disabled={busy} style={endBtn(runHadMistake)}>
+                    Do it again
+                  </button>
+                  <button onClick={nextLine} disabled={busy} style={endBtn(!runHadMistake)}>
+                    Next line
+                  </button>
                 </div>
               </div>
             )}

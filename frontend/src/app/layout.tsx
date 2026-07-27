@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Newsreader, JetBrains_Mono } from "next/font/google";
+import AuthGate from "@/components/auth/AuthGate";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -36,7 +37,9 @@ export default function RootLayout({
       lang="en"
       className={`h-full ${spaceGrotesk.variable} ${newsreader.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AuthGate>{children}</AuthGate>
+      </body>
     </html>
   );
 }

@@ -1,7 +1,13 @@
 import type { MoveNode } from '@/lib/chess/types'
 import type { Repertoire, RepertoireSummary } from '@/lib/trainer/types'
+import { getToken, clearToken } from '@/lib/auth/token'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
+
+function authHeader(): Record<string, string> {
+  const token = getToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
 
 export interface PieceJSON {
   type: string
@@ -70,7 +76,16 @@ export interface Explorer {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API}${path}`, init)
+  const res = await fetch(`${API}${path}`, {
+    ...init,
+    headers: { ...(init?.headers ?? {}), ...authHeader() },
+  })
+  if (res.status === 401) {
+    // Token missing/expired/rejected — clear it so AuthGate (subscribed via
+    // onAuthChange) drops back to the login screen. A wrong-password 401
+    // from login() itself just clears an already-absent token — harmless.
+    clearToken()
+  }
   if (!res.ok) {
     const text = await res.text()
     throw new Error(text || res.statusText)
@@ -149,9 +164,10 @@ export interface LoadPGNResponse extends GameState {
 export const loadPGN = async (id: string, pgn: string): Promise<LoadPGNResponse> => {
   const res = await fetch(`${API}/api/games/${id}/pgn`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeader() },
     body: JSON.stringify({ pgn }),
   })
+  if (res.status === 401) clearToken()
   if (!res.ok && res.status !== 422) {
     const text = await res.text()
     throw new Error(text || res.statusText)
@@ -200,7 +216,7 @@ async function coachRequest<T>(path: string, body: unknown): Promise<T> {
   try {
     res = await fetch(`${API}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(body),
       signal: controller.signal,
     })
@@ -212,6 +228,7 @@ async function coachRequest<T>(path: string, body: unknown): Promise<T> {
   } finally {
     clearTimeout(timer)
   }
+  if (res.status === 401) clearToken()
   if (!res.ok) {
     const text = (await res.text()).trim()
     if (res.status === 503) throw new CoachUnavailableError(text || 'coach not configured')
@@ -238,3 +255,72 @@ export const listRepertoires = (): Promise<RepertoireSummary[]> => request('/api
 
 export const getRepertoire = (id: string): Promise<Repertoire> =>
   request(`/api/repertoires/${id}`)
+
+// --- Auth ---
+
+export interface LoginResponse {
+  token: string
+}
+
+export const login = (username: string, password: string): Promise<LoginResponse> =>
+  request('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
+
+// --- Trainer progress sync (server-side, replaces localStorage — see
+// frontend CLAUDE.md's "Server-side trainer sync" note for why) ---
+
+export interface ServerCardState {
+  box: number
+  lapses: number
+  seen: number
+  correct: number
+  lastSeenISO: string | null
+}
+
+export interface GetProgressResponse {
+  cards: Record<string, ServerCardState>
+}
+
+export const getProgress = (repertoireId: string): Promise<GetProgressResponse> =>
+  request(`/api/progress/${repertoireId}`)
+
+export interface LineAttempt {
+  chapterId: string
+  chapterName: string
+  cardId: string
+  hadMistake: boolean
+}
+
+export const saveProgress = (
+  repertoireId: string,
+  cards: Record<string, ServerCardState>,
+  lineAttempt?: LineAttempt,
+): Promise<{ ok: boolean }> =>
+  request(`/api/progress/${repertoireId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cards, lineAttempt }),
+  })
+
+export interface ChapterCount {
+  repertoireId: string
+  chapterId: string
+  chapterName: string
+  count: number
+}
+
+export interface DayCount {
+  date: string
+  total: number
+}
+
+export interface AnalyticsResponse {
+  todayTotal: number
+  todayByChapter: ChapterCount[]
+  last7Days: DayCount[]
+}
+
+export const getAnalytics = (): Promise<AnalyticsResponse> => request('/api/analytics')

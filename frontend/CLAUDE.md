@@ -16,7 +16,8 @@ npm run test     # vitest (currently just lib/trainer/scheduler.test.ts)
 ```
 src/
   app/
-    layout.tsx          # root layout; loads Newsreader/Space Grotesk/JetBrains Mono via next/font/google
+    layout.tsx          # root layout; loads Newsreader/Space Grotesk/JetBrains Mono via next/font/google;
+                        #   wraps {children} in <AuthGate> — one login gate for the whole site
     page.tsx            # Analysis Board page — 3-column layout (see below); wraps in <Suspense> for
                         #   useSearchParams (?gameId= adoption, see Opening Trainer below)
     opening-study/
@@ -37,16 +38,24 @@ src/
                         #   (figurines + per-move eval, even columns), nav/reset, PGN paste box
     layout/
       TopBar.tsx        # wordmark + PageSwitcher + turn/book-move pills, OR an arbitrary `right` node
-                        #   (the trainer page passes its own) — logo mark removed
+                        #   (the trainer page passes its own) — logo mark removed; always renders a
+                        #   small "Sign out" button (clears the auth token — see components/auth/)
       Logo.tsx           # 34×34 SVG logo mark (no longer used on the page)
       PageSwitcher.tsx  # top-bar dropdown: Analysis Board / Opening Study, current page checked
+    auth/
+      Login.tsx          # username/password form, styled to match RepertoirePicker's setup card —
+                        #   the one login gating the whole site (see root CLAUDE.md's "Auth +
+                        #   server-side trainer sync"), not a per-page check
+      AuthGate.tsx       # wraps app/layout.tsx's {children}; shows <Login> until a token exists in
+                        #   localStorage, re-checks on lib/auth/token.ts's onAuthChange
     tree/
       OpeningTree.tsx   # "Opening Tree" panel (now under the board) — real Lichess explorer data, click row to play
     coach/
       Coach.tsx         # AI coach panel (left column) — "Ask Coach" button for a per-move explanation
                         #   (pinned, manual not automatic) + freeform chat thread
     trainer/
-      RepertoirePicker.tsx  # setup screen — repertoire/chapter pick, new-cards/mode
+      RepertoirePicker.tsx  # setup screen — repertoire/chapter pick, new-cards/mode, a small
+                        #     "Today" analytics panel (getAnalytics — line count + by chapter)
       LinePanel.tsx         # chapter name + intro comment + line-so-far + answer comment
       FeedbackStrip.tsx     # correct / correct-alt / incorrect / excluded / line-end states
       SessionSummary.tsx    # end-of-session stats + Drill mistakes / Same again / Change repertoire
@@ -55,13 +64,21 @@ src/
                         #   Optional `initialGameId` param adopts an existing game (via `getGame`) instead
                         #   of always `createGame()` — used by the trainer's "Analyze this line" handoff.
     useTrainerSession.ts # Opening Trainer session/run state machine — see below; deliberately does NOT
-                        #   reuse useChessGame (analysis/explorer/coach calls would leak the answer)
+                        #   reuse useChessGame (analysis/explorer/coach calls would leak the answer).
+                        #   Progress syncs to the backend (getProgress/saveProgress), not localStorage
+                        #   — see root CLAUDE.md's "Auth + server-side trainer sync"
   lib/
     api/
       client.ts         # typed fetch wrappers + Analysis/Explorer/GameState (moveTree) types;
                         #   loadPGN, evalFen (per-move eval), coach: explainMove (incl. viewerColor)/coachChat
                         #   (+ CoachUnavailableError, 120s abort timeout); createGame(fen?), setPosition,
-                        #   listRepertoires, getRepertoire for the trainer
+                        #   listRepertoires, getRepertoire for the trainer; login, getProgress/
+                        #   saveProgress/getAnalytics for server-side trainer sync. Every request
+                        #   attaches an Authorization header (lib/auth/token.ts's getToken) and a 401
+                        #   response clears the token, which AuthGate reacts to
+    auth/
+      token.ts           # localStorage-backed JWT (chesslab.auth.token) + onAuthChange subscription
+                        #   so AuthGate/client.ts can react to login/logout without a page reload
     chess/
       types.ts          # shared TS types: Piece, Square, MoveNode, BoardState
       moveTree.ts       # move-tree helpers: childrenOf (null-safe), flatten, mainlineEnd
@@ -70,10 +87,13 @@ src/
     trainer/
       types.ts          # Repertoire/Chapter/RepNode/Card/Answer/Reply wire types (mirror the Go API),
                         #   plus CardState/SessionState/SessionOptions/SessionSummary
-      rng.ts            # mulberry32 seeded PRNG + weightedChoice/uniform — scheduler never uses Math.random
-      scheduler.ts      # pure Leitner-box scheduler: createSession/pickNext/grade/isComplete/summarise
+      rng.ts            # mulberry32 seeded PRNG + weightedChoice/uniform/shuffle — scheduler never uses Math.random
+      scheduler.ts      # pure Leitner-box scheduler: createSession/pickNext/grade/isComplete/summarise;
+                        #   createSession shuffles its input cards (seeded) so new-card introduction
+                        #   and due-list tie-breaking aren't stuck in repertoire-build (chapter) order
       scheduler.test.ts # vitest — 10 cases per docs/opening-trainer/scheduler.md §9
-      persistence.ts    # localStorage load/save/merge (chesslab.trainer.v1.<repertoireId>)
+      persistence.ts    # mergeSessionCards — pure card-state merge logic only; no I/O of its own
+                        #   since trainer progress moved server-side (see lib/api/client.ts, above)
       cardKey.ts        # cardKey(fen) — mirrors Go's CardKey (strip halfmove/fullmove FEN fields)
 ```
 
@@ -293,9 +313,10 @@ turn/book-move pills.
   square-select — caught during manual browser verification, not by `tsc`/lint, since it type-checks
   fine either way.
 - `FeedbackStrip` sits directly under the board; when `phase === 'line-complete'` a row below it
-  shows **Analyze** (always available) plus either **"Do it again"** (the run had a mistake) or
-  **"Next line"** (clean run) — never both — per `useTrainerSession`'s run-completion rule (see the
-  root `CLAUDE.md`'s "Opening Trainer page" section for the full flow rationale).
+  always shows all three of **Analyze**, **"Do it again"**, and **"Next line"** — which of the
+  latter two renders as primary (blue, via `endBtn(primary)`) follows whether the run had a mistake,
+  but both are always clickable (an earlier version only rendered one or the other; see root
+  `CLAUDE.md`'s "Opening Trainer page" section for the full flow rationale).
 
 ## Environment
 `NEXT_PUBLIC_API_URL` — backend URL, defaults to `http://localhost:8080`

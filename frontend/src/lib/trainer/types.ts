@@ -123,7 +123,10 @@ export interface SessionSummary {
   missed: { cardId: string; lapses: number }[]
 }
 
-// --- persistence (localStorage, see data-format.md §6) ---
+// --- persistence (server-side, see frontend CLAUDE.md's "Server-side
+// trainer sync" note — this used to be a localStorage-backed wrapper type
+// with its own session-log array; both are gone now that a Postgres
+// line_attempts log covers what the session-log array used to be for) ---
 
 export interface PersistedCardState {
   box: number
@@ -131,20 +134,4 @@ export interface PersistedCardState {
   seen: number
   correct: number
   lastSeenISO: string | null
-}
-
-export interface PersistedSessionLog {
-  startedISO: string
-  endedISO: string
-  steps: number
-  correct: number
-  cardsSeen: number
-}
-
-export interface PersistedState {
-  version: 1
-  repertoireId: string
-  updatedISO: string
-  cards: Record<string, PersistedCardState>
-  sessions: PersistedSessionLog[]
 }

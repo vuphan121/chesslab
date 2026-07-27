@@ -13,6 +13,13 @@
 # return 503 in production, same as when Stockfish is unavailable; the rest
 # of the app is unaffected. Wire OLLAMA_BASE_URL below only if you're pointing
 # at an LLM server you host elsewhere.
+#
+# The whole site sits behind one login (see internal/auth's package doc) and
+# trainer progress/analytics are backed by Postgres (see internal/db) — all
+# four secrets below (LICHESS_TOKEN, AUTH_PASSWORD, JWT_SECRET, DATABASE_URL)
+# are marked sync:false, meaning Render prompts for them at Blueprint apply
+# time and stores them outside this file; nothing here or in git holds an
+# actual credential.
 
 services:
   - type: web
@@ -29,6 +36,14 @@ services:
         sync: false # set manually in the dashboard — free token, see backend/.env.example
       - key: OLLAMA_BASE_URL
         value: "" # left empty on purpose — see note above
+      - key: AUTH_USERNAME
+        sync: false
+      - key: AUTH_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false # generate with: openssl rand -hex 32
+      - key: DATABASE_URL
+        sync: false # Postgres connection string (Neon or any Postgres) — trainer sync/analytics 503 without it
 
   - type: web
     name: chesslab-frontend

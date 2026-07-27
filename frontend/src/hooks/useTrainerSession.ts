@@ -6,15 +6,17 @@ import {
   setPosition as apiSetPosition,
   makeMove,
   getRepertoire,
+  getProgress as apiGetProgress,
+  saveProgress as apiSaveProgress,
 } from '@/lib/api/client'
 import type { GameState } from '@/lib/api/client'
 import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
 import { flatten } from '@/lib/chess/moveTree'
-import type { Repertoire, RepCard, SessionOptions, SessionState } from '@/lib/trainer/types'
+import type { Repertoire, RepCard, SessionOptions, SessionState, PersistedCardState } from '@/lib/trainer/types'
 import { createSession, pickNext, grade, isComplete, summarise } from '@/lib/trainer/scheduler'
 import { newRng, weightedChoice } from '@/lib/trainer/rng'
 import { cardKey } from '@/lib/trainer/cardKey'
-import { loadPersisted, savePersisted, mergeSessionIntoPersisted } from '@/lib/trainer/persistence'
+import { mergeSessionCards } from '@/lib/trainer/persistence'
 
 const WEAKNESS_W = 0.75
 
@@ -125,6 +127,11 @@ export function useTrainerSession() {
   const gradedThisPresentationRef = useRef(false)
   const moveReqId = useRef(0)
   const lastArgsRef = useRef<{ repertoireId: string; chapterIds: string[]; opts: SessionOptions } | null>(null)
+  // Snapshot of this repertoire's server-side progress, fetched once when
+  // the session starts (see startSession) — endRun re-merges the session's
+  // current state into this on every run boundary and sends the full
+  // result back to the server, rather than re-fetching each time.
+  const priorProgressRef = useRef<Record<string, PersistedCardState>>({})
 
   const liveIndex = runSnapshots.length - 1
   const isViewingHistory = viewIndex !== null && viewIndex !== liveIndex
@@ -232,23 +239,39 @@ export function useTrainerSession() {
     [repertoire],
   )
 
-  // endRun persists this session's per-card progress so far (so nothing is
-  // lost if the user closes the tab) and moves to the line-complete gate
-  // (Analyze / Redo-or-Next). Runs, not sessions, end here — the session-log
-  // entry itself is written once, at actual session end (nextLine's
-  // isComplete branch / endSession), not on every run boundary.
+  // endRun syncs this session's per-card progress to the server (so nothing
+  // is lost if the user closes the tab or switches devices — see frontend
+  // CLAUDE.md's "Server-side trainer sync" note) and moves to the
+  // line-complete gate (Analyze / Redo-or-Next). Also logs one line_attempts
+  // row for analytics, when the run's chapter can be resolved. Fire-and-
+  // forget: a network hiccup or unconfigured DB just means this run's
+  // progress doesn't sync this time, same "leave state untouched, allow
+  // retry" degradation used elsewhere in this file — it doesn't block the
+  // drilling flow.
   const endRun = useCallback(() => {
     const session = sessionRef.current
     if (session && repertoire) {
-      const prior = loadPersisted(repertoire.id)
-      savePersisted(repertoire.id, mergeSessionIntoPersisted(repertoire.id, prior, session))
+      const merged = mergeSessionCards(priorProgressRef.current, session)
+      priorProgressRef.current = merged
+
+      const startCard = runStartCardIdRef.current ? cardById(runStartCardIdRef.current) : undefined
+      const chapterId = startCard?.chapterIds[0]
+      const chapter = chapterId ? repertoire.chapters.find((c) => c.id === chapterId) : undefined
+      const lineAttempt =
+        startCard && chapter
+          ? { chapterId: chapter.id, chapterName: chapter.name, cardId: startCard.id, hadMistake: runHadMistake }
+          : undefined
+
+      apiSaveProgress(repertoire.id, merged, lineAttempt).catch(() => {
+        // progress sync unavailable this time — nothing else reasonable to do
+      })
     }
     // Clear any hint arrow left over from a wrong-attempt-then-correct-retry
     // earlier in this run — otherwise it stays pointing at an already-
     // superseded move on the line-complete screen's board.
     setHintUci(null)
     setPhase('line-complete')
-  }, [repertoire])
+  }, [repertoire, cardById, runHadMistake])
 
   // proceedAfterCorrect plays the opponent's reply (if the repertoire has
   // one recorded) and advances the run into the next card; otherwise the
@@ -310,7 +333,19 @@ export function useTrainerSession() {
         }
         sessionCardsRef.current = cards
 
-        const saved = loadPersisted(repertoireId)
+        // Fetched from the server, not localStorage — see frontend
+        // CLAUDE.md's "Server-side trainer sync" note. Falls back to no
+        // prior history (a fresh-feeling session, not a hard failure) if
+        // sync is unavailable — not logged in yet, DB not configured, or a
+        // network hiccup — same degrade-gracefully pattern as the rest of
+        // this app (Stockfish/LICHESS_TOKEN/coach).
+        let saved: Record<string, PersistedCardState> = {}
+        try {
+          saved = (await apiGetProgress(repertoireId)).cards
+        } catch {
+          // proceed with no prior history this time
+        }
+        priorProgressRef.current = saved
         const session = createSession(cards, opts, saved, newRng())
         sessionRef.current = session
 
@@ -495,38 +530,20 @@ export function useTrainerSession() {
     }
   }, [cardById, beginRun])
 
-  // persistSessionEnd writes the one-time session-log entry (see the note on
-  // mergeSessionIntoPersisted) — called only when the session actually ends,
-  // not on every run boundary within it.
-  const persistSessionEnd = useCallback(
-    (session: SessionState) => {
-      if (!repertoire) return
-      const prior = loadPersisted(repertoire.id)
-      const log = {
-        startedISO: new Date().toISOString(),
-        endedISO: new Date().toISOString(),
-        steps: session.step,
-        correct: session.correctCount,
-        cardsSeen: session.order.filter((id) => session.cards.get(id)!.seen > 0).length,
-      }
-      savePersisted(repertoire.id, mergeSessionIntoPersisted(repertoire.id, prior, session, log))
-    },
-    [repertoire],
-  )
-
+  // Progress syncs on every run boundary now (see endRun), not just at
+  // actual session end — there's no separate session-log write left to do
+  // here, just the summary/phase transition.
   const nextLine = useCallback(async () => {
     const session = sessionRef.current
     const gid = gameIdRef.current
     if (!session || !gid) return
     if (isComplete(session)) {
-      persistSessionEnd(session)
       setSummary(summarise(session))
       setPhase('summary')
       return
     }
     const next = pickNext(session)
     if (!next) {
-      persistSessionEnd(session)
       setSummary(summarise(session))
       setPhase('summary')
       return
@@ -543,7 +560,7 @@ export function useTrainerSession() {
     } finally {
       setBusy(false)
     }
-  }, [cardById, beginRun, persistSessionEnd, repertoire, resolveRunStartCard])
+  }, [cardById, beginRun, repertoire, resolveRunStartCard])
 
   // analyzeLine hands the exact line just drilled off to the Analysis Board:
   // builds a fresh game at the run's starting position, replays every move
@@ -571,11 +588,10 @@ export function useTrainerSession() {
   const endSession = useCallback(() => {
     const session = sessionRef.current
     if (session) {
-      persistSessionEnd(session)
       setSummary(summarise(session))
     }
     setPhase('summary')
-  }, [persistSessionEnd])
+  }, [])
 
   // sameAgain restarts a fresh session against the same repertoire/chapters/
   // options just used (picking up wherever persisted progress now stands).

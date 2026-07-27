@@ -2,13 +2,20 @@ package main
 
 import (
 	"bufio"
+	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/chesslab/backend/internal/api"
+	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/coach"
+	"github.com/chesslab/backend/internal/db"
 	"github.com/chesslab/backend/internal/engine"
 	"github.com/chesslab/backend/internal/repertoire"
 	"github.com/chesslab/backend/internal/storage"
@@ -67,7 +74,19 @@ func main() {
 	}
 	repertoires := repertoire.NewStore(repertoire.LoadDir(repDir))
 
-	handler := api.NewHandler(store, eng, coachSvc, coachAgent, repertoires)
+	dbStore := newDBStore()
+	authCfg := newAuthConfig()
+	if dbStore != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if err := dbStore.SeedUser(ctx, authCfg.Username, authCfg.Password); err != nil {
+			log.Printf("db: failed to seed user %q (%v) — login will fall back to the env-var check", authCfg.Username, err)
+		} else {
+			log.Printf("db: user %q seeded/updated from AUTH_USERNAME/AUTH_PASSWORD", authCfg.Username)
+		}
+		cancel()
+	}
+
+	handler := api.NewHandler(store, eng, coachSvc, coachAgent, repertoires, dbStore, authCfg)
 	router := api.NewRouter(handler)
 
 	port := os.Getenv("PORT")
@@ -116,4 +135,64 @@ func newCoachDeps() (*coach.Index, *coach.OverviewIndex, *coach.OllamaClient) {
 	log.Printf("coach: LLM client -> %s (model %s)", llm.BaseURL, llm.Model)
 
 	return index, overview, llm
+}
+
+// newDBStore connects the trainer-progress-sync Postgres store — optional,
+// same graceful-degradation pattern as Stockfish/LICHESS_TOKEN/the coach:
+// if DATABASE_URL is unset or the connection fails, progress/analytics
+// endpoints return 503 and everything else (board, engine, drilling itself)
+// is unaffected.
+func newDBStore() *db.Store {
+	url := os.Getenv("DATABASE_URL")
+	if url == "" {
+		log.Printf("db: DATABASE_URL unset — trainer progress sync/analytics endpoints will return 503")
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	store, err := db.Connect(ctx, url)
+	if err != nil {
+		log.Printf("db: connect failed (%v) — trainer progress sync/analytics endpoints will return 503", err)
+		return nil
+	}
+	log.Printf("db: connected, schema migrated")
+
+	retentionDays := 90
+	if v := os.Getenv("LINE_ATTEMPTS_RETENTION_DAYS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			retentionDays = n
+		}
+	}
+	store.StartCleanupLoop(time.Duration(retentionDays)*24*time.Hour, 12*time.Hour)
+	log.Printf("db: line_attempts retention %d days", retentionDays)
+
+	return store
+}
+
+// newAuthConfig reads the single hardcoded login (see internal/auth's
+// package doc for why it's just one user, not a table). Username/password
+// are required — this gates the whole API, so refusing to start without
+// them is safer than silently leaving everything open. JWT_SECRET falls
+// back to a random value generated at boot if unset, purely for local-dev
+// convenience; that means restarting the process invalidates every
+// outstanding token, so set it explicitly in production (see backend/.env.example).
+func newAuthConfig() auth.Config {
+	username := os.Getenv("AUTH_USERNAME")
+	password := os.Getenv("AUTH_PASSWORD")
+	if username == "" || password == "" {
+		log.Fatal("AUTH_USERNAME and AUTH_PASSWORD must both be set — see backend/.env.example")
+	}
+
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		buf := make([]byte, 32)
+		if _, err := rand.Read(buf); err != nil {
+			log.Fatalf("failed to generate a fallback JWT_SECRET: %v", err)
+		}
+		secret = hex.EncodeToString(buf)
+		log.Printf("auth: JWT_SECRET unset — generated a random one for this run only; every token is invalidated on restart. Set JWT_SECRET explicitly in production.")
+	}
+
+	return auth.Config{Username: username, Password: password, JWTSecret: []byte(secret)}
 }

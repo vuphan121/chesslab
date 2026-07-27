@@ -10,6 +10,9 @@ go build ./...         # compile check
 go test ./...          # run tests
 ```
 
+**Auth is required to start** — `AUTH_USERNAME`/`AUTH_PASSWORD` must be set (`.env`, gitignored) or
+`main.go` calls `log.Fatal`; see "Auth + trainer sync (Postgres)" below.
+
 **With Stockfish** (required for analysis endpoint):
 ```bash
 STOCKFISH_PATH="C:/Users/vupha/AppData/Local/Microsoft/WinGet/Packages/Stockfish.Stockfish_Microsoft.Winget.Source_8wekyb3d8bbwe/stockfish/stockfish-windows-x86-64-avx2.exe" go run ./cmd/server/
@@ -47,11 +50,22 @@ internal/
   lichess/
     client.go       # Fetch() — cloud-eval (public, no auth) used as first choice in AnalyzeGame
     explorer.go     # FetchExplorer() — opening-explorer (requires LICHESS_TOKEN bearer auth)
+  auth/
+    auth.go         # Config: JWT issue/verify, env-var credential fallback, chi middleware — see
+                     #   "Auth + trainer sync (Postgres)" below
+  db/               # Postgres-backed trainer progress sync + analytics — see below
+    schema.sql       # embedded, exec'd idempotently at boot (users/card_progress/line_attempts)
+    db.go            # Connect/migrate
+    users.go         # SeedUser (bcrypt-hash + upsert at boot) / VerifyUser
+    progress.go       # GetProgress/SaveProgress (upsert + line_attempts insert, one tx)/GetAnalytics
+    cleanup.go        # StartCleanupLoop — prunes old line_attempts on a retention window
   api/
     handlers.go     # HTTP handlers: CreateGame, GetGame, MakeMove, DeleteGame, AnalyzeGame, Explorer, GotoNode
     pgn.go          # HTTP handler: LoadPGN — resets the tree first (Game.Reset), replays via chess.TokenizePGNMoves/FindLegalMoveBySAN
     coach_handler.go # HTTP handlers: ExplainMove (Path 1), CoachChat (Path 2)
-    routes.go       # chi router setup + CORS middleware
+    auth_handler.go # HTTP handler: Login
+    progress_handler.go # HTTP handlers: GetProgress, SaveProgress, Analytics
+    routes.go       # chi router setup + CORS middleware + auth middleware group (see below)
   storage/
     memory.go       # Store interface + thread-safe in-memory implementation
   repertoire/       # Opening Trainer: parses a Lichess study PGN into drillable cards.
@@ -65,7 +79,7 @@ internal/
     store.go         # in-memory read-only registry (loaded once at startup)
     pgn_test.go      # parses the demo Catalan study; asserts tree structure (custom start FEN,
                      #   intro comment placement, depth-3 nested variation)
-    build_test.go    # asserts the exact 60-card enumeration, exclusion propagation, cross-chapter
+    build_test.go    # asserts the exact 86-card enumeration, exclusion propagation, cross-chapter
                      #   reply-pool merge (see docs/opening-trainer/data-format.md §2.3)
   coach/
     index.go        # Chunk/TheoryMatch/LookupResult + Index — loads chunks.validated.json; indexes
@@ -107,6 +121,13 @@ internal/
 | GET | `/api/repertoires/{id}` | Full repertoire: chapters (with trees), derived cards, opponent reply pools |
 | POST | `/api/games/{id}/coach/explain` | Grounded per-move explanation (Path 1) |
 | POST | `/api/games/{id}/coach/chat` | Freeform agentic coach chat (Path 2) |
+| POST | `/api/auth/login` | `{"username","password"}` → `{"token"}` (JWT). The one unauthenticated route besides `/healthz` — see "Auth + trainer sync" below |
+| GET | `/api/progress/{repertoireId}` | Authenticated user's saved per-card scheduler state — `{"cards": {...}}`, empty map if nothing drilled yet. 503 if no database configured |
+| POST | `/api/progress/{repertoireId}` | Upsert a run's card states + optionally log one `line_attempts` row — `{"cards": {...}, "lineAttempt"?: {...}}` |
+| GET | `/api/analytics` | Today's + last-7-days drilling activity for the authenticated user |
+
+**Everything above except `/api/auth/login` and `/healthz` requires `Authorization: Bearer <token>`**
+— see `routes.go`'s auth middleware group and "Auth + trainer sync" below.
 
 ### Load PGN request/response
 ```json
@@ -264,6 +285,58 @@ internal/
   can I play X?" (the injected current FEN + the named move → legality + book-aware verdict).
 - Returns 503 if unconfigured, 502 if the local LLM call fails, or if the tool-call loop exceeds
   `maxToolIterations` (4) without a final answer.
+
+## Auth + trainer sync (Postgres)
+
+**Why:** trainer progress (per-card box/lapses/seen/correct) used to live only in the browser's
+`localStorage` — see root `CLAUDE.md`'s "Server-side trainer sync" note for the full before/after.
+It's now in Postgres (Neon in production, any Postgres works), so it follows the user across
+devices and survives clearing browser storage. Adding a real database made "just gate the site with
+a login" cheap too, so both landed together.
+
+**Auth is a single hardcoded login, not real accounts** (`internal/auth`) — `AUTH_USERNAME`/
+`AUTH_PASSWORD` env vars, required at boot (`main.go` calls `log.Fatal` if either is empty, since
+this gates the *entire* API and silently running open would be worse than refusing to start).
+`POST /api/auth/login` issues a 30-day JWT (`golang-jwt/jwt/v5`, HMAC-SHA256, `JWT_SECRET` — falls
+back to a random value generated at boot if unset, which just means a restart logs everyone out;
+set it explicitly in production). `routes.go` wraps every route except `/api/auth/login` and
+`/healthz` in `auth.Config.Middleware`, which validates `Authorization: Bearer <token>` and stashes
+the username in the request context (`auth.UsernameFromContext`) for handlers to scope queries by.
+
+**The credential itself lives in Postgres, not just the env var** (`internal/db/users.go`): at boot,
+if a database is configured, `main.go` calls `SeedUser` to bcrypt-hash `AUTH_PASSWORD` and
+upsert it into the `users` table (`username` is the primary key, so re-running with a changed
+`AUTH_PASSWORD` and redeploying rotates it — no manual SQL needed). `Login` then checks
+`db.VerifyUser` (bcrypt compare against the stored hash) when a database is configured, falling back
+to `auth.Config.CheckCredentials` (a constant-time compare directly against the env vars) only when
+it isn't — that fallback exists purely so local dev works without setting up a database at all, not
+as a parallel production path.
+
+**`internal/db`** is the one package that needs a durable store — everything else in this backend is
+either in-memory (games) or reloaded fresh from committed files on boot (repertoires, coach corpus).
+`Connect` opens a `pgxpool.Pool` and runs `schema.sql` idempotently (`CREATE TABLE/INDEX IF NOT
+EXISTS`, split into individual statements — comment-only lines are stripped first, since a naive
+split on every `;` in the file would also break on semicolons inside prose comments, which was a
+real bug caught by actually booting against the live database, not by `go build`). Three tables:
+- `users` — bcrypt hash, see above.
+- `card_progress` — one row per `(username, repertoire_id, card_id)`, upserted wholesale on every
+  run boundary (`SaveProgress`) with whatever the frontend's scheduler currently has for every card
+  it's touched — the same "read prior, merge in this session's cards, write the merged whole thing
+  back" shape `mergeSessionIntoPersisted` used for localStorage, just over the network now (see
+  frontend `useTrainerSession.ts`). Never pruned — this **is** the learning state.
+- `line_attempts` — one row per completed drill run (repertoire/chapter/card/`hadMistake`/timestamp).
+  A log, not state: it's the raw material for `GetAnalytics`'s "lines drilled today / this week, by
+  chapter" aggregates (and, per the original ask, is there for a future smarter scheduler to mine),
+  but nothing breaks if old rows disappear — so `cleanup.go`'s `StartCleanupLoop` prunes rows older
+  than `LINE_ATTEMPTS_RETENTION_DAYS` (default 90) on a 12-hour ticker, running once immediately at
+  boot too. `card_progress` is never touched by this.
+
+**Everything database-related degrades gracefully, same pattern as Stockfish/`LICHESS_TOKEN`/the
+coach**: no `DATABASE_URL` (or a failed connection) logs a warning and leaves `db.Store` `nil` —
+`/api/progress/*` and `/api/analytics` return 503, `Login` falls back to the env-var check, and
+everything else (board, engine, drilling itself) is unaffected. The frontend mirrors this: a failed
+`getProgress`/`saveProgress` call is swallowed (session just starts with no prior history / doesn't
+sync that run), never surfaced as a blocking error.
 
 ## AI coach design
 

@@ -1,7 +1,7 @@
 // Pure scheduling algorithm — no chess knowledge, no network, no wall clock
 // inside a session. See docs/opening-trainer/scheduler.md for the full spec
 // and worked trace this implementation is checked against.
-import type { RepCard, CardState, SessionOptions, SessionState, PersistedState, SessionSummary } from './types'
+import type { RepCard, CardState, SessionOptions, SessionState, PersistedCardState, SessionSummary } from './types'
 import { uniform, weightedChoice, shuffle } from './rng'
 
 export const BASE_GAP = [2, 4, 8, 16, 32, 64]
@@ -38,11 +38,15 @@ function freshCardState(cardId: string): CardState {
 }
 
 // createSession seeds a session's card states from persisted history
-// (time-decayed per scheduler.md §8), filtered/ordered by mode.
+// (time-decayed per scheduler.md §8), filtered/ordered by mode. `saved` is
+// a flat cardId -> state map, fetched from the server (see
+// useTrainerSession.ts) — not wrapped in the old localStorage-era
+// PersistedState envelope, which carried nothing this function used besides
+// `.cards`.
 export function createSession(
   cards: RepCard[],
   opts: SessionOptions,
-  saved: PersistedState | null,
+  saved: Record<string, PersistedCardState> | null,
   rng: () => number,
 ): SessionState {
   const states = new Map<string, CardState>()
@@ -55,10 +59,10 @@ export function createSession(
   // lines, then chapter 2's, in order" instead of drilling across the whole
   // repertoire.
   for (const card of shuffle(cards, rng)) {
-    if (opts.mode === 'mistakes' && !(saved?.cards[card.id]?.lapses)) continue
+    if (opts.mode === 'mistakes' && !(saved?.[card.id]?.lapses)) continue
 
     const st = freshCardState(card.id)
-    const persisted = saved?.cards[card.id]
+    const persisted = saved?.[card.id]
     if (persisted) {
       st.box = persisted.box
       st.lapses = persisted.lapses
