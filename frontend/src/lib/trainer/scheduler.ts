@@ -2,7 +2,7 @@
 // inside a session. See docs/opening-trainer/scheduler.md for the full spec
 // and worked trace this implementation is checked against.
 import type { RepCard, CardState, SessionOptions, SessionState, PersistedState, SessionSummary } from './types'
-import { uniform, weightedChoice } from './rng'
+import { uniform, weightedChoice, shuffle } from './rng'
 
 export const BASE_GAP = [2, 4, 8, 16, 32, 64]
 export const MAX_BOX = 5
@@ -48,7 +48,13 @@ export function createSession(
   const states = new Map<string, CardState>()
   const order: string[] = []
 
-  for (const card of cards) {
+  // Shuffled once up front — `cards` arrives in whatever order the backend
+  // built the repertoire in (chapter by chapter), and both new-card
+  // introduction (pickNext's `newPool[0]`) and due-list tie-breaking walk
+  // `order` positionally. Left unshuffled, a session felt like "chapter 1's
+  // lines, then chapter 2's, in order" instead of drilling across the whole
+  // repertoire.
+  for (const card of shuffle(cards, rng)) {
     if (opts.mode === 'mistakes' && !(saved?.cards[card.id]?.lapses)) continue
 
     const st = freshCardState(card.id)

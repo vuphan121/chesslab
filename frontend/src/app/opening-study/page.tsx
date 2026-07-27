@@ -44,7 +44,6 @@ export default function OpeningStudyPage() {
     hintUci,
     runHadMistake,
     runMoves,
-    progress,
     summary,
     viewIndex,
     isViewingHistory,
@@ -201,10 +200,6 @@ export default function OpeningStudyPage() {
                 </span>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="mono" style={{ fontSize: 12, color: '#a3a099' }}>
-                  step {progress.step}
-                  {progress.sessionLength != null ? ` / ${progress.sessionLength}` : ''}
-                </span>
                 <button
                   onClick={toggleFlipped}
                   title="Flip board"

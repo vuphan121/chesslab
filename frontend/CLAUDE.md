@@ -279,10 +279,11 @@ eval bar, no `OpeningTree`, no `Coach`, since any of those would show the answer
 (`SessionSummary`, centered). `TopBar`'s `right` prop shows the repertoire name instead of the usual
 turn/book-move pills.
 
-- The caption row above the board shows `{turn} to move — play your repertoire move` (left) and
-  `step {n}[ / {sessionLength}]` + the flip button (right, same SVG as the Analysis Board's).
-  `flipped` defaults to the repertoire's own side (`rep.side === 'b'`) at session start, so a Black
-  repertoire opens with Black at the bottom.
+- The caption row above the board shows `{turn} to move — play your repertoire move` (left) and the
+  flip button (right, same SVG as the Analysis Board's) — a `step {n}` counter used to live here too
+  but was removed as unneeded (`useTrainerSession`'s `progress` state that tracked it was removed
+  entirely, not just hidden). `flipped` defaults to the repertoire's own side (`rep.side === 'b'`) at
+  session start, so a Black repertoire opens with Black at the bottom.
 - Board interaction (`selectSquare`/`move`/`legalMovesFor`) is hand-rolled in `useTrainerSession`,
   mirroring `useChessGame`'s click-to-move/drag pattern exactly — **`boardState` must be a value
   derived fresh every render from the raw `GameState` + current `selected`**

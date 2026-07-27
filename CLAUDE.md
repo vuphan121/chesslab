@@ -213,6 +213,15 @@ saves per-card `{box, lapses, seen, correct, lastSeenISO}` to `localStorage`
 (`chesslab.trainer.v1.<repertoireId>`), with crude cross-session day-based box decay at session
 start (`createSession`).
 
+**`createSession` shuffles its input card list** (`rng.ts`'s new `shuffle`, Fisher-Yates) before
+building `SessionState.order`. Was a real bug, reported by actual use: `cards` arrives from the
+backend in repertoire-build order — chapter 1's cards, then chapter 2's, etc. — and `order` is what
+both new-card introduction (`pickNext`'s `newPool[0]`) and due-list tie-breaking walk positionally,
+so an unshuffled session felt exactly like "drill chapter 1 start to finish, then chapter 2" instead
+of practicing across the whole repertoire. The shuffle is seeded (same `rng` the rest of the session
+uses), so a session is still fully deterministic/reproducible under a fixed seed — only the *order*
+changed, not the determinism guarantee `scheduler.test.ts`'s "is deterministic" case checks.
+
 **Session hook** (`hooks/useTrainerSession.ts`) — deliberately does *not* reuse `useChessGame` (which
 fires analysis/explorer/coach after every move — would both leak the answer and be slow). Owns the
 scheduler session, the current run, and the actual drill flow, which is stricter than the original

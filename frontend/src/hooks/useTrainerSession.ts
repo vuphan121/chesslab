@@ -100,7 +100,6 @@ export function useTrainerSession() {
   const [hintUci, setHintUci] = useState<string | null>(null)
   const [runHadMistake, setRunHadMistake] = useState(false)
   const [runMoves, setRunMoves] = useState<RunMove[]>([]) // reactive mirror of runMovesRef, for the "line so far" display
-  const [progress, setProgress] = useState({ step: 0, sessionLength: null as number | null })
 
   const [summary, setSummary] = useState<ReturnType<typeof summarise> | null>(null)
 
@@ -243,7 +242,6 @@ export function useTrainerSession() {
     if (session && repertoire) {
       const prior = loadPersisted(repertoire.id)
       savePersisted(repertoire.id, mergeSessionIntoPersisted(repertoire.id, prior, session))
-      setProgress({ step: session.step, sessionLength: session.opts.sessionLength })
     }
     // Clear any hint arrow left over from a wrong-attempt-then-correct-retry
     // earlier in this run — otherwise it stays pointing at an already-
@@ -325,7 +323,6 @@ export function useTrainerSession() {
         const dueCard = cards.find((c) => c.id === first.cardId)!
         const firstCard = resolveRunStartCard(rep, dueCard)
         dueTargetPathRef.current = dueCard.pathSan
-        setProgress({ step: session.step, sessionLength: opts.sessionLength })
 
         const gs = await createGame(firstCard.fen)
         gameIdRef.current = gs.id
@@ -379,7 +376,6 @@ export function useTrainerSession() {
             playedSan,
             comment: matchAnswer.comment,
           })
-          setProgress((p) => ({ ...p, step: sessionRef.current?.step ?? p.step }))
           await sleep(450)
           if (reqId !== moveReqId.current) return
           // Use gs.fen (the position the backend just actually computed) rather
@@ -624,7 +620,6 @@ export function useTrainerSession() {
     hintUci,
     runHadMistake,
     runMoves,
-    progress,
     summary,
     viewIndex,
     isViewingHistory,
