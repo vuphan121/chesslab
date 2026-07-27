@@ -55,3 +55,22 @@ An aggresive line but quite difficult to play. }) 2... Bd7 (2... Rb8 3. Nfd2 e5 
 [UTCTime "08:55:04"]
 
 1. Qa4 Bb4+ (1... Nd5 2. Qxc4 Nb6 3. Qd3) (1... Nd7 2. Qxc4 Nb6 3. Qd3) (1... Bd6 2. Ne5) (1... Bd7 2. Qxc4 Na5 3. Qd3 c5 4. O-O) 2. Bd2 Nd5 (2... Bxd2+ 3. Nbxd2) (2... Bd6 3. Na3 Ne4 (3... Bxa3 4. Qxa3 Nxd4 5. Nxd4 Qxd4 6. Rd1) 4. Nxc4 Nxd2 5. Nfxd2 { Try to prevent d5 to make it harder for black to develop white bishop }) 3. Bxb4 Nxb4 4. O-O Rb8 5. Na3 { Preventing b5 } 5... O-O 6. Qb5 b6 7. Qxc4 Ba6 8. Nb5 Qd5 9. Qxd5 Nxd5 10. a4 *
+
+
+[Event "Catalan: Open, c5"]
+[Date "2026.07.27"]
+[Result "*"]
+[Variant "From Position"]
+[FEN "rnbqkb1r/pp3ppp/4pn2/2p5/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 1 5"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "Catalan"]
+[ChapterName "Open, c5"]
+[ChapterURL "https://lichess.org/study/pYmWdR27/Ifg15qcX"]
+[Annotator "https://lichess.org/@/vuphan121"]
+[FEN "rnbqkb1r/pp3ppp/4pn2/2p5/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 1 5"]
+[SetUp "1"]
+[UTCDate "2026.07.27"]
+[UTCTime "06:24:54"]
+
+5. O-O Nc6 (5... cxd4 6. Nxd4 { White is slightly better in most of these lines. } 6... Qb6 (6... a6 7. Qa4+ Qd7 8. Qxc4 b5 9. Qb3) (6... Bc5 7. Qa4+ Qd7 8. Nb5 O-O 9. Qxc4) 7. Qa4+ Bd7 8. Qxc4 Na6 9. Qb3) 6. Qa4 Bd7 (6... cxd4 7. Nxd4 Qxd4 8. Bxc6+ Bd7 9. Rd1 Bxc6 10. Qxc6+ bxc6 11. Rxd4) 7. Qxc4 cxd4 (7... b5 8. Qd3 c4 (8... Rc8 9. dxc5 Bxc5 10. Nc3) 9. Qd1 Rc8) 8. Nxd4 Rc8 9. Nc3 Nxd4 10. Qxd4 Bc5 11. Qh4 *

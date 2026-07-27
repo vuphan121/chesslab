@@ -46,7 +46,7 @@ src/
       Coach.tsx         # AI coach panel (left column) — "Ask Coach" button for a per-move explanation
                         #   (pinned, manual not automatic) + freeform chat thread
     trainer/
-      RepertoirePicker.tsx  # setup screen — repertoire/chapter pick, session length/new-cards/mode
+      RepertoirePicker.tsx  # setup screen — repertoire/chapter pick, new-cards/mode
       LinePanel.tsx         # chapter name + intro comment + line-so-far + answer comment
       FeedbackStrip.tsx     # correct / correct-alt / incorrect / excluded / line-end states
       SessionSummary.tsx    # end-of-session stats + Drill mistakes / Same again / Change repertoire

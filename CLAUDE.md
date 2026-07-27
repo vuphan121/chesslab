@@ -193,9 +193,11 @@ variations by design for the PGN-paste feature). `BuildRepertoire` resolves excl
 `.config.json` + `$2/$4/$6` NAGs) and derives the card set + opponent reply pools, keyed by
 `CardKey(fen)` (clock-stripped FEN) so the same position reached via different chapters/move-orders
 merges into one card. Demo repertoire: `backend/data/repertoires/catalan-white.{pgn,config.json}` —
-fetched from `https://lichess.org/study/pYmWdR27`, 60 cards across 3 chapters (verified by
-`internal/repertoire/*_test.go`, including the exact expected card enumeration in
-`docs/opening-trainer/data-format.md` §2.3). New endpoints: `GET /api/repertoires`,
+fetched from `https://lichess.org/study/pYmWdR27`, 86 cards across 4 chapters (a 4th chapter, "Open,
+c5", was added to the source study after the first 3 — verified by `internal/repertoire/*_test.go`,
+including the card-count assertion and independence checks in `docs/opening-trainer/data-format.md`
+§2.3; unlike chapters 1–3, chapter 4's individual cards aren't hand-tabulated in that doc, just its
+totals — see the doc for why). New endpoints: `GET /api/repertoires`,
 `GET /api/repertoires/{id}`, `POST /api/games/{id}/position` (re-points an existing game at an
 arbitrary FEN, discarding its tree — same contract as `Game.Reset()`, see backend `CLAUDE.md`).
 `POST /api/games` gained an optional `{fen}` body (defaults to the initial position, unchanged for
@@ -227,9 +229,9 @@ design doc's "no retry" decision (superseded — see below):
   continues. This replaces design.md §7.3/§12's original "no retry" decision; the user asked for
   undo-show-retry explicitly and it's what's implemented.
 - **Run completion**: if the run had *any* mistake (even one later corrected via retry), the only
-  way forward is **"Do it again"** (replays the exact same run from its starting card) — no "Next
-  line" option is offered until a clean pass. A clean run offers **"Next line"** (advances the
-  scheduler via `pickNext`). Both states also offer **"Analyze"**.
+  way forward is **"Do it again"** (replays the same run from its starting card) — no "Next line"
+  option is offered until a clean pass. A clean run offers **"Next line"** (advances the scheduler
+  via `pickNext`). Both states also offer **"Analyze"**.
 - **"Analyze this line"**: builds a fresh game at the run's starting FEN, replays every move
   actually played this run (both sides, via sequential `POST /moves` calls) on a **new** backend game
   object, then navigates to `/?gameId=<newId>` — `useChessGame` picks up an existing game via that
@@ -245,8 +247,29 @@ have silently misgraded correct answers as wrong past the first move of every li
 the played node up via `flatten(gs.moveTree).get(gs.currentNodeId)?.node`, the same pattern
 `useChessGame`'s `nodeMeta` already uses.
 
+**A second real bug, reported by actual use** (not caught by any test — the scheduler's own unit
+tests are chess-agnostic and never exercise `useTrainerSession`'s repertoire-aware layer): "Do it
+again" could visibly replay a *different* line than the one just failed, and "Next line" after a
+clean pass could hand back the exact card that was just answered correctly. Root cause: a run starts
+at its **chapter's** beginning (`resolveRunStartCard`), not at the specific card the scheduler picked
+as due, and the opponent's reply at every branch point was chosen by unseeded weighted-random
+(`pickOpponentReply`) with no memory of *why* the run started. Two consequences: (1) two runs from
+the same start could wander down different siblings and diverge after the first branch — "Do it
+again" wasn't reproducible; (2) if the random walk never actually reached the due card down a
+different branch, that card's due status never resolved, so the scheduler would just hand it straight
+back out on the very next "Next line" — a real repeat, not a perceived one. Fixed by
+`dueTargetPathRef`: when a run starts (`startSession`/`nextLine`), it's set to the due card's own
+`pathSan` (the SAN path from chapter root — already computed server-side for the "line so far"
+display); `pickOpponentReply` now forces the reply matching that path for as long as one remains,
+falling back to the original weighted-random choice once the path is exhausted (or doesn't match,
+e.g. the due card's recorded path came from a different chapter than the one this run resolved to —
+safe no-op fallback, not a regression). `redoLine` deliberately leaves the ref untouched, so a redo
+retraces the same forced path. Not covered by an automated test (it's fundamentally about random-walk
+behavior across many runs) — verify by actually drilling a multi-branch chapter.
+
 **UI components** (`components/trainer/`): `RepertoirePicker` (setup screen — repertoire/chapter
-selection, session length/new-cards/mode options), `LinePanel` (chapter name + intro comment + line
+selection, new-cards/mode options — a session-length control existed early on but was removed as
+unneeded; sessions always run "until done" now), `LinePanel` (chapter name + intro comment + line
 so far, reusing `toFigurine`, now extracted to `lib/chess/figurine.ts` so both this and
 `MoveHistory` share one implementation), `FeedbackStrip` (correct/incorrect/excluded states,
 `aria-live="polite"`), `SessionSummary` (end-of-session stats + "Drill mistakes"/"Same

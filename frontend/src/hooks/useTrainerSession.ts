@@ -110,6 +110,19 @@ export function useTrainerSession() {
   const selectedChapterIdsRef = useRef<Set<string>>(new Set()) // chapters selected for this session
   const runStartCardIdRef = useRef<string | null>(null)
   const runMovesRef = useRef<RunMove[]>([])
+  // The pathSan of the specific card the scheduler picked as "due" when this
+  // run began (set in startSession/nextLine, deliberately left untouched by
+  // redoLine/beginRun so a redo retraces the same path). A run starts at its
+  // *chapter's* beginning, not at the due card itself (see
+  // resolveRunStartCard), and the opponent's reply at a branch point used to
+  // be picked purely at random — meaning the run could easily wander down a
+  // sibling branch and never actually reach the due card at all. Its due
+  // status would then never get resolved, so the scheduler would just hand
+  // it right back out on the next "Next line" (repeat), and two "Do it
+  // again" attempts could visibly diverge after the first branch point. See
+  // pickOpponentReply below, which forces the reply along this path for as
+  // long as one is set.
+  const dueTargetPathRef = useRef<string[] | null>(null)
   const gradedThisPresentationRef = useRef(false)
   const moveReqId = useRef(0)
   const lastArgsRef = useRef<{ repertoireId: string; chapterIds: string[]; opts: SessionOptions } | null>(null)
@@ -190,14 +203,26 @@ export function useTrainerSession() {
     setViewIndex(null)
   }, [])
 
-  // pickOpponentReply implements the weighted-random reply choice from
-  // design.md §6 — reaching for the reply pool at `fen` and biasing toward
+  // pickOpponentReply first tries to stay on dueTargetPathRef (see its
+  // comment above) so the run actually reaches the card the scheduler is
+  // trying to test; once that path is exhausted (or doesn't match this
+  // position at all — e.g. the due card's recorded path came from a
+  // different chapter than the one this run resolved to), it falls back to
+  // the original weighted-random choice from design.md §6, biasing toward
   // whichever continuation currently has more lapses recorded against it.
   const pickOpponentReply = useCallback(
     (fen: string) => {
       if (!repertoire) return null
       const replies = repertoire.replies[cardKey(fen)]
       if (!replies || replies.length === 0) return null
+
+      const target = dueTargetPathRef.current
+      const idx = runMovesRef.current.length
+      if (target && idx < target.length) {
+        const forced = replies.find((r) => r.san === target[idx])
+        if (forced) return forced
+      }
+
       const session = sessionRef.current
       return weightedChoice(
         replies,
@@ -299,6 +324,7 @@ export function useTrainerSession() {
         }
         const dueCard = cards.find((c) => c.id === first.cardId)!
         const firstCard = resolveRunStartCard(rep, dueCard)
+        dueTargetPathRef.current = dueCard.pathSan
         setProgress({ step: session.step, sessionLength: opts.sessionLength })
 
         const gs = await createGame(firstCard.fen)
@@ -512,6 +538,7 @@ export function useTrainerSession() {
     const dueCard = cardById(next.cardId)
     if (!dueCard || !repertoire) return
     const card = resolveRunStartCard(repertoire, dueCard)
+    dueTargetPathRef.current = dueCard.pathSan
     setBusy(true)
     try {
       const gs = await apiSetPosition(gid, card.fen)

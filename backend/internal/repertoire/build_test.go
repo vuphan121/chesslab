@@ -29,12 +29,34 @@ func TestBuildRepertoire_Side(t *testing.T) {
 
 func TestBuildRepertoire_CardCount(t *testing.T) {
 	rep := buildDemo(t)
-	if len(rep.Cards) != 60 {
+	if len(rep.Cards) != 86 {
 		names := make([]string, 0, len(rep.Cards))
 		for _, c := range rep.Cards {
 			names = append(names, c.ID)
 		}
-		t.Fatalf("got %d cards, want 60 (see docs/opening-trainer/data-format.md §2.3): %v", len(rep.Cards), names)
+		t.Fatalf("got %d cards, want 86 (see docs/opening-trainer/data-format.md §2.3): %v", len(rep.Cards), names)
+	}
+}
+
+// TestBuildRepertoire_Chapter4IsIndependent covers the fourth chapter ("Open,
+// c5"), added in a later update to the source study: like chapter 3, it
+// starts from a genuinely different position (...c5 instead of ...a6/...Nc6),
+// so it must not share the root card and needs no exclusions of its own.
+func TestBuildRepertoire_Chapter4IsIndependent(t *testing.T) {
+	rep := buildDemo(t)
+	ch4 := chapterByName(t, rep, "Open, c5")
+	if ch4.StartFEN == catalanFEN || ch4.StartFEN == catalanNc6FEN {
+		t.Fatal("chapter 4 should not share another chapter's start position")
+	}
+	root4 := findCard(t, rep, CardKey(ch4.StartFEN))
+	if len(root4.ChapterIDs) != 1 || root4.ChapterIDs[0] != ch4.ID {
+		t.Errorf("chapter 4 root card ChapterIDs = %v, want just [%s]", root4.ChapterIDs, ch4.ID)
+	}
+	if len(root4.Answers) != 1 || root4.Answers[0].SAN != "O-O" || !root4.Answers[0].Primary {
+		t.Errorf("chapter 4 root card answers = %+v, want exactly primary O-O", root4.Answers)
+	}
+	if len(root4.ExcludedAnswers) != 0 {
+		t.Errorf("chapter 4 root card excludedAnswers = %+v, want none", root4.ExcludedAnswers)
 	}
 }
 

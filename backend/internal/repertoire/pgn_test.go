@@ -8,6 +8,7 @@ import (
 const demoPGNPath = "../../data/repertoires/catalan-white.pgn"
 const catalanFEN = "rnbqkb1r/1pp2ppp/p3pn2/8/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 0 1"
 const catalanNc6FEN = "r1bqkb1r/ppp2ppp/2n1pn2/8/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 0 1"
+const catalanC5FEN = "rnbqkb1r/pp3ppp/4pn2/2p5/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 1 5"
 
 func loadDemoChapters(t *testing.T) []*Chapter {
 	t.Helper()
@@ -22,10 +23,10 @@ func loadDemoChapters(t *testing.T) []*Chapter {
 	return chapters
 }
 
-func TestParsePGN_ThreeChapters(t *testing.T) {
+func TestParsePGN_FourChapters(t *testing.T) {
 	chapters := loadDemoChapters(t)
-	if len(chapters) != 3 {
-		t.Fatalf("got %d chapters, want 3", len(chapters))
+	if len(chapters) != 4 {
+		t.Fatalf("got %d chapters, want 4", len(chapters))
 	}
 	if chapters[0].Name != "Open, a6 b5" {
 		t.Errorf("chapter 1 name = %q", chapters[0].Name)
@@ -36,16 +37,21 @@ func TestParsePGN_ThreeChapters(t *testing.T) {
 	if chapters[2].Name != "Open, Nc6" {
 		t.Errorf("chapter 3 name = %q", chapters[2].Name)
 	}
+	if chapters[3].Name != "Open, c5" {
+		t.Errorf("chapter 4 name = %q", chapters[3].Name)
+	}
 }
 
 func TestParsePGN_CustomStartFEN(t *testing.T) {
 	// Chapters 1 and 2 share the ...a6 Open Catalan position; chapter 3 is a
-	// genuinely different branch (...Nc6 without ...a6 first) with its own FEN.
+	// genuinely different branch (...Nc6 without ...a6 first) with its own FEN;
+	// chapter 4 is a different branch again (...c5 instead of ...a6/...Nc6).
 	chapters := loadDemoChapters(t)
 	want := map[string]string{
 		"Open, a6 b5":  catalanFEN,
 		"Open, a6 Nc6": catalanFEN,
 		"Open, Nc6":    catalanNc6FEN,
+		"Open, c5":     catalanC5FEN,
 	}
 	for _, ch := range chapters {
 		wantFEN, ok := want[ch.Name]

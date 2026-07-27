@@ -88,7 +88,6 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
   const [listError, setListError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [selectedChapters, setSelectedChapters] = useState<Set<string>>(new Set())
-  const [sessionLength, setSessionLength] = useState<number | null>(40)
   const [newLimit, setNewLimit] = useState(8)
   const [mode, setMode] = useState<SessionOptions['mode']>('mixed')
 
@@ -160,7 +159,7 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
 
   const handleStart = () => {
     if (!selectedId || selectedChapters.size === 0) return
-    onStart(selectedId, [...selectedChapters], { sessionLength, newLimit, mode })
+    onStart(selectedId, [...selectedChapters], { sessionLength: null, newLimit, mode })
   }
 
   const panelStyle: React.CSSProperties = {
@@ -362,19 +361,6 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
         Session
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, color: '#6a675f', width: 80 }}>Length</span>
-          <Segmented
-            options={[
-              { label: '20', value: 20 },
-              { label: '40', value: 40 },
-              { label: '80', value: 80 },
-              { label: 'Until done', value: -1 },
-            ]}
-            value={sessionLength ?? -1}
-            onChange={(v) => setSessionLength(v === -1 ? null : v)}
-          />
-        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 12, color: '#6a675f', width: 80 }}>New cards</span>
           <Segmented
