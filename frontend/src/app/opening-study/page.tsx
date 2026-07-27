@@ -18,6 +18,15 @@ const OUTER_PADDING_NARROW = 14
 const CAPTION_ROW_HEIGHT = 30
 const COLUMN_GAP = 14
 const BOARD_TOP_OFFSET = CAPTION_ROW_HEIGHT + COLUMN_GAP
+const ROW_GAP_DESKTOP = 20
+// Board column + LinePanel + the symmetry spacer, same layout as the
+// Analysis Board page — see its CLAUDE.md/page.tsx comment for why this
+// needs to scale as one unit instead of relying on the browser's default
+// flex-shrink (it doesn't shrink these fixed-width columns evenly, which
+// silently overflows and gets clipped on any screen narrower than this).
+const FULL_CONTAINER_WIDTH =
+  DESKTOP_SQUARE_SIZE * 8 + SIDE_WIDTH * 2 + ROW_GAP_DESKTOP * 2 + OUTER_PADDING_DESKTOP * 2
+const MIN_DESKTOP_SCALE = 0.45
 
 export default function OpeningStudyPage() {
   const {
@@ -58,10 +67,16 @@ export default function OpeningStudyPage() {
   const viewportWidth = useViewportWidth()
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
   const outerPadding = isNarrow ? OUTER_PADDING_NARROW : OUTER_PADDING_DESKTOP
+  const desktopScale = isNarrow
+    ? 1
+    : clamp((viewportWidth ?? FULL_CONTAINER_WIDTH) / FULL_CONTAINER_WIDTH, MIN_DESKTOP_SCALE, 1)
   const squareSize = isNarrow
     ? clamp(Math.floor(((viewportWidth ?? NARROW_BREAKPOINT) - outerPadding * 2) / 8), 30, DESKTOP_SQUARE_SIZE)
-    : DESKTOP_SQUARE_SIZE
+    : clamp(Math.floor(DESKTOP_SQUARE_SIZE * desktopScale), 30, DESKTOP_SQUARE_SIZE)
   const boardSize = squareSize * 8
+  const sideWidth = isNarrow ? SIDE_WIDTH : Math.floor(SIDE_WIDTH * desktopScale)
+  const rowGap = isNarrow ? 16 : Math.max(12, Math.floor(ROW_GAP_DESKTOP * desktopScale))
+  const containerWidth = boardSize + sideWidth * 2 + rowGap * 2 + outerPadding * 2
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -80,8 +95,9 @@ export default function OpeningStudyPage() {
   }, [navBack, navForward])
 
   const outerWrapStyle: React.CSSProperties = {
-    width: isNarrow ? '100%' : 1432,
+    width: isNarrow ? '100%' : containerWidth,
     maxWidth: '100vw',
+    flexShrink: 0,
     margin: '0 auto',
     padding: isNarrow ? `0 ${OUTER_PADDING_NARROW}px` : '0 24px',
   }
@@ -128,7 +144,7 @@ export default function OpeningStudyPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#e8e8e6] py-6 sm:py-10">
-      <div style={{ width: isNarrow ? '100%' : 1432, maxWidth: '100vw', background: '#e8e8e6', borderRadius: 16, padding: outerPadding }}>
+      <div style={{ width: isNarrow ? '100%' : containerWidth, maxWidth: '100vw', flexShrink: 0, background: '#e8e8e6', borderRadius: 16, padding: outerPadding }}>
         <TopBar
           right={
             <span
@@ -150,7 +166,7 @@ export default function OpeningStudyPage() {
           style={{
             display: 'flex',
             flexDirection: isNarrow ? 'column' : 'row',
-            gap: isNarrow ? 16 : 20,
+            gap: isNarrow ? 16 : rowGap,
             alignItems: isNarrow ? 'stretch' : 'flex-start',
           }}
         >
@@ -262,7 +278,7 @@ export default function OpeningStudyPage() {
 
           <div
             style={{
-              width: isNarrow ? '100%' : SIDE_WIDTH,
+              width: isNarrow ? '100%' : sideWidth,
               height: isNarrow ? 320 : boardSize,
               marginTop: isNarrow ? 0 : BOARD_TOP_OFFSET,
               flexShrink: 0,
@@ -283,7 +299,7 @@ export default function OpeningStudyPage() {
             />
           </div>
 
-          {!isNarrow && <div style={{ width: SIDE_WIDTH, marginTop: BOARD_TOP_OFFSET, flexShrink: 0 }} />}
+          {!isNarrow && <div style={{ width: sideWidth, marginTop: BOARD_TOP_OFFSET, flexShrink: 0 }} />}
         </div>
       </div>
     </main>

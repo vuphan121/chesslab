@@ -13,9 +13,15 @@ import { useViewportWidth, clamp } from '@/hooks/useViewportWidth'
 
 const DESKTOP_SQUARE_SIZE = 72
 const SIDE_WIDTH = 371
-const NARROW_BREAKPOINT = 1040 // below this, the 3-column row no longer fits
+const NARROW_BREAKPOINT = 1040 // below this, panels stack into a single column
 const OUTER_PADDING_DESKTOP = 24
 const OUTER_PADDING_NARROW = 14
+const ROW_GAP_DESKTOP = 20
+// Full side-by-side layout's natural width: 2 side panels + 2 gaps + board
+// column (board + eval-bar gap + eval-bar) + outer padding.
+const FULL_CONTAINER_WIDTH =
+  SIDE_WIDTH * 2 + ROW_GAP_DESKTOP * 2 + (DESKTOP_SQUARE_SIZE * 8 + 11 + 15) + OUTER_PADDING_DESKTOP * 2
+const MIN_DESKTOP_SCALE = 0.45 // keeps squares >= ~32px before the stacked layout takes over
 // The board sits below a caption row (opening name / engine / flip button) in
 // the center column. Offset the side panels by the same amount so their tops
 // and bottoms line up with the board, not the caption above it (desktop only
@@ -76,10 +82,27 @@ function HomeInner() {
   // (the resize listener fires immediately on mount and corrects it).
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
   const outerPadding = isNarrow ? OUTER_PADDING_NARROW : OUTER_PADDING_DESKTOP
+
+  // Below the full ~1432px design width but still above NARROW_BREAKPOINT
+  // (i.e. most real laptops), scale the whole side-by-side layout down
+  // together instead of leaving it at a fixed width. Was a real bug: the
+  // outer container is a flex item with no flex-shrink:0, so it visually
+  // reported a shrunk width, but its three fixed-width columns (side panels
+  // always 371px, board always 72px squares) never shrank with it — they
+  // just overflowed the container's right edge and got clipped by the
+  // page's overflow-x:hidden, making the whole layout look pushed left with
+  // the right panel partly cut off. Scaling every dimension from the same
+  // factor keeps the row's actual total width always <= the viewport.
+  const desktopScale = isNarrow
+    ? 1
+    : clamp((viewportWidth ?? FULL_CONTAINER_WIDTH) / FULL_CONTAINER_WIDTH, MIN_DESKTOP_SCALE, 1)
   const squareSize = isNarrow
     ? clamp(Math.floor(((viewportWidth ?? NARROW_BREAKPOINT) - outerPadding * 2 - 15 - 11) / 8), 30, DESKTOP_SQUARE_SIZE)
-    : DESKTOP_SQUARE_SIZE
+    : clamp(Math.floor(DESKTOP_SQUARE_SIZE * desktopScale), 30, DESKTOP_SQUARE_SIZE)
   const boardSize = squareSize * 8
+  const sideWidth = isNarrow ? SIDE_WIDTH : Math.floor(SIDE_WIDTH * desktopScale)
+  const rowGap = isNarrow ? 16 : Math.max(12, Math.floor(ROW_GAP_DESKTOP * desktopScale))
+  const containerWidth = sideWidth * 2 + rowGap * 2 + boardSize + 11 + 15 + outerPadding * 2
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -110,8 +133,9 @@ function HomeInner() {
     <main className="min-h-screen flex items-center justify-center bg-[#e8e8e6] py-6 sm:py-10">
       <div
         style={{
-          width: isNarrow ? '100%' : 1432,
+          width: isNarrow ? '100%' : containerWidth,
           maxWidth: '100vw',
+          flexShrink: 0,
           background: '#e8e8e6',
           borderRadius: 16,
           padding: outerPadding,
@@ -123,19 +147,19 @@ function HomeInner() {
           style={{
             display: 'flex',
             flexDirection: isNarrow ? 'column' : 'row',
-            gap: isNarrow ? 16 : 20,
+            gap: isNarrow ? 16 : rowGap,
             alignItems: isNarrow ? 'stretch' : 'flex-start',
           }}
         >
           <div
             style={{
-              width: isNarrow ? '100%' : SIDE_WIDTH,
+              width: isNarrow ? '100%' : sideWidth,
               height: isNarrow ? 420 : boardSize,
               marginTop: isNarrow ? 0 : BOARD_TOP_OFFSET,
               flexShrink: 0,
               display: 'flex',
               flexDirection: 'column',
-              order: isNarrow ? 3 : 0,
+              order: 3,
             }}
           >
             <Coach
@@ -154,7 +178,7 @@ function HomeInner() {
               display: 'flex',
               flexDirection: 'column',
               gap: 14,
-              order: isNarrow ? 1 : 0,
+              order: isNarrow ? 1 : 2,
               alignItems: isNarrow ? 'center' : undefined,
             }}
           >
@@ -237,13 +261,13 @@ function HomeInner() {
 
           <div
             style={{
-              width: isNarrow ? '100%' : SIDE_WIDTH,
+              width: isNarrow ? '100%' : sideWidth,
               height: isNarrow ? 360 : boardSize,
               marginTop: isNarrow ? 0 : BOARD_TOP_OFFSET,
               flexShrink: 0,
               display: 'flex',
               flexDirection: 'column',
-              order: isNarrow ? 2 : 0,
+              order: isNarrow ? 2 : 1,
             }}
           >
             <MoveHistory
