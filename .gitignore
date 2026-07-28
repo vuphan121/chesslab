@@ -6,7 +6,11 @@
 .env
 *.env
 .claude/
-*.md
+
+# Claude Code project instructions — internal working notes for the AI
+# assistant, not meant for the public repo. Matches at any depth (root,
+# frontend/, backend/), unlike a leading-slash pattern.
+CLAUDE.md
 
 # Python
 __pycache__/
