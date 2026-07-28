@@ -3,6 +3,8 @@ package repertoire
 import (
 	"os"
 	"testing"
+
+	"github.com/chesslab/backend/internal/chess"
 )
 
 const demoPGNPath = "../../data/repertoires/catalan-white.pgn"
@@ -145,9 +147,68 @@ func TestParsePGN_Chapter2HasDeeplyNestedVariation(t *testing.T) {
 
 func TestParsePGN_EveryMoveReplaysLegally(t *testing.T) {
 	// ParsePGN itself errors out on the first illegal/unrecognized token, so
-	// reaching here at all already proves every move in the file replayed
-	// legally. This test just documents that as the invariant being checked.
+	// reaching here at all already proves every move in the file replayed to
+	// *some* legal move. That's necessary but not sufficient — a case-fold
+	// bug in chess.FindLegalMoveBySAN once let an intended bishop capture
+	// like "Bxc6" silently resolve to the different (but also legal) pawn
+	// capture "bxc6" instead, since both are legal in some positions and
+	// "Bxc6"/"bxc6" collide case-insensitively. ParsePGN alone couldn't have
+	// caught that: no error, just the wrong move. TestParsePGN_AllLinesReplayExactly
+	// below is the test that actually rules that out, by checking the
+	// replayed SAN is character-for-character what was recorded, not just
+	// legal.
 	loadDemoChapters(t)
+}
+
+// TestParsePGN_AllLinesReplayExactly independently re-walks every root-to-leaf
+// line in every chapter and replays its recorded SAN sequence from the
+// chapter's own start FEN through chess.FindLegalMoveBySAN, checking at each
+// ply that the freshly-generated SAN for the resolved move is identical to
+// what's stored on the node — this is what actually catches a case-fold (or
+// similar) mismatch, since ParsePGN succeeding only proves the token matched
+// *some* legal move, not the intended one (see TestParsePGN_EveryMoveReplaysLegally).
+func TestParsePGN_AllLinesReplayExactly(t *testing.T) {
+	chapters := loadDemoChapters(t)
+	total := 0
+	for _, ch := range chapters {
+		var walk func(node *Node, path []string)
+		walk = func(node *Node, path []string) {
+			if len(node.Children) == 0 {
+				total++
+				verifyLineReplaysExactly(t, ch.Name, ch.StartFEN, path, node.FEN)
+				return
+			}
+			for _, child := range node.Children {
+				walk(child, append(path, child.SAN))
+			}
+		}
+		walk(ch.Root, nil)
+	}
+	if total == 0 {
+		t.Fatal("walked zero lines — test isn't exercising anything")
+	}
+	t.Logf("verified %d full lines across %d chapters", total, len(chapters))
+}
+
+func verifyLineReplaysExactly(t *testing.T, chapterName, startFEN string, sans []string, wantFinalFEN string) {
+	t.Helper()
+	pos, err := chess.ParseFEN(startFEN)
+	if err != nil {
+		t.Fatalf("chapter %q: bad start FEN %q: %v", chapterName, startFEN, err)
+	}
+	for i, san := range sans {
+		m, ok := chess.FindLegalMoveBySAN(pos, san)
+		if !ok {
+			t.Fatalf("chapter %q, line %v: ply %d token %q did not resolve to any legal move", chapterName, sans, i+1, san)
+		}
+		if got := chess.SAN(pos, m); got != san {
+			t.Errorf("chapter %q, line %v: ply %d token %q replayed as %q instead", chapterName, sans, i+1, san, got)
+		}
+		pos = chess.ApplyMove(pos, m)
+	}
+	if got := chess.FEN(pos); got != wantFinalFEN {
+		t.Errorf("chapter %q, line %v: final FEN mismatch\n got:  %s\n want: %s", chapterName, sans, got, wantFinalFEN)
+	}
 }
 
 func findChild(t *testing.T, n *Node, san string) *Node {

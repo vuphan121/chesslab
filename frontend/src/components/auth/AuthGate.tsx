@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { getToken, onAuthChange } from '@/lib/auth/token'
+import { pingBackend } from '@/lib/api/client'
 import Login from './Login'
 
 // Gates the entire app behind the login screen (both pages — this wraps
@@ -15,6 +16,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState<boolean | null>(null)
 
   useEffect(() => {
+    pingBackend() // wakes a sleeping Render free-tier backend as early as possible
     setAuthed(!!getToken())
     return onAuthChange(() => setAuthed(!!getToken()))
   }, [])

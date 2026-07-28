@@ -90,8 +90,16 @@ func isResultToken(f string) bool {
 }
 
 // FindLegalMoveBySAN matches a pasted SAN token against the position's legal
-// moves, tolerating trailing annotations ("Nf3!?", "Bd7+") and the "0-0"
-// castling spelling some PGN exporters use instead of "O-O".
+// moves, tolerating trailing annotations ("Nf3!?", "Bd7+") and the "0-0"/"o-o"
+// castling spellings some PGN exporters use instead of "O-O". Comparison is
+// case-SENSITIVE beyond that normalization — SAN case is semantically load-
+// bearing (piece letter vs. pawn-capture file letter), and "b" is exactly the
+// one file letter that collides with a piece letter ("B" for bishop). A
+// case-insensitive match here would let a bishop capture like "Bxc6" match a
+// legal pawn capture "bxc6" (or vice versa) whenever both are legal in the
+// position, silently replaying the wrong move — a real bug caught via a
+// repertoire chapter whose recorded line was 9...Bxc6 10.Qxc6+ bxc6, which a
+// case-insensitive matcher could resolve as 9...bxc6 10.Qxc6 Bxc6 instead.
 func FindLegalMoveBySAN(pos *Position, token string) (Move, bool) {
 	want := normalizeSANToken(token)
 	if want == "" {
@@ -99,7 +107,7 @@ func FindLegalMoveBySAN(pos *Position, token string) (Move, bool) {
 	}
 	for _, m := range GenerateLegalMoves(pos) {
 		san := normalizeSANToken(SAN(pos, m))
-		if strings.EqualFold(san, want) {
+		if san == want {
 			return m, true
 		}
 	}
@@ -110,9 +118,9 @@ func normalizeSANToken(s string) string {
 	s = strings.TrimSpace(s)
 	s = strings.TrimRight(s, "+#!?")
 	switch s {
-	case "0-0":
+	case "0-0", "o-o":
 		return "O-O"
-	case "0-0-0":
+	case "0-0-0", "o-o-o":
 		return "O-O-O"
 	}
 	return s

@@ -9,6 +9,13 @@ function authHeader(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
+// Fire-and-forget hit to the unauthenticated /healthz route, called on app
+// load (AuthGate) so a Render free-tier cold start begins immediately
+// instead of waiting for the first real API call (e.g. login).
+export function pingBackend(): void {
+  fetch(`${API}/healthz`).catch(() => {})
+}
+
 export interface PieceJSON {
   type: string
   color: string
