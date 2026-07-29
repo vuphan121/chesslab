@@ -52,8 +52,9 @@ move, `Ply` (0 at the chapter root), `Comment`, `NAGs`, `Children`.
 
 ## 2. The demo repertoire, verbatim
 
-Save to `backend/data/repertoires/catalan-white.pgn` exactly as fetched (last refreshed 2026-07-27,
-when a third chapter was added and chapter 1 gained two extra plies on two existing sidelines):
+Save to `backend/data/repertoires/catalan-white.pgn` exactly as fetched (last refreshed 2026-07-29,
+when two more chapters were added — "Closed" and "Closed with dxc4", covering the Closed Catalan
+where Black plays `...e6`/`...d5` without ever taking on c4, both before and after that capture):
 
 ```
 [Event "Catalan: Open, a6 b5"]
@@ -113,6 +114,65 @@ An aggresive line but quite difficult to play. }) 2... Bd7 (2... Rb8 3. Nfd2 e5 
 [UTCTime "08:55:04"]
 
 1. Qa4 Bb4+ (1... Nd5 2. Qxc4 Nb6 3. Qd3) (1... Nd7 2. Qxc4 Nb6 3. Qd3) (1... Bd6 2. Ne5) (1... Bd7 2. Qxc4 Na5 3. Qd3 c5 4. O-O) 2. Bd2 Nd5 (2... Bxd2+ 3. Nbxd2) (2... Bd6 3. Na3 Ne4 (3... Bxa3 4. Qxa3 Nxd4 5. Nxd4 Qxd4 6. Rd1) 4. Nxc4 Nxd2 5. Nfxd2 { Try to prevent d5 to make it harder for black to develop white bishop }) 3. Bxb4 Nxb4 4. O-O Rb8 5. Na3 { Preventing b5 } 5... O-O 6. Qb5 b6 7. Qxc4 Ba6 8. Nb5 Qd5 9. Qxd5 Nxd5 10. a4 *
+
+
+[Event "Catalan: Open, c5"]
+[Date "2026.07.27"]
+[Result "*"]
+[Variant "From Position"]
+[FEN "rnbqkb1r/pp3ppp/4pn2/2p5/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 1 5"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "Catalan"]
+[ChapterName "Open, c5"]
+[ChapterURL "https://lichess.org/study/pYmWdR27/Ifg15qcX"]
+[Annotator "https://lichess.org/@/vuphan121"]
+[FEN "rnbqkb1r/pp3ppp/4pn2/2p5/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 1 5"]
+[SetUp "1"]
+[UTCDate "2026.07.27"]
+[UTCTime "06:24:54"]
+
+5. O-O Nc6 (5... cxd4 6. Nxd4 { White is slightly better in most of these lines. } 6... Qb6 (6... a6 7. Qa4+ Qd7 8. Qxc4 b5 9. Qb3) (6... Bc5 7. Qa4+ Qd7 8. Nb5 O-O 9. Qxc4) 7. Qa4+ Bd7 8. Qxc4 Na6 9. Qb3) 6. Qa4 Bd7 (6... cxd4 7. Nxd4 Qxd4 8. Bxc6+ Bd7 9. Rd1 Bxc6 10. Qxc6+ bxc6 11. Rxd4) 7. Qxc4 cxd4 (7... b5 8. Qd3 c4 (8... Rc8 9. dxc5 Bxc5 10. Nc3) 9. Qd1 Rc8) 8. Nxd4 Rc8 9. Nc3 Nxd4 10. Qxd4 Bc5 11. Qh4 *
+
+
+[Event "Catalan: Closed"]
+[Date "2026.07.28"]
+[Result "*"]
+[Variant "From Position"]
+[FEN "rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQ1RK1 b - - 0 1"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "Catalan"]
+[ChapterName "Closed"]
+[ChapterURL "https://lichess.org/study/pYmWdR27/6jOIsrDH"]
+[Annotator "https://lichess.org/@/vuphan121"]
+[FEN "rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQ1RK1 b - - 0 1"]
+[SetUp "1"]
+[UTCDate "2026.07.28"]
+[UTCTime "07:38:03"]
+
+{ c5 -> Tarrasch QGD
+b6 -> Queen's indian
+Ne4 and f5 -> Stonewall dutch }
+1... c6 2. Qc2 b6 (2... Nbd7 3. b3 b6 4. Rd1 Ba6 (4... Bb7 5. Nc3 Rc8 6. e4 dxe4 (6... c5 7. e5) 7. Nxe4 Nxe4 8. Qxe4) 5. Nbd2 Rc8 (5... c5 6. e4) 6. e4 dxe4 (6... c5 7. e5 Ne8 8. cxd5 cxd4 9. Qe4 Bb7 10. Qxd4) 7. Nxe4 Nxe4 8. Qxe4 b5 9. Qc2) 3. Nbd2 Bb7 { If Ba6, white goes b3, tranposing into the Nd7 lines } 4. e4 Na6 5. a3 c5 6. exd5 exd5 7. dxc5 Nxc5 8. b4 Ne6 9. Bb2 Rc8 10. Ne5 *
+
+
+[Event "Catalan: Closed with dxc4"]
+[Date "2026.07.28"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "Catalan"]
+[ChapterName "Closed with dxc4"]
+[ChapterURL "https://lichess.org/study/pYmWdR27/NgJFHgcB"]
+[Annotator "https://lichess.org/@/vuphan121"]
+[FEN "rnbq1rk1/ppp1bppp/4pn2/8/2pP4/5NP1/PP2PPBP/RNBQ1RK1 w - - 0 1"]
+[SetUp "1"]
+[UTCDate "2026.07.28"]
+[UTCTime "07:44:31"]
+
+1. Qc2 c6 (1... b5 2. a4 b4 3. Nfd2) (1... b6 2. Bg5 Nd5 3. Bxe7 Qxe7 4. Ne5) (1... c5 2. Qxc4 cxd4 3. Nxd4 e5 4. Nb3) (1... a6 2. a4 Bd7 3. Qxc4 Bc6 4. Bg5 Bd5 5. Qc2 Be4 6. Qc1 h6 7. Bxf6 Bxf6 8. Rd1) 2. Qxc4 b5 3. Qc2 *
 ```
 
 Note the comment placement quirk in chapter 1: the `{ a4 is not a great move… }` comment sits after
@@ -120,9 +180,22 @@ Note the comment placement quirk in chapter 1: the `{ a4 is not a great move… 
 and the parser should not try to be clever about it — attach it to `O-O` as written, and let the
 sidecar (§3) carry the machine-readable "a4 is excluded" fact.
 
-Chapter 3 (`[Variant "From Position"]`) carries a **duplicate `[FEN]` tag** — Lichess emits the
-custom-position FEN both before and after the standard tag block for this variant type. Harmless:
-`splitGames`'s tag map just takes the second occurrence (identical value here either way).
+Chapters 3, 4, and 5 (`[Variant "From Position"]`) carry a **duplicate `[FEN]` tag** — Lichess emits
+the custom-position FEN both before and after the standard tag block for this variant type. Harmless:
+`splitGames`'s tag map just takes the second occurrence (identical value here either way). Chapters 1,
+2, and 6, by contrast, carry only one `[FEN]` tag each — chapter 6 despite having a custom FEN/SetUp
+just like 3–5, because Lichess tags it `[Variant "Standard"]` instead of `[Variant "From Position"]`.
+The parser doesn't branch on `Variant` at all — it roots every chapter on `[FEN]`+`[SetUp "1"]`
+whenever present, regardless of how many times the tag appears or what `Variant` says — so neither
+quirk needs special-casing.
+
+Chapter 5 ("Closed") is also the **only chapter whose root is Black to move** (`b - -` in the FEN) —
+Black hasn't yet chosen between the c5/b6/Ne4+f5 systems the intro comment frames, and the study only
+actually records the `...c6` (Tarrasch-style) branch. This matters for parsing (§2.2's "trainer side"
+heuristic, which infers side from the root's side-to-move, would guess *Black* for this chapter alone
+if it weren't overridden) and for card derivation: the chapter's own `StartFEN` never becomes a card
+(White is never to move there) — the first card is one ply deeper, after Black's `...c6` (see
+`TestBuildRepertoire_Chapter5RootIsOpponentToMove` in `build_test.go`).
 
 ### 2.1 What these positions are
 
@@ -135,6 +208,17 @@ so the a6/b7 pawn structure differs entirely (no pawn on a6, b7 pawn still home)
 transposition of the other two chapters; the repertoire is now White's answer to two distinct Black
 setups against the Open Catalan, not one.
 
+`rnbqkb1r/pp3ppp/4pn2/2p5/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 1 5` (chapter 4) is yet another distinct
+Open Catalan branch, `5... c5` instead of `5... a6`/`5... Nc6`.
+
+Chapters 5 and 6 leave the Open Catalan entirely — Black never takes on c4 by move 5, playing
+`...e6`/`...d5` instead (the Closed Catalan). `rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQ1RK1
+b - - 0 1` (chapter 5, "Closed") is the tabiya before Black commits to a system; chapter 6, "Closed
+with dxc4", is the same family of positions one White queen move later and with Black having already
+captured on c4 (`rnbq1rk1/ppp1bppp/4pn2/8/2pP4/5NP1/PP2PPBP/RNBQ1RK1 w - - 0 1`) — a genuinely
+different chapter, not a transposition of chapter 5, since by the time Black takes on c4 the position
+no longer matches chapter 5's tree at any node.
+
 **Display caveat:** every chapter FEN has fullmove `1`, so `O-O`/`Qa4` shows as move **1** in the
 trainer even though it is really later in the real game. Lichess does the same thing. Display move
 numbers relative to each chapter's own start FEN and don't try to reconstruct the real numbering.
@@ -144,13 +228,16 @@ numbers relative to each chapter's own start FEN and don't try to reconstruct th
 `w`. Detected from the chapter root's side-to-move when the root has children — the side that moves
 first in the study is the side being trained. Overridable in the sidecar; a Black repertoire
 starting from the initial position would have root side `w` and needs the override, so the sidecar
-field is not optional in practice.
+field is not optional in practice. Chapter 5 ("Closed") is a concrete case where the per-chapter
+heuristic alone would guess wrong — its own root is Black to move — which is exactly why side lives
+in the sidecar at the repertoire level, not derived per chapter.
 
 ### 2.3 Expected parse — the card set
 
-**86 unique cards** across 4 chapters. Chapters 1 and 2 **share their root card** (both start from
-the same FEN with the same primary answer `O-O`); chapters 3 and 4 each start from their own
-distinct FEN and share nothing with the others.
+**130 unique cards** across 6 chapters. Chapters 1 and 2 **share their root card** (both start from
+the same FEN with the same primary answer `O-O`); chapters 3, 4, and 6 each start from their own
+distinct FEN and share nothing with the others. Chapter 5's own root is Black to move, so it
+contributes no root card at all (see §2.2) — its 26 cards start one ply deeper.
 
 | Chapter | Cards touching it | Unique to it |
 |---|---|---|
@@ -158,7 +245,9 @@ distinct FEN and share nothing with the others.
 | 2 — "Open, a6 Nc6" | 21 | 20 (+ shared root) |
 | 3 — "Open, Nc6" | 24 | 24 (own root, no sharing) |
 | 4 — "Open, c5" | 26 | 26 (own root, no sharing) |
-| **Total unique** | | **86** |
+| 5 — "Closed" | 26 | 26 (no root card — see above) |
+| 6 — "Closed with dxc4" | 18 | 18 (own root, no sharing) |
+| **Total unique** | | **130** |
 
 Cards are listed by the SAN path from their chapter's own root. `…` shows the accepted answers,
 primary first.
@@ -262,19 +351,34 @@ alternate, which continues three more plies to `10. Nc3`). See `build_test.go`'s
 this table's counts are checked against; unlike chapters 1–3, chapter 4's individual cards aren't
 hand-tabulated here — the tests are the authoritative source.
 
-**These 86 cards are the acceptance test for the parser.** Assert the count, assert the ch1/ch2
-shared root, assert card 17 has exactly two answers, assert chapters 3 and 4's roots do **not** share
-a card with any other chapter, and assert no card exists in the `1. a4` subtree.
+**Chapter 5** ("Closed" — 26 new cards, added in the same later update as chapter 6; Black's only
+recorded try off the Black-to-move root is `1... c6`, so the root itself contributes no card (§2.2) —
+White's first card is `2. Qc2`, answering `1...c6`, with `2...b6` mainline and `2...Nbd7` as an
+accepted alternate that branches several plies deep). No exclusions needed — every recorded move is a
+genuine answer or a legitimate opponent try.
+
+**Chapter 6** ("Closed with dxc4" — 18 new cards, its own independent root; White plays `1. Qc2`
+against `1...c6` mainline, with `1...b5`/`1...b6`/`1...c5`/`1...a6` as accepted alternates, each a
+short, mostly non-branching line). No exclusions needed here either. See `build_test.go`'s
+`TestBuildRepertoire_Chapter5RootIsOpponentToMove` and `TestBuildRepertoire_Chapter6IsIndependent`;
+like chapter 4, chapters 5 and 6's individual cards aren't hand-tabulated here — the tests are the
+authoritative source.
+
+**These 130 cards are the acceptance test for the parser.** Assert the count, assert the ch1/ch2
+shared root, assert card 17 has exactly two answers, assert chapters 3, 4, and 6's roots do **not**
+share a card with any other chapter, assert chapter 5's root produces no card at all, and assert no
+card exists in the `1. a4` subtree.
 
 **Card count alone doesn't prove the *moves* are right.** A real bug (found via manual drilling, not
 by any test at the time) had chapter 4's `9...Bxc6 10.Qxc6+ bxc6` line silently replayed as
-`9...bxc6 10.Qxc6 Bxc6` instead — still 86 cards, still every token "legal," just the wrong legal
-move at two plies, because `chess.FindLegalMoveBySAN` matched SAN tokens case-*insensitively* and
+`9...bxc6 10.Qxc6 Bxc6` instead — still 86 cards (the count at the time), still every token "legal,"
+just the wrong legal move at two plies, because `chess.FindLegalMoveBySAN` matched SAN tokens
+case-*insensitively* and
 `Bxc6` (bishop capture) collides character-for-character with `bxc6` (pawn capture) once case is
 folded — the one file letter (`b`) that coincides with a piece letter (Bishop). Fixed by comparing
 case-sensitively (SAN case is semantically load-bearing, not cosmetic); the regression guard is
 `TestParsePGN_AllLinesReplayExactly` in `internal/repertoire/pgn_test.go`, which independently
-re-walks every root-to-leaf line in all 4 chapters and checks the freshly-generated SAN for each
+re-walks every root-to-leaf line in all 6 chapters and checks the freshly-generated SAN for each
 replayed move is character-for-character what the tree recorded, not just *a* legal move.
 
 ## 3. Sidecar config
@@ -287,7 +391,7 @@ replayed move is character-for-character what the tree recorded, not just *a* le
   "name": "Catalan",
   "side": "w",
   "source": "https://lichess.org/study/pYmWdR27",
-  "description": "White repertoire against the Open Catalan. Three chapters: ...a6 b5, ...a6 Nc6, and direct ...Nc6 (without ...a6).",
+  "description": "White repertoire against the Catalan. Six chapters: Open Catalan ...a6 b5, ...a6 Nc6, direct ...Nc6 (without ...a6), and ...c5; Closed Catalan (...e6/...d5 without ...dxc4) and Closed with ...dxc4 already played.",
   "excluded": [
     {
       "chapter": "Open, a6 b5",

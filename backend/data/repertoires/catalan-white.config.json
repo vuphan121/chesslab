@@ -3,7 +3,7 @@
   "name": "Catalan",
   "side": "w",
   "source": "https://lichess.org/study/pYmWdR27",
-  "description": "White repertoire against the Open Catalan. Four chapters: ...a6 b5, ...a6 Nc6, direct ...Nc6 (without ...a6), and ...c5.",
+  "description": "White repertoire against the Catalan. Six chapters: Open Catalan ...a6 b5, ...a6 Nc6, direct ...Nc6 (without ...a6), and ...c5; Closed Catalan (...e6/...d5 without ...dxc4) and Closed with ...dxc4 already played.",
   "excluded": [
     {
       "chapter": "Open, a6 b5",

@@ -11,6 +11,8 @@ const demoPGNPath = "../../data/repertoires/catalan-white.pgn"
 const catalanFEN = "rnbqkb1r/1pp2ppp/p3pn2/8/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 0 1"
 const catalanNc6FEN = "r1bqkb1r/ppp2ppp/2n1pn2/8/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 0 1"
 const catalanC5FEN = "rnbqkb1r/pp3ppp/4pn2/2p5/2pP4/5NP1/PP2PPBP/RNBQK2R w KQkq - 1 5"
+const catalanClosedFEN = "rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQ1RK1 b - - 0 1"
+const catalanClosedDxc4FEN = "rnbq1rk1/ppp1bppp/4pn2/8/2pP4/5NP1/PP2PPBP/RNBQ1RK1 w - - 0 1"
 
 func loadDemoChapters(t *testing.T) []*Chapter {
 	t.Helper()
@@ -25,35 +27,46 @@ func loadDemoChapters(t *testing.T) []*Chapter {
 	return chapters
 }
 
-func TestParsePGN_FourChapters(t *testing.T) {
+func TestParsePGN_SixChapters(t *testing.T) {
 	chapters := loadDemoChapters(t)
-	if len(chapters) != 4 {
-		t.Fatalf("got %d chapters, want 4", len(chapters))
+	if len(chapters) != 6 {
+		t.Fatalf("got %d chapters, want 6", len(chapters))
 	}
-	if chapters[0].Name != "Open, a6 b5" {
-		t.Errorf("chapter 1 name = %q", chapters[0].Name)
+	wantNames := []string{
+		"Open, a6 b5",
+		"Open, a6 Nc6",
+		"Open, Nc6",
+		"Open, c5",
+		"Closed",
+		"Closed with dxc4",
 	}
-	if chapters[1].Name != "Open, a6 Nc6" {
-		t.Errorf("chapter 2 name = %q", chapters[1].Name)
-	}
-	if chapters[2].Name != "Open, Nc6" {
-		t.Errorf("chapter 3 name = %q", chapters[2].Name)
-	}
-	if chapters[3].Name != "Open, c5" {
-		t.Errorf("chapter 4 name = %q", chapters[3].Name)
+	for i, want := range wantNames {
+		if chapters[i].Name != want {
+			t.Errorf("chapter %d name = %q, want %q", i+1, chapters[i].Name, want)
+		}
 	}
 }
 
 func TestParsePGN_CustomStartFEN(t *testing.T) {
 	// Chapters 1 and 2 share the ...a6 Open Catalan position; chapter 3 is a
 	// genuinely different branch (...Nc6 without ...a6 first) with its own FEN;
-	// chapter 4 is a different branch again (...c5 instead of ...a6/...Nc6).
+	// chapter 4 is a different branch again (...c5 instead of ...a6/...Nc6);
+	// chapters 5 and 6 are Closed Catalan positions (...e6/...d5, no ...dxc4
+	// or with it already played), each with their own FEN. Chapter 5's root is
+	// Black to move — Black hasn't yet chosen between the c5/b6/Ne4+f5 systems
+	// the intro comment describes — the only chapter root that isn't White to
+	// move.
 	chapters := loadDemoChapters(t)
 	want := map[string]string{
-		"Open, a6 b5":  catalanFEN,
-		"Open, a6 Nc6": catalanFEN,
-		"Open, Nc6":    catalanNc6FEN,
-		"Open, c5":     catalanC5FEN,
+		"Open, a6 b5":      catalanFEN,
+		"Open, a6 Nc6":     catalanFEN,
+		"Open, Nc6":        catalanNc6FEN,
+		"Open, c5":         catalanC5FEN,
+		"Closed":           catalanClosedFEN,
+		"Closed with dxc4": catalanClosedDxc4FEN,
+	}
+	wantTurn := map[string]string{
+		"Closed": "b",
 	}
 	for _, ch := range chapters {
 		wantFEN, ok := want[ch.Name]
@@ -66,8 +79,12 @@ func TestParsePGN_CustomStartFEN(t *testing.T) {
 		if ch.Root.FEN != wantFEN {
 			t.Errorf("%s: root.FEN = %q, want %q", ch.Name, ch.Root.FEN, wantFEN)
 		}
-		if ch.Root.Pos.Turn.String() != "w" {
-			t.Errorf("%s: root side to move = %s, want w", ch.Name, ch.Root.Pos.Turn)
+		turn := "w"
+		if t2, ok := wantTurn[ch.Name]; ok {
+			turn = t2
+		}
+		if ch.Root.Pos.Turn.String() != turn {
+			t.Errorf("%s: root side to move = %s, want %s", ch.Name, ch.Root.Pos.Turn, turn)
 		}
 	}
 }

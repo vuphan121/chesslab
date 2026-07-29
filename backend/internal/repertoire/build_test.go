@@ -29,12 +29,12 @@ func TestBuildRepertoire_Side(t *testing.T) {
 
 func TestBuildRepertoire_CardCount(t *testing.T) {
 	rep := buildDemo(t)
-	if len(rep.Cards) != 86 {
+	if len(rep.Cards) != 130 {
 		names := make([]string, 0, len(rep.Cards))
 		for _, c := range rep.Cards {
 			names = append(names, c.ID)
 		}
-		t.Fatalf("got %d cards, want 86 (see docs/opening-trainer/data-format.md §2.3): %v", len(rep.Cards), names)
+		t.Fatalf("got %d cards, want 130 (see docs/opening-trainer/data-format.md §2.3): %v", len(rep.Cards), names)
 	}
 }
 
@@ -81,6 +81,52 @@ func TestBuildRepertoire_Chapter3IsIndependent(t *testing.T) {
 	}
 	if len(root3.ExcludedAnswers) != 0 {
 		t.Errorf("chapter 3 root card excludedAnswers = %+v, want none", root3.ExcludedAnswers)
+	}
+}
+
+// TestBuildRepertoire_Chapter6IsIndependent covers the sixth chapter ("Closed
+// with dxc4"), added in a later update to the source study alongside chapter
+// 5: a Closed Catalan position where Black has already taken on c4. Its root
+// is White to move (mirroring chapters 3/4), so it follows the same
+// independent-root shape.
+func TestBuildRepertoire_Chapter6IsIndependent(t *testing.T) {
+	rep := buildDemo(t)
+	ch6 := chapterByName(t, rep, "Closed with dxc4")
+	if ch6.StartFEN == catalanFEN || ch6.StartFEN == catalanNc6FEN || ch6.StartFEN == catalanC5FEN {
+		t.Fatal("chapter 6 should not share another chapter's start position")
+	}
+	root6 := findCard(t, rep, CardKey(ch6.StartFEN))
+	if len(root6.ChapterIDs) != 1 || root6.ChapterIDs[0] != ch6.ID {
+		t.Errorf("chapter 6 root card ChapterIDs = %v, want just [%s]", root6.ChapterIDs, ch6.ID)
+	}
+	if len(root6.Answers) != 1 || root6.Answers[0].SAN != "Qc2" || !root6.Answers[0].Primary {
+		t.Errorf("chapter 6 root card answers = %+v, want exactly primary Qc2", root6.Answers)
+	}
+	if len(root6.ExcludedAnswers) != 0 {
+		t.Errorf("chapter 6 root card excludedAnswers = %+v, want none", root6.ExcludedAnswers)
+	}
+}
+
+// TestBuildRepertoire_Chapter5RootIsOpponentToMove covers chapter 5
+// ("Closed"), whose chapter-root FEN is Black to move — Black hasn't yet
+// chosen between the c5/b6/Ne4+f5 systems the intro comment frames, and only
+// the c6 (Tarrasch-style) branch is actually recorded — so unlike every other
+// chapter, the chapter's own StartFEN never becomes a card (White is never
+// to move there); the first card is one ply deeper, after Black's c6.
+func TestBuildRepertoire_Chapter5RootIsOpponentToMove(t *testing.T) {
+	rep := buildDemo(t)
+	ch5 := chapterByName(t, rep, "Closed")
+	if _, ok := findCardOK(rep, CardKey(ch5.StartFEN)); ok {
+		t.Fatal("chapter 5 root (Black to move) should not itself be a card")
+	}
+	replies := rep.Replies[CardKey(ch5.StartFEN)]
+	if len(replies) != 1 || replies[0].SAN != "c6" {
+		t.Fatalf("chapter 5 root replies = %+v, want exactly {c6}", replies)
+	}
+	c6 := findChild(t, ch5.Root, "c6")
+	card := findCard(t, rep, CardKey(c6.FEN))
+	if len(card.Answers) != 1 || card.Answers[0].SAN != "Qc2" || !card.Answers[0].Primary {
+		t.Errorf("chapter 5 card after c6 answers = %+v, want exactly primary Qc2", card.Answers)
 	}
 }
 

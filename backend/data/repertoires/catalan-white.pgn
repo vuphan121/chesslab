@@ -74,3 +74,45 @@ An aggresive line but quite difficult to play. }) 2... Bd7 (2... Rb8 3. Nfd2 e5 
 [UTCTime "06:24:54"]
 
 5. O-O Nc6 (5... cxd4 6. Nxd4 { White is slightly better in most of these lines. } 6... Qb6 (6... a6 7. Qa4+ Qd7 8. Qxc4 b5 9. Qb3) (6... Bc5 7. Qa4+ Qd7 8. Nb5 O-O 9. Qxc4) 7. Qa4+ Bd7 8. Qxc4 Na6 9. Qb3) 6. Qa4 Bd7 (6... cxd4 7. Nxd4 Qxd4 8. Bxc6+ Bd7 9. Rd1 Bxc6 10. Qxc6+ bxc6 11. Rxd4) 7. Qxc4 cxd4 (7... b5 8. Qd3 c4 (8... Rc8 9. dxc5 Bxc5 10. Nc3) 9. Qd1 Rc8) 8. Nxd4 Rc8 9. Nc3 Nxd4 10. Qxd4 Bc5 11. Qh4 *
+
+
+[Event "Catalan: Closed"]
+[Date "2026.07.28"]
+[Result "*"]
+[Variant "From Position"]
+[FEN "rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQ1RK1 b - - 0 1"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "Catalan"]
+[ChapterName "Closed"]
+[ChapterURL "https://lichess.org/study/pYmWdR27/6jOIsrDH"]
+[Annotator "https://lichess.org/@/vuphan121"]
+[FEN "rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQ1RK1 b - - 0 1"]
+[SetUp "1"]
+[UTCDate "2026.07.28"]
+[UTCTime "07:38:03"]
+
+{ c5 -> Tarrasch QGD
+b6 -> Queen's indian
+Ne4 and f5 -> Stonewall dutch }
+1... c6 2. Qc2 b6 (2... Nbd7 3. b3 b6 4. Rd1 Ba6 (4... Bb7 5. Nc3 Rc8 6. e4 dxe4 (6... c5 7. e5) 7. Nxe4 Nxe4 8. Qxe4) 5. Nbd2 Rc8 (5... c5 6. e4) 6. e4 dxe4 (6... c5 7. e5 Ne8 8. cxd5 cxd4 9. Qe4 Bb7 10. Qxd4) 7. Nxe4 Nxe4 8. Qxe4 b5 9. Qc2) 3. Nbd2 Bb7 { If Ba6, white goes b3, tranposing into the Nd7 lines } 4. e4 Na6 5. a3 c5 6. exd5 exd5 7. dxc5 Nxc5 8. b4 Ne6 9. Bb2 Rc8 10. Ne5 *
+
+
+[Event "Catalan: Closed with dxc4"]
+[Date "2026.07.28"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "Catalan"]
+[ChapterName "Closed with dxc4"]
+[ChapterURL "https://lichess.org/study/pYmWdR27/NgJFHgcB"]
+[Annotator "https://lichess.org/@/vuphan121"]
+[FEN "rnbq1rk1/ppp1bppp/4pn2/8/2pP4/5NP1/PP2PPBP/RNBQ1RK1 w - - 0 1"]
+[SetUp "1"]
+[UTCDate "2026.07.28"]
+[UTCTime "07:44:31"]
+
+1. Qc2 c6 (1... b5 2. a4 b4 3. Nfd2) (1... b6 2. Bg5 Nd5 3. Bxe7 Qxe7 4. Ne5) (1... c5 2. Qxc4 cxd4 3. Nxd4 e5 4. Nb3) (1... a6 2. a4 Bd7 3. Qxc4 Bc6 4. Bg5 Bd5 5. Qc2 Be4 6. Qc1 h6 7. Bxf6 Bxf6 8. Rd1) 2. Qxc4 b5 3. Qc2 *
+
+
