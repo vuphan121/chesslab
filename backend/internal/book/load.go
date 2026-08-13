@@ -49,6 +49,15 @@ func loadOne(path string) (*Book, error) {
 	if err != nil {
 		return nil, err
 	}
+	return ParseAndValidate(data)
+}
+
+// ParseAndValidate unmarshals raw book JSON and runs it through the same QA
+// gate loadOne uses for a file — shared by the DB-backed loading path
+// (internal/db.Store.LoadBooks) so a book seeded via `cmd/seedbooks` gets
+// identical validation to one dropped in backend/data/books/, not a laxer
+// check just because it came from a different source.
+func ParseAndValidate(data []byte) (*Book, error) {
 	var b Book
 	if err := json.Unmarshal(data, &b); err != nil {
 		return nil, err

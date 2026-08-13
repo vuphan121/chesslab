@@ -201,3 +201,44 @@ independent read, not a proof of correctness on its own — the backend's move-l
 
 Both are now examples of why extraction should always cross-check bystander pieces, not just the
 ones directly involved in a solution line — those are exactly the pieces the legality gate can't see.
+
+## 6. Deploying book content (database-backed, no file needed)
+
+`backend/data/books/*.json` is gitignored (§1) — fine for local dev, but it means a deployed instance
+built straight from the git repo has **zero books**, even though the "Study from Book" feature's code
+is fully deployed. There's no way to fix that by committing anything (that's the whole point of §1),
+so book content is instead stored as a row in the existing Postgres database (Neon in production) —
+the same database that already holds trainer progress, gated behind `DATABASE_URL`, never checked
+into git either.
+
+**Schema:** a `books` table (`internal/db/schema.sql`) — `id TEXT PRIMARY KEY`, `data JSONB NOT NULL`
+holding the whole book's JSON verbatim, `updated_at`. One row per book.
+
+**Loading (`cmd/server/main.go`'s `loadBooks`):** prefers the database when `DATABASE_URL` is
+configured — `internal/db.Store.LoadBooks` returns every row's raw JSON, and each one goes through
+`internal/book.ParseAndValidate` (the exact same FEN/legality QA gate §3 describes, extracted out of
+`LoadDir` so both paths share it — a book seeded via the database gets no less scrutiny than one
+loaded from a file). Falls back to the local `BOOKS_PATH` directory only when no database is
+configured at all — same either/or pattern as `auth`'s DB-vs-env-var fallback, not merged with the DB
+path, so local dev never sees the same book listed twice.
+
+**Getting content into the database (`cmd/seedbooks`):** a one-off CLI, not a runtime endpoint —
+there's no user-facing upload flow, this is a manual step run locally whenever the extracted content
+changes:
+
+```bash
+cd backend
+DATABASE_URL=postgres://... go run ./cmd/seedbooks        # defaults to data/books/
+DATABASE_URL=postgres://... go run ./cmd/seedbooks some/other/dir
+```
+
+It reads `.env` the same way `cmd/server` does (its own small copy of `loadDotEnv` — a real gotcha
+here: `DATABASE_URL` values routinely contain unescaped `&`/`?` from the connection string's query
+params, which breaks a plain `source .env` in a shell; the Go-side loader sidesteps that entirely),
+validates every file with `book.ParseAndValidate` before writing anything (a bad file fails the whole
+run rather than landing partially-seeded data), and upserts each book by `id`. Run it once against
+your **local** dev database to test, then again against the **production** `DATABASE_URL` (the same
+value Render/Neon already uses for trainer sync) to actually deploy the content — the running backend
+picks it up on its next restart, no redeploy of the app itself required. Verified end-to-end: booted
+the server with `data/books/` renamed out of the way entirely and confirmed it still loaded all 3
+chapters (70 items) from the database alone.

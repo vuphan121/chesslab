@@ -57,3 +57,19 @@ CREATE TABLE IF NOT EXISTS book_item_progress (
     completed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (username, book_id, item_id)
 );
+
+-- Book content for the "Study from Book" feature, stored here instead of a
+-- committed file so it never has to touch git — not even as a gitignored
+-- local file that a deploy target would need copied onto it by hand. What's
+-- stored is still only facts (FEN/moves) plus original prose (see
+-- docs/study-from-book/data-format.md §1), the same copyright boundary as
+-- the file-based path; the DB is just a different, git-free place to keep
+-- it. One row per book, whole parsed-and-validated JSON blob in `data` (see
+-- internal/book.ParseAndValidate, shared with the file-loading path so both
+-- go through the identical FEN/legality QA gate). Populated by the
+-- `cmd/seedbooks` one-off tool, not a user-facing upload endpoint.
+CREATE TABLE IF NOT EXISTS books (
+    id TEXT PRIMARY KEY,
+    data JSONB NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

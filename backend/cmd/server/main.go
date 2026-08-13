@@ -75,18 +75,18 @@ func main() {
 	}
 	repertoires := repertoire.NewStore(repertoire.LoadDir(repDir))
 
-	// Optional, unlike repertoires above: backend/data/books/ is gitignored
-	// (personal book content, not for redistribution — see root CLAUDE.md's
-	// "Study from Book" section), so most checkouts and the deployed instance
-	// have zero books. LoadDir already returns nil on a missing dir; /api/books
-	// just serves an empty list rather than the server needing this data to boot.
-	booksDir := os.Getenv("BOOKS_PATH")
-	if booksDir == "" {
-		booksDir = "data/books"
-	}
-	books := book.NewStore(book.LoadDir(booksDir))
-
 	dbStore := newDBStore()
+
+	// Optional, unlike repertoires above: book content isn't committed to
+	// git at all (see root CLAUDE.md's "Study from Book" section) — either
+	// nothing loads, or it comes from the DB (seeded once via `cmd/seedbooks`,
+	// see internal/db/books.go), never from a file checked into the repo.
+	// backend/data/books/ still works for local dev (gitignored, drop a file
+	// there), but only as a fallback when no database is configured — same
+	// either/or pattern as auth's DB-vs-env-var fallback, not merged with the
+	// DB path, so a book seeded into the DB doesn't show up twice locally.
+	books := book.NewStore(loadBooks(dbStore))
+
 	authCfg := newAuthConfig()
 	if dbStore != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -147,6 +147,46 @@ func newCoachDeps() (*coach.Index, *coach.OverviewIndex, *coach.OllamaClient) {
 	log.Printf("coach: LLM client -> %s (model %s)", llm.BaseURL, llm.Model)
 
 	return index, overview, llm
+}
+
+// loadBooks prefers the DB-backed store when one is configured (production —
+// see internal/db/books.go), falling back to the local BOOKS_PATH directory
+// only when there's no database at all (local dev without Postgres set up).
+// Either source degrades to zero books rather than failing boot, same as
+// everywhere else this app handles optional content.
+func loadBooks(dbStore *db.Store) []*book.Book {
+	if dbStore != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		raw, err := dbStore.LoadBooks(ctx)
+		if err != nil {
+			log.Printf("book: failed to load from database (%v) — falling back to BOOKS_PATH", err)
+		} else if len(raw) == 0 {
+			log.Printf("book: database has no books yet — run cmd/seedbooks to load one")
+		} else {
+			var books []*book.Book
+			for _, r := range raw {
+				b, err := book.ParseAndValidate(r)
+				if err != nil {
+					log.Printf("book: skipping a database row: %v", err)
+					continue
+				}
+				books = append(books, b)
+				itemCount := 0
+				for _, ch := range b.Chapters {
+					itemCount += len(ch.Items)
+				}
+				log.Printf("book: loaded %q from database (%s, %d chapters, %d items)", b.ID, b.Title, len(b.Chapters), itemCount)
+			}
+			return books
+		}
+	}
+
+	booksDir := os.Getenv("BOOKS_PATH")
+	if booksDir == "" {
+		booksDir = "data/books"
+	}
+	return book.LoadDir(booksDir)
 }
 
 // newDBStore connects the trainer-progress-sync Postgres store — optional,
