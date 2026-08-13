@@ -120,6 +120,14 @@ export function useTrainerSession() {
   const [hintUci, setHintUci] = useState<string | null>(null)
   const [runHadMistake, setRunHadMistake] = useState(false)
   const [runMoves, setRunMoves] = useState<RunMove[]>([]) // reactive mirror of runMovesRef, for the "line so far" display
+  // The opponent move(s) already applied to reach runStartCard from the
+  // chapter's true root (see resolveRunStartCard) — shown as a read-only
+  // prefix in "line so far" so a Black-repertoire run doesn't just silently
+  // open mid-position with no indication of what White just played. Not
+  // navigable via gotoPly (no runSnapshots entry exists for these — the
+  // created game starts directly at runStartCard.fen), so this is display
+  // data only, kept separate from runMoves/runSnapshots on purpose.
+  const [leadingMoves, setLeadingMoves] = useState<RunMove[]>([])
 
   const [summary, setSummary] = useState<ReturnType<typeof summarise> | null>(null)
 
@@ -143,6 +151,10 @@ export function useTrainerSession() {
   // pickOpponentReply below, which forces the reply along this path for as
   // long as one is set.
   const dueTargetPathRef = useRef<string[] | null>(null)
+  // Mirrors leadingMoves the same way dueTargetPathRef mirrors targetPath —
+  // set in startSession/nextLine, reused (not recomputed) by redoLine so a
+  // redo shows the exact same "what White played" prefix as the original run.
+  const leadingMovesRef = useRef<RunMove[]>([])
   const gradedThisPresentationRef = useRef(false)
   const moveReqId = useRef(0)
   const lastArgsRef = useRef<{ repertoireId: string; chapterIds: string[]; opts: SessionOptions } | null>(null)
@@ -206,27 +218,44 @@ export function useTrainerSession() {
   // anything to answer, whether that's the root itself (ply 0, White
   // repertoires) or one ply in after the opponent's first move (Black
   // repertoires, where the root itself is never a card).
+  // Also returns `leadingMoves` — the opponent move(s) consumed by that walk
+  // (root to the resolved card), so the caller can show them as "what the
+  // opponent already played" even though the created game starts directly
+  // at `card.fen`, not the true root (see startSession/nextLine).
+  // `targetPath` is sliced by that same consumed count before being
+  // returned: it's read by pickOpponentReply as `target[runMoves.length]`,
+  // and runMoves starts counting fresh from `card.fen`, not the chapter
+  // root — an earlier version returned the *unsliced*, root-relative path
+  // here, which silently shifted every forced-reply lookup by however many
+  // leading plies were consumed. That's the actual bug behind "Do it again
+  // hands back a different line": with the indices misaligned,
+  // pickOpponentReply's `replies.find((r) => r.san === target[idx])` almost
+  // never matched, so it fell through to the random weighted choice on
+  // nearly every opponent turn — including on a redo, since dueTargetPathRef
+  // is deliberately left untouched by redoLine and was *already* wrong.
   // Takes `rep` explicitly (rather than closing over the `repertoire` state)
   // because startSession needs to call this synchronously right after
   // setRepertoireState, before that state update has actually committed.
   const resolveRunStartCard = useCallback(
-    (rep: Repertoire, dueCard: RepCard): { card: RepCard; targetPath: string[] } => {
+    (rep: Repertoire, dueCard: RepCard): { card: RepCard; targetPath: string[]; leadingMoves: RunMove[] } => {
       const chapterId = dueCard.chapterIds.find((id) => selectedChapterIdsRef.current.has(id)) ?? dueCard.chapterIds[0]
       const chapter = rep.chapters.find((c) => c.id === chapterId)
-      if (!chapter) return { card: dueCard, targetPath: dueCard.pathSan }
-      const targetPath = findPathInChapterTree(chapter.tree, cardKey(dueCard.fen)) ?? dueCard.pathSan
+      if (!chapter) return { card: dueCard, targetPath: dueCard.pathSan, leadingMoves: [] }
+      const fullPath = findPathInChapterTree(chapter.tree, cardKey(dueCard.fen)) ?? dueCard.pathSan
 
       let node = chapter.tree
       let startCard = cardById(cardKey(node.fen))
-      for (const san of targetPath) {
+      const leadingMoves: RunMove[] = []
+      for (const san of fullPath) {
         if (startCard) break
         const next = (node.children ?? []).find((c) => c.san === san)
         if (!next) break
         node = next
+        leadingMoves.push({ san: next.san, uci: next.uci, mover: 'opponent' })
         startCard = cardById(cardKey(node.fen))
       }
 
-      return { card: startCard ?? dueCard, targetPath }
+      return { card: startCard ?? dueCard, targetPath: fullPath.slice(leadingMoves.length), leadingMoves }
     },
     [cardById],
   )
@@ -254,10 +283,11 @@ export function useTrainerSession() {
   // beginRun puts the board at `card`'s position and resets all per-run
   // bookkeeping. Refs and setState setters are stable across renders, so
   // this needs no dependencies.
-  const beginRun = useCallback((card: RepCard, gs: GameState) => {
+  const beginRun = useCallback((card: RepCard, gs: GameState, leading: RunMove[] = []) => {
     runStartCardIdRef.current = card.id
     runMovesRef.current = []
     setRunMoves([])
+    setLeadingMoves(leading)
     gradedThisPresentationRef.current = false
     setRunHadMistake(false)
     setRunStartCard(card)
@@ -417,13 +447,14 @@ export function useTrainerSession() {
           return
         }
         const dueCard = cards.find((c) => c.id === first.cardId)!
-        const { card: firstCard, targetPath } = resolveRunStartCard(rep, dueCard)
+        const { card: firstCard, targetPath, leadingMoves: leading } = resolveRunStartCard(rep, dueCard)
         dueTargetPathRef.current = targetPath
+        leadingMovesRef.current = leading
 
         const gs = await createGame(firstCard.fen)
         gameIdRef.current = gs.id
 
-        beginRun(firstCard, gs)
+        beginRun(firstCard, gs, leading)
         setPhase('drilling')
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : 'Failed to start session.')
@@ -584,7 +615,7 @@ export function useTrainerSession() {
     setBusy(true)
     try {
       const gs = await apiSetPosition(gid, card.fen)
-      beginRun(card, gs)
+      beginRun(card, gs, leadingMovesRef.current)
       setPhase('drilling')
     } finally {
       setBusy(false)
@@ -611,12 +642,13 @@ export function useTrainerSession() {
     }
     const dueCard = cardById(next.cardId)
     if (!dueCard || !repertoire) return
-    const { card, targetPath } = resolveRunStartCard(repertoire, dueCard)
+    const { card, targetPath, leadingMoves: leading } = resolveRunStartCard(repertoire, dueCard)
     dueTargetPathRef.current = targetPath
+    leadingMovesRef.current = leading
     setBusy(true)
     try {
       const gs = await apiSetPosition(gid, card.fen)
-      beginRun(card, gs)
+      beginRun(card, gs, leading)
       setPhase('drilling')
     } finally {
       setBusy(false)
@@ -697,6 +729,7 @@ export function useTrainerSession() {
     hintUci,
     runHadMistake,
     runMoves,
+    leadingMoves,
     summary,
     viewIndex,
     isViewingHistory,

@@ -44,6 +44,7 @@ export default function OpeningStudyPage() {
     hintUci,
     runHadMistake,
     runMoves,
+    leadingMoves,
     summary,
     viewIndex,
     isViewingHistory,
@@ -283,6 +284,7 @@ export default function OpeningStudyPage() {
               repertoire={repertoire}
               runStartCard={runStartCard}
               runMoves={runMoves}
+              leadingMoves={leadingMoves}
               answerComment={feedback?.kind === 'correct' || feedback?.kind === 'correct-alt' ? feedback.comment : undefined}
               viewIndex={viewIndex}
               onGotoPly={gotoPly}

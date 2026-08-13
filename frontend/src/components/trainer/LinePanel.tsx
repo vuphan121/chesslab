@@ -14,6 +14,12 @@ interface Props {
   repertoire: Repertoire
   runStartCard: RepCard
   runMoves: RunMove[]
+  // Opponent move(s) already applied to reach runStartCard from the
+  // chapter's true root (see useTrainerSession's resolveRunStartCard) —
+  // rendered as a read-only prefix so a Black-repertoire run doesn't open
+  // mid-position with no indication of what the opponent just played. Not
+  // clickable (no onGotoPly index — no runSnapshots entry exists for these).
+  leadingMoves?: RunMove[]
   answerComment?: string
   viewIndex: number | null // null = live (the last position)
   onGotoPly: (index: number) => void
@@ -50,6 +56,7 @@ export default function LinePanel({
   repertoire,
   runStartCard,
   runMoves,
+  leadingMoves = [],
   answerComment,
   viewIndex,
   onGotoPly,
@@ -64,14 +71,14 @@ export default function LinePanel({
   const atStart = activeIndex <= 0
   const atLive = activeIndex >= liveIndex
 
-  type Cell = { san: string; index: number }
+  // index is null for leadingMoves cells — no runSnapshots entry exists for
+  // them (see leadingMoves' own doc comment), so they render read-only.
+  type Cell = { san: string; index: number | null }
   const rows: { num: number; white?: Cell; black?: Cell }[] = []
   let pending: { num: number; white?: Cell; black?: Cell } | null = null
-  for (let i = 0; i < runMoves.length; i++) {
-    const ply = runStartCard.ply + 1 + i
+  function addCell(ply: number, cell: Cell) {
     const num = Math.ceil(ply / 2)
     const isWhite = ply % 2 === 1
-    const cell: Cell = { san: toFigurine(runMoves[i].san), index: i + 1 }
     if (isWhite) {
       if (pending) rows.push(pending)
       pending = { num, white: cell }
@@ -82,31 +89,46 @@ export default function LinePanel({
       pending = { num, black: cell }
     }
   }
+  // leadingMoves come before runStartCard's own ply, so they're numbered
+  // counting backward from it rather than forward from 0.
+  const leadingBasePly = runStartCard.ply - leadingMoves.length
+  leadingMoves.forEach((m, j) => addCell(leadingBasePly + 1 + j, { san: toFigurine(m.san), index: null }))
+  runMoves.forEach((m, i) => addCell(runStartCard.ply + 1 + i, { san: toFigurine(m.san), index: i + 1 }))
   if (pending) rows.push(pending)
 
   const renderCell = (cell: Cell | undefined) => {
     if (!cell) return <span style={{ flex: 1 }} />
-    const isActive = cell.index === activeIndex
+    const clickable = cell.index !== null
+    const isActive = clickable && cell.index === activeIndex
     return (
       <span
-        onClick={() => onGotoPly(cell.index)}
+        onClick={clickable ? () => onGotoPly(cell.index as number) : undefined}
         className="mono"
         style={{
           flex: 1,
-          cursor: 'pointer',
+          cursor: clickable ? 'pointer' : 'default',
           padding: '1px 5px',
           borderRadius: 5,
           background: isActive ? '#4a90d9' : 'transparent',
-          color: isActive ? '#fff' : '#37352f',
+          color: isActive ? '#fff' : clickable ? '#37352f' : '#a3a099',
           fontWeight: isActive ? 700 : 500,
+          fontStyle: clickable ? 'normal' : 'italic',
           transition: 'background 0.1s',
         }}
-        onMouseEnter={(e) => {
-          if (!isActive) (e.currentTarget as HTMLElement).style.background = '#f4f3ee'
-        }}
-        onMouseLeave={(e) => {
-          if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'
-        }}
+        onMouseEnter={
+          clickable
+            ? (e) => {
+                if (!isActive) (e.currentTarget as HTMLElement).style.background = '#f4f3ee'
+              }
+            : undefined
+        }
+        onMouseLeave={
+          clickable
+            ? (e) => {
+                if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'
+              }
+            : undefined
+        }
       >
         {cell.san}
       </span>
