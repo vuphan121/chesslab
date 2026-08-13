@@ -187,9 +187,25 @@ export function useTrainerSession() {
   // off and never actually reach the due card, leaving it "due" and handing
   // it right back out on the next pick. Walking the resolved chapter's own
   // tree is correct regardless of which chapter the card's `pathSan` came
-  // from. Falls back to `pathSan` only if the position genuinely isn't in
-  // this chapter's tree at all (shouldn't happen, since `chapterId` was
-  // chosen from the due card's own `chapterIds`).
+  // from.
+  // "The chapter's own root FEN" is only itself a card when the chapter
+  // starts with the trainer's own side to move (true for every White
+  // repertoire chapter so far, e.g. Catalan). For a Black repertoire — the
+  // Grunfeld's chapters, and the first one this bug actually showed up on —
+  // the chapter root is the *opponent's* move, so no card exists exactly
+  // there, and `cardById(cardKey(chapter.startFen))` always misses. That
+  // used to fall through to `dueCard` directly (the "??" fallback below is
+  // gone now), which silently started the run's board at whatever deep
+  // position the scheduler happened to pick as due — i.e. a real bug, not
+  // the intended "always start from the chapter's own beginning" behavior;
+  // caught live by the run's created game landing several moves into a line
+  // with an empty move tree, rather than at the chapter's declared root.
+  // Fixed by walking `targetPath` from the chapter's root one ply at a time
+  // and taking the *first* node along it that's an actual card — that's the
+  // true first point in this specific line where the trainer's side has
+  // anything to answer, whether that's the root itself (ply 0, White
+  // repertoires) or one ply in after the opponent's first move (Black
+  // repertoires, where the root itself is never a card).
   // Takes `rep` explicitly (rather than closing over the `repertoire` state)
   // because startSession needs to call this synchronously right after
   // setRepertoireState, before that state update has actually committed.
@@ -198,8 +214,18 @@ export function useTrainerSession() {
       const chapterId = dueCard.chapterIds.find((id) => selectedChapterIdsRef.current.has(id)) ?? dueCard.chapterIds[0]
       const chapter = rep.chapters.find((c) => c.id === chapterId)
       if (!chapter) return { card: dueCard, targetPath: dueCard.pathSan }
-      const startCard = cardById(cardKey(chapter.startFen))
       const targetPath = findPathInChapterTree(chapter.tree, cardKey(dueCard.fen)) ?? dueCard.pathSan
+
+      let node = chapter.tree
+      let startCard = cardById(cardKey(node.fen))
+      for (const san of targetPath) {
+        if (startCard) break
+        const next = (node.children ?? []).find((c) => c.san === san)
+        if (!next) break
+        node = next
+        startCard = cardById(cardKey(node.fen))
+      }
+
       return { card: startCard ?? dueCard, targetPath }
     },
     [cardById],

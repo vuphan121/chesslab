@@ -3,5 +3,12 @@
   "name": "Grünfeld Defense",
   "side": "b",
   "source": "https://lichess.org/study/SiEkqW7i",
-  "description": "Black repertoire for the Grünfeld Defense. Kept as separate study chapters: Exchange variation and Exchange variation sidelines."
+  "description": "Black repertoire for the Grünfeld Defense. Kept as separate study chapters: Exchange variation and Exchange variation sidelines.",
+  "excluded": [
+    {
+      "chapter": "Exchange variation sidelines",
+      "path": ["Bc4"],
+      "reason": "Recorded in this chapter only as an anchor for the sibling first-move sidelines (Bg5/Bb5+/Qa4+/Be3) — 1.Bc4 itself has no continuation here and is already fully covered by the 'Exchange variation' chapter, so it isn't a real line of its own."
+    }
+  ]
 }
