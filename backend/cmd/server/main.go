@@ -14,6 +14,7 @@ import (
 
 	"github.com/chesslab/backend/internal/api"
 	"github.com/chesslab/backend/internal/auth"
+	"github.com/chesslab/backend/internal/book"
 	"github.com/chesslab/backend/internal/coach"
 	"github.com/chesslab/backend/internal/db"
 	"github.com/chesslab/backend/internal/engine"
@@ -74,6 +75,17 @@ func main() {
 	}
 	repertoires := repertoire.NewStore(repertoire.LoadDir(repDir))
 
+	// Optional, unlike repertoires above: backend/data/books/ is gitignored
+	// (personal book content, not for redistribution — see root CLAUDE.md's
+	// "Study from Book" section), so most checkouts and the deployed instance
+	// have zero books. LoadDir already returns nil on a missing dir; /api/books
+	// just serves an empty list rather than the server needing this data to boot.
+	booksDir := os.Getenv("BOOKS_PATH")
+	if booksDir == "" {
+		booksDir = "data/books"
+	}
+	books := book.NewStore(book.LoadDir(booksDir))
+
 	dbStore := newDBStore()
 	authCfg := newAuthConfig()
 	if dbStore != nil {
@@ -86,7 +98,7 @@ func main() {
 		cancel()
 	}
 
-	handler := api.NewHandler(store, eng, coachSvc, coachAgent, repertoires, dbStore, authCfg)
+	handler := api.NewHandler(store, eng, coachSvc, coachAgent, repertoires, books, dbStore, authCfg)
 	router := api.NewRouter(handler)
 
 	port := os.Getenv("PORT")

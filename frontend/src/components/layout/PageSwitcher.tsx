@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 const PAGES = [
   { href: '/', label: 'Analysis Board', sub: 'Board, engine, explorer, AI coach' },
   { href: '/opening-study', label: 'Opening Study', sub: 'Drill your repertoire' },
+  { href: '/book-study', label: 'Study from Book', sub: 'Work through book chapters' },
 ]
 
 export default function PageSwitcher() {

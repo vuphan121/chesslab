@@ -1,5 +1,6 @@
 import type { MoveNode } from '@/lib/chess/types'
 import type { Repertoire, RepertoireSummary } from '@/lib/trainer/types'
+import type { Book, BookSummary } from '@/lib/books/types'
 import { getToken, clearToken } from '@/lib/auth/token'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
@@ -262,6 +263,22 @@ export const listRepertoires = (): Promise<RepertoireSummary[]> => request('/api
 
 export const getRepertoire = (id: string): Promise<Repertoire> =>
   request(`/api/repertoires/${id}`)
+
+// --- Study from Book ---
+
+export const listBooks = (): Promise<BookSummary[]> => request('/api/books')
+
+export const getBook = (id: string): Promise<Book> => request(`/api/books/${id}`)
+
+export interface GetBookProgressResponse {
+  done: string[]
+}
+
+export const getBookProgress = (bookId: string): Promise<GetBookProgressResponse> =>
+  request(`/api/book-progress/${bookId}`)
+
+export const markItemDone = (bookId: string, itemId: string): Promise<{ ok: boolean }> =>
+  request(`/api/book-progress/${bookId}/${itemId}`, { method: 'POST' })
 
 // --- Auth ---
 

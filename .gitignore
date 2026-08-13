@@ -15,3 +15,8 @@ CLAUDE.md
 # Python
 __pycache__/
 *.pyc
+
+# Purchased book sources + anything derived from them for the "Study from
+# Book" feature — personal copies, not for redistribution in the public repo.
+book-sources/
+backend/data/books/

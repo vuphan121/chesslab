@@ -43,3 +43,17 @@ CREATE TABLE IF NOT EXISTS line_attempts (
 
 CREATE INDEX IF NOT EXISTS line_attempts_username_played_at_idx
     ON line_attempts (username, played_at DESC);
+
+-- One row per (username, book, item) the user has completed in the "Study
+-- from Book" feature (lesson started / puzzle solved / puzzle solution
+-- revealed) — presence of a row means done, no boolean column needed.
+-- Deliberately the only piece of book-study state that persists: the
+-- per-item move history a user plays while exploring a puzzle is ephemeral
+-- frontend state, never sent here (see useBookStudySession.ts).
+CREATE TABLE IF NOT EXISTS book_item_progress (
+    username TEXT NOT NULL,
+    book_id TEXT NOT NULL,
+    item_id TEXT NOT NULL,
+    completed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (username, book_id, item_id)
+);
