@@ -16,10 +16,10 @@ func TestGrunfeldStudyLoadsByChapter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParsePGN: %v", err)
 	}
-	if len(chapters) != 2 {
-		t.Fatalf("got %d chapters, want 2", len(chapters))
+	if len(chapters) != 3 {
+		t.Fatalf("got %d chapters, want 3", len(chapters))
 	}
-	for i, want := range []string{"Exchange variation", "Exchange variation sidelines"} {
+	for i, want := range []string{"Exchange variation", "Exchange variation sidelines", "Closed variation"} {
 		if chapters[i].Name != want {
 			t.Errorf("chapter %d name = %q, want %q", i+1, chapters[i].Name, want)
 		}

@@ -34,3 +34,21 @@
 [UTCTime "10:44:34"]
 
 1. Bc4 (1. Bg5 c5 2. Rc1 O-O 3. d5 Qd6 4. Nf3 Bg4) (1. Bb5+ c6 2. Ba4 O-O 3. Ne2 c5 4. O-O Nc6) (1. Qa4+ Nd7 2. Nf3 O-O 3. Be2 c5 4. O-O cxd4 5. cxd4 Nc5) (1. Be3 c5 2. Qd2 Qa5) *
+
+
+[Event "Grunfeld: Closed variation"]
+[Date "2026.08.14"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "Grunfeld"]
+[ChapterName "Closed variation"]
+[ChapterURL "https://lichess.org/study/SiEkqW7i/jUQS0b7O"]
+[Annotator "https://lichess.org/@/vuphan121"]
+[FEN "rnbqk2r/ppp1ppbp/5np1/3p4/2PP4/2N1PN2/PP3PPP/R1BQKB1R b KQkq - 0 1"]
+[SetUp "1"]
+[UTCDate "2026.08.14"]
+[UTCTime "16:51:43"]
+
+1... O-O 2. cxd5 (2. Be2 dxc4 3. Bxc4 c5 4. d5 Ne8 5. O-O Nd6) 2... Nxd5 3. Bc4 Nb6 4. Bb3 c5 5. O-O (5. dxc5 N6d7 6. Na4 Na6) 5... cxd4 6. exd4 Nc6 7. d5 Na5 *
