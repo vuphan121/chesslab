@@ -3,7 +3,7 @@
   "name": "Grünfeld Defense",
   "side": "b",
   "source": "https://lichess.org/study/SiEkqW7i",
-  "description": "Black repertoire for the Grünfeld Defense. Kept as separate study chapters: Exchange variation, Exchange variation sidelines, and Closed variation.",
+  "description": "Black repertoire for the Grünfeld Defense. Kept as separate study chapters: Exchange variation, Exchange variation sidelines, Closed variation, Russian system (Qb3), Brinckmann Attack (Bf4), and Neo-Grunfeld.",
   "excluded": [
     {
       "chapter": "Exchange variation sidelines",
