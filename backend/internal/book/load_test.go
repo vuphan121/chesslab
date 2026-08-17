@@ -161,3 +161,17 @@ func TestStore_ListAndGet(t *testing.T) {
 		t.Error("Get(missing) should return ok=false")
 	}
 }
+
+func TestSourcePath_OnlyServesValidatedFilename(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "source.pdf", "not really a PDF")
+	b := &Book{SourcePDF: "source.pdf"}
+	path, ok := SourcePath(dir, b)
+	if !ok || path != filepath.Join(dir, "source.pdf") {
+		t.Fatalf("SourcePath = %q, %v", path, ok)
+	}
+	b.SourcePDF = "../secret.pdf"
+	if _, ok := SourcePath(dir, b); ok {
+		t.Fatal("SourcePath accepted a path outside the configured source directory")
+	}
+}

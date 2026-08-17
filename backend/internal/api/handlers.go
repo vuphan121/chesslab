@@ -21,18 +21,19 @@ import (
 )
 
 type Handler struct {
-	store       storage.Store
-	engine      *engine.Engine
-	coach       *coach.Service // Path 1 (per-move); nil if unconfigured — endpoint returns 503
-	coachAgent  *coach.Agent   // Path 2 (freeform chat); nil if unconfigured — endpoint returns 503
-	repertoires *repertoire.Store
-	books       *book.Store // "Study from Book"; empty store (not nil) if no BOOKS_PATH data — endpoints just return []
-	db          *db.Store   // trainer progress sync + analytics; nil if DATABASE_URL unset — endpoints return 503
-	authCfg     auth.Config
+	store          storage.Store
+	engine         *engine.Engine
+	coach          *coach.Service // Path 1 (per-move); nil if unconfigured — endpoint returns 503
+	coachAgent     *coach.Agent   // Path 2 (freeform chat); nil if unconfigured — endpoint returns 503
+	repertoires    *repertoire.Store
+	books          *book.Store // "Study from Book"; empty store (not nil) if no BOOKS_PATH data — endpoints just return []
+	bookSourcesDir string      // local, user-provided PDFs; unavailable in deployments without this directory
+	db             *db.Store   // trainer progress sync + analytics; nil if DATABASE_URL unset — endpoints return 503
+	authCfg        auth.Config
 }
 
-func NewHandler(store storage.Store, eng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config) *Handler {
-	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg}
+func NewHandler(store storage.Store, eng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config, bookSourcesDir string) *Handler {
+	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSourcesDir: bookSourcesDir}
 }
 
 type PieceJSON struct {
@@ -87,11 +88,12 @@ type MakeMoveRequest struct {
 }
 
 type LineJSON struct {
-	Score int      `json:"score"` // centipawns, white perspective
-	Mate  int      `json:"mate"`  // >0 = white mates in N; <0 = black mates in N
-	Depth int      `json:"depth"`
-	Moves []string `json:"moves"` // SAN
-	FENs  []string `json:"fens"`  // FEN after each move
+	Score    int      `json:"score"` // centipawns, white perspective
+	Mate     int      `json:"mate"`  // >0 = white mates in N; <0 = black mates in N
+	Depth    int      `json:"depth"`
+	Moves    []string `json:"moves"`    // SAN
+	UCIMoves []string `json:"uciMoves"` // UCI, parallel to Moves
+	FENs     []string `json:"fens"`     // FEN after each move
 }
 
 type AnalysisJSON struct {
@@ -281,11 +283,12 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			result.Lines = append(result.Lines, LineJSON{
-				Score: score,
-				Mate:  mate,
-				Depth: cloud.Depth,
-				Moves: sans,
-				FENs:  fens,
+				Score:    score,
+				Mate:     mate,
+				Depth:    cloud.Depth,
+				Moves:    sans,
+				UCIMoves: moves,
+				FENs:     fens,
 			})
 		}
 		respondJSON(w, http.StatusOK, result)
@@ -318,11 +321,12 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 		}
 		sans, fens := chess.MovesToSANAndFENs(g.Pos, l.Moves)
 		result.Lines = append(result.Lines, LineJSON{
-			Score: score,
-			Mate:  mate,
-			Depth: l.Depth,
-			Moves: sans,
-			FENs:  fens,
+			Score:    score,
+			Mate:     mate,
+			Depth:    l.Depth,
+			Moves:    sans,
+			UCIMoves: l.Moves,
+			FENs:     fens,
 		})
 	}
 	respondJSON(w, http.StatusOK, result)
@@ -460,20 +464,20 @@ func toGameState(g *chess.Game) GameStateJSON {
 	}
 
 	return GameStateJSON{
-		ID:             g.ID,
-		FEN:            chess.FEN(g.Pos),
-		Turn:           g.Pos.Turn.String(),
-		FullMove:       g.Pos.FullMove,
-		Pieces:         pieces,
-		LegalMoves:     legalMoves,
-		LastMove:       lastMove,
-		IsCheck:        g.IsCheck(),
-		IsCheckmate:    g.IsCheckmate(),
-		IsStalemate:    g.IsStalemate(),
-		IsDraw:         g.IsDraw(),
-		IsGameOver:     g.IsGameOver(),
-		MoveTree:       toMoveNode(g.Root, 0),
-		CurrentNodeID:  g.Current.ID,
+		ID:            g.ID,
+		FEN:           chess.FEN(g.Pos),
+		Turn:          g.Pos.Turn.String(),
+		FullMove:      g.Pos.FullMove,
+		Pieces:        pieces,
+		LegalMoves:    legalMoves,
+		LastMove:      lastMove,
+		IsCheck:       g.IsCheck(),
+		IsCheckmate:   g.IsCheckmate(),
+		IsStalemate:   g.IsStalemate(),
+		IsDraw:        g.IsDraw(),
+		IsGameOver:    g.IsGameOver(),
+		MoveTree:      toMoveNode(g.Root, 0),
+		CurrentNodeID: g.Current.ID,
 	}
 }
 

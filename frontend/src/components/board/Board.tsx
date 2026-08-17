@@ -18,6 +18,7 @@ interface Props {
   onMove: (from: string, to: string) => void
   legalMovesFor: (square: string) => string[]
   bestMove?: string
+  analysisMoves?: { uci: string; scale: number }[]
   flipped?: boolean
   squareSize?: number
 }
@@ -28,6 +29,7 @@ export default function Board({
   onMove,
   legalMovesFor,
   bestMove,
+  analysisMoves = [],
   flipped = false,
   squareSize = 80,
 }: Props) {
@@ -241,6 +243,20 @@ export default function Board({
               squareSize={squareSize}
               flipped={flipped}
             />
+          )}
+
+          {!isDragging && analysisMoves.map(({ uci, scale }, index) =>
+            uci.length >= 4 ? (
+              <Arrow
+                key={`${uci}-${index}`}
+                from={uci.slice(0, 2)}
+                to={uci.slice(2, 4)}
+                squareSize={squareSize}
+                flipped={flipped}
+                color="rgba(96, 99, 104, 0.68)"
+                scale={scale}
+              />
+            ) : null,
           )}
 
           {[...circles].map((sq) => {

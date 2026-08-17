@@ -78,6 +78,9 @@ func ParseAndValidate(data []byte) (*Book, error) {
 // that doesn't actually apply is a hard error naming the chapter/item, not a
 // silently-served bad puzzle).
 func validateBook(b *Book) error {
+	if b.SourcePDF != "" && (filepath.Base(b.SourcePDF) != b.SourcePDF || b.SourcePDF == ".") {
+		return fmt.Errorf("sourcePdf must be a filename, not a path")
+	}
 	for ci := range b.Chapters {
 		ch := &b.Chapters[ci]
 		for ii := range ch.Items {
@@ -104,4 +107,19 @@ func validateBook(b *Book) error {
 		}
 	}
 	return nil
+}
+
+// SourcePath returns the only local PDF a book is allowed to expose. Keeping
+// the filename in the validated book data prevents this endpoint from ever
+// becoming an arbitrary-file reader.
+func SourcePath(dir string, b *Book) (string, bool) {
+	if b == nil || b.SourcePDF == "" || filepath.Base(b.SourcePDF) != b.SourcePDF {
+		return "", false
+	}
+	path := filepath.Join(dir, b.SourcePDF)
+	info, err := os.Stat(path)
+	if err != nil || info.IsDir() {
+		return "", false
+	}
+	return path, true
 }

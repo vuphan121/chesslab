@@ -7,6 +7,7 @@ interface Props {
   squareSize: number
   flipped?: boolean
   color?: string
+  scale?: number
 }
 
 export default function Arrow({
@@ -15,6 +16,7 @@ export default function Arrow({
   squareSize,
   flipped = false,
   color = 'rgba(110, 110, 120, 0.55)',
+  scale = 1,
 }: Props) {
   const files = flipped ? [...FILES].reverse() : FILES
   const ranks = flipped ? [...RANKS].reverse() : RANKS
@@ -42,9 +44,9 @@ export default function Arrow({
   const py = ux
 
   const startOff = squareSize * 0.3
-  const sw = squareSize * 0.14 // shaft half-width
-  const hw = squareSize * 0.44 // head half-width
-  const hl = squareSize * 0.65 // head length
+  const sw = squareSize * 0.14 * scale // shaft half-width
+  const hw = squareSize * 0.44 * scale // head half-width
+  const hl = squareSize * 0.65 * scale // head length
 
   const sx = x1 + ux * startOff
   const sy = y1 + uy * startOff

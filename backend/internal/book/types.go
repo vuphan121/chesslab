@@ -23,6 +23,9 @@ type Item struct {
 	// normal play uses; SAN alone isn't enough for that.
 	SolutionUCI []string `json:"solutionUci,omitempty"`
 	Note        string   `json:"note,omitempty"`
+	// SourcePage is the 1-based PDF page containing this position. It is
+	// optional because a book can still be used without its local source PDF.
+	SourcePage int `json:"sourcePage,omitempty"`
 }
 
 // Chapter is one numbered chapter of the book.
@@ -35,8 +38,11 @@ type Chapter struct {
 
 // Book is one parsed book plus its chapters.
 type Book struct {
-	ID       string    `json:"id"`
-	Title    string    `json:"title"`
-	Author   string    `json:"author"`
-	Chapters []Chapter `json:"chapters"`
+	ID     string `json:"id"`
+	Title  string `json:"title"`
+	Author string `json:"author"`
+	// SourcePDF is a filename within BOOK_SOURCES_PATH, never an arbitrary
+	// path supplied by the client.
+	SourcePDF string    `json:"sourcePdf,omitempty"`
+	Chapters  []Chapter `json:"chapters"`
 }

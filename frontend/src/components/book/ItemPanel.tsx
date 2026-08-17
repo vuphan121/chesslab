@@ -1,43 +1,27 @@
 'use client'
 
-import type { FlatItem, BookFeedback } from '@/hooks/useBookStudySession'
-
-const SOLVED_COLORS = { fg: 'oklch(0.45 0.13 152)', bg: 'oklch(0.95 0.045 152)' }
+import type { FlatItem } from '@/hooks/useBookStudySession'
 
 interface Props {
   current: FlatItem
   index: number
   total: number
-  feedback: BookFeedback | null
-  lessonStarted: boolean
-  completed: boolean
   busy: boolean
   onPrev: () => void
   onNext: () => void
-  onStartLesson: () => void
-  onRevealSolution: () => void
 }
 
 export default function ItemPanel({
   current,
   index,
   total,
-  feedback,
-  lessonStarted,
-  completed,
   busy,
   onPrev,
   onNext,
-  onStartLesson,
-  onRevealSolution,
 }: Props) {
   const { item } = current
   const isPuzzle = item.type === 'puzzle'
-  const lessonIdle = !isPuzzle && !lessonStarted
-  // Puzzle notes describe the tactical idea, so they'd spoil an unsolved
-  // puzzle — only show once this session's solve/reveal fired, or it was
-  // already completed in an earlier session (per the persisted checkmark).
-  const showNote = item.note && (isPuzzle ? feedback?.kind === 'solved' || completed : !lessonIdle)
+  const prompt = item.prompt.replace(/^(White|Black) to move[.:]?\s*/i, '')
 
   return (
     <div
@@ -77,81 +61,18 @@ export default function ItemPanel({
           >
             {isPuzzle ? 'Puzzle' : 'Lesson'}
           </span>
-          {completed && (
-            <span style={{ fontSize: 12, color: '#2e7d32', fontWeight: 700 }} title="Completed">
-              ✓
-            </span>
-          )}
         </div>
       </div>
 
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: '12px 16px' }}>
-        <p style={{ fontSize: 14, color: '#37352f', lineHeight: 1.5 }}>{item.prompt}</p>
+        {prompt && <p style={{ fontSize: 14, color: '#37352f', lineHeight: 1.5 }}>{prompt}</p>}
 
-        {showNote && (
+        {item.note && (
           <p className="serif" style={{ fontSize: 13, color: '#4a4740', lineHeight: 1.5, marginTop: 12 }}>
             {item.note}
           </p>
         )}
 
-        {lessonIdle && (
-          <button
-            onClick={onStartLesson}
-            disabled={busy}
-            style={{
-              marginTop: 14,
-              fontSize: 13,
-              fontWeight: 600,
-              color: '#fff',
-              background: '#4a90d9',
-              border: 'none',
-              borderRadius: 8,
-              padding: '9px 16px',
-              cursor: busy ? 'default' : 'pointer',
-            }}
-          >
-            Start lesson
-          </button>
-        )}
-
-        {isPuzzle && item.solution && item.solution.length > 0 && (
-          <button
-            onClick={onRevealSolution}
-            disabled={busy}
-            style={{
-              marginTop: 14,
-              fontSize: 12,
-              fontWeight: 600,
-              color: '#6a675f',
-              background: '#f0efe9',
-              border: 'none',
-              borderRadius: 6,
-              padding: '6px 12px',
-              cursor: busy ? 'default' : 'pointer',
-            }}
-          >
-            Show solution
-          </button>
-        )}
-      </div>
-
-      <div
-        aria-live="polite"
-        style={{
-          height: 40,
-          flexShrink: 0,
-          margin: '0 16px',
-          borderRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 12px',
-          fontSize: 12,
-          color: feedback ? SOLVED_COLORS.fg : 'transparent',
-          background: feedback ? SOLVED_COLORS.bg : 'transparent',
-          transition: 'background 0.18s, color 0.18s',
-        }}
-      >
-        {feedback?.kind === 'solved' && 'Solved!'}
       </div>
 
       <div style={{ display: 'flex', gap: 8, padding: '12px 16px 16px' }}>
