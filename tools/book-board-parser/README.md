@@ -46,3 +46,15 @@ writes to the database.
 ```powershell
 python -m unittest tools/book-board-parser/test_book_board_parser.py
 ```
+
+## Parse the remaining chapters
+
+`parse_remaining.py` processes Chapters 3-24 sequentially using the canonical
+page ranges. It uses the same checkpointing and 5.2-second minimum request
+interval, and generates `docs/study-from-book/board-parser-errors.md` for only
+the diagrams the tool could not recognize or whose turn marker was unknown.
+It never corrects those diagrams or writes to Neon.
+
+```powershell
+python tools/book-board-parser/parse_remaining.py 'book-sources/Book 1.pdf'
+```
