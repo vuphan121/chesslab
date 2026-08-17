@@ -161,3 +161,14 @@ func TestStore_ListAndGet(t *testing.T) {
 		t.Error("Get(missing) should return ok=false")
 	}
 }
+
+func TestChapterObjectKey(t *testing.T) {
+	b := &Book{ID: "example-book", Chapters: []Chapter{{ID: "ch1", Number: 1}}}
+	key, ok := ChapterObjectKey("books", b, "ch1")
+	if !ok || key != "books/example-book/chapter-1.pdf" {
+		t.Fatalf("ChapterObjectKey = %q, %v", key, ok)
+	}
+	if _, ok := ChapterObjectKey("books", b, "missing"); ok {
+		t.Fatal("ChapterObjectKey accepted an unknown chapter")
+	}
+}

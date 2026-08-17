@@ -10,6 +10,7 @@ export interface BookItem {
   solution?: string[]
   solutionUci?: string[]
   note?: string
+  sourcePage?: number
 }
 
 export interface BookChapter {

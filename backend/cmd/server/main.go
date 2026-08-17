@@ -15,6 +15,7 @@ import (
 	"github.com/chesslab/backend/internal/api"
 	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/book"
+	"github.com/chesslab/backend/internal/booksource"
 	"github.com/chesslab/backend/internal/coach"
 	"github.com/chesslab/backend/internal/db"
 	"github.com/chesslab/backend/internal/engine"
@@ -85,7 +86,14 @@ func main() {
 	// there), but only as a fallback when no database is configured — same
 	// either/or pattern as auth's DB-vs-env-var fallback, not merged with the
 	// DB path, so a book seeded into the DB doesn't show up twice locally.
-	books := book.NewStore(loadBooks(dbStore))
+	loadedBooks := loadBooks(dbStore)
+	books := book.NewStore(loadedBooks)
+	bookSource, err := booksource.NewB2FromEnv()
+	if err != nil {
+		log.Printf("book storage unavailable (%v) — chapter PDFs will return 503", err)
+	} else if bookSource != nil {
+		log.Printf("book storage: Backblaze B2 enabled")
+	}
 
 	authCfg := newAuthConfig()
 	if dbStore != nil {
@@ -98,7 +106,7 @@ func main() {
 		cancel()
 	}
 
-	handler := api.NewHandler(store, eng, coachSvc, coachAgent, repertoires, books, dbStore, authCfg)
+	handler := api.NewHandler(store, eng, coachSvc, coachAgent, repertoires, books, dbStore, authCfg, bookSource, os.Getenv("B2_CHAPTER_PREFIX"))
 	router := api.NewRouter(handler)
 
 	port := os.Getenv("PORT")

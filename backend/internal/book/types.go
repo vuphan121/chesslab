@@ -23,6 +23,9 @@ type Item struct {
 	// normal play uses; SAN alone isn't enough for that.
 	SolutionUCI []string `json:"solutionUci,omitempty"`
 	Note        string   `json:"note,omitempty"`
+	// SourcePage is the 1-based PDF page containing this position. It is
+	// optional because a book can still be used without its local source PDF.
+	SourcePage int `json:"sourcePage,omitempty"`
 }
 
 // Chapter is one numbered chapter of the book.

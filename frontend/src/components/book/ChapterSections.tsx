@@ -5,7 +5,6 @@ import type { FlatItem } from '@/hooks/useBookStudySession'
 interface Props {
   items: FlatItem[] // every item in the current chapter, in order
   activeItemId: string
-  completedItems: Set<string>
   busy: boolean
   onSelect: (globalIndex: number) => void
 }
@@ -13,7 +12,7 @@ interface Props {
 // ChapterSections is the right-hand navigation bar: one entry per item
 // ("part") in the current chapter, clickable to jump straight to it —
 // distinct from ItemPanel's Previous/Next, which only step one at a time.
-export default function ChapterSections({ items, activeItemId, completedItems, busy, onSelect }: Props) {
+export default function ChapterSections({ items, activeItemId, busy, onSelect }: Props) {
   return (
     <div
       style={{
@@ -36,7 +35,6 @@ export default function ChapterSections({ items, activeItemId, completedItems, b
         {items.map((flat, i) => {
           const active = flat.item.id === activeItemId
           const isPuzzle = flat.item.type === 'puzzle'
-          const done = completedItems.has(flat.item.id)
           return (
             <button
               key={flat.item.id}
@@ -84,11 +82,6 @@ export default function ChapterSections({ items, activeItemId, completedItems, b
               >
                 {isPuzzle ? 'Puzzle' : 'Lesson'}
               </span>
-              {done && (
-                <span style={{ fontSize: 12, color: '#2e7d32', fontWeight: 700 }} title="Completed">
-                  ✓
-                </span>
-              )}
             </button>
           )
         })}

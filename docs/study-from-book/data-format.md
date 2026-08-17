@@ -1,244 +1,109 @@
-# Study from Book — data format & extraction pipeline
+# Study from Book
 
-Covers: the `Book`/`Chapter`/`Item` JSON schema the backend loads and serves, how that data gets
-produced from a source PDF, and the ChessOCR API used as a cross-check during extraction.
+The Study from Book page is a reader and free-play board workspace. A student
+selects a section, sees the corresponding PDF page, and explores the supplied
+position on the board. Their move tree exists only for that browser session;
+changing sections starts a fresh board.
 
-## 1. Copyright approach (read this before adding another book)
+## Content and copyright
 
-Source PDFs live in `book-sources/` (gitignored) — personal, purchased copies, never committed.
-Derived data lives in `backend/data/books/` (also gitignored). What actually goes into that derived
-JSON matters:
+- Purchased source PDFs are private. The master PDF used for local preparation
+  is `book-sources/Book 1.pdf`; it is gitignored and must never be committed.
+- The app stores only structured chess facts (FEN, side to move, chapter/item
+  identifiers, and optional source-page numbers) plus app-authored labels.
+- Production book records live in Neon Postgres. Chapter PDFs live in the
+  private Backblaze B2 bucket configured by `B2_*` environment variables and
+  are streamed only after the app's normal authentication check.
 
-- **FEN positions and SAN/UCI move sequences are facts, not copyrightable expression** — these are
-  extracted directly from the book's diagrams and solution lines and stored as-is.
-- **Every `prompt` and `note` string is original text, written fresh for the app** — never a
-  transcription, paraphrase, or "lightly edited" version of the book's own prose. The book's actual
-  explanatory paragraphs, game annotations, and commentary are never stored anywhere in this
-  pipeline or its output.
-- **"Show solution" plays the real move sequence on the board, not book text** — same reasoning
-  applies to any future in-app "reveal" feature. If a request ever asks for the book's literal
-  wording, the correct response is the same original-explanation pattern already used everywhere
-  else here, not a copy.
+## Active data model
 
-## 2. `Book` / `Chapter` / `Item` schema
-
-Mirrors `backend/internal/book/types.go` field-for-field (the Go structs already carry `json` tags,
-so there's no separate DTO layer the way `internal/repertoire` needs one for its move-tree).
+`Book` contains chapters; every item is a `lesson` or `puzzle` with a FEN and
+`sideToMove`. The client uses that position as a free-play starting point. It
+does not load a prepared book line, reveal a solution, or persist the moves a
+student makes.
 
 ```jsonc
 {
-  "id": "build-up-your-chess-1",
-  "title": "Build Up Your Chess 1: The Fundamentals",
-  "author": "Artur Yusupov",
-  "chapters": [
-    {
-      "id": "buyc1-ch1",
-      "number": 1,
-      "name": "Mating motifs",          // short factual chapter title, not book prose
-      "items": [
-        {
-          "id": "buyc1-ch1-lesson-1",
-          "chapterId": "buyc1-ch1",
-          "type": "lesson",              // "lesson" | "puzzle"
-          "fen": "6k1/8/p7/r1r2Pp1/3R2Pp/1p6/1P4P1/3R2K1 w - - 0 1",
-          "sideToMove": "w",              // must agree with the FEN's own side to move
-          "prompt": "White to move. Play through the line and see how the rooks force the king to the edge of the board.",
-          "solution": ["Rd8+", "Kg7", "R1d7+", "Kf6", "Rf8+", "Ke5", "Re8+", "Kf4", "Rd4+", "Kg3", "Re3#"],
-          "solutionUci": ["d4d8", "h8g7", "d1d7", "g7f6", "d8f8", "f6e5", "f8e8", "e5f4", "d7d4", "f4g3", "e8e3"],
-          "note": "Two rooks alone can hunt a lone king down: each check cuts off a rank or file, herding the king toward a corner until it runs out of squares."
-        }
-      ]
-    }
-  ]
+  "id": "example-book",
+  "title": "Example",
+  "author": "Author",
+  "chapters": [{
+    "id": "example-ch1",
+    "number": 1,
+    "name": "Chapter 1",
+    "items": [{
+      "id": "example-ch1-1",
+      "chapterId": "example-ch1",
+      "type": "lesson",
+      "fen": "...",
+      "sideToMove": "w",
+      "sourcePage": 12
+    }]
+  }]
 }
 ```
 
-- `solution` (SAN) is what's authored by hand during extraction; `solutionUci` is **derived at
-  backend load time**, not written by hand — see §3.
-- `note` is optional; when present it's shown once the item's content is revealed (lesson started,
-  or puzzle solved/revealed).
-- Lesson items always carry a full `solution` (the book's own worked line, replayed move by move on
-  start). Puzzle items carry the line the book gives as the answer; the user is never forced to
-  match it move-by-move to make progress — see root `CLAUDE.md`'s "Study from Book" section for why
-  puzzles are free-play rather than strict-match.
+The backend validates each FEN and confirms that `sideToMove` matches the FEN.
+Each chapter is stored separately under
+`books/<book-id>/chapter-<number>.pdf`. The reader requests only
+`/api/books/{id}/chapters/{chapterId}/source.pdf`, never a whole-book file or
+a client-supplied object name. The backend authenticates to B2 and streams the
+chapter bytes; neither B2 keys nor B2 download tokens reach the browser.
 
-## 3. Backend loading & the legality QA gate
+## Build Up Your Chess 1 source-page map
 
-`internal/book.LoadDir` (mirrors `internal/repertoire.LoadDir`'s glob-and-skip-on-error shape, closer
-in spirit to `coach.LoadIndex`'s "load one finished JSON" since there's no PGN to parse) unmarshals
-each `*.json` in the books directory, then **validates every item**:
+The table below is the canonical page map for the private master file
+`Book 1.pdf` (263 physical PDF pages). `Book page` is the printed page number
+visible in the book; `master PDF` is its 1-based physical page in the source
+file. The first numbered page has an offset of two: `master PDF = book page -
+2`.
 
-1. `chess.ParseFEN` — the FEN must actually parse.
-2. `sideToMove` must agree with the FEN's own side-to-move field.
-3. Every `solution` move is replayed via `chess.FindLegalMoveBySAN` + `chess.ApplyMove`, ply by ply,
-   from the item's FEN — an illegal or misspelled move is a hard load error naming the exact chapter
-   and item, not a silently-skipped one.
-4. **`solutionUci` is derived during this same replay**, not authored — each SAN ply's resolved
-   `chess.Move` gets recorded as its UCI form (`internal/book/load.go`'s `validateBook`). The
-   frontend needs UCI (`from`/`to` squares) to actually play a move via the same `makeMove` endpoint
-   normal play uses; SAN alone isn't enough to drive that.
+The `chapter PDF` column is 1-based inside the individually stored object.
+When recording a future diagram/board extraction, save all three values:
+`bookPage`, `masterPDFPage`, and `chapterPDFPage`. For a diagram on chapter
+page `n`, derive `masterPDFPage = chapterStartMasterPDFPage + n - 1` and
+`bookPage = masterPDFPage + 2`. This avoids losing the actual book location
+when a chapter is later re-exported or parsed.
 
-This is the QA gate that catches transcription mistakes made while reading a diagram — see §5 for
-two real examples it caught (and one it couldn't).
+| # | Chapter | Object | Book pages | Master PDF pages | Chapter PDF pages |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Mating motifs | `books/build-up-your-chess-1/chapter-1.pdf` | 8-17 | 6-15 | 1-10 |
+| 2 | Mating motifs 2 | `books/build-up-your-chess-1/chapter-2.pdf` | 18-29 | 16-27 | 1-12 |
+| 3 | Basic opening principles | `books/build-up-your-chess-1/chapter-3.pdf` | 30-43 | 28-41 | 1-14 |
+| 4 | Simple pawn endings | `books/build-up-your-chess-1/chapter-4.pdf` | 44-53 | 42-51 | 1-10 |
+| 5 | Double check | `books/build-up-your-chess-1/chapter-5.pdf` | 54-63 | 52-61 | 1-10 |
+| 6 | The value of the pieces | `books/build-up-your-chess-1/chapter-6.pdf` | 64-73 | 62-71 | 1-10 |
+| 7 | The discovered attack | `books/build-up-your-chess-1/chapter-7.pdf` | 74-81 | 72-79 | 1-8 |
+| 8 | Centralizing the pieces | `books/build-up-your-chess-1/chapter-8.pdf` | 82-91 | 80-89 | 1-10 |
+| 9 | Mate in two moves | `books/build-up-your-chess-1/chapter-9.pdf` | 92-99 | 90-97 | 1-8 |
+| 10 | The opposition | `books/build-up-your-chess-1/chapter-10.pdf` | 100-109 | 98-107 | 1-10 |
+| 11 | The pin | `books/build-up-your-chess-1/chapter-11.pdf` | 110-119 | 108-117 | 1-10 |
+| 12 | The double attack | `books/build-up-your-chess-1/chapter-12.pdf` | 120-127 | 118-125 | 1-8 |
+| 13 | Realizing a material advantage | `books/build-up-your-chess-1/chapter-13.pdf` | 128-137 | 126-135 | 1-10 |
+| 14 | Open files and Outposts | `books/build-up-your-chess-1/chapter-14.pdf` | 138-147 | 136-145 | 1-10 |
+| 15 | Combinations | `books/build-up-your-chess-1/chapter-15.pdf` | 148-155 | 146-153 | 1-8 |
+| 16 | Queen against pawn | `books/build-up-your-chess-1/chapter-16.pdf` | 156-163 | 154-161 | 1-8 |
+| 17 | Stalemate motifs | `books/build-up-your-chess-1/chapter-17.pdf` | 164-171 | 162-169 | 1-8 |
+| 18 | Forced variations | `books/build-up-your-chess-1/chapter-18.pdf` | 172-181 | 170-179 | 1-10 |
+| 19 | Combinations involving promotion | `books/build-up-your-chess-1/chapter-19.pdf` | 182-191 | 180-189 | 1-10 |
+| 20 | Weak points | `books/build-up-your-chess-1/chapter-20.pdf` | 192-201 | 190-199 | 1-10 |
+| 21 | Pawn combinations | `books/build-up-your-chess-1/chapter-21.pdf` | 202-211 | 200-209 | 1-10 |
+| 22 | The wrong bishop | `books/build-up-your-chess-1/chapter-22.pdf` | 212-221 | 210-219 | 1-10 |
+| 23 | Smothered mate | `books/build-up-your-chess-1/chapter-23.pdf` | 222-231 | 220-229 | 1-10 |
+| 24 | Gambits | `books/build-up-your-chess-1/chapter-24.pdf` | 232-243 | 230-241 | 1-12 |
 
-## 4. Extraction pipeline (how a chapter actually gets produced)
+The final test (book pages 244-251 / master PDF pages 242-249) and appendices
+are intentionally not chapter objects yet. They need their own section IDs in
+the study data before the reader can request them.
 
-There is no OCR/automation step that goes straight from PDF to JSON — book diagrams here use a
-figurine line-art style, not a photo of a physical board or a lichess/chess.com-style digital
-render, and the PDF's own text layer is unreliable for this font (garbled substitutions observed,
-e.g. "typical" extracting as "rypical"). The actual pipeline:
+## Archived OCR experiments
 
-1. **Render pages to images.** `book-sources/render_pages.py` (gitignored, generic PDF-page-to-PNG
-   utility — no book content in the script itself) wraps `pypdfium2` to render a page range at a
-   given DPI into a scratch directory. Diagrams get individually cropped from these renders (higher
-   DPI — 500–900 — for anything ambiguous) rather than fed to anything at low resolution. Crop
-   generously around each diagram (include the label and a margin on every side) — the API detects
-   the board's own bounding box within the submitted image, so a tight/clipped crop is the actual
-   failure mode (see below), not a loose one.
-2. **Read every diagram's board layout via the ChessOCR API (§5) — this is the sole board-reading
-   method now, not a hand-read.** Run `book-sources/chessocr.py <crop>.png` for each diagram and take
-   its board-layout FEN as the piece placement, full stop — do not additionally hand-derive a FEN
-   from the image yourself and cross-check the two. (An earlier version of this pipeline did a
-   hand-read plus an API cross-check; that's been dropped in favor of API-only, on the reasoning that
-   a second manual read is the effort this step exists to save.) If the API fails to detect a board
-   or the crop looks suspicious (clipped rank, wrong image), re-crop wider — a too-tight crop that
-   clips a rank returns a *plausible-looking wrong* FEN (an `8` empty-rank where the real rank has
-   pieces) rather than an obvious error, so a suspiciously clean-looking result is still worth a
-   second look at the crop bounds, not the board itself. Still read by eye, since the API doesn't
-   return them: side-to-move (the small △/▼ triangle next to each diagram — white/black to move
-   respectively) and the solution's SAN sequence, transcribed from the accompanying text.
-   **Known gap with API-only reading:** §5.2 records a case where the API's own read was wrong on a
-   piece color, and it went uncaught until the downstream move-simulation step (§4.3, next) failed to
-   parse a resulting move — that step remains the real backstop now that there's no second human read
-   to catch a bad API result directly, so don't skip it.
-3. **Simulate the full solution line with a rules engine before trusting a mate claim — and check
-   canonical SAN, not just legality.** For any solution ending in `#`, don't rely on manual
-   read-through to confirm it's genuinely checkmate (`backend`'s own load-time validation only checks
-   that each move is *legal*, not that a claimed mate actually is one). Verify with `python-chess`:
-   ```python
-   import chess
-   b = chess.Board("<fen> <turn> <castling> - 0 1")
-   for san in ["Rxe4", "dxe4", "..."]:
-       m = b.parse_san(san)
-       assert b.san(m) == san, f"backend needs exact SAN — got {b.san(m)!r}"
-       b.push(m)
-   assert b.is_checkmate()
-   ```
-   **The `b.san(m) == san` check is not optional** — `parse_san` is lenient (it accepts an
-   unnecessary disambiguation prefix, like `Raf1` when only one rook can actually reach `f1`, and
-   silently resolves it) but the backend's `FindLegalMoveBySAN` requires an exact string match
-   against its own generated canonical SAN (see backend `CLAUDE.md`'s "Repertoire parsing" section —
-   the same exactness requirement that fixed the `Bxc6`/`bxc6` case-sensitivity bug applies here).
-   Skipping this check is how two real bugs got through chapter 2's own `python-chess` pass and only
-   surfaced when the Go backend's `LoadDir` actually rejected them: an over-disambiguated `Raf1`
-   (should've been plain `Rf1` — the other rook was pinned to its own king and couldn't legally reach
-   f1 at all) and a missing check symbol on `Rxe4` (the capturing rook opened direct fire on a king
-   that, at that point in the line, hadn't castled away from e8 yet — easy to miss when skimming the
-   book's own prose, which had also omitted it because the author's next line was the recapture).
-   This also catches castling-rights mistakes in the hand-built FEN (a `parse_san` failure on `O-O`
-   is usually a missing `K`/`Q`/`k`/`q` in the FEN, not an illegal move in the book). **Fastest way to
-   run this for a whole chapter at once:** load the actual JSON file being edited and validate every
-   item's `fen`/`solution` in one pass, rather than a hand-copied per-item snippet — that's what
-   caught these two, since a snippet copied by hand from notes can silently drift from what's
-   actually in the file.
-4. **Write original `prompt`/`note` text** per item — never copied/paraphrased from the book (§1).
-5. **Run the backend's `LoadDir` validation** (§3) as the final gate before considering an item done.
+The OCR, diagram-detection, labeling, PaddleOCR/TroCR fine-tuning, and
+third-party ChessOCR experiments were removed from this repository. They did
+not reliably recognize the textbook's chess figurines, so the product no
+longer depends on automated PDF-to-position extraction.
 
-## 5. ChessOCR API (third-party, not part of this repo)
-
-A hosted chess-diagram-recognition service, used purely as a second opinion during extraction — not
-integrated into the running app, not something this repo controls or is responsible for uptime/
-correctness of.
-
-```
-POST https://helpman.komtera.lt/predict
-Content-Type: multipart/form-data
-  file: <binary image>   # the field name is exactly "file"
-```
-
-Response:
-```jsonc
-{
-  "results": [
-    {
-      "fen": "6k1/8/p7/r1r2Pp1/3R2Pp/1p6/1P4P1/3R2K1",  // board layout only — 4 FEN fields, not 6
-      "xc": 0.565, "yc": 0.423, "width": 0.699, "height": 0.709  // detected board's bbox within the submitted image, normalized 0-1
-    }
-  ],
-  "status": 0,
-  "id": "20260807160154009",
-  "message": null
-}
-```
-
-- `fen` is **board layout only** — no side-to-move, castling rights, or en passant fields. Those
-  three (especially side-to-move, driven by the diagram's own △/▼ symbol) still have to be read by
-  hand and appended before the FEN is usable.
-- No documented rate limit or auth requirement observed; treat it as a courtesy, not a guaranteed
-  SLA — it's someone else's server (`https://helpman.komtera.lt/chessocr/` is the human-facing page
-  this endpoint backs; no public API docs beyond what's captured here).
-- `book-sources/chessocr.py` (gitignored alongside `render_pages.py` for the same reason — pure
-  utility code, no book content) wraps the POST above as a one-line `predict(image_path) -> str`
-  call, so a future extraction session doesn't need to reconstruct the multipart request by hand.
-
-### 5.1 Known limitation
-
-The API returns *a* legal-looking board layout; it does not know which pieces are meant to be
-bystanders versus part of the puzzle's actual solution, and it can't tell you if a diagram was
-misread in a way that still parses as a valid position. Cross-checking against it is a second
-independent read, not a proof of correctness on its own — the backend's move-legality validation
-(§3) is what actually catches "this piece's color is wrong but the position still looks plausible."
-
-### 5.2 Real mistakes it caught during Chapter 1 extraction
-
-- A lesson diagram's black king was hand-read as h8; the API (and a closer re-read of the same crop)
-  showed it was actually on g8. The move sequence given in the book was legal either way (a rook
-  check along the back rank doesn't distinguish the two squares), so this was **not** caught by the
-  backend's legality validator — only the independent second read caught it.
-- A puzzle diagram had a queen hand-read as white; it was actually black. That queen never moves in
-  the puzzle's own solution line, so — same as above — the legality validator had nothing to catch;
-  only the cross-check surfaced it.
-
-Both are now examples of why extraction should always cross-check bystander pieces, not just the
-ones directly involved in a solution line — those are exactly the pieces the legality gate can't see.
-
-## 6. Deploying book content (database-backed, no file needed)
-
-`backend/data/books/*.json` is gitignored (§1) — fine for local dev, but it means a deployed instance
-built straight from the git repo has **zero books**, even though the "Study from Book" feature's code
-is fully deployed. There's no way to fix that by committing anything (that's the whole point of §1),
-so book content is instead stored as a row in the existing Postgres database (Neon in production) —
-the same database that already holds trainer progress, gated behind `DATABASE_URL`, never checked
-into git either.
-
-**Schema:** a `books` table (`internal/db/schema.sql`) — `id TEXT PRIMARY KEY`, `data JSONB NOT NULL`
-holding the whole book's JSON verbatim, `updated_at`. One row per book.
-
-**Loading (`cmd/server/main.go`'s `loadBooks`):** prefers the database when `DATABASE_URL` is
-configured — `internal/db.Store.LoadBooks` returns every row's raw JSON, and each one goes through
-`internal/book.ParseAndValidate` (the exact same FEN/legality QA gate §3 describes, extracted out of
-`LoadDir` so both paths share it — a book seeded via the database gets no less scrutiny than one
-loaded from a file). Falls back to the local `BOOKS_PATH` directory only when no database is
-configured at all — same either/or pattern as `auth`'s DB-vs-env-var fallback, not merged with the DB
-path, so local dev never sees the same book listed twice.
-
-**Getting content into the database (`cmd/seedbooks`):** a one-off CLI, not a runtime endpoint —
-there's no user-facing upload flow, this is a manual step run locally whenever the extracted content
-changes:
-
-```bash
-cd backend
-DATABASE_URL=postgres://... go run ./cmd/seedbooks        # defaults to data/books/
-DATABASE_URL=postgres://... go run ./cmd/seedbooks some/other/dir
-```
-
-It reads `.env` the same way `cmd/server` does (its own small copy of `loadDotEnv` — a real gotcha
-here: `DATABASE_URL` values routinely contain unescaped `&`/`?` from the connection string's query
-params, which breaks a plain `source .env` in a shell; the Go-side loader sidesteps that entirely),
-validates every file with `book.ParseAndValidate` before writing anything (a bad file fails the whole
-run rather than landing partially-seeded data), and upserts each book by `id`. Run it once against
-your **local** dev database to test, then again against the **production** `DATABASE_URL` (the same
-value Render/Neon already uses for trainer sync) to actually deploy the content — the running backend
-picks it up on its next restart, no redeploy of the app itself required. Verified end-to-end: booted
-the server with `data/books/` renamed out of the way entirely and confirmed it still loaded all 3
-chapters (70 items) from the database alone.
+If automated extraction is revisited, it must be a separate, opt-in project:
+do not reintroduce OCR tooling, training images, generated crops, or model
+artifacts into this repository or production app. The product workflow is the
+PDF reader plus explicitly supplied FEN positions.

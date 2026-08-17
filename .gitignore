@@ -20,3 +20,7 @@ __pycache__/
 # Book" feature — personal copies, not for redistribution in the public repo.
 book-sources/
 backend/data/books/
+
+# Offline textbook extraction artifacts. Source PDFs and OCR output must never
+# be committed; the reusable parser code lives in textbook-parser/.
+textbook-parser/work/

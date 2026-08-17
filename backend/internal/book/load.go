@@ -105,3 +105,22 @@ func validateBook(b *Book) error {
 	}
 	return nil
 }
+
+// ChapterObjectKey is server-derived from trusted book metadata. The client
+// never selects a B2 object name, which keeps the object-store permission
+// boundary independent of any request path.
+func ChapterObjectKey(prefix string, b *Book, chapterID string) (string, bool) {
+	if b == nil || b.ID == "" {
+		return "", false
+	}
+	for _, chapter := range b.Chapters {
+		if chapter.ID == chapterID && chapter.Number > 0 {
+			prefix = strings.Trim(prefix, "/")
+			if prefix == "" {
+				prefix = "books"
+			}
+			return fmt.Sprintf("%s/%s/chapter-%d.pdf", prefix, b.ID, chapter.Number), true
+		}
+	}
+	return "", false
+}

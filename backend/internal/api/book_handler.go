@@ -1,9 +1,12 @@
 package api
 
 import (
+	"errors"
+	"io"
 	"net/http"
 
 	"github.com/chesslab/backend/internal/book"
+	"github.com/chesslab/backend/internal/booksource"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -43,6 +46,40 @@ func (h *Handler) GetBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, b)
+}
+
+// GetBookChapterPDF streams exactly one private, chapter-sized source PDF.
+// The browser gets bytes only after the normal app-auth check; it never gets
+// a Backblaze credential, download token, or arbitrary object path.
+func (h *Handler) GetBookChapterPDF(w http.ResponseWriter, r *http.Request) {
+	b, ok := h.books.Get(chi.URLParam(r, "id"))
+	if !ok {
+		http.Error(w, "book not found", http.StatusNotFound)
+		return
+	}
+	objectKey, ok := book.ChapterObjectKey(h.bookChapterPrefix, b, chi.URLParam(r, "chapterID"))
+	if !ok {
+		http.Error(w, "book chapter not found", http.StatusNotFound)
+		return
+	}
+	if h.bookSource == nil {
+		http.Error(w, "book storage is not configured", http.StatusServiceUnavailable)
+		return
+	}
+	f, err := h.bookSource.Open(r.Context(), objectKey)
+	if err != nil {
+		if errors.Is(err, booksource.ErrNotFound) {
+			http.Error(w, "book chapter PDF not available", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "book chapter PDF temporarily unavailable", http.StatusBadGateway)
+		return
+	}
+	defer f.Close()
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", "inline; filename=\"chapter.pdf\"")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	_, _ = io.Copy(w, f)
 }
 
 func toBookSummary(b *book.Book) BookSummaryJSON {
