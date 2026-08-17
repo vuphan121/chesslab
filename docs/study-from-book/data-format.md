@@ -37,13 +37,18 @@ student makes.
       "type": "lesson",
       "fen": "...",
       "sideToMove": "w",
-      "sourcePage": 12
+      "sourcePage": 12,
+      "bookPage": 14,
+      "masterPDFPage": 12
     }]
   }]
 }
 ```
 
 The backend validates each FEN and confirms that `sideToMove` matches the FEN.
+`sourcePage` is chapter-local (for the reader), while `bookPage` and
+`masterPDFPage` preserve the original physical location for diagram extraction
+and review.
 Each chapter is stored separately under
 `books/<book-id>/chapter-<number>.pdf`. The reader requests only
 `/api/books/{id}/chapters/{chapterId}/source.pdf`, never a whole-book file or
@@ -96,14 +101,32 @@ The final test (book pages 244-251 / master PDF pages 242-249) and appendices
 are intentionally not chapter objects yet. They need their own section IDs in
 the study data before the reader can request them.
 
+### Chapter 2 board-location audit
+
+Chapter 2 (Mating motifs 2) was rendered from master PDF pages 16-27 and
+checked against the existing study data. The external board recognizer found
+27 diagrams on book pages 18-25. All 24 existing Chapter 2 lesson/puzzle
+items matched one OCR piece placement uniquely and now store `sourcePage`,
+`bookPage`, and `masterPDFPage` in Neon.
+
+Three additional diagrams are valid board positions but are not currently a
+lesson or puzzle. They remain unassigned until their intended study treatment
+is chosen:
+
+| Diagram ID | Book page | Master PDF page | Chapter PDF page | Piece placement |
+| --- | --- | --- | --- | --- |
+| `buyc1-ch2-p017-02` | 19 | 17 | 2 | `q1r1k2r/1b3pp1/p3p3/P1b4n/1pN1P2p/3BBP2/1P2Q1PP/R4R1K` |
+| `buyc1-ch2-p017-03` | 19 | 17 | 2 | `q1r4r/1b2kpp1/p3p3/P1b5/1pN1P3/3BBPp1/1P4P1/R3QRK1` |
+| `buyc1-ch2-p019-02` | 21 | 19 | 4 | `r1bq1rk1/ppp2ppp/2n5/6NQ/2BPp3/2P5/P4PPP/R1B3K1` |
+
 ## Archived OCR experiments
 
 The OCR, diagram-detection, labeling, PaddleOCR/TroCR fine-tuning, and
-third-party ChessOCR experiments were removed from this repository. They did
-not reliably recognize the textbook's chess figurines, so the product no
-longer depends on automated PDF-to-position extraction.
+third-party ChessOCR code were removed from this repository. The production
+product does not depend on automated PDF-to-position extraction.
 
-If automated extraction is revisited, it must be a separate, opt-in project:
-do not reintroduce OCR tooling, training images, generated crops, or model
-artifacts into this repository or production app. The product workflow is the
-PDF reader plus explicitly supplied FEN positions.
+If automated extraction is revisited, it must be a separate, opt-in operation:
+keep its client, rendered pages, and crops outside the repository; submit only
+tight board crops; comply with the provider's rate limit; and persist only
+structurally validated chess facts plus page metadata after review. The product
+workflow remains the PDF reader plus explicitly supplied FEN positions.

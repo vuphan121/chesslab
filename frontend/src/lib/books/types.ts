@@ -11,6 +11,8 @@ export interface BookItem {
   solutionUci?: string[]
   note?: string
   sourcePage?: number
+  bookPage?: number
+  masterPDFPage?: number
 }
 
 export interface BookChapter {
