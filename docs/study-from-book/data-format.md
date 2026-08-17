@@ -7,13 +7,13 @@ changing sections starts a fresh board.
 
 ## Content and copyright
 
-- Purchased source PDFs are private, local files. The current source is
-  `book-sources/Book 1.pdf`; it is gitignored and must never be committed.
+- Purchased source PDFs are private. The master PDF used for local preparation
+  is `book-sources/Book 1.pdf`; it is gitignored and must never be committed.
 - The app stores only structured chess facts (FEN, side to move, chapter/item
   identifiers, and optional source-page numbers) plus app-authored labels.
-- Production book records live in Neon Postgres. PDFs should be stored in a
-  private object store (planned: Cloudflare R2) and streamed only after the
-  app's normal authentication check.
+- Production book records live in Neon Postgres. Chapter PDFs live in the
+  private Backblaze B2 bucket configured by `B2_*` environment variables and
+  are streamed only after the app's normal authentication check.
 
 ## Active data model
 
@@ -27,7 +27,6 @@ student makes.
   "id": "example-book",
   "title": "Example",
   "author": "Author",
-  "sourcePdf": "example.pdf",
   "chapters": [{
     "id": "example-ch1",
     "number": 1,
@@ -45,8 +44,11 @@ student makes.
 ```
 
 The backend validates each FEN and confirms that `sideToMove` matches the FEN.
-The reader serves `/api/books/{id}/source.pdf` only for the explicitly linked
-local/object-store source, never from a client-supplied filesystem path.
+Each chapter is stored separately under
+`books/<book-id>/chapter-<number>.pdf`. The reader requests only
+`/api/books/{id}/chapters/{chapterId}/source.pdf`, never a whole-book file or
+a client-supplied object name. The backend authenticates to B2 and streams the
+chapter bytes; neither B2 keys nor B2 download tokens reach the browser.
 
 ## Archived OCR experiments
 

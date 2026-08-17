@@ -1,17 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getBookSourcePDF } from '@/lib/api/client'
+import { getBookChapterPDF } from '@/lib/api/client'
 
 interface Props {
   bookId: string
+  chapterId: string
   sourcePage?: number
 }
 
 // This intentionally uses the browser's native PDF reader: it gives the
 // student ordinary scroll/zoom/find controls while keeping the purchased PDF
 // local. A blob URL is necessary because an iframe cannot send our auth token.
-export default function BookPDFViewer({ bookId, sourcePage }: Props) {
+export default function BookPDFViewer({ bookId, chapterId, sourcePage }: Props) {
   const [url, setUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(sourcePage ?? 1)
@@ -20,20 +21,26 @@ export default function BookPDFViewer({ bookId, sourcePage }: Props) {
   useEffect(() => {
     let active = true
     let objectURL: string | null = null
-    getBookSourcePDF(bookId)
+    getBookChapterPDF(bookId, chapterId)
       .then((pdf) => {
         if (!active) return
         objectURL = URL.createObjectURL(pdf)
         setUrl(objectURL)
       })
       .catch((err: unknown) => {
-        if (active) setError(err instanceof Error ? err.message : 'Unable to load the local source PDF.')
+        if (active) setError(err instanceof Error ? err.message : 'Unable to load this chapter PDF.')
       })
     return () => {
       active = false
       if (objectURL) URL.revokeObjectURL(objectURL)
     }
-  }, [bookId])
+  }, [bookId, chapterId])
+
+  useEffect(() => {
+    const nextPage = sourcePage ?? 1
+    setPage(nextPage)
+    setDraftPage(String(nextPage))
+  }, [sourcePage])
 
   const goToPage = () => {
     const parsed = Number.parseInt(draftPage, 10)
@@ -58,8 +65,8 @@ export default function BookPDFViewer({ bookId, sourcePage }: Props) {
     >
       <div style={{ padding: '12px 14px', borderBottom: '1px solid #efeee9', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="lbl" style={{ color: '#b4b1a8' }}>Book source</div>
-          <div style={{ fontSize: 11, color: '#8b887f', marginTop: 3 }}>Local PDF · scroll, zoom, or use Find</div>
+          <div className="lbl" style={{ color: '#b4b1a8' }}>Chapter source</div>
+          <div style={{ fontSize: 11, color: '#8b887f', marginTop: 3 }}>This chapter only · scroll, zoom, or use Find</div>
         </div>
         <form onSubmit={(event) => { event.preventDefault(); goToPage() }} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <label htmlFor="book-source-page" style={{ fontSize: 11, color: '#77746c' }}>Page</label>
@@ -77,13 +84,13 @@ export default function BookPDFViewer({ bookId, sourcePage }: Props) {
       {url ? (
         <iframe
           key={`${url}#${page}`}
-          title="Book source PDF"
+          title="Book chapter PDF"
           src={`${url}#page=${page}&view=FitH`}
           style={{ flex: 1, width: '100%', minHeight: 0, border: 'none', background: '#f4f3ef' }}
         />
       ) : (
         <div style={{ flex: 1, minHeight: 0, display: 'grid', placeItems: 'center', padding: 24, textAlign: 'center', color: '#7a776f', fontSize: 13 }}>
-          {error ? error : 'Loading your local source PDF…'}
+          {error ? error : 'Loading this chapter PDF…'}
         </div>
       )}
     </section>

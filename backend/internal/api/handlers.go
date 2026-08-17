@@ -9,6 +9,7 @@ import (
 
 	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/book"
+	"github.com/chesslab/backend/internal/booksource"
 	"github.com/chesslab/backend/internal/chess"
 	"github.com/chesslab/backend/internal/coach"
 	"github.com/chesslab/backend/internal/db"
@@ -21,19 +22,20 @@ import (
 )
 
 type Handler struct {
-	store          storage.Store
-	engine         *engine.Engine
-	coach          *coach.Service // Path 1 (per-move); nil if unconfigured — endpoint returns 503
-	coachAgent     *coach.Agent   // Path 2 (freeform chat); nil if unconfigured — endpoint returns 503
-	repertoires    *repertoire.Store
-	books          *book.Store // "Study from Book"; empty store (not nil) if no BOOKS_PATH data — endpoints just return []
-	bookSourcesDir string      // local, user-provided PDFs; unavailable in deployments without this directory
-	db             *db.Store   // trainer progress sync + analytics; nil if DATABASE_URL unset — endpoints return 503
-	authCfg        auth.Config
+	store             storage.Store
+	engine            *engine.Engine
+	coach             *coach.Service // Path 1 (per-move); nil if unconfigured — endpoint returns 503
+	coachAgent        *coach.Agent   // Path 2 (freeform chat); nil if unconfigured — endpoint returns 503
+	repertoires       *repertoire.Store
+	books             *book.Store       // "Study from Book"; empty store (not nil) if no BOOKS_PATH data — endpoints just return []
+	bookSource        booksource.Reader // private chapter PDFs; nil when B2 is not configured
+	bookChapterPrefix string
+	db                *db.Store // trainer progress sync + analytics; nil if DATABASE_URL unset — endpoints return 503
+	authCfg           auth.Config
 }
 
-func NewHandler(store storage.Store, eng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config, bookSourcesDir string) *Handler {
-	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSourcesDir: bookSourcesDir}
+func NewHandler(store storage.Store, eng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config, bookSource booksource.Reader, bookChapterPrefix string) *Handler {
+	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix}
 }
 
 type PieceJSON struct {

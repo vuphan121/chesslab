@@ -162,16 +162,13 @@ func TestStore_ListAndGet(t *testing.T) {
 	}
 }
 
-func TestSourcePath_OnlyServesValidatedFilename(t *testing.T) {
-	dir := t.TempDir()
-	writeFile(t, dir, "source.pdf", "not really a PDF")
-	b := &Book{SourcePDF: "source.pdf"}
-	path, ok := SourcePath(dir, b)
-	if !ok || path != filepath.Join(dir, "source.pdf") {
-		t.Fatalf("SourcePath = %q, %v", path, ok)
+func TestChapterObjectKey(t *testing.T) {
+	b := &Book{ID: "example-book", Chapters: []Chapter{{ID: "ch1", Number: 1}}}
+	key, ok := ChapterObjectKey("books", b, "ch1")
+	if !ok || key != "books/example-book/chapter-1.pdf" {
+		t.Fatalf("ChapterObjectKey = %q, %v", key, ok)
 	}
-	b.SourcePDF = "../secret.pdf"
-	if _, ok := SourcePath(dir, b); ok {
-		t.Fatal("SourcePath accepted a path outside the configured source directory")
+	if _, ok := ChapterObjectKey("books", b, "missing"); ok {
+		t.Fatal("ChapterObjectKey accepted an unknown chapter")
 	}
 }

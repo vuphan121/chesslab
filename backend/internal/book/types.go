@@ -38,11 +38,8 @@ type Chapter struct {
 
 // Book is one parsed book plus its chapters.
 type Book struct {
-	ID     string `json:"id"`
-	Title  string `json:"title"`
-	Author string `json:"author"`
-	// SourcePDF is a filename within BOOK_SOURCES_PATH, never an arbitrary
-	// path supplied by the client.
-	SourcePDF string    `json:"sourcePdf,omitempty"`
-	Chapters  []Chapter `json:"chapters"`
+	ID       string    `json:"id"`
+	Title    string    `json:"title"`
+	Author   string    `json:"author"`
+	Chapters []Chapter `json:"chapters"`
 }

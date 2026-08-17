@@ -15,6 +15,7 @@ import (
 	"github.com/chesslab/backend/internal/api"
 	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/book"
+	"github.com/chesslab/backend/internal/booksource"
 	"github.com/chesslab/backend/internal/coach"
 	"github.com/chesslab/backend/internal/db"
 	"github.com/chesslab/backend/internal/engine"
@@ -86,8 +87,13 @@ func main() {
 	// either/or pattern as auth's DB-vs-env-var fallback, not merged with the
 	// DB path, so a book seeded into the DB doesn't show up twice locally.
 	loadedBooks := loadBooks(dbStore)
-	applyBookSourceOverrides(loadedBooks, os.Getenv("BOOK_SOURCE_OVERRIDES"))
 	books := book.NewStore(loadedBooks)
+	bookSource, err := booksource.NewB2FromEnv()
+	if err != nil {
+		log.Printf("book storage unavailable (%v) — chapter PDFs will return 503", err)
+	} else if bookSource != nil {
+		log.Printf("book storage: Backblaze B2 enabled")
+	}
 
 	authCfg := newAuthConfig()
 	if dbStore != nil {
@@ -100,11 +106,7 @@ func main() {
 		cancel()
 	}
 
-	bookSourcesDir := os.Getenv("BOOK_SOURCES_PATH")
-	if bookSourcesDir == "" {
-		bookSourcesDir = "../book-sources"
-	}
-	handler := api.NewHandler(store, eng, coachSvc, coachAgent, repertoires, books, dbStore, authCfg, bookSourcesDir)
+	handler := api.NewHandler(store, eng, coachSvc, coachAgent, repertoires, books, dbStore, authCfg, bookSource, os.Getenv("B2_CHAPTER_PREFIX"))
 	router := api.NewRouter(handler)
 
 	port := os.Getenv("PORT")
@@ -115,30 +117,6 @@ func main() {
 	log.Printf("chesslab backend listening on %s", addr)
 	if err := http.ListenAndServe(addr, router); err != nil {
 		log.Fatal(err)
-	}
-}
-
-// applyBookSourceOverrides joins local PDFs to otherwise portable book data.
-// Values have the form "book-id=filename,other-book=other.pdf". The default
-// makes the current local demo useful immediately. Production can explicitly
-// list its own local files; without one at the configured path the endpoint
-// returns 404 and no source PDF is exposed.
-func applyBookSourceOverrides(books []*book.Book, raw string) {
-	if raw == "" {
-		raw = "build-up-your-chess-1=Book 1.pdf"
-	}
-	byID := make(map[string]*book.Book, len(books))
-	for _, b := range books {
-		byID[b.ID] = b
-	}
-	for _, pair := range strings.Split(raw, ",") {
-		id, filename, ok := strings.Cut(strings.TrimSpace(pair), "=")
-		if !ok || id == "" || filename == "" {
-			continue
-		}
-		if b := byID[id]; b != nil && b.SourcePDF == "" {
-			b.SourcePDF = strings.TrimSpace(filename)
-		}
 	}
 }
 

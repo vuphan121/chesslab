@@ -273,8 +273,8 @@ export const getBook = (id: string): Promise<Book> => request(`/api/books/${id}`
 
 // The browser's built-in PDF viewer cannot attach our Bearer token itself, so
 // fetch the user-owned file here and hand it an in-memory blob URL instead.
-export const getBookSourcePDF = async (id: string): Promise<Blob> => {
-  const res = await fetch(`${API}/api/books/${id}/source.pdf`, { headers: authHeader() })
+export const getBookChapterPDF = async (id: string, chapterId: string): Promise<Blob> => {
+  const res = await fetch(`${API}/api/books/${encodeURIComponent(id)}/chapters/${encodeURIComponent(chapterId)}/source.pdf`, { headers: authHeader() })
   if (res.status === 401) clearToken()
   if (!res.ok) throw new Error((await res.text()) || res.statusText)
   return res.blob()

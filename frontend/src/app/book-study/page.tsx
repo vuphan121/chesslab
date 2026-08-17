@@ -115,7 +115,7 @@ export default function BookStudyPage() {
           </section>
 
           <aside style={{ height: isNarrow ? 680 : frameHeight, minHeight: 0, order: isNarrow ? 3 : undefined }}>
-            <BookPDFViewer key={`${book.id}:${current.item.id}`} bookId={book.id} sourcePage={sourcePageForItem(book.id, current.item.id, current.item.sourcePage)} />
+            <BookPDFViewer key={`${book.id}:${current.chapterId}`} bookId={book.id} chapterId={current.chapterId} sourcePage={sourcePageForItem(book.id, current.item.id, current.item.sourcePage)} />
           </aside>
         </div>
       </div>

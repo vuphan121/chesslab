@@ -1,11 +1,12 @@
 package api
 
 import (
+	"errors"
+	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"github.com/chesslab/backend/internal/book"
+	"github.com/chesslab/backend/internal/booksource"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -47,35 +48,38 @@ func (h *Handler) GetBook(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, b)
 }
 
-// GetBookSourcePDF streams the explicitly linked, local source PDF for a
-// book. PDFs remain outside git and are only served to an authenticated local
-// user; books without a linked local file simply return 404.
-func (h *Handler) GetBookSourcePDF(w http.ResponseWriter, r *http.Request) {
+// GetBookChapterPDF streams exactly one private, chapter-sized source PDF.
+// The browser gets bytes only after the normal app-auth check; it never gets
+// a Backblaze credential, download token, or arbitrary object path.
+func (h *Handler) GetBookChapterPDF(w http.ResponseWriter, r *http.Request) {
 	b, ok := h.books.Get(chi.URLParam(r, "id"))
 	if !ok {
 		http.Error(w, "book not found", http.StatusNotFound)
 		return
 	}
-	path, ok := book.SourcePath(h.bookSourcesDir, b)
+	objectKey, ok := book.ChapterObjectKey(h.bookChapterPrefix, b, chi.URLParam(r, "chapterID"))
 	if !ok {
-		http.Error(w, "book source PDF not available", http.StatusNotFound)
+		http.Error(w, "book chapter not found", http.StatusNotFound)
 		return
 	}
-	f, err := os.Open(path)
+	if h.bookSource == nil {
+		http.Error(w, "book storage is not configured", http.StatusServiceUnavailable)
+		return
+	}
+	f, err := h.bookSource.Open(r.Context(), objectKey)
 	if err != nil {
-		http.Error(w, "book source PDF not available", http.StatusNotFound)
+		if errors.Is(err, booksource.ErrNotFound) {
+			http.Error(w, "book chapter PDF not available", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "book chapter PDF temporarily unavailable", http.StatusBadGateway)
 		return
 	}
 	defer f.Close()
-	info, err := f.Stat()
-	if err != nil {
-		http.Error(w, "book source PDF not available", http.StatusNotFound)
-		return
-	}
 	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", "inline; filename=\""+filepath.Base(path)+"\"")
+	w.Header().Set("Content-Disposition", "inline; filename=\"chapter.pdf\"")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-	http.ServeContent(w, r, filepath.Base(path), info.ModTime(), f)
+	_, _ = io.Copy(w, f)
 }
 
 func toBookSummary(b *book.Book) BookSummaryJSON {

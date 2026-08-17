@@ -24,7 +24,6 @@ export interface Book {
   id: string
   title: string
   author: string
-  sourcePdf?: string
   chapters: BookChapter[]
 }
 
