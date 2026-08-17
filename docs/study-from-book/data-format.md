@@ -119,14 +119,27 @@ is chosen:
 | `buyc1-ch2-p017-03` | 19 | 17 | 2 | `q1r4r/1b2kpp1/p3p3/P1b5/1pN1P3/3BBPp1/1P4P1/R3QRK1` |
 | `buyc1-ch2-p019-02` | 21 | 19 | 4 | `r1bq1rk1/ppp2ppp/2n5/6NQ/2BPp3/2P5/P4PPP/R1B3K1` |
 
-## Archived OCR experiments
+## Offline board-parser workflow
 
-The OCR, diagram-detection, labeling, PaddleOCR/TroCR fine-tuning, and
-third-party ChessOCR code were removed from this repository. The production
-product does not depend on automated PDF-to-position extraction.
+The production app does not perform PDF-to-position extraction. The tracked,
+opt-in admin tool at `tools/book-board-parser/` is for preparing a chapter
+locally. It renders only the requested master-PDF page range, locates boards,
+assigns a consecutive `chapter-diagram` number in visual reading order, reads
+the outlined turn triangle, and submits tight board crops to ChessOCR for the
+piece placement.
 
-If automated extraction is revisited, it must be a separate, opt-in operation:
-keep its client, rendered pages, and crops outside the repository; submit only
-tight board crops; comply with the provider's rate limit; and persist only
-structurally validated chess facts plus page metadata after review. The product
-workflow remains the PDF reader plus explicitly supplied FEN positions.
+The tool enforces a five-second minimum between recognition requests and saves
+a checkpoint after every crop, so an interrupted run can resume without
+repeating successful calls. Its local rendered pages, crops, checkpoint, and
+JSON review output belong under `tools/book-board-parser/work/` or `tmp/` and
+are gitignored. It never uploads source PDF pages or writes application data.
+
+Run it with `--validate-api http://localhost:8080` to compare the extracted
+piece placements and sides to move against the current Neon records. Validation
+only reports counts; new/extra diagrams remain review candidates until someone
+explicitly seeds them as book items. The Chapter 1 and Chapter 2 baseline runs
+produced 25/25 and 24/24 existing-record FEN and turn matches respectively;
+Chapter 2 also contains three recognized diagrams not yet used as study items.
+
+Older PaddleOCR/TroCR labeling and fine-tuning experiments remain retired. They
+are neither a production dependency nor part of the offline parser.

@@ -21,6 +21,7 @@ __pycache__/
 book-sources/
 backend/data/books/
 
-# Offline textbook extraction artifacts. Source PDFs and OCR output must never
-# be committed; the reusable parser code lives in textbook-parser/.
-textbook-parser/work/
+# Offline book-parser artifacts. Source PDFs, rendered pages, crops, and OCR
+# checkpoints must never be committed; the reusable admin tool is tracked.
+tools/book-board-parser/work/
+tmp/book-board-parser/
