@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { listBooks } from '@/lib/api/client'
+import { getBook, getBookProgress, listBooks } from '@/lib/api/client'
 import type { BookSummary } from '@/lib/books/types'
 
 interface Props {
@@ -15,6 +15,7 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
   const [listError, setListError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null)
+  const [completedChapterIds, setCompletedChapterIds] = useState<Set<string>>(() => new Set())
 
   useEffect(() => {
     listBooks()
@@ -29,6 +30,24 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
   }, [])
 
   const selected = books?.find((b) => b.id === selectedId) ?? null
+
+  useEffect(() => {
+    if (!selectedId) {
+      setCompletedChapterIds(new Set())
+      return
+    }
+    let cancelled = false
+    Promise.all([getBook(selectedId), getBookProgress(selectedId).catch(() => ({ done: [] }))])
+      .then(([book, progress]) => {
+        if (cancelled) return
+        const done = new Set(progress.done)
+        setCompletedChapterIds(new Set(book.chapters
+          .filter((chapter) => chapter.items.length > 0 && chapter.items.every((item) => done.has(item.id)))
+          .map((chapter) => chapter.id)))
+      })
+      .catch(() => { if (!cancelled) setCompletedChapterIds(new Set()) })
+    return () => { cancelled = true }
+  }, [selectedId])
 
   function selectBook(id: string) {
     setSelectedId(id)
@@ -134,7 +153,7 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
           >
             {selected.chapters.map((ch) => (
               <option key={ch.id} value={ch.id}>
-                {ch.number}. {ch.name} — {ch.itemCount} item{ch.itemCount === 1 ? '' : 's'}
+                {completedChapterIds.has(ch.id) ? '✓ ' : ''}{ch.number}. {ch.name} — {ch.itemCount} item{ch.itemCount === 1 ? '' : 's'}
               </option>
             ))}
           </select>

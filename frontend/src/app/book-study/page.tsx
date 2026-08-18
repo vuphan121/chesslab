@@ -23,7 +23,7 @@ const EVAL_SLOT_WIDTH = 30
 export default function BookStudyPage() {
   const {
     phase, book, loadError, loading, flatItems, current, boardState,
-    busy, flipped, toggleFlipped, analysisEnabled, analysis, analysisLoading, toggleAnalysis, currentPly, canStepBack, canStepForward,
+    busy, flipped, toggleFlipped, analysisEnabled, analysis, analysisLoading, toggleAnalysis, completedItemIds, completionBusy, completionError, markCurrentComplete, currentPly, canStepBack, canStepForward,
     stepBack, stepForward, loadStart, goToIndex, goToMove, selectSquare,
     move, legalMovesFor, restart,
   } = useBookStudySession()
@@ -88,13 +88,17 @@ export default function BookStudyPage() {
         <TopBar right={<span style={{ fontSize: 12, fontWeight: 600, color: '#6a675f', background: '#f0efe9', padding: '6px 13px', borderRadius: 8 }}>{book.title}</span>} />
         <div style={{ display: 'grid', gridTemplateColumns: isNarrow ? '1fr' : `${SECTIONS_WIDTH}px ${centerWidth}px ${PDF_WIDTH}px`, gap: COLUMN_GAP, alignItems: 'stretch' }}>
           <aside style={{ height: isNarrow ? 260 : frameHeight, minHeight: 0, order: isNarrow ? 1 : undefined }}>
-            <ChapterSections items={chapterItems} activeItemId={current.item.id} busy={busy} onSelect={(localIndex) => goToIndex(chapterStartIndex + localIndex)} />
+            <ChapterSections items={chapterItems} activeItemId={current.item.id} completedItemIds={completedItemIds} busy={busy} onSelect={(localIndex) => goToIndex(chapterStartIndex + localIndex)} />
           </aside>
 
           <section style={{ width: isNarrow ? '100%' : centerWidth, display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'flex-start', order: isNarrow ? 2 : undefined }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: centerWidth, minHeight: 30 }}>
               <strong style={{ fontSize: 14, color: '#37352f' }}>{boardState.turn === 'w' ? 'White' : 'Black'} to move</strong>
               <div style={{ display: 'flex', gap: 7 }}>
+                <button onClick={markCurrentComplete} disabled={completionBusy || completedItemIds.has(current.item.id)} style={{ ...completeButton, background: completedItemIds.has(current.item.id) ? '#e5f6eb' : '#fff', color: completedItemIds.has(current.item.id) ? '#25864d' : '#427e59', borderColor: completedItemIds.has(current.item.id) ? '#b9e5c8' : '#d6e8dd' }}>
+                  {completedItemIds.has(current.item.id) ? '✓ Complete' : completionBusy ? 'Saving…' : 'Mark complete'}
+                </button>
+                {completionError && <span title={completionError} style={{ color: '#b1453b', fontSize: 11 }}>Not saved</span>}
                 <button onClick={toggleAnalysis} title="Toggle engine analysis" style={{ ...analysisButton, background: analysisEnabled ? '#e8f3fd' : '#fff', color: analysisEnabled ? '#2f6db0' : '#77746c' }}>{analysisLoading ? 'Analyzing…' : 'Analysis'}</button>
                 <button onClick={toggleFlipped} title="Flip board" style={flipButton}>⇅</button>
               </div>
@@ -130,3 +134,4 @@ function navBtn(enabled: boolean): React.CSSProperties {
 const primaryButton: React.CSSProperties = { fontSize: 13, fontWeight: 600, padding: '9px 20px', borderRadius: 8, border: 'none', background: '#4a90d9', color: '#fff', cursor: 'pointer' }
 const flipButton: React.CSSProperties = { width: 30, height: 30, border: '1px solid #eae8e2', background: '#fff', borderRadius: 6, color: '#77746c', cursor: 'pointer', fontSize: 16, lineHeight: 1 }
 const analysisButton: React.CSSProperties = { height: 30, border: '1px solid #dbe8f4', borderRadius: 6, padding: '0 9px', cursor: 'pointer', fontSize: 11, fontWeight: 700 }
+const completeButton: React.CSSProperties = { height: 30, border: '1px solid', borderRadius: 6, padding: '0 9px', cursor: 'pointer', fontSize: 11, fontWeight: 700 }

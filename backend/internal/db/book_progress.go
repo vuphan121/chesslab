@@ -28,8 +28,8 @@ func (s *Store) GetBookProgress(ctx context.Context, username, bookID string) (m
 	return out, rows.Err()
 }
 
-// MarkItemDone records one item as completed — idempotent, a re-mark of an
-// already-done item is a no-op rather than an error.
+// MarkItemDone records an explicitly completed item — idempotent, a re-mark
+// of an already-done item is a no-op rather than an error.
 func (s *Store) MarkItemDone(ctx context.Context, username, bookID, itemID string) error {
 	_, err := s.pool.Exec(ctx, `
 		INSERT INTO book_item_progress (username, book_id, item_id)

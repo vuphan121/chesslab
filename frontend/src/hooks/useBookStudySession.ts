@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createGame, setPosition as apiSetPosition, makeMove, gotoNode, getBook, analyzeGame } from '@/lib/api/client'
+import { createGame, setPosition as apiSetPosition, makeMove, gotoNode, getBook, getBookProgress, markItemDone, analyzeGame } from '@/lib/api/client'
 import type { Analysis, GameState } from '@/lib/api/client'
 import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
 import { flatten } from '@/lib/chess/moveTree'
@@ -77,6 +77,9 @@ export function useBookStudySession() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
+  const [completedItemIds, setCompletedItemIds] = useState<Set<string>>(() => new Set())
+  const [completionBusy, setCompletionBusy] = useState(false)
+  const [completionError, setCompletionError] = useState<string | null>(null)
 
   const gameIdRef = useRef<string | null>(null)
   const moveReqId = useRef(0)
@@ -141,8 +144,12 @@ export function useBookStudySession() {
       setLoading(true)
       setLoadError(null)
       try {
-        const b = await getBook(bookId)
+        const [b, progress] = await Promise.all([
+          getBook(bookId),
+          getBookProgress(bookId).catch(() => ({ done: [] })),
+        ])
         setBook(b)
+        setCompletedItemIds(new Set(progress.done))
         const items = b.chapters.flatMap((c) => c.items)
         if (items.length === 0) {
           setLoadError('This book has no study items yet.')
@@ -305,6 +312,23 @@ export function useBookStudySession() {
     setAnalysisEnabled((enabled) => !enabled)
   }, [])
 
+  // Completion is intentionally explicit. Exploring a position or moving a
+  // piece never marks it done; only this action writes the authenticated
+  // user's (username, book, item) row in Neon.
+  const markCurrentComplete = useCallback(async () => {
+    if (!book || !current || completionBusy || completedItemIds.has(current.item.id)) return
+    setCompletionBusy(true)
+    setCompletionError(null)
+    try {
+      await markItemDone(book.id, current.item.id)
+      setCompletedItemIds((previous) => new Set(previous).add(current.item.id))
+    } catch (error) {
+      setCompletionError(error instanceof Error ? error.message : 'Could not save completion.')
+    } finally {
+      setCompletionBusy(false)
+    }
+  }, [book, current, completionBusy, completedItemIds])
+
   const restart = useCallback(() => {
     setPhase('setup')
     setBook(null)
@@ -314,6 +338,8 @@ export function useBookStudySession() {
     setAnalysisEnabled(false)
     setAnalysis(null)
     setAnalysisError(null)
+    setCompletedItemIds(new Set())
+    setCompletionError(null)
   }, [])
 
   return {
@@ -333,6 +359,10 @@ export function useBookStudySession() {
     analysisLoading,
     analysisError,
     toggleAnalysis,
+    completedItemIds,
+    completionBusy,
+    completionError,
+    markCurrentComplete,
     currentPly: currentTreeInfo.ply,
     canStepBack: currentTreeInfo.canBack,
     canStepForward: currentTreeInfo.canForward,
