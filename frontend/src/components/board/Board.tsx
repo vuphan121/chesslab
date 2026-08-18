@@ -11,7 +11,7 @@ const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1']
 
 const ANNOTATION_COLOR = 'rgba(255, 152, 0, 0.8)'
-const MOVE_ANIMATION_MS = 180
+const MOVE_ANIMATION_MS = 280
 
 interface Props {
   boardState: BoardState
@@ -76,14 +76,21 @@ export default function Board({
     const piece = previous.pieces[lastMove.from]
     if (!piece || !boardState.pieces[lastMove.to]) return
 
-    let animationFrame = 0
-    const timer = window.setTimeout(() => setMoveAnimation(null), MOVE_ANIMATION_MS)
+    let firstFrame = 0
+    let secondFrame = 0
+    const timer = window.setTimeout(() => setMoveAnimation(null), MOVE_ANIMATION_MS + 24)
     setMoveAnimation({ from: lastMove.from, to: lastMove.to, piece, hasStarted: false })
-    animationFrame = window.requestAnimationFrame(() => {
-      setMoveAnimation((active) => active && { ...active, hasStarted: true })
+    // A double frame guarantees the source-position overlay is painted once
+    // before transform transitions to its destination. Without it React can
+    // batch both states and restart the image/transition visibly.
+    firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        setMoveAnimation((active) => active && { ...active, hasStarted: true })
+      })
     })
     return () => {
-      window.cancelAnimationFrame(animationFrame)
+      window.cancelAnimationFrame(firstFrame)
+      window.cancelAnimationFrame(secondFrame)
       window.clearTimeout(timer)
     }
   }, [boardState.fen, boardState.lastMove?.from, boardState.lastMove?.to])
@@ -351,9 +358,14 @@ export default function Board({
               zIndex: 25,
               pointerEvents: 'none',
               transform: moveAnimation.hasStarted
-                ? `translate(${(animationToFile - animationFromFile) * squareSize}px, ${(animationToRank - animationFromRank) * squareSize}px)`
-                : 'translate(0, 0)',
-              transition: `transform ${MOVE_ANIMATION_MS}ms cubic-bezier(0.22, 0.8, 0.28, 1)`,
+                ? `translate3d(${(animationToFile - animationFromFile) * squareSize}px, ${(animationToRank - animationFromRank) * squareSize}px, 0)`
+                : 'translate3d(0, 0, 0)',
+              // Do not animate the initial placement. The moving copy exists
+              // exactly once at the source square, then makes one journey.
+              transition: moveAnimation.hasStarted
+                ? `transform ${MOVE_ANIMATION_MS}ms cubic-bezier(0.22, 0.8, 0.28, 1)`
+                : 'none',
+              willChange: 'transform',
             }}
           >
             <Piece piece={moveAnimation.piece} size={squareSize * 0.9} />
