@@ -1,8 +1,9 @@
 # Chesslab
 
-**An AI-powered chess opening trainer** — a real-time analysis board backed by Stockfish and a local
-LLM coach, paired with a spaced-repetition drilling tool that turns a Lichess study into a
-repertoire you actually remember.
+**A chess study tool** with a real-time analysis board, Stockfish, an AI trainer, opening-study
+drills, and a private PDF book workspace. Study your repertoire with spaced repetition, explore
+positions with engine-backed coaching, or work directly from your chess books on an interactive
+board.
 
 [![Go](https://img.shields.io/badge/backend-Go-00ADD8?logo=go&logoColor=white)](backend)
 [![Next.js](https://img.shields.io/badge/frontend-Next.js-000000?logo=nextdotjs&logoColor=white)](frontend)
@@ -18,6 +19,7 @@ repertoire you actually remember.
 - [Analysis Board](#analysis-board)
 - [AI Coach](#ai-coach)
 - [Opening Study (spaced-repetition trainer)](#opening-study-spaced-repetition-trainer)
+- [Study from Book](#study-from-book)
 - [Architecture](#architecture)
 - [Tech stack](#tech-stack)
 - [Getting started](#getting-started)
@@ -29,12 +31,13 @@ repertoire you actually remember.
 
 ## What it does
 
-Chesslab is two tools sharing one Go chess engine and one login:
+Chesslab brings several study tools together behind one Go chess engine and one login:
 
 | | |
 |---|---|
 | **Analysis Board** (`/`) | A Lichess-style opening database + Stockfish analysis board, with move-tree navigation (sidelines included) and an AI coach that explains *this* position, grounded in real engine and book data — not a chatbot guessing at chess. |
 | **Opening Study** (`/opening-study`) | Feed it a Lichess study URL and it becomes a spaced-repetition drilling deck: play your repertoire from memory, get corrected instantly, and let a Leitner-style scheduler decide what you see next. |
+| **Study from Book** (`/book-study`) | Read one private book chapter at a time beside an interactive board, freely explore each supplied lesson or puzzle position, and keep completion progress per user. |
 
 Everything below the UI is real: legal-move generation, check/mate/stalemate detection, SAN
 notation with disambiguation, and move trees with non-destructive sideline navigation are all
@@ -109,6 +112,13 @@ Point it at a Lichess study export and it becomes a drilling deck, Chessbook/Lot
 - **Progress follows you.** A single login gates the whole app, and drilling progress (per-card box,
   lapse count, accuracy) syncs to Postgres instead of living only in one browser — pick up a session
   on a different device and the scheduler already knows what you know.
+
+## Study from Book
+
+Study a private chess textbook chapter beside an interactive board. Every lesson and puzzle starts
+from its supplied FEN and is free to explore: user move trees remain local to the session, while
+completion and study activity are tracked per authenticated user. The reader fetches only the
+selected chapter PDF, not the complete book.
 
 ## Architecture
 
