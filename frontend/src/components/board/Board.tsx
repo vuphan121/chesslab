@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useRef, useMemo, useEffect, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Square from './Square'
 import Piece from './Piece'
@@ -11,6 +11,7 @@ const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1']
 
 const ANNOTATION_COLOR = 'rgba(255, 152, 0, 0.8)'
+const MOVE_ANIMATION_MS = 180
 
 interface Props {
   boardState: BoardState
@@ -40,10 +41,18 @@ export default function Board({
 
   const boardRef = useRef<HTMLDivElement>(null)
   const downPos = useRef({ x: 0, y: 0 })
+  const dragMovedRef = useRef(false)
   const [dragFrom, setDragFrom] = useState<string | null>(null)
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 })
   const [dragOver, setDragOver] = useState<string | null>(null)
   const [hasMoved, setHasMoved] = useState(false)
+  const [moveAnimation, setMoveAnimation] = useState<{
+    from: string
+    to: string
+    piece: NonNullable<BoardState['pieces'][string]>
+    hasStarted: boolean
+  } | null>(null)
+  const previousPosition = useRef({ fen: boardState.fen, pieces: boardState.pieces })
 
   const rightDownSquare = useRef<string | null>(null)
   const [rightDragTo, setRightDragTo] = useState<string | null>(null)
@@ -54,6 +63,30 @@ export default function Board({
     setArrows([])
     setCircles(new Set())
   }, [boardState.fen])
+
+  // The server returns the destination position as one state update. Keep a
+  // transient copy of the moving piece above that new board and hide its
+  // destination square until it lands, so the move visibly travels instead of
+  // teleporting. useLayoutEffect prevents a one-frame destination flash.
+  useLayoutEffect(() => {
+    const previous = previousPosition.current
+    const lastMove = boardState.lastMove
+    previousPosition.current = { fen: boardState.fen, pieces: boardState.pieces }
+    if (previous.fen === boardState.fen || !lastMove) return
+    const piece = previous.pieces[lastMove.from]
+    if (!piece || !boardState.pieces[lastMove.to]) return
+
+    let animationFrame = 0
+    const timer = window.setTimeout(() => setMoveAnimation(null), MOVE_ANIMATION_MS)
+    setMoveAnimation({ from: lastMove.from, to: lastMove.to, piece, hasStarted: false })
+    animationFrame = window.requestAnimationFrame(() => {
+      setMoveAnimation((active) => active && { ...active, hasStarted: true })
+    })
+    return () => {
+      window.cancelAnimationFrame(animationFrame)
+      window.clearTimeout(timer)
+    }
+  }, [boardState.fen, boardState.lastMove?.from, boardState.lastMove?.to])
 
   const toggleAnnotation = (from: string, to: string) => {
     if (from === to) {
@@ -115,6 +148,7 @@ export default function Board({
       e.preventDefault()
       boardRef.current?.setPointerCapture(e.pointerId)
       downPos.current = { x: e.clientX, y: e.clientY }
+      dragMovedRef.current = false
       setDragFrom(sq)
       setDragPos({ x: e.clientX, y: e.clientY })
       setHasMoved(false)
@@ -131,7 +165,10 @@ export default function Board({
     if (!dragFrom) return
     const dx = e.clientX - downPos.current.x
     const dy = e.clientY - downPos.current.y
-    if (!hasMoved && Math.sqrt(dx * dx + dy * dy) > 5) setHasMoved(true)
+    if (!dragMovedRef.current && Math.sqrt(dx * dx + dy * dy) > 5) {
+      dragMovedRef.current = true
+      setHasMoved(true)
+    }
     setDragPos({ x: e.clientX, y: e.clientY })
     setDragOver(squareFromPoint(e.clientX, e.clientY))
   }
@@ -148,10 +185,11 @@ export default function Board({
     if (!dragFrom) return
     const target = squareFromPoint(e.clientX, e.clientY)
     const from = dragFrom
-    const moved = hasMoved
+    const moved = dragMovedRef.current
     setDragFrom(null)
     setDragOver(null)
     setHasMoved(false)
+    dragMovedRef.current = false
     if (!moved) {
       onSquareClick(from)
     } else if (target && dragTargets.has(target)) {
@@ -161,6 +199,10 @@ export default function Board({
 
   const dragPiece = dragFrom ? (boardState.pieces[dragFrom] ?? null) : null
   const boardSize = squareSize * 8
+  const animationFromFile = moveAnimation ? files.indexOf(moveAnimation.from[0]) : -1
+  const animationFromRank = moveAnimation ? ranks.indexOf(moveAnimation.from[1]) : -1
+  const animationToFile = moveAnimation ? files.indexOf(moveAnimation.to[0]) : -1
+  const animationToRank = moveAnimation ? ranks.indexOf(moveAnimation.to[1]) : -1
 
   return (
     <>
@@ -213,7 +255,7 @@ export default function Board({
                       piece.color === boardState.turn
                     }
                     isDragHighlight={isDragging && dragOver === square && dragTargets.has(square)}
-                    hidePiece={isDragSource}
+                    hidePiece={isDragSource || moveAnimation?.to === square}
                     rankLabel={file === firstFile ? rank : undefined}
                     fileLabel={rank === lastRank ? file : undefined}
                   />
@@ -297,6 +339,26 @@ export default function Board({
             />
           )}
         </svg>
+
+        {moveAnimation && animationFromFile >= 0 && animationFromRank >= 0 && animationToFile >= 0 && animationToRank >= 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              left: animationFromFile * squareSize + squareSize * 0.05,
+              top: animationFromRank * squareSize + squareSize * 0.05,
+              width: squareSize * 0.9,
+              height: squareSize * 0.9,
+              zIndex: 25,
+              pointerEvents: 'none',
+              transform: moveAnimation.hasStarted
+                ? `translate(${(animationToFile - animationFromFile) * squareSize}px, ${(animationToRank - animationFromRank) * squareSize}px)`
+                : 'translate(0, 0)',
+              transition: `transform ${MOVE_ANIMATION_MS}ms cubic-bezier(0.22, 0.8, 0.28, 1)`,
+            }}
+          >
+            <Piece piece={moveAnimation.piece} size={squareSize * 0.9} />
+          </div>
+        )}
       </div>
 
       {isDragging &&
