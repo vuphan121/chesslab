@@ -201,9 +201,9 @@ def build_candidates(args: argparse.Namespace) -> list[dict[str, Any]]:
             crop_path = crops_dir / f"ch{args.chapter}-master-{master_page:03d}-{index:02d}.png"
             cv2.imwrite(str(crop_path), crop)
             side, confidence, reason = detect_turn(image, board)
-            # Decorative caption glyphs lose their text mapping in later pages.
-            # This book numbers every diagram consecutively within a chapter, so
-            # visual document order remains a durable source for its number.
+
+
+
             diagram_number = next_diagram_number
             next_diagram_number += 1
             caption = next((f"{label.chapter}-{label.number}" for label in page_labels if label.number == diagram_number), None)
@@ -254,7 +254,7 @@ def recognize_records(records: list[dict[str, Any]], args: argparse.Namespace, c
         try:
             record["piecePlacement"] = recognize_crop(Path(record["cropPath"]), args.endpoint)
             record["recognitionStatus"] = "ok"
-        except Exception as error:  # checkpoint failures for deliberate retry later
+        except Exception as error:
             record["error"] = str(error)
             record["recognitionStatus"] = "error"
         existing[identifier] = {key: record[key] for key in ("piecePlacement", "recognitionStatus", "error") if key in record}

@@ -11,9 +11,6 @@ type GetBookProgressResponse struct {
 	Done []string `json:"done"`
 }
 
-// GetBookProgress returns the authenticated user's completed item ids for
-// one book — the server-side "which checkmarks are filled in" source, same
-// degrade-gracefully-if-unconfigured shape as GetProgress (opening trainer).
 func (h *Handler) GetBookProgress(w http.ResponseWriter, r *http.Request) {
 	if h.db == nil {
 		http.Error(w, "progress sync not configured", http.StatusServiceUnavailable)
@@ -38,8 +35,6 @@ func (h *Handler) GetBookProgress(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, GetBookProgressResponse{Done: out})
 }
 
-// MarkItemDone marks one item completed after the student explicitly chooses
-// "Mark complete" in the book-study UI. Idempotent.
 func (h *Handler) MarkItemDone(w http.ResponseWriter, r *http.Request) {
 	if h.db == nil {
 		http.Error(w, "progress sync not configured", http.StatusServiceUnavailable)

@@ -7,9 +7,6 @@ import (
 	"github.com/chesslab/backend/internal/chess"
 )
 
-// CardKey strips the halfmove clock and fullmove number fields from a FEN,
-// so the same position reached via different move orders or chapters
-// collides into one card / reply-pool entry.
 func CardKey(fen string) string {
 	fields := strings.Fields(fen)
 	if len(fields) < 4 {
@@ -18,8 +15,6 @@ func CardKey(fen string) string {
 	return strings.Join(fields[:4], " ")
 }
 
-// BuildRepertoire resolves exclusions (sidecar config + NAGs), derives the
-// drillable card set, and derives the opponent reply pools.
 func BuildRepertoire(chapters []*Chapter, cfg *Config) (*Repertoire, error) {
 	if err := applyExclusions(chapters, cfg); err != nil {
 		return nil, err
@@ -92,8 +87,6 @@ func applyExclusions(chapters []*Chapter, cfg *Config) error {
 	return nil
 }
 
-// applyNAGExclusions marks any move annotated $2/$4/$6 (?, ??, ?!) as
-// excluded automatically, on top of whatever the sidecar config declares.
 func applyNAGExclusions(n *Node) {
 	for _, nag := range n.NAGs {
 		if nag == 2 || nag == 4 || nag == 6 {
@@ -217,7 +210,7 @@ func walkReplies(ch *Chapter, n *Node, side chess.Color, replies map[string][]Re
 }
 
 func pathSAN(n *Node) []string {
-	rev := []string{} // never nil — the root card's path is empty, not JSON null
+	rev := []string{}
 	for cur := n; cur.Parent != nil; cur = cur.Parent {
 		rev = append(rev, cur.SAN)
 	}

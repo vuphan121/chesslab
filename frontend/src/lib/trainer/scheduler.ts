@@ -1,6 +1,6 @@
-// Pure scheduling algorithm — no chess knowledge, no network, no wall clock
-// inside a session. See docs/opening-trainer/scheduler.md for the full spec
-// and worked trace this implementation is checked against.
+
+
+
 import type { RepCard, CardState, SessionOptions, SessionState, PersistedCardState, SessionSummary } from './types'
 import { uniform, weightedChoice, shuffle } from './rng'
 
@@ -34,20 +34,20 @@ function freshCardState(cardId: string): CardState {
   }
 }
 
-// createSession seeds a session's card states from persisted history
-// (time-decayed per scheduler.md §8), filtered/ordered by mode. `saved` is
-// a flat cardId -> state map, fetched from the server (see
-// useTrainerSession.ts) — not wrapped in the old localStorage-era
-// PersistedState envelope, which carried nothing this function used besides
-// `.cards`.
-//
-// Every included card is immediately eligible for picking (no more
-// "introduce new cards gradually" drip-feed, which used to be gated by a
-// newLimit option) — the scheduler doesn't distinguish material you've
-// already learned from material you haven't; both are just cards with a
-// dueStep, and pickNext treats them identically. mode still filters *which*
-// cards are included ('review-only'/'mistakes' skip never-seen cards), just
-// not how fast they're introduced once included.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export function createSession(
   cards: RepCard[],
   opts: SessionOptions,
@@ -57,11 +57,11 @@ export function createSession(
   const states = new Map<string, CardState>()
   const order: string[] = []
 
-  // Shuffled once up front — `cards` arrives in whatever order the backend
-  // built the repertoire in (chapter by chapter), and due-list tie-breaking
-  // walks `order` positionally. Left unshuffled, a session felt like
-  // "chapter 1's lines, then chapter 2's, in order" instead of drilling
-  // across the whole repertoire.
+
+
+
+
+
   for (const card of shuffle(cards, rng)) {
     if (opts.mode === 'mistakes' && !(saved?.[card.id]?.lapses)) continue
 
@@ -102,8 +102,8 @@ function activeCards(s: SessionState): CardState[] {
   return s.order.map((id) => s.cards.get(id)!).filter((c) => !c.retired)
 }
 
-// pickNext returns the next card to present, or null if the session is
-// complete (every card retired). See scheduler.md §4.
+
+
 export function pickNext(s: SessionState): CardState | null {
   const active = activeCards(s)
   let due = active.filter((c) => c.dueStep <= s.step)
@@ -124,8 +124,8 @@ export function pickNext(s: SessionState): CardState | null {
   )
 }
 
-// grade records a graded attempt at cardId and reschedules it. See
-// scheduler.md §5.
+
+
 export function grade(s: SessionState, cardId: string, correct: boolean): void {
   const c = s.cards.get(cardId)
   if (!c) return

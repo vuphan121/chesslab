@@ -6,8 +6,8 @@ import { childrenOf, flatten } from '@/lib/chess/moveTree'
 import { evalFen, type FenEval } from '@/lib/api/client'
 import { toFigurine } from '@/lib/chess/figurine'
 
-// formatMoveEval renders a White-relative score as a compact signed pawn value
-// (e.g. +0.2, −0.6) or mate (#3 / #-2).
+
+
 function formatMoveEval(e: FenEval): string {
   if (e.mate !== 0) return `#${e.mate}`
   const v = (Math.abs(e.score) / 100).toFixed(1)
@@ -28,7 +28,7 @@ interface Props {
   onLoadPgn: (pgn: string) => Promise<void>
 }
 
-// ── NavBtn ────────────────────────────────────────────────────────────────────
+
 
 function NavBtn({
   label,
@@ -65,7 +65,7 @@ function NavBtn({
   )
 }
 
-// ── MoveOrder ─────────────────────────────────────────────────────────────────
+
 
 export default function MoveHistory({
   openingName,
@@ -103,15 +103,15 @@ export default function MoveHistory({
     currentRef.current?.scrollIntoView({ block: 'nearest' })
   }, [currentNodeId])
 
-  // Per-move evals, keyed by FEN so they survive navigation and are never
-  // refetched. Fetched lazily/sequentially for any mainline node we don't yet
-  // have, to avoid hammering the eval endpoint.
+
+
+
   const [evals, setEvals] = useState<Record<string, FenEval>>({})
   const evalsRef = useRef(evals)
   evalsRef.current = evals
 
   useEffect(() => {
-    // Collect mainline FENs (root's children[0] chain).
+
     const fens: string[] = []
     let n: MoveNode | undefined = moveTree
     while (n) {
@@ -131,7 +131,7 @@ export default function MoveHistory({
           const e = await evalFen(fen)
           if (!cancelled) setEvals((prev) => ({ ...prev, [fen]: e }))
         } catch {
-          // leave this move without an eval; keep going
+
         }
       }
     })()
@@ -145,7 +145,7 @@ export default function MoveHistory({
   const atRoot = currentNodeId === moveTree.id
   const atLeaf = currentNode ? childrenOf(currentNode).length === 0 : true
 
-  // Render one move token: optional move number + SAN chip.
+
   const renderMove = (node: MoveNode, showNumber: boolean, variation: boolean): ReactNode => {
     const isWhite = node.ply % 2 === 1
     const moveNum = Math.ceil(node.ply / 2)
@@ -189,9 +189,9 @@ export default function MoveHistory({
     )
   }
 
-  // renderCell is one move in the row: the figurine SAN on the left and its
-  // (White-relative) eval on the right, filling the column. The whole cell is
-  // clickable and highlights when it's the current move (Lichess-style).
+
+
+
   const renderCell = (node: MoveNode | null): ReactNode => {
     if (!node) return <span style={{ flex: 1 }} />
     const isCurrent = node.id === currentNodeId
@@ -242,10 +242,10 @@ export default function MoveHistory({
     )
   }
 
-  // Render the mainline one full move per row (number · white · black), the two
-  // move columns spaced evenly across the width. Any sidelines that branch from
-  // a move are emitted as an indented row right after it, reusing the inline
-  // renderer for their (possibly nested) content.
+
+
+
+
   const renderRows = (): ReactNode[] => {
     const rows: ReactNode[] = []
     let node = moveTree
@@ -322,8 +322,8 @@ export default function MoveHistory({
     return rows
   }
 
-  // Render the main line from posNode onward, inlining any sidelines (in
-  // parentheses) right after the move they branch from. Recurses for nesting.
+
+
   const renderContinuation = (
     posNode: MoveNode,
     forceNumberFirst: boolean,
@@ -374,7 +374,7 @@ export default function MoveHistory({
         overflow: 'hidden',
       }}
     >
-      {/* Opening name — full name, allowed to wrap (never truncated) */}
+      {}
       <div
         style={{
           flexShrink: 0,
@@ -409,7 +409,7 @@ export default function MoveHistory({
         )}
       </div>
 
-      {/* Header */}
+      {}
       <div
         style={{
           flexShrink: 0,
@@ -447,7 +447,7 @@ export default function MoveHistory({
         </div>
       </div>
 
-      {/* Move list — one full move (number · white · black) per row */}
+      {}
       <div
         style={{
           flex: 1,
@@ -465,7 +465,7 @@ export default function MoveHistory({
         )}
       </div>
 
-      {/* PGN paste */}
+      {}
       <div
         style={{
           flexShrink: 0,
@@ -483,8 +483,8 @@ export default function MoveHistory({
           rows={2}
           style={{
             resize: 'vertical',
-            // 16px minimum — iOS Safari auto-zooms the page on focusing any
-            // text input/textarea with a smaller computed font-size.
+
+
             fontSize: 16,
             fontFamily: 'var(--font-mono, monospace)',
             padding: '6px 8px',

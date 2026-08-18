@@ -38,10 +38,6 @@ func TestBuildRepertoire_CardCount(t *testing.T) {
 	}
 }
 
-// TestBuildRepertoire_Chapter4IsIndependent covers the fourth chapter ("Open,
-// c5"), added in a later update to the source study: like chapter 3, it
-// starts from a genuinely different position (...c5 instead of ...a6/...Nc6),
-// so it must not share the root card and needs no exclusions of its own.
 func TestBuildRepertoire_Chapter4IsIndependent(t *testing.T) {
 	rep := buildDemo(t)
 	ch4 := chapterByName(t, rep, "Open, c5")
@@ -60,12 +56,6 @@ func TestBuildRepertoire_Chapter4IsIndependent(t *testing.T) {
 	}
 }
 
-// TestBuildRepertoire_Chapter3IsIndependent covers the third chapter ("Open,
-// Nc6"), added in a later update to the source study: it starts from a
-// genuinely different position (...Nc6 without ...a6 first, not a
-// transposition of the other two chapters), so it must not share the root
-// card and needs no exclusions of its own (no move in it is annotated or
-// configured as out-of-repertoire).
 func TestBuildRepertoire_Chapter3IsIndependent(t *testing.T) {
 	rep := buildDemo(t)
 	ch3 := chapterByName(t, rep, "Open, Nc6")
@@ -84,11 +74,6 @@ func TestBuildRepertoire_Chapter3IsIndependent(t *testing.T) {
 	}
 }
 
-// TestBuildRepertoire_Chapter6IsIndependent covers the sixth chapter ("Closed
-// with dxc4"), added in a later update to the source study alongside chapter
-// 5: a Closed Catalan position where Black has already taken on c4. Its root
-// is White to move (mirroring chapters 3/4), so it follows the same
-// independent-root shape.
 func TestBuildRepertoire_Chapter6IsIndependent(t *testing.T) {
 	rep := buildDemo(t)
 	ch6 := chapterByName(t, rep, "Closed with dxc4")
@@ -107,12 +92,6 @@ func TestBuildRepertoire_Chapter6IsIndependent(t *testing.T) {
 	}
 }
 
-// TestBuildRepertoire_Chapter5RootIsOpponentToMove covers chapter 5
-// ("Closed"), whose chapter-root FEN is Black to move — Black hasn't yet
-// chosen between the c5/b6/Ne4+f5 systems the intro comment frames, and only
-// the c6 (Tarrasch-style) branch is actually recorded — so unlike every other
-// chapter, the chapter's own StartFEN never becomes a card (White is never
-// to move there); the first card is one ply deeper, after Black's c6.
 func TestBuildRepertoire_Chapter5RootIsOpponentToMove(t *testing.T) {
 	rep := buildDemo(t)
 	ch5 := chapterByName(t, rep, "Closed")
@@ -146,8 +125,7 @@ func TestBuildRepertoire_RootCardSharedAcrossChapters(t *testing.T) {
 
 func TestBuildRepertoire_NoCardsInExcludedSubtree(t *testing.T) {
 	rep := buildDemo(t)
-	// 1. a4 Nc6 is inside the excluded a4 sideline; even though the position
-	// after Nc6 is White to move, no card should exist for it.
+
 	ch1 := chapterByName(t, rep, "Open, a6 b5")
 	a4 := findChild(t, ch1.Root, "a4")
 	if !a4.Excluded {

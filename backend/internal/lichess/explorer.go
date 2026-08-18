@@ -30,9 +30,6 @@ type ExplorerResponse struct {
 	Opening *ExplorerOpening `json:"opening"`
 }
 
-// FetchExplorer returns Lichess opening-explorer stats (games played, W/D/L,
-// and named-opening info) for the given position, sourced from rated games
-// by 2000+ players. Requires LICHESS_TOKEN to be set.
 func FetchExplorer(fen string) (*ExplorerResponse, error) {
 	token := os.Getenv("LICHESS_TOKEN")
 	if token == "" {

@@ -1,9 +1,9 @@
-// Pure merge logic for folding a session's per-card progress into whatever
-// was already known. This used to also own the localStorage read/write —
-// trainer progress is server-side now (see frontend CLAUDE.md's
-// "Server-side trainer sync" note and useTrainerSession.ts, which fetches
-// prior state via client.ts's getProgress and writes the merged result back
-// via saveProgress), so this module is just the data-shape logic, no I/O.
+
+
+
+
+
+
 import type { PersistedCardState, SessionState } from './types'
 
 export function mergeSessionCards(

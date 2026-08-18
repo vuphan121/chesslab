@@ -14,14 +14,14 @@ interface Props {
   repertoire: Repertoire
   runStartCard: RepCard
   runMoves: RunMove[]
-  // Opponent move(s) already applied to reach runStartCard from the
-  // chapter's true root (see useTrainerSession's resolveRunStartCard) —
-  // rendered as a read-only prefix so a Black-repertoire run doesn't open
-  // mid-position with no indication of what the opponent just played. Not
-  // clickable (no onGotoPly index — no runSnapshots entry exists for these).
+
+
+
+
+
   leadingMoves?: RunMove[]
   answerComment?: string
-  viewIndex: number | null // null = live (the last position)
+  viewIndex: number | null
   onGotoPly: (index: number) => void
   onNavBack: () => void
   onNavForward: () => void
@@ -71,8 +71,8 @@ export default function LinePanel({
   const atStart = activeIndex <= 0
   const atLive = activeIndex >= liveIndex
 
-  // index is null for leadingMoves cells — no runSnapshots entry exists for
-  // them (see leadingMoves' own doc comment), so they render read-only.
+
+
   type Cell = { san: string; index: number | null }
   const rows: { num: number; white?: Cell; black?: Cell }[] = []
   let pending: { num: number; white?: Cell; black?: Cell } | null = null
@@ -89,8 +89,8 @@ export default function LinePanel({
       pending = { num, black: cell }
     }
   }
-  // leadingMoves come before runStartCard's own ply, so they're numbered
-  // counting backward from it rather than forward from 0.
+
+
   const leadingBasePly = runStartCard.ply - leadingMoves.length
   leadingMoves.forEach((m, j) => addCell(leadingBasePly + 1 + j, { san: toFigurine(m.san), index: null }))
   runMoves.forEach((m, i) => addCell(runStartCard.ply + 1 + i, { san: toFigurine(m.san), index: i + 1 }))
@@ -157,8 +157,8 @@ export default function LinePanel({
         </div>
       </div>
 
-      {/* The study's own intro/description text is deliberately never shown here —
-          it can describe the position's plan while it's the user's own turn to find it. */}
+      {
+}
 
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: '10px 16px 12px' }}>
         <div

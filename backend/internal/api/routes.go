@@ -14,21 +14,13 @@ func NewRouter(h *Handler) http.Handler {
 	r.Use(middleware.Recoverer)
 	r.Use(corsMiddleware)
 
-	// Render (and most PaaS load balancers) probe "/" or a configured health
-	// check path before routing traffic to a new instance — chi has no route
-	// for "/" otherwise, which some health checks treat as unhealthy. Stays
-	// outside the auth group below, same as /api/auth/login.
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok")) //nolint:errcheck
+		w.Write([]byte("ok"))
 	})
 
 	r.Post("/api/auth/login", h.Login)
 
-	// Everything else behind the app requires a valid token — see
-	// auth.Config.Middleware. This gates the whole site, not just the
-	// trainer-sync endpoints below, per the original ask ("add a small auth
-	// layer at the front").
 	r.Group(func(r chi.Router) {
 		r.Use(h.authCfg.Middleware)
 
@@ -46,7 +38,6 @@ func NewRouter(h *Handler) http.Handler {
 			r.Post("/{id}/coach/chat", h.CoachChat)
 		})
 
-		// Game-independent: eval an arbitrary FEN (drives per-move eval in the list).
 		r.Get("/api/eval", h.EvalFEN)
 
 		r.Route("/api/repertoires", func(r chi.Router) {
@@ -77,9 +68,6 @@ func NewRouter(h *Handler) http.Handler {
 	return r
 }
 
-// allowedOrigin defaults to "*" (unchanged local-dev behavior). Set
-// ALLOWED_ORIGIN in production to the deployed frontend's origin instead of
-// leaving the API open to any site.
 func allowedOrigin() string {
 	if v := os.Getenv("ALLOWED_ORIGIN"); v != "" {
 		return v

@@ -1,6 +1,3 @@
-// importparsedboards merges validated board-parser output into an existing
-// Neon book. It is an offline admin command: it never runs in the API server
-// and changes the database only when --apply is supplied.
 package main
 
 import (

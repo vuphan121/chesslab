@@ -11,11 +11,6 @@ import (
 	"github.com/chesslab/backend/internal/chess"
 )
 
-// LoadDir globs every *.json in dir, unmarshals it as a Book, and validates
-// every item's FEN and (for puzzles) solution move sequence against the
-// chess engine. A single book's load/validation failure is logged and
-// skipped, not fatal — same policy as repertoire.LoadDir and the coach's
-// optional corpora, so one bad file never takes the server down.
 func LoadDir(dir string) []*Book {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -52,11 +47,6 @@ func loadOne(path string) (*Book, error) {
 	return ParseAndValidate(data)
 }
 
-// ParseAndValidate unmarshals raw book JSON and runs it through the same QA
-// gate loadOne uses for a file — shared by the DB-backed loading path
-// (internal/db.Store.LoadBooks) so a book seeded via `cmd/seedbooks` gets
-// identical validation to one dropped in backend/data/books/, not a laxer
-// check just because it came from a different source.
 func ParseAndValidate(data []byte) (*Book, error) {
 	var b Book
 	if err := json.Unmarshal(data, &b); err != nil {
@@ -71,12 +61,6 @@ func ParseAndValidate(data []byte) (*Book, error) {
 	return &b, nil
 }
 
-// validateBook checks every item's FEN parses, its sideToMove field agrees
-// with the FEN's own side-to-move, and every puzzle's solution moves apply
-// legally in sequence — this is the QA gate that catches transcription
-// mistakes made while extracting the book (a wrong FEN or a solution move
-// that doesn't actually apply is a hard error naming the chapter/item, not a
-// silently-served bad puzzle).
 func validateBook(b *Book) error {
 	for ci := range b.Chapters {
 		ch := &b.Chapters[ci]
@@ -106,9 +90,6 @@ func validateBook(b *Book) error {
 	return nil
 }
 
-// ChapterObjectKey is server-derived from trusted book metadata. The client
-// never selects a B2 object name, which keeps the object-store permission
-// boundary independent of any request path.
 func ChapterObjectKey(prefix string, b *Book, chapterID string) (string, bool) {
 	if b == nil || b.ID == "" {
 		return "", false

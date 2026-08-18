@@ -3,16 +3,16 @@
 import type { FlatItem } from '@/hooks/useBookStudySession'
 
 interface Props {
-  items: FlatItem[] // every item in the current chapter, in order
+  items: FlatItem[]
   activeItemId: string
   completedItemIds: Set<string>
   busy: boolean
   onSelect: (globalIndex: number) => void
 }
 
-// ChapterSections is the right-hand navigation bar: one entry per item
-// ("part") in the current chapter, clickable to jump straight to it —
-// distinct from ItemPanel's Previous/Next, which only step one at a time.
+
+
+
 export default function ChapterSections({ items, activeItemId, completedItemIds, busy, onSelect }: Props) {
   return (
     <div

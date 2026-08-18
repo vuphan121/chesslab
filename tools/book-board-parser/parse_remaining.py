@@ -15,7 +15,7 @@ from pathlib import Path
 import book_board_parser as parser
 
 
-# 1-based master-PDF ranges. Keep this in sync with data-format.md.
+
 CHAPTER_RANGES: dict[int, tuple[int, int]] = {
     3: (28, 41), 4: (42, 51), 5: (52, 61), 6: (62, 71),
     7: (72, 79), 8: (80, 89), 9: (90, 97), 10: (98, 107),
@@ -138,8 +138,8 @@ def main() -> None:
         failures.extend(chapter_failures)
         recognized = sum(record.get("recognitionStatus") == "ok" for record in records)
         summaries.append({"chapter": chapter, "detected": len(records), "recognized": recognized, "issues": len(chapter_failures)})
-        # Keep a useful review document even if the machine is interrupted
-        # between chapters; checkpoints already make recognition resumable.
+
+
         write_review_report(Path(args.report), summaries, failures)
         print(f"chapter {chapter}: detected={len(records)} recognized={recognized} review={len(chapter_failures)}", flush=True)
 

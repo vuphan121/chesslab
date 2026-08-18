@@ -6,10 +6,6 @@ import (
 	"time"
 )
 
-// StartCleanupLoop prunes line_attempts older than retention — runs once
-// immediately (so a long-lived deploy doesn't wait a full interval before
-// its first sweep) and then on the given interval, in the background.
-// card_progress is never touched here; only the raw attempt log decays.
 func (s *Store) StartCleanupLoop(retention, interval time.Duration) {
 	sweep := func() {
 		cutoff := time.Now().Add(-retention)

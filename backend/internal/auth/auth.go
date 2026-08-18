@@ -1,12 +1,3 @@
-// Package auth is a deliberately small gate — one login (no signup flow),
-// a JWT so the backend stays stateless between requests, and a middleware
-// that protects everything except the login route itself and /healthz. The
-// actual credential — a bcrypt hash in Postgres's `users` table, seeded
-// from AUTH_USERNAME/AUTH_PASSWORD at boot — lives in internal/db (see
-// db.SeedUser/VerifyUser); this package only holds the env-var fallback
-// used when no database is configured (local dev) and the JWT issue/verify
-// logic. If this ever needs more than one person behind it, replace the
-// fallback with real signup, not extend it in place.
 package auth
 
 import (
@@ -22,7 +13,7 @@ import (
 
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
-const tokenTTL = 30 * 24 * time.Hour // long-lived — single personal user, not worth re-logging-in often
+const tokenTTL = 30 * 24 * time.Hour
 
 type Config struct {
 	Username  string
@@ -30,8 +21,6 @@ type Config struct {
 	JWTSecret []byte
 }
 
-// CheckCredentials is a constant-time comparison against the one configured
-// user, to avoid a timing side-channel on the username/password check.
 func (c Config) CheckCredentials(username, password string) bool {
 	userOK := subtle.ConstantTimeCompare([]byte(username), []byte(c.Username)) == 1
 	passOK := subtle.ConstantTimeCompare([]byte(password), []byte(c.Password)) == 1
@@ -69,10 +58,6 @@ type ctxKey int
 
 const usernameKey ctxKey = iota
 
-// Middleware validates "Authorization: Bearer <token>" and stashes the
-// username in the request context for handlers to read via
-// UsernameFromContext. Only wired onto routes that need it (see routes.go) —
-// /api/auth/login and /healthz stay outside this group.
 func (c Config) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")

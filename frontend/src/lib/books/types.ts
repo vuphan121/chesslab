@@ -1,4 +1,4 @@
-// --- wire shapes (mirror backend/internal/api/book_handler.go) ---
+
 
 export interface BookItem {
   id: string

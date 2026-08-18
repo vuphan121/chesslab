@@ -2,13 +2,8 @@ package coach
 
 import "testing"
 
-// A gambit: the engine sees a real deficit (mover's win% drops a lot), but the
-// resulting position is established theory — the human-facing verdict must be
-// Book, not Mistake/Blunder.
 func TestGambitNotGradedAsMistake(t *testing.T) {
-	// evalBefore ~ +20cp (mover slightly better), evalAfterRaw ~ +150cp from the
-	// opponent's perspective (i.e. the mover is now ~150cp worse) — a big win%
-	// swing that would eval-grade as Mistake or Blunder.
+
 	mq := classifyByEval(20, 0, 150, 0)
 	if !worseThanGood(mq.EngineCategory) {
 		t.Fatalf("expected the eval grade to be Inaccuracy-or-worse, got %s (lost %.1f%%)",
@@ -28,7 +23,6 @@ func TestGambitNotGradedAsMistake(t *testing.T) {
 	}
 }
 
-// A genuinely bad move that is NOT in any book stays a Mistake/Blunder.
 func TestBadNoveltyStaysGraded(t *testing.T) {
 	mq := classifyByEval(20, 0, 150, 0)
 	engineGrade := mq.EngineCategory
@@ -43,10 +37,8 @@ func TestBadNoveltyStaysGraded(t *testing.T) {
 	}
 }
 
-// A good move that's also established theory keeps its (good) eval grade — the
-// Book override only fires when the eval grade is bad.
 func TestGoodBookMoveKeepsGrade(t *testing.T) {
-	mq := classifyByEval(20, 0, -25, 0) // mover stayed fine / improved
+	mq := classifyByEval(20, 0, -25, 0)
 	if worseThanGood(mq.EngineCategory) {
 		t.Fatalf("setup: expected a good eval grade, got %s", mq.EngineCategory)
 	}

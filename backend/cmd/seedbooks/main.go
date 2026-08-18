@@ -1,22 +1,3 @@
-// seedbooks is a one-off admin tool, not part of the running server: it
-// reads every *.json book file from a local directory (default
-// backend/data/books/, gitignored — never committed) and upserts each one
-// into the `books` table of whatever DATABASE_URL it's pointed at. That's
-// the intended way to get book content onto a deployed instance, since the
-// content itself never touches git — run this once against the production
-// DATABASE_URL (same value Render/Neon uses) after extracting a new book or
-// chapter locally, and the running backend picks it up on its next restart
-// (see cmd/server/main.go's loadBooks, which prefers the DB over the local
-// directory whenever a database is configured).
-//
-// Usage:
-//
-//	DATABASE_URL=postgres://... go run ./cmd/seedbooks [dir]
-//
-// dir defaults to data/books. Each file is validated with the same
-// chess-engine QA gate the server itself uses (internal/book.ParseAndValidate)
-// before being written — a bad file fails the seed run instead of quietly
-// landing in the database.
 package main
 
 import (
@@ -32,12 +13,6 @@ import (
 	"github.com/chesslab/backend/internal/db"
 )
 
-// loadDotEnv is a copy of cmd/server's own helper (KEY=VALUE per line,
-// doesn't override a variable already set in the real environment) — small
-// enough that duplicating it beats introducing a shared package just for
-// this. DATABASE_URL in particular tends to contain unescaped `&`/`?`
-// characters that break a plain `source .env` in a shell, so this is also
-// the easiest correct way to point this tool at the local dev database.
 func loadDotEnv(path string) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -57,7 +32,7 @@ func loadDotEnv(path string) {
 		}
 		key = strings.TrimSpace(key)
 		if _, exists := os.LookupEnv(key); !exists {
-			os.Setenv(key, strings.TrimSpace(value)) //nolint:errcheck
+			os.Setenv(key, strings.TrimSpace(value))
 		}
 	}
 }

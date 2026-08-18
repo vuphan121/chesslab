@@ -28,15 +28,15 @@ function promotionFromUci(uci: string): string | undefined {
   return uci.length >= 5 ? uci[4] : undefined
 }
 
-// findPathInChapterTree walks a chapter's own tree (DFS) for the node whose
-// position matches targetKey, returning the SAN path from that chapter's
-// root to it — or null if the position isn't reachable in this chapter at
-// all. Used instead of trusting a card's own `pathSan` (recorded relative
-// to whichever chapter *first* contributed it — see the Go backend's
-// PathSAN comment) because resolveRunStartCard can resolve a due card to a
-// *different* chapter than that, whenever the card is reachable via more
-// than one (e.g. two chapters sharing an opening before diverging) — see
-// resolveRunStartCard's comment for why that mismatch matters.
+
+
+
+
+
+
+
+
+
 function findPathInChapterTree(node: RepNode, targetKey: string, path: string[] = []): string[] | null {
   if (cardKey(node.fen) === targetKey) return path
   for (const child of node.children ?? []) {
@@ -98,17 +98,17 @@ export function useTrainerSession() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // The full position history of the current run, one GameState per ply
-  // (index 0 = the position before any move this run; index i+1 = the
-  // position after runMoves[i]). This is the trainer's own record — the
-  // backend's own tree does NOT reliably span a whole run, since a wrong
-  // answer's undo (POST /position) discards it back to a bare root — so
-  // "line so far" / back-navigation must be reconstructed from here, not
-  // from gameState.moveTree.
+
+
+
+
+
+
+
   const [runSnapshots, setRunSnapshots] = useState<GameState[]>([])
   const runSnapshotsRef = useRef<GameState[]>([])
-  // null = viewing the live (current, interactive) position; otherwise an
-  // index into runSnapshots being reviewed read-only.
+
+
   const [viewIndex, setViewIndex] = useState<number | null>(null)
   const [selected, setSelected] = useState<Square | null>(null)
   const [busy, setBusy] = useState(false)
@@ -119,49 +119,49 @@ export function useTrainerSession() {
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [hintUci, setHintUci] = useState<string | null>(null)
   const [runHadMistake, setRunHadMistake] = useState(false)
-  const [runMoves, setRunMoves] = useState<RunMove[]>([]) // reactive mirror of runMovesRef, for the "line so far" display
-  // The opponent move(s) already applied to reach runStartCard from the
-  // chapter's true root (see resolveRunStartCard) — shown as a read-only
-  // prefix in "line so far" so a Black-repertoire run doesn't just silently
-  // open mid-position with no indication of what White just played. Not
-  // navigable via gotoPly (no runSnapshots entry exists for these — the
-  // created game starts directly at runStartCard.fen), so this is display
-  // data only, kept separate from runMoves/runSnapshots on purpose.
+  const [runMoves, setRunMoves] = useState<RunMove[]>([])
+
+
+
+
+
+
+
   const [leadingMoves, setLeadingMoves] = useState<RunMove[]>([])
 
   const [summary, setSummary] = useState<ReturnType<typeof summarise> | null>(null)
 
   const gameIdRef = useRef<string | null>(null)
   const sessionRef = useRef<SessionState | null>(null)
-  const sessionCardsRef = useRef<RepCard[]>([]) // filtered card list for this session
-  const selectedChapterIdsRef = useRef<Set<string>>(new Set()) // chapters selected for this session
+  const sessionCardsRef = useRef<RepCard[]>([])
+  const selectedChapterIdsRef = useRef<Set<string>>(new Set())
   const runStartCardIdRef = useRef<string | null>(null)
   const runMovesRef = useRef<RunMove[]>([])
-  // The SAN path (within the run's own chapter — see resolveRunStartCard's
-  // targetPath) to the specific card the scheduler picked as "due" when this
-  // run began (set in startSession/nextLine, deliberately left untouched by
-  // redoLine/beginRun so a redo retraces the same path). A run starts at its
-  // *chapter's* beginning, not at the due card itself (see
-  // resolveRunStartCard), and the opponent's reply at a branch point used to
-  // be picked purely at random — meaning the run could easily wander down a
-  // sibling branch and never actually reach the due card at all. Its due
-  // status would then never get resolved, so the scheduler would just hand
-  // it right back out on the next "Next line" (repeat), and two "Do it
-  // again" attempts could visibly diverge after the first branch point. See
-  // pickOpponentReply below, which forces the reply along this path for as
-  // long as one is set.
+
+
+
+
+
+
+
+
+
+
+
+
+
   const dueTargetPathRef = useRef<string[] | null>(null)
-  // Mirrors leadingMoves the same way dueTargetPathRef mirrors targetPath —
-  // set in startSession/nextLine, reused (not recomputed) by redoLine so a
-  // redo shows the exact same "what White played" prefix as the original run.
+
+
+
   const leadingMovesRef = useRef<RunMove[]>([])
   const gradedThisPresentationRef = useRef(false)
   const moveReqId = useRef(0)
   const lastArgsRef = useRef<{ repertoireId: string; chapterIds: string[]; opts: SessionOptions } | null>(null)
-  // Snapshot of this repertoire's server-side progress, fetched once when
-  // the session starts (see startSession) — endRun re-merges the session's
-  // current state into this on every run boundary and sends the full
-  // result back to the server, rather than re-fetching each time.
+
+
+
+
   const priorProgressRef = useRef<Record<string, PersistedCardState>>({})
 
   const liveIndex = runSnapshots.length - 1
@@ -169,8 +169,8 @@ export function useTrainerSession() {
   const liveGameState: GameState | null = liveIndex >= 0 ? runSnapshots[liveIndex] : null
   const viewedGameState: GameState | null =
     viewIndex !== null ? (runSnapshots[viewIndex] ?? liveGameState) : liveGameState
-  // While reviewing history the board is read-only (no selection); at live
-  // it reflects the current click-to-move selection as normal.
+
+
   const boardState: BoardState | null = viewedGameState
     ? toBoardState(viewedGameState, isViewingHistory ? null : selected)
     : null
@@ -180,62 +180,62 @@ export function useTrainerSession() {
     [],
   )
 
-  // resolveRunStartCard maps whatever card the scheduler picked as "due" to
-  // the card that begins that card's own chapter — the scheduler still
-  // decides *which line* most needs review (via lapses/due-time), but a run
-  // is never started mid-line, including inside a sideline: it always
-  // replays from the true beginning of the chapter and walks forward
-  // naturally from there, so the due card (and everything before it) gets
-  // graded as it's actually reached, not jumped to directly.
-  // Also returns `targetPath` — the SAN path from *this* chapter's root to
-  // the due card, derived by walking the chapter's own tree rather than
-  // trusting the card's stored `pathSan`. A card reachable via more than one
-  // chapter (e.g. two chapters sharing an opening before diverging — true of
-  // this demo repertoire's chapters 1/2) only has ONE `pathSan`, recorded
-  // relative to whichever chapter first contributed it; if that's a
-  // *different* chapter than the one picked here, forcing pickOpponentReply
-  // along the wrong chapter's SANs would silently stop matching right at the
-  // divergence point and fall back to random — meaning the run could wander
-  // off and never actually reach the due card, leaving it "due" and handing
-  // it right back out on the next pick. Walking the resolved chapter's own
-  // tree is correct regardless of which chapter the card's `pathSan` came
-  // from.
-  // "The chapter's own root FEN" is only itself a card when the chapter
-  // starts with the trainer's own side to move (true for every White
-  // repertoire chapter so far, e.g. Catalan). For a Black repertoire — the
-  // Grunfeld's chapters, and the first one this bug actually showed up on —
-  // the chapter root is the *opponent's* move, so no card exists exactly
-  // there, and `cardById(cardKey(chapter.startFen))` always misses. That
-  // used to fall through to `dueCard` directly (the "??" fallback below is
-  // gone now), which silently started the run's board at whatever deep
-  // position the scheduler happened to pick as due — i.e. a real bug, not
-  // the intended "always start from the chapter's own beginning" behavior;
-  // caught live by the run's created game landing several moves into a line
-  // with an empty move tree, rather than at the chapter's declared root.
-  // Fixed by walking `targetPath` from the chapter's root one ply at a time
-  // and taking the *first* node along it that's an actual card — that's the
-  // true first point in this specific line where the trainer's side has
-  // anything to answer, whether that's the root itself (ply 0, White
-  // repertoires) or one ply in after the opponent's first move (Black
-  // repertoires, where the root itself is never a card).
-  // Also returns `leadingMoves` — the opponent move(s) consumed by that walk
-  // (root to the resolved card), so the caller can show them as "what the
-  // opponent already played" even though the created game starts directly
-  // at `card.fen`, not the true root (see startSession/nextLine).
-  // `targetPath` is sliced by that same consumed count before being
-  // returned: it's read by pickOpponentReply as `target[runMoves.length]`,
-  // and runMoves starts counting fresh from `card.fen`, not the chapter
-  // root — an earlier version returned the *unsliced*, root-relative path
-  // here, which silently shifted every forced-reply lookup by however many
-  // leading plies were consumed. That's the actual bug behind "Do it again
-  // hands back a different line": with the indices misaligned,
-  // pickOpponentReply's `replies.find((r) => r.san === target[idx])` almost
-  // never matched, so it fell through to the random weighted choice on
-  // nearly every opponent turn — including on a redo, since dueTargetPathRef
-  // is deliberately left untouched by redoLine and was *already* wrong.
-  // Takes `rep` explicitly (rather than closing over the `repertoire` state)
-  // because startSession needs to call this synchronously right after
-  // setRepertoireState, before that state update has actually committed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const resolveRunStartCard = useCallback(
     (rep: Repertoire, dueCard: RepCard): { card: RepCard; targetPath: string[]; leadingMoves: RunMove[] } => {
       const chapterId = dueCard.chapterIds.find((id) => selectedChapterIdsRef.current.has(id)) ?? dueCard.chapterIds[0]
@@ -260,8 +260,8 @@ export function useTrainerSession() {
     [cardById],
   )
 
-  // pushSnapshot records a new ply's position, appended to the run's history,
-  // and snaps the view back to live (a fresh move always returns you to now).
+
+
   function pushSnapshot(gs: GameState) {
     const next = [...runSnapshotsRef.current, gs]
     runSnapshotsRef.current = next
@@ -269,9 +269,9 @@ export function useTrainerSession() {
     setViewIndex(null)
   }
 
-  // replaceLastSnapshot swaps the current (live) position without adding a
-  // new ply — used after a wrong-answer undo, which returns to the same
-  // position the card was already at, not a new move.
+
+
+
   function replaceLastSnapshot(gs: GameState) {
     const next = runSnapshotsRef.current.length > 0 ? [...runSnapshotsRef.current] : [gs]
     if (next.length > 0) next[next.length - 1] = gs
@@ -280,9 +280,9 @@ export function useTrainerSession() {
     setViewIndex(null)
   }
 
-  // beginRun puts the board at `card`'s position and resets all per-run
-  // bookkeeping. Refs and setState setters are stable across renders, so
-  // this needs no dependencies.
+
+
+
   const beginRun = useCallback((card: RepCard, gs: GameState, leading: RunMove[] = []) => {
     runStartCardIdRef.current = card.id
     runMovesRef.current = []
@@ -300,13 +300,13 @@ export function useTrainerSession() {
     setViewIndex(null)
   }, [])
 
-  // pickOpponentReply first tries to stay on dueTargetPathRef (see its
-  // comment above) so the run actually reaches the card the scheduler is
-  // trying to test; once that path is exhausted (or doesn't match this
-  // position at all — e.g. the due card's recorded path came from a
-  // different chapter than the one this run resolved to), it falls back to
-  // the original weighted-random choice from design.md §6, biasing toward
-  // whichever continuation currently has more lapses recorded against it.
+
+
+
+
+
+
+
   const pickOpponentReply = useCallback(
     (fen: string) => {
       if (!repertoire) return null
@@ -330,15 +330,15 @@ export function useTrainerSession() {
     [repertoire],
   )
 
-  // endRun syncs this session's per-card progress to the server (so nothing
-  // is lost if the user closes the tab or switches devices — see frontend
-  // CLAUDE.md's "Server-side trainer sync" note) and moves to the
-  // line-complete gate (Analyze / Redo-or-Next). Also logs one line_attempts
-  // row for analytics, when the run's chapter can be resolved. Fire-and-
-  // forget: a network hiccup or unconfigured DB just means this run's
-  // progress doesn't sync this time, same "leave state untouched, allow
-  // retry" degradation used elsewhere in this file — it doesn't block the
-  // drilling flow.
+
+
+
+
+
+
+
+
+
   const endRun = useCallback(() => {
     const session = sessionRef.current
     if (session && repertoire) {
@@ -354,19 +354,19 @@ export function useTrainerSession() {
           : undefined
 
       apiSaveProgress(repertoire.id, merged, lineAttempt).catch(() => {
-        // progress sync unavailable this time — nothing else reasonable to do
+
       })
     }
-    // Clear any hint arrow left over from a wrong-attempt-then-correct-retry
-    // earlier in this run — otherwise it stays pointing at an already-
-    // superseded move on the line-complete screen's board.
+
+
+
     setHintUci(null)
     setPhase('line-complete')
   }, [repertoire, cardById, runHadMistake])
 
-  // proceedAfterCorrect plays the opponent's reply (if the repertoire has
-  // one recorded) and advances the run into the next card; otherwise the
-  // run has reached a leaf/out-of-book and ends here.
+
+
+
   const proceedAfterCorrect = useCallback(
     async (answerFen: string) => {
       const gid = gameIdRef.current
@@ -392,17 +392,17 @@ export function useTrainerSession() {
 
       gradedThisPresentationRef.current = false
       setCurrentCard(nextCard)
-      // Feedback is intentionally left showing (the "✓ Correct" banner from
-      // the move that just advanced the run) — it stays up through the
-      // opponent's reply and into the new prompt, and only gets replaced
-      // once the user's next move attempt grades and sets a fresh one.
+
+
+
+
       setHintUci(null)
       setSelected(null)
     },
     [pickOpponentReply, endRun, cardById],
   )
 
-  // --- session lifecycle ---
+
 
   const startSession = useCallback(
     async (repertoireId: string, chapterIds: string[], opts: SessionOptions) => {
@@ -424,17 +424,17 @@ export function useTrainerSession() {
         }
         sessionCardsRef.current = cards
 
-        // Fetched from the server, not localStorage — see frontend
-        // CLAUDE.md's "Server-side trainer sync" note. Falls back to no
-        // prior history (a fresh-feeling session, not a hard failure) if
-        // sync is unavailable — not logged in yet, DB not configured, or a
-        // network hiccup — same degrade-gracefully pattern as the rest of
-        // this app (Stockfish/LICHESS_TOKEN/coach).
+
+
+
+
+
+
         let saved: Record<string, PersistedCardState> = {}
         try {
           saved = (await apiGetProgress(repertoireId)).cards
         } catch {
-          // proceed with no prior history this time
+
         }
         priorProgressRef.current = saved
         const session = createSession(cards, opts, saved, newRng())
@@ -480,9 +480,9 @@ export function useTrainerSession() {
         const gs = await makeMove(gid, from, to, isPromo ? 'q' : undefined)
         if (reqId !== moveReqId.current) return
 
-        // gs.moveTree.children[0] is only "the move just played" right after a
-        // tree reset — within a run the tree accumulates every ply, so the
-        // played node must be looked up by the current node id instead.
+
+
+
         const played = flatten(gs.moveTree).get(gs.currentNodeId)?.node
         const playedSan = played?.san ?? ''
 
@@ -505,12 +505,12 @@ export function useTrainerSession() {
           })
           await sleep(450)
           if (reqId !== moveReqId.current) return
-          // Use gs.fen (the position the backend just actually computed) rather
-          // than matchAnswer.fen (fixed at repertoire-build time from whichever
-          // chapter first contributed this answer) — normally identical, but if
-          // this card/answer is reached via a longer/shorter transposed path in
-          // a different chapter, matchAnswer.fen's clocks would be wrong for
-          // this specific run. gs.fen is always correct by construction.
+
+
+
+
+
+
           await proceedAfterCorrect(gs.fen)
         } else {
           setRunHadMistake(true)
@@ -526,16 +526,16 @@ export function useTrainerSession() {
             reason: matchExcluded?.reason,
           })
           setHintUci(primary?.uci ?? null)
-          // undo: put the board back at the card's own position for a retry
-          // (replaces the current/live snapshot in place — this isn't a new
-          // ply, just a restore of the position the card was already at)
+
+
+
           const back = await apiSetPosition(gid, card.fen)
           if (reqId !== moveReqId.current) return
           setSelected(null)
           replaceLastSnapshot(back)
         }
       } catch {
-        // network hiccup — leave the position untouched, allow retry
+
       } finally {
         if (reqId === moveReqId.current) setBusy(false)
       }
@@ -543,7 +543,7 @@ export function useTrainerSession() {
     [currentCard, phase, busy, boardState, isViewingHistory, proceedAfterCorrect],
   )
 
-  // --- click-to-move / drag-and-drop plumbing (mirrors useChessGame) ---
+
 
   const selectSquare = useCallback(
     (square: Square) => {
@@ -577,7 +577,7 @@ export function useTrainerSession() {
     [liveGameState, isViewingHistory],
   )
 
-  // --- line-so-far navigation (review only — never mutates the live drill) ---
+
 
   const navBack = useCallback(() => {
     setViewIndex((v) => {
@@ -589,22 +589,22 @@ export function useTrainerSession() {
 
   const navForward = useCallback(() => {
     setViewIndex((v) => {
-      if (v === null) return null // already live
+      if (v === null) return null
       const last = runSnapshotsRef.current.length - 1
       const next = v + 1
       return next >= last ? null : next
     })
   }, [])
 
-  // gotoPly jumps straight to a specific position in the run's history —
-  // index 0 is the position before any move, index i+1 is the position
-  // right after runMoves[i]. Clicking the live/last entry returns to live.
+
+
+
   const gotoPly = useCallback((index: number) => {
     const last = runSnapshotsRef.current.length - 1
     setViewIndex(index >= last ? null : Math.max(0, index))
   }, [])
 
-  // --- end-of-run actions ---
+
 
   const redoLine = useCallback(async () => {
     const gid = gameIdRef.current
@@ -622,9 +622,9 @@ export function useTrainerSession() {
     }
   }, [cardById, beginRun])
 
-  // Progress syncs on every run boundary now (see endRun), not just at
-  // actual session end — there's no separate session-log write left to do
-  // here, just the summary/phase transition.
+
+
+
   const nextLine = useCallback(async () => {
     const session = sessionRef.current
     const gid = gameIdRef.current
@@ -655,9 +655,9 @@ export function useTrainerSession() {
     }
   }, [cardById, beginRun, repertoire, resolveRunStartCard])
 
-  // analyzeLine hands the exact line just drilled off to the Analysis Board:
-  // builds a fresh game at the run's starting position, replays every move
-  // actually played this run (both sides), and navigates there.
+
+
+
   const analyzeLine = useCallback(async () => {
     const startId = runStartCardIdRef.current
     if (!startId) return
@@ -686,8 +686,8 @@ export function useTrainerSession() {
     setPhase('summary')
   }, [])
 
-  // sameAgain restarts a fresh session against the same repertoire/chapters/
-  // options just used (picking up wherever persisted progress now stands).
+
+
   const sameAgain = useCallback(() => {
     const args = lastArgsRef.current
     if (!args) return
@@ -695,8 +695,8 @@ export function useTrainerSession() {
     startSession(args.repertoireId, args.chapterIds, args.opts)
   }, [startSession])
 
-  // drillMistakes restarts a session over just this session's missed cards
-  // (mode: 'mistakes').
+
+
   const drillMistakes = useCallback(() => {
     const args = lastArgsRef.current
     if (!args) return

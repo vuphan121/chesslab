@@ -1,7 +1,5 @@
 package book
 
-// Store is a read-only in-memory registry of loaded books. Same shape as
-// repertoire.Store — loaded once at startup, never written to at runtime.
 type Store struct {
 	byID map[string]*Book
 	all  []*Book

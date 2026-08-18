@@ -6,7 +6,6 @@ var sanPieceChar = map[PieceType]byte{
 	Knight: 'N', Bishop: 'B', Rook: 'R', Queen: 'Q', King: 'K',
 }
 
-// SAN returns the Standard Algebraic Notation string for move m in position pos.
 func SAN(pos *Position, m Move) string {
 	if m.Flag == CastleKS {
 		return suffix("O-O", pos, m)
@@ -22,7 +21,6 @@ func SAN(pos *Position, m Move) string {
 		sb.WriteByte(sanPieceChar[piece.Type])
 	}
 
-	// Disambiguation for non-pawn moves
 	if piece.Type != Pawn {
 		lms := GenerateLegalMoves(pos)
 		var needFile, needRank bool
@@ -48,7 +46,6 @@ func SAN(pos *Position, m Move) string {
 		}
 	}
 
-	// Capture
 	isCapture := pos.Board[m.To] != nil || m.Flag == EnPassant
 	if piece.Type == Pawn && isCapture {
 		sb.WriteByte('a' + byte(m.From.File()))
@@ -59,7 +56,6 @@ func SAN(pos *Position, m Move) string {
 
 	sb.WriteString(m.To.String())
 
-	// Promotion
 	if m.IsPromotion() {
 		sb.WriteByte('=')
 		sb.WriteByte(sanPieceChar[m.PromotionPiece()])
@@ -79,7 +75,6 @@ func suffix(base string, pos *Position, m Move) string {
 	return base + "+"
 }
 
-// MovesToSANAndFENs converts UCI moves to SAN and also returns the FEN after each move.
 func MovesToSANAndFENs(pos *Position, uciMoves []string) (sans []string, fens []string) {
 	cur := pos
 	for _, uci := range uciMoves {
@@ -122,7 +117,6 @@ func MovesToSANAndFENs(pos *Position, uciMoves []string) (sans []string, fens []
 	return
 }
 
-// MovesToSAN converts a slice of UCI move strings to SAN, playing from pos.
 func MovesToSAN(pos *Position, uciMoves []string) []string {
 	sans, _ := MovesToSANAndFENs(pos, uciMoves)
 	return sans

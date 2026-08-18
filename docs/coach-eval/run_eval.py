@@ -39,7 +39,7 @@ CHUNKS_PATH = os.path.join(
 OUT_PATH = os.path.join(ROOT, "results.md")
 
 
-# ---- classifier replica (mirrors backend/internal/coach/classify.go) ----
+
 
 def win_percent(cp, mate, mover_is_white):
     """Mover-perspective win% from white-relative engine score/mate."""
@@ -86,7 +86,7 @@ def book_category(engine_cat, status, in_corpus):
     return engine_cat
 
 
-# ---- SAN parsing (mirrors validate_chunks.py) ----
+
 
 def tokenize_moves(seq):
     text = seq.replace("...", " ")
@@ -123,7 +123,7 @@ def san_line_to_moves(san_tokens):
     return uci, sans
 
 
-# ---- backend driver ----
+
 
 def new_game():
     return requests.post(f"{BASE}/api/games").json()["id"]
@@ -170,14 +170,14 @@ def score_of(ana):
     return ana.get("score", 0), ana.get("mate", 0), ana.get("depth", 0), ana.get("engineName", "?")
 
 
-# ---- run one case ----
+
 
 def run_case(case, chunks_by_fen):
     game = new_game()
     uci, sans = san_line_to_moves(case["san"])
-    mover_is_white = (len(uci) % 2 == 1)  # last move by white if odd count
+    mover_is_white = (len(uci) % 2 == 1)
 
-    # play all but the last move -> prevFen + eval before
+
     for u in uci[:-1]:
         play(game, u)
     prev_state = requests.get(f"{BASE}/api/games/{game}").json()
@@ -185,7 +185,7 @@ def run_case(case, chunks_by_fen):
     before = analysis(game)
     b_cp, b_mate, _, _ = score_of(before)
 
-    # play the target move -> afterFen + eval after + explorer
+
     play(game, uci[-1])
     after_state = requests.get(f"{BASE}/api/games/{game}").json()
     fen = after_state["fen"]
@@ -228,10 +228,10 @@ def run_case(case, chunks_by_fen):
 
 
 CASES = [
-    # ----- Group A: in the theory database (Accelerated Dragon corpus) -----
-    # (san lines filled from the corpus at runtime; see build_group_a)
 
-    # ----- Group B: NOT in the corpus, a ladder by evaluation swing -----
+
+
+
     {"group": "B", "id": "B1", "desc": "Negligible swing — main-line Ruy Lopez developing move (Be7)",
      "san": ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6", "O-O", "Be7"]},
     {"group": "B", "id": "B2", "desc": "Slight swing — a small waiting move in the Italian (Kh8)",
@@ -257,7 +257,7 @@ def build_group_a(chunks):
     seen = set()
     for c in chunks:
         seq = c["moveSequence"]
-        # want a chunk deep enough to have a distinct 'last move' and real prose
+
         if len(c["commentaryText"]) < 60:
             continue
         toks = tokenize_moves(seq)
@@ -317,7 +317,7 @@ def write_report(results):
                  "<20 Mistake · ≥20 Blunder. `final` becomes **Book** when the move is established "
                  "theory the engine dislikes (gambits).\n")
 
-    # summary table
+
     lines.append("## Summary\n")
     lines.append("| # | Group | Move | eval before→after (cp, White+) | win% lost | engine | final | book status (games) | in corpus |")
     lines.append("|---|-------|------|--------------------------------|-----------|--------|-------|---------------------|-----------|")
@@ -328,7 +328,7 @@ def write_report(results):
             f"**{r['finalCat']}** | {r['bookStatus']} ({r['games']}) | {'yes' if r['inCorpus'] else 'no'} |")
     lines.append("")
 
-    # detail per case
+
     lines.append("## Details\n")
     for r in results:
         lines.append(f"### {r['id']} — {md_escape(r['desc'])}\n")

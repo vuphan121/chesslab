@@ -10,9 +10,9 @@ function authHeader(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-// Fire-and-forget hit to the unauthenticated /healthz route, called on app
-// load (AuthGate) so a Render free-tier cold start begins immediately
-// instead of waiting for the first real API call (e.g. login).
+
+
+
 export function pingBackend(): void {
   fetch(`${API}/healthz`).catch(() => {})
 }
@@ -90,9 +90,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { ...(init?.headers ?? {}), ...authHeader() },
   })
   if (res.status === 401) {
-    // Token missing/expired/rejected — clear it so AuthGate (subscribed via
-    // onAuthChange) drops back to the login screen. A wrong-password 401
-    // from login() itself just clears an already-absent token — harmless.
+
+
+
     clearToken()
   }
   if (!res.ok) {
@@ -102,9 +102,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-// createGame with no arguments keeps the original behavior (initial
-// position). Passing a FEN roots the game at an arbitrary position — used
-// by the opening trainer and the analysis-board handoff.
+
+
+
 export const createGame = (fen?: string): Promise<GameState> =>
   request('/api/games', {
     method: 'POST',
@@ -113,8 +113,8 @@ export const createGame = (fen?: string): Promise<GameState> =>
       : {}),
   })
 
-// setPosition re-points an existing game at an arbitrary FEN, discarding its
-// tree — the trainer reuses one game object across a whole drill session.
+
+
 export const setPosition = (id: string, fen: string): Promise<GameState> =>
   request(`/api/games/${id}/position`, {
     method: 'POST',
@@ -141,13 +141,13 @@ export const analyzeGame = (id: string): Promise<Analysis> =>
   request(`/api/games/${id}/analysis`)
 
 export interface FenEval {
-  score: number // centipawns, White-relative
+  score: number
   mate: number
   depth: number
 }
 
-// evalFen returns a White-relative eval for an arbitrary position — used to
-// annotate each move in the move list.
+
+
 export const evalFen = (fen: string): Promise<FenEval> =>
   request(`/api/eval?fen=${encodeURIComponent(fen)}`)
 
@@ -167,9 +167,9 @@ export interface LoadPGNResponse extends GameState {
   error?: string
 }
 
-// loadPGN replays a pasted PGN move list from the start position. Unlike the
-// other requests, a 422 (partial parse — hit an illegal/unrecognized token)
-// still carries a usable body, so it's read and returned rather than thrown.
+
+
+
 export const loadPGN = async (id: string, pgn: string): Promise<LoadPGNResponse> => {
   const res = await fetch(`${API}/api/games/${id}/pgn`, {
     method: 'POST',
@@ -184,7 +184,7 @@ export const loadPGN = async (id: string, pgn: string): Promise<LoadPGNResponse>
   return res.json() as Promise<LoadPGNResponse>
 }
 
-// --- AI coach ---
+
 
 export interface ExplainMoveRequest {
   fen: string
@@ -208,14 +208,14 @@ export interface CoachChatResponse {
   reply: string
 }
 
-// CoachUnavailableError marks a 503 from the coach endpoints — i.e. the coach
-// isn't configured (no local model reachable). Callers use it to show a
-// distinct "coach offline" message rather than a generic failure.
+
+
+
 export class CoachUnavailableError extends Error {}
 
-// Local-model inference is slow (tens of seconds) and the agent chat can chain
-// several calls, so we allow a generous ceiling — but still bound it so a hung
-// request surfaces an error instead of freezing the coach panel forever.
+
+
+
 const COACH_TIMEOUT_MS = 120_000
 
 async function coachRequest<T>(path: string, body: unknown): Promise<T> {
@@ -258,21 +258,21 @@ export const coachChat = (
 ): Promise<CoachChatResponse> =>
   coachRequest(`/api/games/${id}/coach/chat`, { message, history })
 
-// --- Opening trainer ---
+
 
 export const listRepertoires = (): Promise<RepertoireSummary[]> => request('/api/repertoires')
 
 export const getRepertoire = (id: string): Promise<Repertoire> =>
   request(`/api/repertoires/${id}`)
 
-// --- Study from Book ---
+
 
 export const listBooks = (): Promise<BookSummary[]> => request('/api/books')
 
 export const getBook = (id: string): Promise<Book> => request(`/api/books/${id}`)
 
-// The browser's built-in PDF viewer cannot attach our Bearer token itself, so
-// fetch the user-owned file here and hand it an in-memory blob URL instead.
+
+
 export const getBookChapterPDF = async (id: string, chapterId: string): Promise<Blob> => {
   const res = await fetch(`${API}/api/books/${encodeURIComponent(id)}/chapters/${encodeURIComponent(chapterId)}/source.pdf`, { headers: authHeader() })
   if (res.status === 401) clearToken()
@@ -299,7 +299,7 @@ export const recordBookStudyActivity = (
     method: 'POST',
   })
 
-// --- Auth ---
+
 
 export interface LoginResponse {
   token: string
@@ -312,8 +312,8 @@ export const login = (username: string, password: string): Promise<LoginResponse
     body: JSON.stringify({ username, password }),
   })
 
-// --- Trainer progress sync (server-side, replaces localStorage — see
-// frontend CLAUDE.md's "Server-side trainer sync" note for why) ---
+
+
 
 export interface ServerCardState {
   box: number

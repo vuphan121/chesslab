@@ -2,16 +2,9 @@ package chess
 
 import "testing"
 
-// TestGameResetDiscardsTree covers the PGN-paste bug: pasting a line that
-// diverges from whatever was already on the board must replace the game
-// outright, not branch a sideline off the stale root. GotoNode(root) alone
-// doesn't clear Children, so a diverging ApplyMove after it used to create
-// exactly that stale sideline; Reset must actually give the root a clean
-// Children slice.
 func TestGameResetDiscardsTree(t *testing.T) {
 	g := NewGame("test")
 
-	// Play 1.e4 e5, then reset and play 1.d4 instead.
 	e4 := findMove(t, g, "e2", "e4")
 	if err := g.ApplyMove(e4); err != nil {
 		t.Fatalf("applying e4: %v", err)
@@ -42,9 +35,6 @@ func TestGameResetDiscardsTree(t *testing.T) {
 	}
 }
 
-// TestGameResetToDiscardsTree covers the same contract as
-// TestGameResetDiscardsTree, for the FEN variant used by the opening
-// trainer to re-point one game at each new card's position.
 func TestGameResetToDiscardsTree(t *testing.T) {
 	g := NewGame("test")
 

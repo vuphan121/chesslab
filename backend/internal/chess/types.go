@@ -80,7 +80,7 @@ func (s Square) String() string {
 type MoveFlag uint8
 
 const (
-	Normal     MoveFlag = iota
+	Normal MoveFlag = iota
 	DoublePush
 	EnPassant
 	CastleKS

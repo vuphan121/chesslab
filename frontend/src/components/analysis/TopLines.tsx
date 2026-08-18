@@ -91,7 +91,7 @@ export default function TopLines({ analysis, analyzing, turn, fullMove, height }
           flexShrink: 0,
         }}
       >
-        {/* Header */}
+        {}
         <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid #ebebeb' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
             <span
@@ -122,7 +122,7 @@ export default function TopLines({ analysis, analyzing, turn, fullMove, height }
           </div>
         </div>
 
-        {/* Lines */}
+        {}
         <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
           {lines.map((line, i) => {
             const tokens = buildTokens(line.moves, turn, fullMove)

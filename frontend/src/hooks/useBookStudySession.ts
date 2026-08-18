@@ -7,9 +7,9 @@ import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
 import { flatten } from '@/lib/chess/moveTree'
 import type { Book, BookItem } from '@/lib/books/types'
 
-// Duplicated from useTrainerSession/useChessGame — same GameState -> BoardState
-// shape, kept as its own small copy rather than a shared import (see frontend
-// CLAUDE.md: each hook already keeps its own copy of this).
+
+
+
 function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
   const pieces: BoardState['pieces'] = {}
   for (const [sq, p] of Object.entries(gs.pieces)) {
@@ -49,18 +49,18 @@ export interface FlatItem {
   chapterNumber: number
 }
 
-// useBookStudySession is a hand-rolled state machine, deliberately not built
-// on useChessGame — same reasoning as useTrainerSession: no engine/eval/
-// explorer/coach calls, since those would leak a puzzle's answer.
-//
-// Each item is only a FEN plus whose turn it is. Lessons and puzzles are both
-// immediately free-play: every legal move belongs to the student, and a move
-// played from an earlier position naturally creates a sideline in the local
-// game tree. No book line, solution, or student move history is persisted.
-// Ephemeral by construction: `enterItem`/`goToIndex` re-point the game at a
-// fresh `apiSetPosition` (discarding whatever tree was there), and a new
-// session (`loadStart`) creates a brand-new game — so a student's played-out
-// tree never survives navigating away or reloading.
+
+
+
+
+
+
+
+
+
+
+
+
 export function useBookStudySession() {
   const [phase, setPhase] = useState<BookStudyPhase>('setup')
   const [book, setBook] = useState<Book | null>(null)
@@ -130,8 +130,8 @@ export function useBookStudySession() {
     return { ply: entry?.node.ply ?? 0, canBack, canForward }
   }, [gameState])
 
-  // enterItem points the game at `item`'s own position with a clean (empty)
-  // tree — the shared reset step for both item types.
+
+
   const enterItem = useCallback(async (gid: string, item: BookItem) => {
     setSelected(null)
     setFlipped(item.sideToMove === 'b')
@@ -248,7 +248,7 @@ export function useBookStudySession() {
     }
   }, [gameState, busy])
 
-  // --- click-to-move / drag-and-drop plumbing — every item is free-play ---
+
 
   const attemptMove = useCallback(
     async (from: Square, to: Square) => {
@@ -275,7 +275,7 @@ export function useBookStudySession() {
         }
 
       } catch {
-        // network hiccup — leave the position untouched, allow retry
+
       } finally {
         if (reqId === moveReqId.current) setBusy(false)
       }
@@ -320,9 +320,9 @@ export function useBookStudySession() {
     setAnalysisEnabled((enabled) => !enabled)
   }, [])
 
-  // Completion is intentionally explicit. Exploring a position or moving a
-  // piece never marks it done; only this action writes the authenticated
-  // user's (username, book, item) row in Neon.
+
+
+
   const markCurrentComplete = useCallback(async () => {
     if (!book || !current || completionBusy || completedItemIds.has(current.item.id)) return
     setCompletionBusy(true)

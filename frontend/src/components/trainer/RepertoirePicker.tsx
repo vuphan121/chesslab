@@ -7,10 +7,10 @@ import { toFigurine } from '@/lib/chess/figurine'
 import type { RepertoireSummary, Repertoire, RepNode } from '@/lib/trainer/types'
 import type { SessionOptions } from '@/lib/trainer/types'
 
-// enumerateLines walks every path from a chapter's root to a leaf (mainline
-// and every variation, at any nesting depth) and returns each as one line —
-// a plain preview of everything the chapter contains, not just the
-// repertoire's own accepted answers.
+
+
+
+
 interface ChapterLine {
   sans: string[]
   hasExcluded: boolean
@@ -28,8 +28,8 @@ function enumerateLines(node: RepNode, sans: string[] = [], hasExcluded = false)
   return lines
 }
 
-// formatLine renders a line's SAN list as "1.O-O b5 2.Ne5 ..." — figurine
-// notation, move-numbered from the chapter root (ply 0).
+
+
 function formatLine(sans: string[]): string {
   return sans
     .map((san, i) => {
@@ -91,28 +91,28 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
   const [selectedChapters, setSelectedChapters] = useState<Set<string>>(new Set())
   const [mode, setMode] = useState<SessionOptions['mode']>('mixed')
 
-  // Full repertoire (chapters + trees) — only needed to preview a chapter's
-  // lines, so it's fetched lazily once a repertoire is selected rather than
-  // upfront for every repertoire in the list.
+
+
+
   const [fullRep, setFullRep] = useState<Repertoire | null>(null)
   const [fullRepLoading, setFullRepLoading] = useState(false)
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
 
-  // Simple drilling-activity stats (today's count, by chapter) — fetched
-  // once, best-effort; if analytics isn't configured/reachable the panel
-  // just doesn't render rather than blocking the setup screen.
+
+
+
   const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null)
 
   const fullRepReqId = useRef(0)
 
-  // selectRepertoire is the single place a repertoire gets selected — from
-  // the initial-load callback or a row click, never from an effect reacting
-  // to state. It resets whatever was expanded/loaded for the *previous*
-  // selection and kicks off the fetch of the full tree data (needed for the
-  // line previews) directly, the same way data fetches elsewhere in this
-  // app are triggered by the action that needs them rather than by watching
-  // state change. reqId guards against a slow, now-superseded fetch
-  // clobbering a later selection if they resolve out of order.
+
+
+
+
+
+
+
+
   function selectRepertoire(id: string, chapterIds: string[]) {
     setSelectedId(id)
     setSelectedChapters(new Set(chapterIds))
@@ -126,7 +126,7 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
         if (reqId === fullRepReqId.current) setFullRep(rep)
       })
       .catch(() => {
-        // preview just won't be available; chapter selection still works off the summary list
+
       })
       .finally(() => {
         if (reqId === fullRepReqId.current) setFullRepLoading(false)
@@ -143,8 +143,8 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
     getAnalytics()
       .then(setAnalytics)
       .catch(() => {
-        // analytics unavailable (DB not configured, or a network hiccup) —
-        // the panel just stays hidden, doesn't block anything else
+
+
       })
   }, [])
 
@@ -209,7 +209,7 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
           Drop a study PGN + config into <code>backend/data/repertoires/</code>, e.g.:
         </p>
         <pre className="mono" style={{ fontSize: 12, background: '#fbfaf7', padding: 10, borderRadius: 6 }}>
-          curl -sL https://lichess.org/api/study/&lt;id&gt;.pgn -o backend/data/repertoires/name.pgn
+          curl -sL https:
         </pre>
       </div>
     )
@@ -310,10 +310,10 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
               const isExpanded = expandedChapters.has(ch.id)
               const chapterTree =
                 fullRep?.id === selectedId ? fullRep.chapters.find((c) => c.id === ch.id)?.tree : undefined
-              // Excluded lines (e.g. the demo repertoire's "1. a4" — annotated
-              // in the study as inferior) are dropped here rather than shown
-              // struck through — the count and preview below should only
-              // reflect what's actually part of the repertoire.
+
+
+
+
               const lines = chapterTree ? enumerateLines(chapterTree).filter((l) => !l.hasExcluded) : []
               return (
                 <div key={ch.id}>

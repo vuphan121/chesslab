@@ -14,8 +14,6 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
-// Login is the one unauthenticated /api route (besides /healthz) — see
-// routes.go for how the auth middleware group is carved out around it.
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -23,10 +21,6 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The users table (seeded from AUTH_USERNAME/AUTH_PASSWORD at boot — see
-	// main.go) is the real source of truth once a database is configured;
-	// the env-var comparison is only a fallback for local dev without
-	// DATABASE_URL set, where there's nothing to seed a table into.
 	var ok bool
 	if h.db != nil {
 		var err error

@@ -6,8 +6,8 @@ import { clearToken } from '@/lib/auth/token'
 interface Props {
   turn?: Color
   isBookMove?: boolean
-  // Overrides the default turn/book-move pills entirely — pages with a
-  // different right-hand status (e.g. the opening trainer) pass their own.
+
+
   right?: ReactNode
 }
 

@@ -34,8 +34,8 @@ export default function BookStudyPage() {
     ? clamp(Math.floor(((viewportWidth ?? NARROW_BREAKPOINT) - 28) / 8), 38, DESKTOP_SQUARE_SIZE)
     : DESKTOP_SQUARE_SIZE
   const boardSize = squareSize * 8
-  // The eval slot is always reserved. Toggling analysis merely fades the bar
-  // in/out, so neither the board nor the PDF shifts horizontally.
+
+
   const centerWidth = boardSize + EVAL_SLOT_WIDTH
   const shellWidth = SECTIONS_WIDTH + centerWidth + PDF_WIDTH + COLUMN_GAP * 2 + OUTER_PADDING * 2
   const frameHeight = Math.max(720, boardSize + 370)

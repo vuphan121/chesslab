@@ -13,9 +13,6 @@ type LoadPGNRequest struct {
 	PGN string `json:"pgn"`
 }
 
-// LoadPGNResponse is the game state after loading, plus how far the parse got
-// — a malformed/illegal token stops the load but keeps whatever prefix of
-// moves applied cleanly (same spirit as Lichess's PGN paste).
 type LoadPGNResponse struct {
 	GameStateJSON
 	AppliedPlies int    `json:"appliedPlies"`
@@ -23,11 +20,6 @@ type LoadPGNResponse struct {
 	Error        string `json:"error,omitempty"`
 }
 
-// LoadPGN replays a pasted PGN move list from the start position, rebuilding
-// the move tree via the same Game.ApplyMove used by normal play (so it goes
-// through the same tree/sideline semantics, not a separate code path).
-// Tokenizing and SAN matching live in the chess package (chess.go/pgn.go) —
-// shared with the coach corpus's prefix-position indexing, see coach/index.go.
 func (h *Handler) LoadPGN(w http.ResponseWriter, r *http.Request) {
 	g, ok := h.store.Get(chi.URLParam(r, "id"))
 	if !ok {

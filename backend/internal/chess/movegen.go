@@ -195,7 +195,7 @@ func castleQSClear(pos *Position, rank int, opp Color) bool {
 	if pos.Board[sqB] != nil || pos.Board[sqC] != nil || pos.Board[sqD] != nil {
 		return false
 	}
-	// b-file only needs to be empty; king travels e→d→c so those three must not be attacked
+
 	sqE := NewSquare(4, rank)
 	return !IsAttacked(pos, sqE, opp) &&
 		!IsAttacked(pos, sqD, opp) &&

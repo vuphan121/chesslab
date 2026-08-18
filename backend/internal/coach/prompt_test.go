@@ -12,11 +12,11 @@ func TestMoverAndPly(t *testing.T) {
 		wantMover string
 		wantPly   int
 	}{
-		// After 1.e4: black on move, fullmove 1 -> white moved, ply 1.
+
 		{"after white's first move", "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1", "White", 1},
-		// After 1...e5: white on move, fullmove 2 -> black moved, ply 2.
+
 		{"after black's first move", "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2", "Black", 2},
-		// After 2.Nf3: black on move, fullmove 2 -> white moved, ply 3.
+
 		{"after white's second move", "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2", "White", 3},
 		{"unparseable", "not a fen", "", 0},
 	}
@@ -57,9 +57,6 @@ func TestShowEngineEval(t *testing.T) {
 	}
 }
 
-// TestBuildExplainPromptSuppressesOpeningEval checks that an early, non-serious
-// move produces a prompt with no engine-evaluation section (the eval-in-opening
-// suppression) but still names the mover's perspective.
 func TestBuildExplainPromptSuppressesOpeningEval(t *testing.T) {
 	req := ExplainRequest{
 		FEN:         "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
@@ -123,9 +120,6 @@ func TestPerspectiveLine(t *testing.T) {
 	}
 }
 
-// TestBuildExplainPromptViewerDiffersFromMover is an end-to-end check of the
-// flip-recompute feature: when the human is studying from White but Black just
-// moved, the prompt must say so explicitly rather than defaulting to the mover.
 func TestBuildExplainPromptViewerDiffersFromMover(t *testing.T) {
 	req := ExplainRequest{
 		FEN:         "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2",

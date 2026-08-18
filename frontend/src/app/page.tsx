@@ -13,25 +13,25 @@ import { useViewportWidth, clamp } from '@/hooks/useViewportWidth'
 
 const DESKTOP_SQUARE_SIZE = 72
 const SIDE_WIDTH = 371
-const NARROW_BREAKPOINT = 1040 // below this, panels stack into a single column
+const NARROW_BREAKPOINT = 1040
 const OUTER_PADDING_DESKTOP = 24
 const OUTER_PADDING_NARROW = 14
 const ROW_GAP_DESKTOP = 20
-// Full side-by-side layout's natural width: 2 side panels + 2 gaps + board
-// column (board + eval-bar gap + eval-bar) + outer padding.
+
+
 const FULL_CONTAINER_WIDTH =
   SIDE_WIDTH * 2 + ROW_GAP_DESKTOP * 2 + (DESKTOP_SQUARE_SIZE * 8 + 11 + 15) + OUTER_PADDING_DESKTOP * 2
-const MIN_DESKTOP_SCALE = 0.45 // keeps squares >= ~32px before the stacked layout takes over
-// The board sits below a caption row (opening name / engine / flip button) in
-// the center column. Offset the side panels by the same amount so their tops
-// and bottoms line up with the board, not the caption above it (desktop only
-// — panels stack under the board on narrow screens, so no offset is needed).
+const MIN_DESKTOP_SCALE = 0.45
+
+
+
+
 const CAPTION_ROW_HEIGHT = 30
 const COLUMN_GAP = 14
-const BOARD_TOP_OFFSET = CAPTION_ROW_HEIGHT + COLUMN_GAP // 45
+const BOARD_TOP_OFFSET = CAPTION_ROW_HEIGHT + COLUMN_GAP
 
-// formatEval renders the white-relative engine score as a signed pawn value
-// (e.g. +0.3, -1.2) or mate (#3 / #-2), for the caption readout.
+
+
 function formatEval(score: number, mate: number): string {
   if (mate !== 0) return `#${mate}`
   const v = (Math.abs(score) / 100).toFixed(1)
@@ -47,8 +47,8 @@ export default function Home() {
 }
 
 function HomeInner() {
-  // ?gameId=... lets the opening trainer hand off an exact just-drilled line
-  // to this page (Analysis Board) instead of always starting a fresh game.
+
+
   const searchParams = useSearchParams()
   const initialGameId = searchParams.get('gameId') ?? undefined
 
@@ -77,22 +77,22 @@ function HomeInner() {
   } = useChessGame(initialGameId)
 
   const viewportWidth = useViewportWidth()
-  // Treat "not yet measured" (SSR/first paint) as desktop, so the initial
-  // render matches the server and there's no layout flash on mobile either
-  // (the resize listener fires immediately on mount and corrects it).
+
+
+
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
   const outerPadding = isNarrow ? OUTER_PADDING_NARROW : OUTER_PADDING_DESKTOP
 
-  // Below the full ~1432px design width but still above NARROW_BREAKPOINT
-  // (i.e. most real laptops), scale the whole side-by-side layout down
-  // together instead of leaving it at a fixed width. Was a real bug: the
-  // outer container is a flex item with no flex-shrink:0, so it visually
-  // reported a shrunk width, but its three fixed-width columns (side panels
-  // always 371px, board always 72px squares) never shrank with it — they
-  // just overflowed the container's right edge and got clipped by the
-  // page's overflow-x:hidden, making the whole layout look pushed left with
-  // the right panel partly cut off. Scaling every dimension from the same
-  // factor keeps the row's actual total width always <= the viewport.
+
+
+
+
+
+
+
+
+
+
   const desktopScale = isNarrow
     ? 1
     : clamp((viewportWidth ?? FULL_CONTAINER_WIDTH) / FULL_CONTAINER_WIDTH, MIN_DESKTOP_SCALE, 1)

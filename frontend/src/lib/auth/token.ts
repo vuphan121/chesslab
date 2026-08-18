@@ -1,6 +1,6 @@
-// localStorage-backed auth token + a tiny change-notification mechanism so
-// AuthGate can react to a login/logout (or client.ts reacting to a 401 —
-// see its request() helper) without a page reload.
+
+
+
 'use client'
 
 const STORAGE_KEY = 'chesslab.auth.token'

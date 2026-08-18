@@ -19,11 +19,11 @@ const CAPTION_ROW_HEIGHT = 30
 const COLUMN_GAP = 14
 const BOARD_TOP_OFFSET = CAPTION_ROW_HEIGHT + COLUMN_GAP
 const ROW_GAP_DESKTOP = 20
-// Board column + LinePanel + the symmetry spacer, same layout as the
-// Analysis Board page — see its CLAUDE.md/page.tsx comment for why this
-// needs to scale as one unit instead of relying on the browser's default
-// flex-shrink (it doesn't shrink these fixed-width columns evenly, which
-// silently overflows and gets clipped on any screen narrower than this).
+
+
+
+
+
 const FULL_CONTAINER_WIDTH =
   DESKTOP_SQUARE_SIZE * 8 + SIDE_WIDTH * 2 + ROW_GAP_DESKTOP * 2 + OUTER_PADDING_DESKTOP * 2
 const MIN_DESKTOP_SCALE = 0.45

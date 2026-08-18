@@ -11,10 +11,10 @@ import (
 )
 
 type Line struct {
-	Score int      // centipawns from the side-to-move's perspective
-	Mate  int      // 0 = none; >0 = mates in N; <0 = mated in N
+	Score int
+	Mate  int
 	Depth int
-	Moves []string // UCI format
+	Moves []string
 }
 
 type Analysis struct {
@@ -45,14 +45,14 @@ func New(path string) (*Engine, error) {
 	}
 	e := &Engine{cmd: cmd, in: in, out: bufio.NewScanner(outPipe)}
 	if err := e.handshake(); err != nil {
-		cmd.Process.Kill() //nolint:errcheck
+		cmd.Process.Kill()
 		return nil, err
 	}
 	return e, nil
 }
 
 func (e *Engine) send(s string) {
-	fmt.Fprintln(e.in, s) //nolint:errcheck
+	fmt.Fprintln(e.in, s)
 }
 
 func (e *Engine) handshake() error {
@@ -125,7 +125,7 @@ func (e *Engine) waitFor(prefix string) bool {
 
 func (e *Engine) Close() {
 	e.send("quit")
-	e.cmd.Wait() //nolint:errcheck
+	e.cmd.Wait()
 }
 
 type parsedInfo struct {

@@ -17,9 +17,9 @@ import type { GameState, Analysis, Explorer, ChatTurn } from '@/lib/api/client'
 import type { BoardState, Square } from '@/lib/chess/types'
 import { flatten, mainlineEnd, childrenOf } from '@/lib/chess/moveTree'
 
-// nodeMeta returns the SAN of the move that reached the given node and the FEN
-// of the position just before it (both empty at the root — no move played).
-// prevFen lets the coach classify the move (gambit-aware) without a store race.
+
+
+
 function nodeMeta(gs: GameState, nodeId: string): { san: string; prevFen: string } {
   const map = flatten(gs.moveTree)
   const entry = map.get(nodeId)
@@ -29,7 +29,7 @@ function nodeMeta(gs: GameState, nodeId: string): { san: string; prevFen: string
   return { san, prevFen }
 }
 
-// coachErrorMessage turns a thrown coach error into a short, user-facing line.
+
 function coachErrorMessage(err: unknown): string {
   if (err instanceof CoachUnavailableError) {
     return 'Coach is offline — start a local model (Ollama) to enable it.'
@@ -69,10 +69,10 @@ function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState 
   }
 }
 
-// initialGameId lets a caller adopt an already-existing game instead of
-// always creating a fresh one — used by the opening trainer's "Analyze this
-// line" handoff (?gameId=... on the analysis page) so the exact line just
-// drilled opens with full engine/explorer/coach access.
+
+
+
+
 export function useChessGame(initialGameId?: string) {
   const [gs, setGs] = useState<GameState | null>(null)
   const [selected, setSelected] = useState<Square | null>(null)
@@ -84,12 +84,12 @@ export function useChessGame(initialGameId?: string) {
   const [coachExplanation, setCoachExplanation] = useState<string | null>(null)
   const [coachExplaining, setCoachExplaining] = useState(false)
   const [coachError, setCoachError] = useState<string | null>(null)
-  // Board orientation. Lives here (not just in page.tsx) because flipping is
-  // also which side the coach is currently addressing (see toggleFlipped).
+
+
   const [flipped, setFlipped] = useState(false)
   const moveSound = useRef<HTMLAudioElement | null>(null)
-  // Monotonic id so a slow explanation request the user has since navigated
-  // away from (or re-asked) can't overwrite what's currently shown.
+
+
   const explainReqId = useRef(0)
 
   const runAnalysis = useCallback(async (gameId: string): Promise<Analysis | null> => {
@@ -99,7 +99,7 @@ export function useChessGame(initialGameId?: string) {
       setAnalysis(a)
       return a
     } catch {
-      // engine not configured or game over — leave previous analysis visible
+
       return null
     } finally {
       setAnalyzing(false)
@@ -113,20 +113,20 @@ export function useChessGame(initialGameId?: string) {
       setExplorer(e)
       return e
     } catch {
-      // explorer not configured (e.g. missing LICHESS_TOKEN) — leave previous data visible
+
       return null
     } finally {
       setExplorerLoading(false)
     }
   }, [])
 
-  // Fetches analysis + explorer for the new position after every
-  // move/navigation. The coach explanation (Path 1) is NOT fetched here —
-  // it's a manual action (askCoach, below) triggered by the "Ask Coach"
-  // button, not automatic: firing an explanation on every position passed
-  // through while scrubbing a game would queue up slow local-LLM calls one
-  // after another. Any pinned explanation belongs to the position that's now
-  // behind us, so it's cleared back to idle.
+
+
+
+
+
+
+
   const refreshInsights = useCallback(
     async (gameId: string) => {
       explainReqId.current++
@@ -145,21 +145,21 @@ export function useChessGame(initialGameId?: string) {
       setGs(g)
       refreshInsights(g.id)
     }).catch(console.error)
-    // initialGameId is only meant to be consulted on mount (adopting a game
-    // handed off from elsewhere); it intentionally isn't a dependency here.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+
+
   }, [refreshInsights])
 
-  // Explains the move at the current position (coach Path 1) — reads the
-  // latest gs/analysis/explorer/flipped from state, so it always asks about
-  // wherever the user currently is, however they navigated there.
-  // viewerColor is which side the human is currently studying from (derived
-  // from `flipped`) — it re-frames whose perspective the explanation is
-  // written from, independent of who actually made the move.
+
+
+
+
+
+
   const askCoach = useCallback(async () => {
     if (!gs) return
     const { san, prevFen } = nodeMeta(gs, gs.currentNodeId)
-    if (!san) return // at the root, no move to explain
+    if (!san) return
 
     const reqId = ++explainReqId.current
     setCoachError(null)
@@ -185,9 +185,9 @@ export function useChessGame(initialGameId?: string) {
     }
   }, [gs, analysis, explorer, flipped])
 
-  // Flipping changes which side "you/we" refers to, so a pinned explanation
-  // (written for the old perspective) is now stale — clear it back to idle
-  // rather than show mismatched framing; hit "Ask Coach" again for the new side.
+
+
+
   const toggleFlipped = useCallback(() => {
     setFlipped((f) => !f)
     explainReqId.current++
@@ -272,8 +272,8 @@ export function useChessGame(initialGameId?: string) {
     [gs],
   )
 
-  // Navigate to any node in the move tree. Plays the move sound so stepping
-  // backward/forward is audible, and keeps every move (no truncation).
+
+
   const gotoNodeId = useCallback(
     async (nodeId: string) => {
       if (!gs || busy || nodeId === gs.currentNodeId) return
@@ -285,7 +285,7 @@ export function useChessGame(initialGameId?: string) {
         moveSound.current?.play().catch(() => {})
         refreshInsights(next.id)
       } catch {
-        // ignore
+
       } finally {
         setBusy(false)
       }
@@ -331,9 +331,9 @@ export function useChessGame(initialGameId?: string) {
     }
   }, [refreshInsights])
 
-  // Replaces the whole game with a pasted PGN's move list, replayed from the
-  // start position. Throws with a message if the paste didn't fully parse
-  // (partial parse still lands on whatever prefix of moves was legal).
+
+
+
   const loadPgn = useCallback(
     async (pgn: string) => {
       if (!gs || busy) return
@@ -356,9 +356,9 @@ export function useChessGame(initialGameId?: string) {
     [gs, busy, refreshInsights],
   )
 
-  // Freeform coach chat (Path 2). The backend reads the live board position
-  // from the game store, so we only pass the message + prior turns. Throws a
-  // friendly Error the composer can surface; keeps the caller's history intact.
+
+
+
   const sendCoachChat = useCallback(
     async (message: string, history: ChatTurn[]): Promise<string> => {
       if (!gs) throw new Error('Game not ready yet.')

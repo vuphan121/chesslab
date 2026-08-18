@@ -4,19 +4,19 @@ import { useState, useRef, useEffect } from 'react'
 import type { ChatTurn } from '@/lib/api/client'
 
 interface CoachProps {
-  // Path 1 — per-move explanation of the current position. Manually
-  // triggered (see onAskCoach) rather than automatic, so scrubbing through a
-  // game doesn't queue up a slow local-LLM call for every position passed
-  // through — see useChessGame's askCoach.
+
+
+
+
   explanation: string | null
   explaining: boolean
   explainError: string | null
-  // Fetches the explanation for whatever position is currently on the board.
+
   onAskCoach: () => void
-  // False at the root (no move yet to explain) — disables the ask button.
+
   canAsk: boolean
-  // Path 2 — freeform chat. Resolves to the coach's reply, or throws with a
-  // user-facing message.
+
+
   onSendChat: (message: string, history: ChatTurn[]) => Promise<string>
 }
 
@@ -27,7 +27,7 @@ interface ChatMessage {
   error?: boolean
 }
 
-// A three-dot "thinking" indicator — local model inference takes a few seconds.
+
 function Thinking() {
   return (
     <div style={{ display: 'flex', gap: 4, alignItems: 'center', padding: '2px 0' }}>
@@ -49,10 +49,10 @@ function Thinking() {
   )
 }
 
-// AskCoachButton is reused both for the empty-state prompt and the "ask
-// again" link shown once an explanation is already pinned (e.g. after
-// flipping the board, which clears the old one since it was framed for the
-// other side).
+
+
+
+
 function AskCoachButton({
   onClick,
   disabled,
@@ -96,7 +96,7 @@ export default function Coach({
   const [sending, setSending] = useState(false)
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
-  // Keep the newest content in view as the explanation updates or chat grows.
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, explanation, explaining])
@@ -105,8 +105,8 @@ export default function Coach({
     const text = input.trim()
     if (!text || sending) return
 
-    // History sent to the backend is the committed conversation so far (only
-    // real user/assistant turns — no pending/error placeholders).
+
+
     const history: ChatTurn[] = messages
       .filter((m) => !m.pending && !m.error)
       .map((m) => ({ role: m.role, content: m.text }))
@@ -151,7 +151,7 @@ export default function Coach({
         overflow: 'hidden',
       }}
     >
-      {/* Header */}
+      {}
       <div
         style={{
           padding: '16px 20px',
@@ -169,7 +169,7 @@ export default function Coach({
         </div>
       </div>
 
-      {/* Message list */}
+      {}
       <div
         ref={scrollRef}
         style={{
@@ -182,9 +182,9 @@ export default function Coach({
           gap: 16,
         }}
       >
-        {/* Path 1 — explanation of the current position, pinned at top. Manually
-            triggered, so idle (no explanation/error/in-flight request) shows a
-            prompt to ask instead of firing automatically. */}
+        {
+
+}
         {explainError ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ fontSize: 13, lineHeight: 1.5, color: '#b06a56' }}>{explainError}</div>
@@ -211,7 +211,7 @@ export default function Coach({
           </div>
         ) : null}
 
-        {/* Path 2 — freeform chat thread */}
+        {}
         {messages.map((m, i) =>
           m.role === 'assistant' ? (
             m.pending ? (
@@ -250,7 +250,7 @@ export default function Coach({
         )}
       </div>
 
-      {/* Composer */}
+      {}
       <div style={{ padding: '14px 16px', borderTop: '1px solid #efeee9' }}>
         <div
           style={{
@@ -273,8 +273,8 @@ export default function Coach({
             className="coach-input"
             style={{
               flex: 1,
-              // 16px minimum — iOS Safari auto-zooms the page on focusing any
-              // text input with a smaller computed font-size.
+
+
               fontSize: 16,
               color: '#37352f',
               background: 'transparent',

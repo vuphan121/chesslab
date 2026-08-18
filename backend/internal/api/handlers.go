@@ -24,13 +24,13 @@ import (
 type Handler struct {
 	store             storage.Store
 	engine            *engine.Engine
-	coach             *coach.Service // Path 1 (per-move); nil if unconfigured — endpoint returns 503
-	coachAgent        *coach.Agent   // Path 2 (freeform chat); nil if unconfigured — endpoint returns 503
+	coach             *coach.Service
+	coachAgent        *coach.Agent
 	repertoires       *repertoire.Store
-	books             *book.Store       // "Study from Book"; empty store (not nil) if no BOOKS_PATH data — endpoints just return []
-	bookSource        booksource.Reader // private chapter PDFs; nil when B2 is not configured
+	books             *book.Store
+	bookSource        booksource.Reader
 	bookChapterPrefix string
-	db                *db.Store // trainer progress sync + analytics; nil if DATABASE_URL unset — endpoints return 503
+	db                *db.Store
 	authCfg           auth.Config
 }
 
@@ -50,9 +50,6 @@ type MoveJSON struct {
 	Promotion string `json:"promotion,omitempty"`
 }
 
-// MoveNodeJSON is one node of the game's move tree. The root has an empty SAN
-// and represents the starting position; children[0] is the main line and any
-// further children are sidelines.
 type MoveNodeJSON struct {
 	ID       string         `json:"id"`
 	SAN      string         `json:"san"`
@@ -90,12 +87,12 @@ type MakeMoveRequest struct {
 }
 
 type LineJSON struct {
-	Score    int      `json:"score"` // centipawns, white perspective
-	Mate     int      `json:"mate"`  // >0 = white mates in N; <0 = black mates in N
+	Score    int      `json:"score"`
+	Mate     int      `json:"mate"`
 	Depth    int      `json:"depth"`
-	Moves    []string `json:"moves"`    // SAN
-	UCIMoves []string `json:"uciMoves"` // UCI, parallel to Moves
-	FENs     []string `json:"fens"`     // FEN after each move
+	Moves    []string `json:"moves"`
+	UCIMoves []string `json:"uciMoves"`
+	FENs     []string `json:"fens"`
 }
 
 type AnalysisJSON struct {
@@ -130,9 +127,6 @@ type CreateGameRequest struct {
 	FEN string `json:"fen"`
 }
 
-// CreateGame creates a new game, optionally rooted at an arbitrary FEN (used
-// by the opening trainer and the analysis-board handoff). An empty or
-// absent body keeps the existing behavior: a game from the initial position.
 func (h *Handler) CreateGame(w http.ResponseWriter, r *http.Request) {
 	var req CreateGameRequest
 	if r.ContentLength != 0 {
@@ -163,9 +157,6 @@ type SetPositionRequest struct {
 	FEN string `json:"fen"`
 }
 
-// SetPosition re-points an existing game at an arbitrary FEN, discarding its
-// tree — the opening trainer reuses one game object across a whole drill
-// session instead of creating one per card.
 func (h *Handler) SetPosition(w http.ResponseWriter, r *http.Request) {
 	g, ok := h.store.Get(chi.URLParam(r, "id"))
 	if !ok {
@@ -261,10 +252,6 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 	fen := chess.FEN(g.Pos)
 	flipScore := g.Pos.Turn == chess.Black
 
-	// Try Lichess cloud eval first (deep precomputed analysis, free).
-	// NOTE: cloud-eval cp/mate are already White-relative (positive = White
-	// better / White mates), regardless of side to move — so, unlike the local
-	// Stockfish path below, we must NOT apply flipScore here.
 	if cloud, err := lichess.Fetch(fen, 3); err == nil && cloud != nil {
 		result := AnalysisJSON{EngineName: "Lichess Cloud", Depth: cloud.Depth}
 		for i, pv := range cloud.PVs {
@@ -299,7 +286,6 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 		log.Printf("lichess cloud eval: %v", err)
 	}
 
-	// Fall back to local Stockfish.
 	if h.engine == nil {
 		http.Error(w, "engine not configured", http.StatusServiceUnavailable)
 		return
@@ -334,18 +320,12 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, result)
 }
 
-// EvalFENResponse is a light per-position eval (no PV lines) used to annotate
-// each move in the move list. Score/Mate are White-relative, consistent with
-// the eval bar.
 type EvalFENResponse struct {
 	Score int `json:"score"`
 	Mate  int `json:"mate"`
 	Depth int `json:"depth"`
 }
 
-// EvalFEN returns a White-relative score for an arbitrary FEN (cloud eval
-// first, local Stockfish fallback). Used by the move list to show an eval after
-// each move without replaying the whole game through a stored game object.
 func (h *Handler) EvalFEN(w http.ResponseWriter, r *http.Request) {
 	fen := r.URL.Query().Get("fen")
 	pos, err := chess.ParseFEN(fen)
@@ -355,8 +335,6 @@ func (h *Handler) EvalFEN(w http.ResponseWriter, r *http.Request) {
 	}
 	flipScore := pos.Turn == chess.Black
 
-	// Cloud eval is already White-relative (no flip); Stockfish is
-	// side-to-move relative (flip on Black) — same policy as AnalyzeGame.
 	if cloud, cerr := lichess.Fetch(fen, 1); cerr == nil && cloud != nil && len(cloud.PVs) > 0 {
 		pv := cloud.PVs[0]
 		out := EvalFENResponse{Depth: cloud.Depth}
@@ -483,8 +461,6 @@ func toGameState(g *chess.Game) GameStateJSON {
 	}
 }
 
-// toMoveNode recursively serializes the move tree. ply is the half-move depth
-// (root = 0, first move = 1, ...).
 func toMoveNode(n *chess.Node, ply int) MoveNodeJSON {
 	mj := MoveNodeJSON{ID: n.ID, SAN: n.SAN, FEN: chess.FEN(n.Pos), Ply: ply}
 	for _, ch := range n.Children {
@@ -514,5 +490,5 @@ func toMoveJSON(m chess.Move) MoveJSON {
 func respondJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(v) //nolint:errcheck
+	json.NewEncoder(w).Encode(v)
 }

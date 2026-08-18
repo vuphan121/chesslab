@@ -28,7 +28,7 @@ func applyMove(pos *Position, m Move) *Position {
 		if pos.Turn == Black {
 			dir = -1
 		}
-		// captured pawn sits one rank behind the EP target square
+
 		next.Board[NewSquare(m.To.File(), m.To.Rank()-dir)] = nil
 		next.HalfClock = 0
 
@@ -67,9 +67,6 @@ func applyMove(pos *Position, m Move) *Position {
 	return next
 }
 
-// ApplyMove returns the position after playing m in pos. It does not check
-// legality — callers (e.g. repertoire PGN parsing) are expected to have
-// already validated m via GenerateLegalMoves/FindLegalMoveBySAN.
 func ApplyMove(pos *Position, m Move) *Position {
 	return applyMove(pos, m)
 }
@@ -95,10 +92,6 @@ func updateCastling(c *CastlingRights, from, to Square) {
 	}
 }
 
-// Node is one position in the game's move tree. The root holds the starting
-// position (with a zero Move and empty SAN); every other node holds the move
-// that reached it plus the resulting position. Children[0] is the main line;
-// Children[1:] are sidelines (alternative continuations from the same parent).
 type Node struct {
 	ID       string
 	Move     Move
@@ -112,7 +105,7 @@ type Game struct {
 	ID      string
 	Root    *Node
 	Current *Node
-	// Pos and LastMove mirror Current for convenient access from handlers.
+
 	Pos      *Position
 	LastMove *Move
 	counter  int
@@ -123,9 +116,6 @@ func NewGame(id string) *Game {
 	return g
 }
 
-// NewGameFromFEN creates a game rooted at an arbitrary position instead of
-// the initial one — used by the opening trainer, whose repertoire lines
-// start wherever the source study's chapter does.
 func NewGameFromFEN(id string, fen string) (*Game, error) {
 	pos, err := ParseFEN(fen)
 	if err != nil {
@@ -140,7 +130,6 @@ func (g *Game) nextID() string {
 	return strconv.Itoa(g.counter)
 }
 
-// setCurrent points the game at node n and syncs the mirrored fields.
 func (g *Game) setCurrent(n *Node) {
 	g.Current = n
 	g.Pos = n.Pos
@@ -151,12 +140,6 @@ func (g *Game) setCurrent(n *Node) {
 	}
 }
 
-// Reset discards the entire move tree (all mainline moves and sidelines) and
-// starts over from a fresh starting position, as a brand-new root. Unlike
-// GotoNode(g.Root.ID), which only moves the cursor and leaves old children in
-// place (so replaying a diverging line becomes a sideline off the stale root),
-// this actually clears the tree — used by PGN paste, which should replace the
-// game outright, not branch off whatever was there before.
 func (g *Game) Reset() {
 	pos, _ := ParseFEN(StartFEN)
 	root := &Node{ID: "0", Pos: pos}
@@ -165,12 +148,6 @@ func (g *Game) Reset() {
 	g.setCurrent(root)
 }
 
-// ResetTo is the FEN variant of Reset: discards the entire move tree and
-// starts over from a fresh root at an arbitrary position, rather than the
-// initial one. Same contract as Reset (a brand-new root with empty
-// Children) — used by the opening trainer to re-point one game object at
-// each new card's position without leaking the previous card's moves into
-// the next as a stale sideline.
 func (g *Game) ResetTo(fen string) error {
 	pos, err := ParseFEN(fen)
 	if err != nil {
@@ -183,7 +160,6 @@ func (g *Game) ResetTo(fen string) error {
 	return nil
 }
 
-// GotoNode navigates to an existing node without discarding any moves.
 func (g *Game) GotoNode(id string) error {
 	if n := findNode(g.Root, id); n != nil {
 		g.setCurrent(n)
@@ -208,9 +184,6 @@ func (g *Game) LegalMoves() []Move {
 	return GenerateLegalMoves(g.Pos)
 }
 
-// ApplyMove plays m from the current node. Replaying an existing continuation
-// just navigates onto it; a new move from a node that already has children
-// creates a sideline.
 func (g *Game) ApplyMove(m Move) error {
 	legal := g.LegalMoves()
 

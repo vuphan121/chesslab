@@ -1,17 +1,17 @@
 package chess
 
 type CastlingRights struct {
-	WK, WQ bool // white kingside / queenside
-	BK, BQ bool // black kingside / queenside
+	WK, WQ bool
+	BK, BQ bool
 }
 
 type Position struct {
 	Board     [64]*Piece
 	Turn      Color
 	Castling  CastlingRights
-	EP        Square // en passant target square; NoSquare when none
-	HalfClock int    // half-move clock for the 50-move rule
-	FullMove  int    // full-move number (starts at 1)
+	EP        Square
+	HalfClock int
+	FullMove  int
 }
 
 func (pos *Position) PieceAt(sq Square) *Piece {

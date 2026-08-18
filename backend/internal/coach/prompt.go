@@ -6,25 +6,20 @@ import (
 	"strings"
 )
 
-// LineInput is one engine PV, already resolved to SAN by the caller (mirrors
-// api.LineJSON without importing the api package, to avoid an import cycle).
 type LineInput struct {
 	Score int
 	Mate  int
 	Moves []string
 }
 
-// AnalysisInput is the grounding data the frontend already fetched via
-// GET /api/games/{id}/analysis for this position.
 type AnalysisInput struct {
 	EngineName string
 	Depth      int
-	Score      int // centipawns, white's perspective
+	Score      int
 	Mate       int
 	Lines      []LineInput
 }
 
-// ExplorerMoveInput is one candidate move's stats from the opening explorer.
 type ExplorerMoveInput struct {
 	SAN      string
 	Games    int
@@ -34,8 +29,6 @@ type ExplorerMoveInput struct {
 	BlackPct float64
 }
 
-// ExplorerInput is the grounding data the frontend already fetched via
-// GET /api/games/{id}/explorer for this position.
 type ExplorerInput struct {
 	TotalGames  int
 	OpeningName string
@@ -43,13 +36,6 @@ type ExplorerInput struct {
 	Moves       []ExplorerMoveInput
 }
 
-// ExplainRequest is everything needed to explain the move that was just
-// played/navigated to. FEN is the position *after* that move; PrevFEN is the
-// position *before* it (empty at the game's start), used to classify the move.
-// ViewerColor ("w"/"b") is which side the human is currently studying from —
-// the frontend derives it from the board-flip toggle, so flipping the board
-// re-frames whose perspective the coach speaks from. Empty means unknown, in
-// which case the coach defaults to the side that actually made the move.
 type ExplainRequest struct {
 	FEN         string
 	PrevFEN     string
@@ -63,9 +49,6 @@ const generalPrinciples = `General chess principles to draw on when book theory 
 position: control of the center, piece development and activity, king safety, pawn structure
 (weaknesses, majorities, breaks), tempo, and material vs. compensation.`
 
-// gambitPhilosophy is shared by both paths — it's the core "don't scold a real
-// gambit" framing the user asked for. Engine eval alone is the wrong yardstick
-// for opening theory.
 const gambitPhilosophy = `How to judge an opening move like a human, not just an engine:
 
 - Engine evaluation is ONE input, not the verdict. Many legitimate, respected openings — especially
@@ -173,33 +156,12 @@ Length and tone — be brief, but never at the cost of the actual point:
 
 ` + generalPrinciples
 
-// openingEvalPly is the half-move depth through which the coach treats a
-// position as "still in the opening". Within it, a not-obviously-bad move gets
-// no engine-eval mention (tiny early eval swings are theory/development noise,
-// not something to quote at the player). See showEngineEval.
 const openingEvalPly = 10
 
-// isSeriousError reports whether a move-quality verdict is bad enough to be
-// worth citing the engine eval for even in the opening (a real Mistake/Blunder).
 func isSeriousError(c MoveCategory) bool {
 	return c == CategoryMistake || c == CategoryBlunder
 }
 
-// moverAndPly derives, from the FEN of the position *after* a move, which color
-// made that move and the half-move (ply) count. The FEN's side-to-move field is
-// the player now on move (the opponent of the mover); the fullmove number plus
-// that field give the ply. Returns ("", 0) if the FEN can't be parsed.
-// formatContinuation renders an engine PV as an explicitly color-labeled,
-// capped sequence ("White: Bxd3, Black: Nc6, White: c4, Black: e6") instead
-// of a bare space-separated SAN string. A bare list forces the model to
-// track whose move is whose by counting alternation, which it does
-// unreliably in practice (observed live: given "Bxd3 Nc6 c4 e6..." it
-// described the position's own move as "stopping" c4 — the very next move
-// in that same list, played by the opponent). Labeling every move removes
-// that failure mode structurally instead of just telling the model not to
-// make it. sideToMoveFEN is the "w"/"b" field of the FEN the line starts
-// from; capPlies bounds how many moves are shown (deep lines are noise and
-// more surface area to misread, not more useful signal).
 func formatContinuation(moves []string, sideToMoveFEN string, capPlies int) string {
 	color := "White"
 	if sideToMoveFEN == "b" {
@@ -230,17 +192,14 @@ func moverAndPly(fen string) (mover string, ply int) {
 		return "", 0
 	}
 	switch fields[1] {
-	case "w": // black is on move now, so black just moved
+	case "w":
 		return "Black", (fullMove - 1) * 2
-	case "b": // white is on move now, so white just moved
+	case "b":
 		return "White", (fullMove-1)*2 + 1
 	}
 	return "", 0
 }
 
-// viewerName maps a "w"/"b" viewer-color field (which side the human is
-// currently studying from, sent by the frontend based on board orientation)
-// to a display name. Empty/unrecognized input returns "".
 func viewerName(color string) string {
 	switch color {
 	case "w":
@@ -252,11 +211,6 @@ func viewerName(color string) string {
 	}
 }
 
-// perspectiveLine builds the per-request instruction telling the model whose
-// side "you/we" refers to. viewerColor is the human's chosen viewing side; if
-// unset, the viewer defaults to the mover (preserving the plain "explain from
-// whoever moved" behavior for callers that don't track a flip state, e.g. an
-// older frontend build or a future non-board caller).
 func perspectiveLine(mover, viewerColor string) string {
 	if mover == "" {
 		return ""
@@ -277,11 +231,6 @@ func perspectiveLine(mover, viewerColor string) string {
 		viewer, mover, mover, mover, viewer, viewer, viewer, viewer)
 }
 
-// showEngineEval gates whether the engine evaluation is put in front of the
-// model at all. Past the opening it's always shown; inside the opening it's
-// suppressed unless the move is a genuine Mistake/Blunder — so early book moves
-// don't get narrated with "+0.3, the engine slightly prefers...". An unparseable
-// ply (0) is treated as "not in the opening" so we never over-suppress.
 func showEngineEval(ply int, quality *MoveQuality) bool {
 	if ply <= 0 || ply > openingEvalPly {
 		return true
@@ -289,10 +238,6 @@ func showEngineEval(ply int, quality *MoveQuality) bool {
 	return quality != nil && isSeriousError(quality.Category)
 }
 
-// BuildExplainPrompt assembles the system+user prompt for the per-move
-// explanation path. theory may be entirely empty (most positions won't have
-// book commentary, exact or nearby) and quality may be nil (when the prior
-// position is unknown).
 func BuildExplainPrompt(req ExplainRequest, theory LookupResult, quality *MoveQuality) (system, user string) {
 	var b strings.Builder
 
@@ -314,8 +259,7 @@ func BuildExplainPrompt(req ExplainRequest, theory LookupResult, quality *MoveQu
 			fmt.Fprintf(&b, "- Win probability lost: %.1f%% (book status: %s, %d rated games)\n",
 				quality.WinPercentLost, quality.BookStatus, quality.BookGames)
 		} else {
-			// In the opening for a fine move, keep the book grounding but omit the
-			// win% number so the model has no eval figure to parrot.
+
 			fmt.Fprintf(&b, "- Book status: %s (%d rated games)\n", quality.BookStatus, quality.BookGames)
 		}
 		if quality.Note != "" {
@@ -339,10 +283,7 @@ func BuildExplainPrompt(req ExplainRequest, theory LookupResult, quality *MoveQu
 				fmt.Fprintf(&b, "- Line %d: %s\n", i+1, strings.Join(line.Moves, " "))
 			}
 		} else if len(a.Lines) > 0 && len(a.Lines[0].Moves) > 0 {
-			// Numeric eval is suppressed this early, but the engine's own predicted
-			// continuation is still real ground truth for "what happens next" — just
-			// with no score/depth/engine-name attached to parrot. Color-labeled and
-			// capped — see formatContinuation.
+
 			stm := "w"
 			if fields := strings.Fields(req.FEN); len(fields) > 1 {
 				stm = fields[1]

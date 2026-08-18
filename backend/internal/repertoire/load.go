@@ -7,10 +7,6 @@ import (
 	"strings"
 )
 
-// LoadDir globs every *.pgn in dir, pairs it with a same-basename
-// .config.json sidecar if present, and returns whatever parsed. A single
-// repertoire's parse failure is logged and skipped, not fatal — same policy
-// as the coach's optional corpora.
 func LoadDir(dir string) []*Repertoire {
 	entries, err := os.ReadDir(dir)
 	if err != nil {

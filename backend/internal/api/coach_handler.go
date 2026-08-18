@@ -9,14 +9,11 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// ExplainMoveRequest carries the FEN/move plus whatever analysis/explorer
-// data the frontend already fetched via refreshInsights — no extra
-// Stockfish/Lichess round trip needed for the per-move explanation path.
 type ExplainMoveRequest struct {
 	FEN         string        `json:"fen"`
-	PrevFEN     string        `json:"prevFen"` // position before the move, for move classification
+	PrevFEN     string        `json:"prevFen"`
 	LastMoveSAN string        `json:"lastMoveSan"`
-	ViewerColor string        `json:"viewerColor"` // "w"/"b" — which side the human is currently viewing from
+	ViewerColor string        `json:"viewerColor"`
 	Analysis    *AnalysisJSON `json:"analysis"`
 	Explorer    *ExplorerJSON `json:"explorer"`
 }
@@ -59,10 +56,8 @@ func (h *Handler) ExplainMove(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, ExplainMoveResponse{Explanation: explanation})
 }
 
-// ChatTurnJSON is one message in the conversation history the frontend
-// maintains and resends — the coach agent is stateless between requests.
 type ChatTurnJSON struct {
-	Role    string `json:"role"` // "user" or "assistant"
+	Role    string `json:"role"`
 	Content string `json:"content"`
 }
 

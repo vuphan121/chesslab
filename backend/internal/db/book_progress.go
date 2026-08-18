@@ -5,8 +5,6 @@ import (
 	"fmt"
 )
 
-// GetBookProgress returns the set of item ids the user has completed in the
-// given book — an empty map (not an error) if nothing's been done yet.
 func (s *Store) GetBookProgress(ctx context.Context, username, bookID string) (map[string]bool, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT item_id FROM book_item_progress
@@ -28,8 +26,6 @@ func (s *Store) GetBookProgress(ctx context.Context, username, bookID string) (m
 	return out, rows.Err()
 }
 
-// MarkItemDone records an explicitly completed item — idempotent, a re-mark
-// of an already-done item is a no-op rather than an error.
 func (s *Store) MarkItemDone(ctx context.Context, username, bookID, itemID string) error {
 	_, err := s.pool.Exec(ctx, `
 		INSERT INTO book_item_progress (username, book_id, item_id)

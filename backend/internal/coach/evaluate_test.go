@@ -2,10 +2,6 @@ package coach
 
 import "testing"
 
-// EvaluateMove's legality/parsing path shouldn't need an engine or network —
-// only the quality grading does. With no engine and no Lichess token in tests,
-// ClassifyMove will fail, so Quality is nil, but Legal/Move/UCI/ResultingFEN
-// must still be correct (that's the "can I play X here?" answer).
 func TestEvaluateMoveLegalSAN(t *testing.T) {
 	tools := &Tools{}
 	const startFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -45,7 +41,7 @@ func TestEvaluateMoveIllegal(t *testing.T) {
 	tools := &Tools{}
 	const startFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-	res, err := tools.EvaluateMove(startFEN, "Nf6") // black's move, not legal for white to start
+	res, err := tools.EvaluateMove(startFEN, "Nf6")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

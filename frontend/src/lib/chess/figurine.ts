@@ -1,6 +1,6 @@
-// figurineMap replaces a SAN's leading piece letter with a chess glyph,
-// matching Lichess's move list. Pawn moves (no piece letter) and castling
-// are unchanged.
+
+
+
 const figurineMap: Record<string, string> = {
   K: '♚',
   Q: '♛',

@@ -14,18 +14,11 @@ var (
 	moveNumberPrefix = regexp.MustCompile(`^\d+\.+`)
 )
 
-// gameBlock is one game's raw tag pairs + concatenated movetext, before
-// tokenizing/parsing.
 type gameBlock struct {
 	tags     map[string]string
 	movetext string
 }
 
-// ParsePGN parses a multi-game study export (one chapter per game, each
-// carrying its own [FEN]/[SetUp] and full variation tree) into Chapters.
-// Returns an error naming the chapter and token on the first illegal or
-// unparseable move — a repertoire that silently drops half a line is worse
-// than one that refuses to load.
 func ParsePGN(text string) ([]*Chapter, error) {
 	blocks, err := splitGames(text)
 	if err != nil {
@@ -65,10 +58,6 @@ func ParsePGN(text string) ([]*Chapter, error) {
 	return chapters, nil
 }
 
-// splitGames splits a PGN file into per-game tag blocks + movetext. A study
-// export separates chapters as consecutive "[Tag ...]... movetext" games
-// with no other delimiter, so a new tag block encountered after movetext has
-// already started ends the previous game.
 func splitGames(text string) ([]gameBlock, error) {
 	var blocks []gameBlock
 	tags := map[string]string{}
@@ -118,13 +107,10 @@ const (
 
 type token struct {
 	kind tokKind
-	text string // move SAN (annotation-stripped) or comment text
+	text string
 	nag  int
 }
 
-// tokenizeMovetext scans one chapter's movetext into a flat token stream:
-// moves, comments, NAGs, and paren boundaries. Move-number labels and result
-// markers are dropped entirely (never emitted as tokens).
 func tokenizeMovetext(s string) ([]token, error) {
 	var toks []token
 	i, n := 0, len(s)
@@ -204,9 +190,6 @@ func isResultToken(s string) bool {
 	return false
 }
 
-// splitAnnotationSuffix strips trailing !/? suffix-annotations (as opposed to
-// $N NAGs) from a move token and returns the equivalent NAG, so both
-// notations for the same annotation end up on the node the same way.
 func splitAnnotationSuffix(s string) (san string, nag int) {
 	suf := ""
 	for len(s) > 0 && (s[len(s)-1] == '!' || s[len(s)-1] == '?') {
@@ -231,8 +214,6 @@ func splitAnnotationSuffix(s string) (san string, nag int) {
 	}
 }
 
-// parseChapterMovetext builds one chapter's move tree from its token stream,
-// starting at startFEN.
 func parseChapterMovetext(startFEN string, toks []token, label string) (*Node, error) {
 	pos, err := chess.ParseFEN(startFEN)
 	if err != nil {
@@ -245,11 +226,6 @@ func parseChapterMovetext(startFEN string, toks []token, label string) (*Node, e
 	return root, nil
 }
 
-// parseSeq consumes tokens starting at idx, extending the chain from
-// `current`. A '(' opens a variation that is an alternative to `current`'s
-// own move — i.e. a sibling subtree rooted at current.Parent — parsed via a
-// recursive call that does not disturb `current` in the outer sequence. A
-// ')' or end-of-input ends the current sequence.
 func parseSeq(toks []token, idx int, current *Node, label string) (int, error) {
 	for idx < len(toks) {
 		t := toks[idx]

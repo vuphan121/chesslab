@@ -122,8 +122,7 @@ func TestLoadDir_SkipsMismatchedSideToMove(t *testing.T) {
 
 func TestLoadDir_SkipsIllegalSolutionMove(t *testing.T) {
 	dir := t.TempDir()
-	// e4 is fine, but Ke2 is not a legal reply to it in this position — the
-	// solution sequence must fail validation on ply 2.
+
 	bad := `{"id":"bad","title":"Bad","author":"","chapters":[{"id":"ch1","number":1,"name":"C1","items":[
 		{"id":"i1","chapterId":"ch1","type":"puzzle","fen":"` + startFEN + `","sideToMove":"w","prompt":"x","solution":["e4","Ke2"]}
 	]}]}`

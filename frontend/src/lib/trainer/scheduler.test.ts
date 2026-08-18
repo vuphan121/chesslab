@@ -15,7 +15,7 @@ function makeCard(id: string): RepCard {
   }
 }
 
-const noJitterRng = () => 0.5 // uniform(1-J,1+J, rng)=1.0 at rng()=0.5
+const noJitterRng = () => 0.5
 
 function session(cards: RepCard[], opts?: Partial<SessionOptions>, rng: () => number = noJitterRng) {
   return createSession(cards, { sessionLength: null, mode: 'mixed', ...opts }, null, rng)
@@ -46,7 +46,7 @@ describe('scheduler', () => {
       boxesSeen.push(before)
     }
     expect(boxesSeen).toEqual([0, 1, 2, 3, 4, 5])
-    // dueStep gaps should match BASE_GAP at each box (jitter stubbed to 1.0)
+
   })
 
   it('a miss demotes by exactly 2, floored at 0', () => {
@@ -55,7 +55,7 @@ describe('scheduler', () => {
     c.box = 1
     pickNext(s)
     grade(s, 'A', false)
-    expect(c.box).toBe(0) // floored, not -1
+    expect(c.box).toBe(0)
 
     c.box = 3
     grade(s, 'A', false)
@@ -84,15 +84,15 @@ describe('scheduler', () => {
   it('pickNext never returns a card whose dueStep > step while another is due', () => {
     const s = session([makeCard('A'), makeCard('B')])
     pickNext(s)
-    grade(s, 'A', true) // A now due later
-    const picked = pickNext(s) // B still due at step 0
+    grade(s, 'A', true)
+    const picked = pickNext(s)
     expect(picked?.cardId).toBe('B')
   })
 
   it('fast-forwards step to the minimum dueStep without skipping a card', () => {
     const s = session([makeCard('A'), makeCard('B')])
-    grade(s, 'A', true) // A due later
-    grade(s, 'B', true) // B due later too, both retired? no just box1
+    grade(s, 'A', true)
+    grade(s, 'B', true)
     const before = s.step
     const picked = pickNext(s)
     expect(s.step).toBeGreaterThanOrEqual(before)
@@ -102,8 +102,8 @@ describe('scheduler', () => {
   it('every card is immediately eligible — no gradual new-card introduction', () => {
     const cards = [makeCard('A'), makeCard('B'), makeCard('C')]
     const s = session(cards)
-    // all three should already be "active" (pickable) from step 0, not
-    // drip-fed in one at a time
+
+
     const active = s.order.map((id) => s.cards.get(id)!).filter((c) => !c.retired)
     expect(active).toHaveLength(3)
   })

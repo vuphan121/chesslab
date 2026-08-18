@@ -88,8 +88,6 @@ type RepertoireJSON struct {
 	Replies     map[string][]RepReplyJSON `json:"replies"`
 }
 
-// ListRepertoires returns a lightweight summary of every loaded repertoire
-// (no trees/cards) for the trainer's setup screen.
 func (h *Handler) ListRepertoires(w http.ResponseWriter, r *http.Request) {
 	reps := h.repertoires.List()
 	out := make([]RepertoireSummaryJSON, 0, len(reps))
@@ -99,7 +97,6 @@ func (h *Handler) ListRepertoires(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, out)
 }
 
-// GetRepertoire returns one repertoire's full chapters/cards/replies.
 func (h *Handler) GetRepertoire(w http.ResponseWriter, r *http.Request) {
 	rep, ok := h.repertoires.Get(chi.URLParam(r, "id"))
 	if !ok {

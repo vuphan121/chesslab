@@ -1,9 +1,5 @@
 package repertoire
 
-// Store is a read-only in-memory registry of loaded repertoires. Unlike
-// storage.Store (games), repertoires are static for the process lifetime —
-// loaded once at startup, never written to at runtime (import-at-runtime is
-// a documented stretch, not v1).
 type Store struct {
 	byID map[string]*Repertoire
 	all  []*Repertoire

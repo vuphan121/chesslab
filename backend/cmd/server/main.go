@@ -23,8 +23,6 @@ import (
 	"github.com/chesslab/backend/internal/storage"
 )
 
-// loadDotEnv sets environment variables from a .env file (KEY=VALUE per line)
-// without overriding any variable already set in the real environment.
 func loadDotEnv(path string) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -44,7 +42,7 @@ func loadDotEnv(path string) {
 		}
 		key = strings.TrimSpace(key)
 		if _, exists := os.LookupEnv(key); !exists {
-			os.Setenv(key, strings.TrimSpace(value)) //nolint:errcheck
+			os.Setenv(key, strings.TrimSpace(value))
 		}
 	}
 }
@@ -78,14 +76,6 @@ func main() {
 
 	dbStore := newDBStore()
 
-	// Optional, unlike repertoires above: book content isn't committed to
-	// git at all (see root CLAUDE.md's "Study from Book" section) — either
-	// nothing loads, or it comes from the DB (seeded once via `cmd/seedbooks`,
-	// see internal/db/books.go), never from a file checked into the repo.
-	// backend/data/books/ still works for local dev (gitignored, drop a file
-	// there), but only as a fallback when no database is configured — same
-	// either/or pattern as auth's DB-vs-env-var fallback, not merged with the
-	// DB path, so a book seeded into the DB doesn't show up twice locally.
 	loadedBooks := loadBooks(dbStore)
 	books := book.NewStore(loadedBooks)
 	bookSource, err := booksource.NewB2FromEnv()
@@ -120,11 +110,6 @@ func main() {
 	}
 }
 
-// newCoachDeps wires up the AI coach's shared dependencies: the
-// opening-theory index plus a client for a locally-served, OpenAI-compatible
-// LLM (Ollama by default). The index is optional — if it fails to load, the
-// coach still runs on engine/explorer grounding alone (see
-// coach.Service.ExplainMove / coach.Agent.Chat).
 func newCoachDeps() (*coach.Index, *coach.OverviewIndex, *coach.OllamaClient) {
 	chunksPath := os.Getenv("COACH_CHUNKS_PATH")
 	if chunksPath == "" {
@@ -157,11 +142,6 @@ func newCoachDeps() (*coach.Index, *coach.OverviewIndex, *coach.OllamaClient) {
 	return index, overview, llm
 }
 
-// loadBooks prefers the DB-backed store when one is configured (production —
-// see internal/db/books.go), falling back to the local BOOKS_PATH directory
-// only when there's no database at all (local dev without Postgres set up).
-// Either source degrades to zero books rather than failing boot, same as
-// everywhere else this app handles optional content.
 func loadBooks(dbStore *db.Store) []*book.Book {
 	if dbStore != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -197,11 +177,6 @@ func loadBooks(dbStore *db.Store) []*book.Book {
 	return book.LoadDir(booksDir)
 }
 
-// newDBStore connects the trainer-progress-sync Postgres store — optional,
-// same graceful-degradation pattern as Stockfish/LICHESS_TOKEN/the coach:
-// if DATABASE_URL is unset or the connection fails, progress/analytics
-// endpoints return 503 and everything else (board, engine, drilling itself)
-// is unaffected.
 func newDBStore() *db.Store {
 	url := os.Getenv("DATABASE_URL")
 	if url == "" {
@@ -230,13 +205,6 @@ func newDBStore() *db.Store {
 	return store
 }
 
-// newAuthConfig reads the single hardcoded login (see internal/auth's
-// package doc for why it's just one user, not a table). Username/password
-// are required — this gates the whole API, so refusing to start without
-// them is safer than silently leaving everything open. JWT_SECRET falls
-// back to a random value generated at boot if unset, purely for local-dev
-// convenience; that means restarting the process invalidates every
-// outstanding token, so set it explicitly in production (see backend/.env.example).
 func newAuthConfig() auth.Config {
 	username := os.Getenv("AUTH_USERNAME")
 	password := os.Getenv("AUTH_PASSWORD")

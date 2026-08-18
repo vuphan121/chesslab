@@ -1,6 +1,6 @@
 interface Props {
-  score: number // centipawns, positive = white advantage
-  mate: number // 0 = none; >0 = white mates; <0 = black mates
+  score: number
+  mate: number
   height: number
 }
 

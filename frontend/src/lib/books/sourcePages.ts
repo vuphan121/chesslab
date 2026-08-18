@@ -1,6 +1,6 @@
-// Chapter-local PDF pages and position identifiers only (no source prose).
-// Once a book is re-seeded with sourcePage fields, BookItem.sourcePage takes
-// precedence. Chapter 1 was exported from original PDF pages 6–15.
+
+
+
 const chapterOnePages: Record<string, number> = {
   'buyc1-ch1-lesson-2': 1,
   'buyc1-ch1-lesson-3': 2,

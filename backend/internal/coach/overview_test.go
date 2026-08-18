@@ -51,7 +51,6 @@ func TestOverviewSearchNoMatch(t *testing.T) {
 func TestOverviewSearchLimit(t *testing.T) {
 	idx := newTestOverview()
 
-	// "accelerated dragon" matches the opening field of every chunk.
 	got := idx.Search("accelerated dragon", 2)
 	if len(got) != 2 {
 		t.Errorf("limit not applied: got %d results, want 2", len(got))

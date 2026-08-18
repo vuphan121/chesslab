@@ -11,12 +11,10 @@ import (
 var httpClient = &http.Client{Timeout: 3 * time.Second}
 
 type PV struct {
-	Moves string `json:"moves"` // space-separated UCI moves
-	// CP/Mate are White-relative (positive = White better / White mates),
-	// regardless of whose turn it is — NOT side-to-move relative. Verified
-	// against the live API. Callers that want side-to-move must negate on Black.
-	CP   *int `json:"cp"`   // centipawns, White's perspective
-	Mate *int `json:"mate"` // mate in N (positive = White mates)
+	Moves string `json:"moves"`
+
+	CP   *int `json:"cp"`
+	Mate *int `json:"mate"`
 }
 
 type CloudEval struct {
@@ -24,8 +22,6 @@ type CloudEval struct {
 	PVs   []PV `json:"pvs"`
 }
 
-// Fetch returns precomputed Stockfish analysis from Lichess for the given FEN.
-// Returns nil, nil when the position is not cached (404) or on transient errors.
 func Fetch(fen string, multiPV int) (*CloudEval, error) {
 	u := fmt.Sprintf("https://lichess.org/api/cloud-eval?fen=%s&multiPv=%d",
 		url.QueryEscape(fen), multiPV)

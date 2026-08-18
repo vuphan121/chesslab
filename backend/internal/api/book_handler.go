@@ -25,8 +25,6 @@ type BookSummaryJSON struct {
 	ItemCount int                      `json:"itemCount"`
 }
 
-// ListBooks returns a lightweight summary of every loaded book (chapter
-// names + item counts, no positions) for the setup screen.
 func (h *Handler) ListBooks(w http.ResponseWriter, r *http.Request) {
 	books := h.books.List()
 	out := make([]BookSummaryJSON, 0, len(books))
@@ -36,9 +34,6 @@ func (h *Handler) ListBooks(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, out)
 }
 
-// GetBook returns one book's full chapters and items — including puzzle
-// solutions, same "ship it all, let the UI withhold what it shows" precedent
-// as the repertoire's Card.Answers.
 func (h *Handler) GetBook(w http.ResponseWriter, r *http.Request) {
 	b, ok := h.books.Get(chi.URLParam(r, "id"))
 	if !ok {
@@ -48,9 +43,6 @@ func (h *Handler) GetBook(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, b)
 }
 
-// GetBookChapterPDF streams exactly one private, chapter-sized source PDF.
-// The browser gets bytes only after the normal app-auth check; it never gets
-// a Backblaze credential, download token, or arbitrary object path.
 func (h *Handler) GetBookChapterPDF(w http.ResponseWriter, r *http.Request) {
 	b, ok := h.books.Get(chi.URLParam(r, "id"))
 	if !ok {

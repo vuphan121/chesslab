@@ -1,11 +1,3 @@
-// Package db is the Postgres-backed persistence layer for cross-device
-// trainer sync — a Neon-hosted database, connected via pgx. Everything else
-// in this backend (games, opening theory, repertoire data) is either
-// in-memory or loaded fresh from committed files on boot; this is the one
-// package that actually needs a durable store, since trainer progress must
-// survive backend restarts and follow the user across devices (see root
-// CLAUDE.md's "Server-side trainer sync" section for why localStorage alone
-// wasn't enough).
 package db
 
 import (
@@ -24,9 +16,6 @@ type Store struct {
 	pool *pgxpool.Pool
 }
 
-// Connect opens the pool and runs the (idempotent, CREATE-IF-NOT-EXISTS)
-// schema migration. No separate migration tool — the schema is tiny and
-// additive-only so far; if that stops being true, revisit.
 func Connect(ctx context.Context, databaseURL string) (*Store, error) {
 	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
@@ -49,13 +38,6 @@ func (s *Store) Close() {
 	s.pool.Close()
 }
 
-// migrate execs schema.sql one statement at a time — pgx's simple-exec path
-// can run multiple ;-separated statements at once when there are no query
-// args, but splitting explicitly keeps error messages pointing at the
-// actual failing statement instead of the whole file. Comment-only lines
-// are stripped first: schema.sql's comments are prose and can contain their
-// own semicolons, which a naive split-on-";" would otherwise treat as
-// statement boundaries too.
 func (s *Store) migrate(ctx context.Context) error {
 	var sqlOnly strings.Builder
 	for _, line := range strings.Split(schemaSQL, "\n") {

@@ -64,10 +64,10 @@ export default function Board({
     setCircles(new Set())
   }, [boardState.fen])
 
-  // The server returns the destination position as one state update. Keep a
-  // transient copy of the moving piece above that new board and hide its
-  // destination square until it lands, so the move visibly travels instead of
-  // teleporting. useLayoutEffect prevents a one-frame destination flash.
+
+
+
+
   useLayoutEffect(() => {
     const previous = previousPosition.current
     const lastMove = boardState.lastMove
@@ -80,9 +80,9 @@ export default function Board({
     let secondFrame = 0
     const timer = window.setTimeout(() => setMoveAnimation(null), MOVE_ANIMATION_MS + 24)
     setMoveAnimation({ from: lastMove.from, to: lastMove.to, piece, hasStarted: false })
-    // A double frame guarantees the source-position overlay is painted once
-    // before transform transitions to its destination. Without it React can
-    // batch both states and restart the image/transition visibly.
+
+
+
     firstFrame = window.requestAnimationFrame(() => {
       secondFrame = window.requestAnimationFrame(() => {
         setMoveAnimation((active) => active && { ...active, hasStarted: true })
@@ -272,7 +272,7 @@ export default function Board({
           ))}
         </div>
 
-        {/* Arrow + drag-highlight overlay — outside overflow:hidden board */}
+        {}
         <svg
           style={{
             position: 'absolute',
@@ -360,8 +360,8 @@ export default function Board({
               transform: moveAnimation.hasStarted
                 ? `translate3d(${(animationToFile - animationFromFile) * squareSize}px, ${(animationToRank - animationFromRank) * squareSize}px, 0)`
                 : 'translate3d(0, 0, 0)',
-              // Do not animate the initial placement. The moving copy exists
-              // exactly once at the source square, then makes one journey.
+
+
               transition: moveAnimation.hasStarted
                 ? `transform ${MOVE_ANIMATION_MS}ms cubic-bezier(0.22, 0.8, 0.28, 1)`
                 : 'none',

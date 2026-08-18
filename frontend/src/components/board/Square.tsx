@@ -31,7 +31,7 @@ export default function Square({
   rankLabel,
   fileLabel,
 }: Props) {
-  // (col + row) odd = dark square — determines label colour contrast
+
   const isDark = (spriteCol + spriteRow) % 2 === 1
   const labelColor = isDark ? 'rgba(176, 196, 216, 0.9)' : 'rgba(100, 140, 170, 0.9)'
   const fontSize = Math.max(9, squareSize * 0.2)

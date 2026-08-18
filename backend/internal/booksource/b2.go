@@ -1,4 +1,3 @@
-// Package booksource reads private, chapter-sized book PDFs from Backblaze B2.
 package booksource
 
 import (
@@ -20,8 +19,6 @@ const authorizeURL = "https://api.backblazeb2.com/b2api/v4/b2_authorize_account"
 
 var ErrNotFound = errors.New("book chapter not found")
 
-// Reader provides the chapter PDF requested by the authenticated application.
-// It intentionally returns a stream, never a public object URL.
 type Reader interface {
 	Open(ctx context.Context, objectKey string) (io.ReadCloser, error)
 }
@@ -42,8 +39,6 @@ type B2 struct {
 	authorizeURL   string
 }
 
-// NewB2FromEnv returns nil when B2 is deliberately not configured. This keeps
-// book metadata usable in environments that do not serve source PDFs.
 func NewB2FromEnv() (*B2, error) {
 	keyID := strings.TrimSpace(os.Getenv("B2_KEY_ID"))
 	applicationKey := strings.TrimSpace(os.Getenv("B2_APPLICATION_KEY"))
@@ -70,8 +65,6 @@ func NewB2(cfg B2Config) (*B2, error) {
 	}, nil
 }
 
-// Open authenticates server-to-server and streams one private object. A
-// browser never receives B2 credentials or a reusable download token.
 func (b *B2) Open(ctx context.Context, objectKey string) (io.ReadCloser, error) {
 	if !safeObjectKey(objectKey) {
 		return nil, fmt.Errorf("invalid B2 object key")

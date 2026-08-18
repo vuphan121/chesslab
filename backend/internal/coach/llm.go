@@ -10,62 +10,42 @@ import (
 	"time"
 )
 
-// ChatMessage is one turn in a conversation sent to the LLM. Role is
-// "system"/"user"/"assistant"/"tool". Assistant messages that invoke tools
-// carry ToolCalls; the corresponding replies are "tool"-role messages
-// carrying ToolCallID + the tool's JSON output as Content.
 type ChatMessage struct {
 	Role       string
 	Content    string
 	ToolCallID string
-	Name       string // tool name, only set on "tool"-role messages
+	Name       string
 	ToolCalls  []ToolCall
 }
 
-// ToolCall is a single function-call request from the model.
 type ToolCall struct {
 	ID        string
 	Name      string
-	Arguments string // raw JSON object, as the model produced it
+	Arguments string
 }
 
-// ToolDef describes a callable tool using JSON-schema parameters, following
-// the OpenAI function-calling convention.
 type ToolDef struct {
 	Name        string
 	Description string
 	Parameters  json.RawMessage
 }
 
-// ChatResult is either final prose (Content, no ToolCalls) or a request to
-// run one or more tools (ToolCalls, Content usually empty) — the caller
-// (Agent, see agent.go) drives the loop.
 type ChatResult struct {
 	Content   string
 	ToolCalls []ToolCall
 }
 
-// LLMClient is a chat-completions backend. Chat is the simple, tool-free
-// path used for grounded single-shot explanations (Path 1); ChatCompletion
-// adds tool-calling for the agentic freeform path (Path 2).
 type LLMClient interface {
 	Chat(ctx context.Context, systemPrompt, userPrompt string) (string, error)
 	ChatCompletion(ctx context.Context, messages []ChatMessage, tools []ToolDef) (ChatResult, error)
 }
 
-// OllamaClient talks to a local Ollama instance's OpenAI-compatible
-// /v1/chat/completions endpoint (see https://ollama.com — `ollama serve` +
-// `ollama pull <model>`). Swapping to another OpenAI-compatible runtime
-// (llama.cpp server, a hosted API) is just a different BaseURL/Model.
-// llama3.1 and newer Ollama-supported models understand the "tools" field.
 type OllamaClient struct {
-	BaseURL string // e.g. "http://localhost:11434"
-	Model   string // e.g. "llama3.1:8b"
+	BaseURL string
+	Model   string
 	HTTP    *http.Client
 }
 
-// NewOllamaClient builds a client with sensible defaults. baseURL/model may
-// be empty to fall back to "http://localhost:11434" / "llama3.1:8b".
 func NewOllamaClient(baseURL, model string) *OllamaClient {
 	if baseURL == "" {
 		baseURL = "http://localhost:11434"
@@ -79,8 +59,6 @@ func NewOllamaClient(baseURL, model string) *OllamaClient {
 		HTTP:    &http.Client{Timeout: 90 * time.Second},
 	}
 }
-
-// Wire types mirror the OpenAI chat-completions JSON shape.
 
 type wireFunctionCall struct {
 	Name      string `json:"name"`

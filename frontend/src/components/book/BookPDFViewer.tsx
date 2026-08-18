@@ -9,9 +9,9 @@ interface Props {
   sourcePage?: number
 }
 
-// This intentionally uses the browser's native PDF reader: it gives the
-// student ordinary scroll/zoom/find controls while keeping the purchased PDF
-// local. A blob URL is necessary because an iframe cannot send our auth token.
+
+
+
 export default function BookPDFViewer({ bookId, chapterId, sourcePage }: Props) {
   const [url, setUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)

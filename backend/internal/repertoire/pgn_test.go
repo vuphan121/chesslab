@@ -48,14 +48,7 @@ func TestParsePGN_SixChapters(t *testing.T) {
 }
 
 func TestParsePGN_CustomStartFEN(t *testing.T) {
-	// Chapters 1 and 2 share the ...a6 Open Catalan position; chapter 3 is a
-	// genuinely different branch (...Nc6 without ...a6 first) with its own FEN;
-	// chapter 4 is a different branch again (...c5 instead of ...a6/...Nc6);
-	// chapters 5 and 6 are Closed Catalan positions (...e6/...d5, no ...dxc4
-	// or with it already played), each with their own FEN. Chapter 5's root is
-	// Black to move — Black hasn't yet chosen between the c5/b6/Ne4+f5 systems
-	// the intro comment describes — the only chapter root that isn't White to
-	// move.
+
 	chapters := loadDemoChapters(t)
 	want := map[string]string{
 		"Open, a6 b5":      catalanFEN,
@@ -92,14 +85,13 @@ func TestParsePGN_CustomStartFEN(t *testing.T) {
 func TestParsePGN_Chapter3HasFourOpponentAlternatesAndNestedVariation(t *testing.T) {
 	root := loadDemoChapters(t)[2].Root
 	qa4 := findChild(t, root, "Qa4")
-	// 1. Qa4 Bb4+ (1... Nd5 ...) (1... Nd7 ...) (1... Bd6 ...) (1... Bd7 ...)
-	// — Bb4+ mainline plus four sibling opponent-reply alternates.
+
 	if len(qa4.Children) != 5 {
 		t.Fatalf("Qa4 node has %d children, want 5 (Bb4+ mainline + 4 opponent alternates)", len(qa4.Children))
 	}
 	bb4 := findChild(t, qa4, "Bb4+")
 	bd2 := findChild(t, bb4, "Bd2")
-	// 2... Nd5 (mainline) (2... Bxd2+ ...) (2... Bd6 3. Na3 Ne4 (3... Bxa3 ...) ...)
+
 	if len(bd2.Children) != 3 {
 		t.Fatalf("Bd2 node has %d children, want 3 (Nd5 mainline + Bxd2+ and Bd6 sidelines)", len(bd2.Children))
 	}
@@ -124,8 +116,7 @@ func TestParsePGN_Chapter1RootHasIntroCommentAndTwoChildren(t *testing.T) {
 	if root.Children[1].SAN != "a4" {
 		t.Errorf("chapter 1 root children[1] = %q, want a4 (sideline)", root.Children[1].SAN)
 	}
-	// the O-O node itself carries the "a4 is not a great move" comment, per
-	// the raw PGN's comment placement (see data-format.md §2).
+
 	if root.Children[0].Comment == "" {
 		t.Error("O-O node should carry the study's comment text")
 	}
@@ -133,9 +124,7 @@ func TestParsePGN_Chapter1RootHasIntroCommentAndTwoChildren(t *testing.T) {
 
 func TestParsePGN_Chapter2HasDeeplyNestedVariation(t *testing.T) {
 	root := loadDemoChapters(t)[1].Root
-	// O-O Nc6 e3 Bd7 -> Qe2 b5 (mainline) with (2. Nc3 ...) as a sideline off
-	// the Nc6 node, and a (2... Rb8 ... (3... Qd7 ...)) sideline off e3 that
-	// nests a third variation inside it.
+
 	oo := findChild(t, root, "O-O")
 	nc6 := findChild(t, oo, "Nc6")
 	if len(nc6.Children) != 2 {
@@ -147,8 +136,7 @@ func TestParsePGN_Chapter2HasDeeplyNestedVariation(t *testing.T) {
 	}
 	rb8 := findChild(t, e3, "Rb8")
 	nfd2 := findChild(t, rb8, "Nfd2")
-	// (3... Qd7 ...) is an alternative to 3...e5 itself, so it's a sibling of
-	// e5 under Nfd2, not a child of e5 — this is the depth-3 nested variation.
+
 	if len(nfd2.Children) != 2 {
 		t.Fatalf("Nfd2 node has %d children, want 2 (e5 mainline + Qd7 nested sideline)", len(nfd2.Children))
 	}
@@ -163,27 +151,10 @@ func TestParsePGN_Chapter2HasDeeplyNestedVariation(t *testing.T) {
 }
 
 func TestParsePGN_EveryMoveReplaysLegally(t *testing.T) {
-	// ParsePGN itself errors out on the first illegal/unrecognized token, so
-	// reaching here at all already proves every move in the file replayed to
-	// *some* legal move. That's necessary but not sufficient — a case-fold
-	// bug in chess.FindLegalMoveBySAN once let an intended bishop capture
-	// like "Bxc6" silently resolve to the different (but also legal) pawn
-	// capture "bxc6" instead, since both are legal in some positions and
-	// "Bxc6"/"bxc6" collide case-insensitively. ParsePGN alone couldn't have
-	// caught that: no error, just the wrong move. TestParsePGN_AllLinesReplayExactly
-	// below is the test that actually rules that out, by checking the
-	// replayed SAN is character-for-character what was recorded, not just
-	// legal.
+
 	loadDemoChapters(t)
 }
 
-// TestParsePGN_AllLinesReplayExactly independently re-walks every root-to-leaf
-// line in every chapter and replays its recorded SAN sequence from the
-// chapter's own start FEN through chess.FindLegalMoveBySAN, checking at each
-// ply that the freshly-generated SAN for the resolved move is identical to
-// what's stored on the node — this is what actually catches a case-fold (or
-// similar) mismatch, since ParsePGN succeeding only proves the token matched
-// *some* legal move, not the intended one (see TestParsePGN_EveryMoveReplaysLegally).
 func TestParsePGN_AllLinesReplayExactly(t *testing.T) {
 	chapters := loadDemoChapters(t)
 	total := 0

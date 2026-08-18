@@ -1,6 +1,6 @@
 import type { Color } from '@/lib/chess/types'
 
-// --- wire shapes (mirror backend/internal/api/repertoire_handler.go) ---
+
 
 export interface RepertoireChapterSummary {
   id: string
@@ -83,7 +83,7 @@ export interface Repertoire {
   replies: Record<string, RepReply[]>
 }
 
-// --- scheduler state (session-local, see docs/opening-trainer/scheduler.md) ---
+
 
 export interface CardState {
   cardId: string
@@ -98,7 +98,7 @@ export interface CardState {
 }
 
 export interface SessionOptions {
-  sessionLength: number | null // null = "until done"
+  sessionLength: number | null
   mode: 'mixed' | 'review-only' | 'mistakes'
 }
 
@@ -117,14 +117,14 @@ export interface SessionSummary {
   cardsSeen: number
   correct: number
   incorrect: number
-  learned: string[] // card ids that reached box 5 this session
+  learned: string[]
   missed: { cardId: string; lapses: number }[]
 }
 
-// --- persistence (server-side, see frontend CLAUDE.md's "Server-side
-// trainer sync" note — this used to be a localStorage-backed wrapper type
-// with its own session-log array; both are gone now that a Postgres
-// line_attempts log covers what the session-log array used to be for) ---
+
+
+
+
 
 export interface PersistedCardState {
   box: number

@@ -7,8 +7,6 @@ import (
 
 var moveNumberPrefix = regexp.MustCompile(`^\d+\.+`)
 
-// TokenizePGNMoves strips comments, NAGs, result markers, variations, and
-// move-number labels from a pasted PGN, leaving just the ordered SAN tokens.
 func TokenizePGNMoves(pgn string) []string {
 	s := stripBraceComments(pgn)
 	s = stripLineComments(s)
@@ -59,8 +57,6 @@ func stripLineComments(s string) string {
 	return strings.Join(lines, " ")
 }
 
-// stripParenVariations drops any parenthetical sidelines from the pasted PGN
-// (nesting-aware) — only the mainline is loaded.
 func stripParenVariations(s string) string {
 	var sb strings.Builder
 	depth := 0
@@ -89,17 +85,6 @@ func isResultToken(f string) bool {
 	return false
 }
 
-// FindLegalMoveBySAN matches a pasted SAN token against the position's legal
-// moves, tolerating trailing annotations ("Nf3!?", "Bd7+") and the "0-0"/"o-o"
-// castling spellings some PGN exporters use instead of "O-O". Comparison is
-// case-SENSITIVE beyond that normalization — SAN case is semantically load-
-// bearing (piece letter vs. pawn-capture file letter), and "b" is exactly the
-// one file letter that collides with a piece letter ("B" for bishop). A
-// case-insensitive match here would let a bishop capture like "Bxc6" match a
-// legal pawn capture "bxc6" (or vice versa) whenever both are legal in the
-// position, silently replaying the wrong move — a real bug caught via a
-// repertoire chapter whose recorded line was 9...Bxc6 10.Qxc6+ bxc6, which a
-// case-insensitive matcher could resolve as 9...bxc6 10.Qxc6 Bxc6 instead.
 func FindLegalMoveBySAN(pos *Position, token string) (Move, bool) {
 	want := normalizeSANToken(token)
 	if want == "" {
@@ -126,11 +111,6 @@ func normalizeSANToken(s string) string {
 	return s
 }
 
-// ReplayLine parses and replays a sequence of SAN tokens (as produced by
-// TokenizePGNMoves) from the start position, returning the FEN after each ply
-// in order. Stops at the first illegal/unrecognized token, returning
-// whatever prefix replayed cleanly — callers that need to know whether the
-// whole line replayed should compare len(result) to len(tokens).
 func ReplayLine(tokens []string) []string {
 	pos, err := ParseFEN(StartFEN)
 	if err != nil {

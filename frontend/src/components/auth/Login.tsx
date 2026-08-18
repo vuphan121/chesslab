@@ -4,10 +4,10 @@ import { useState, type FormEvent } from 'react'
 import { login } from '@/lib/api/client'
 import { setToken } from '@/lib/auth/token'
 
-// The one gate in front of the whole app — see internal/auth's package doc
-// on the backend for why this is a single hardcoded login, not real
-// accounts. Styled to match the rest of the app (RepertoirePicker's setup
-// card, TopBar's wordmark) rather than looking like a bolted-on auth page.
+
+
+
+
 export default function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -59,7 +59,7 @@ export default function Login() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               style={{
-                fontSize: 16, // 16px min — iOS Safari zooms on focus below that
+                fontSize: 16,
                 padding: '10px 12px',
                 border: '1px solid #eae8e2',
                 borderRadius: 8,

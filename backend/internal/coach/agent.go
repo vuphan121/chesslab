@@ -7,8 +7,6 @@ import (
 	"strings"
 )
 
-// maxToolIterations bounds the tool-call loop so a confused model can't spin
-// forever — each iteration is one round-trip to the local LLM.
 const maxToolIterations = 4
 
 const agentSystemPrompt = `You are a chess opening coach answering freeform follow-up questions about
@@ -46,25 +44,17 @@ move." Only stay to 1-2 sentences when there genuinely is nothing concrete beyon
 Never restate the same point twice in different words just to fill space.
 ` + generalPrinciples
 
-// ChatTurn is one message in the conversation history the frontend maintains
-// and resends — the coach agent itself is stateless between requests.
 type ChatTurn struct {
-	Role    string // "user" or "assistant"
+	Role    string
 	Content string
 }
 
-// PositionContext tells the agent what's currently on the board, so the user
-// can ask "was my last move good?" without pasting FENs — the caller (the
-// HTTP handler) reads this straight from the game store.
 type PositionContext struct {
-	FEN         string // current position
-	PrevFEN     string // position before the last move, empty at the game's start
+	FEN         string
+	PrevFEN     string
 	LastMoveSAN string
 }
 
-// Agent is the freeform, tool-calling coach chat (design doc "Path 2") —
-// unlike Service (Path 1), it has its own engine access so it can fetch
-// analysis/explorer data for positions the frontend hasn't already looked up.
 type Agent struct {
 	Tools *Tools
 	LLM   LLMClient
@@ -74,8 +64,6 @@ func NewAgent(tools *Tools, llm LLMClient) *Agent {
 	return &Agent{Tools: tools, LLM: llm}
 }
 
-// Chat answers one user message, running the tool-call loop as needed, and
-// returns the final assistant reply text.
 func (a *Agent) Chat(ctx context.Context, pos PositionContext, history []ChatTurn, userMessage string) (string, error) {
 	messages := []ChatMessage{
 		{Role: "system", Content: agentSystemPrompt},
@@ -182,9 +170,6 @@ func toolDefs() []ToolDef {
 	}
 }
 
-// executeTool runs one tool call and returns its JSON-encoded result (or a
-// JSON-encoded {"error": "..."} — fed back to the model as the tool's
-// output rather than aborting the conversation, so it can adapt).
 func (a *Agent) executeTool(name, argsJSON string) string {
 	var fenArgs struct {
 		FEN string `json:"fen"`

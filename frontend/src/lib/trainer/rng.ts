@@ -1,7 +1,7 @@
-// Seeded RNG so scheduler sessions are deterministic and unit-testable —
-// never use Math.random() in the scheduler (see scheduler.md §3 note).
 
-// mulberry32: small, fast, good-enough PRNG for this use (not cryptographic).
+
+
+
 export function mulberry32(seed: number): () => number {
   let a = seed >>> 0
   return function () {
@@ -17,13 +17,13 @@ export function newRng(seed?: number): () => number {
   return mulberry32(seed ?? Date.now())
 }
 
-// uniform returns a random float in [lo, hi).
+
 export function uniform(lo: number, hi: number, rng: () => number): number {
   return lo + rng() * (hi - lo)
 }
 
-// weightedChoice picks one item from `items`, with probability proportional
-// to weight(item). Assumes items is non-empty and every weight is > 0.
+
+
 export function weightedChoice<T>(items: T[], weight: (item: T) => number, rng: () => number): T {
   const weights = items.map(weight)
   const total = weights.reduce((a, b) => a + b, 0)
@@ -35,8 +35,8 @@ export function weightedChoice<T>(items: T[], weight: (item: T) => number, rng: 
   return items[items.length - 1]
 }
 
-// shuffle returns a new array in Fisher-Yates random order — does not
-// mutate `items`.
+
+
 export function shuffle<T>(items: T[], rng: () => number): T[] {
   const out = [...items]
   for (let i = out.length - 1; i > 0; i--) {

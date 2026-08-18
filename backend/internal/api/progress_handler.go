@@ -33,10 +33,6 @@ type GetProgressResponse struct {
 	Cards map[string]CardProgressJSON `json:"cards"`
 }
 
-// GetProgress returns the authenticated user's saved per-card scheduler
-// state for one repertoire — the server-side replacement for what used to
-// be read from localStorage (see frontend CLAUDE.md's "Server-side trainer
-// sync" note). An empty map (not 404) if nothing's been drilled yet.
 func (h *Handler) GetProgress(w http.ResponseWriter, r *http.Request) {
 	if h.db == nil {
 		http.Error(w, "progress sync not configured", http.StatusServiceUnavailable)
@@ -62,10 +58,6 @@ func (h *Handler) GetProgress(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, GetProgressResponse{Cards: out})
 }
 
-// SaveProgress upserts a run's worth of card state (the same merged-map
-// shape the frontend used to write wholesale to localStorage) and, if
-// lineAttempt is present, logs one row for analytics/retention — see
-// db.SaveProgress for why both happen in one transaction.
 func (h *Handler) SaveProgress(w http.ResponseWriter, r *http.Request) {
 	if h.db == nil {
 		http.Error(w, "progress sync not configured", http.StatusServiceUnavailable)
@@ -105,8 +97,6 @@ func (h *Handler) SaveProgress(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
-// Analytics returns today's + the last 7 days' drilling activity for the
-// authenticated user, straight off the line_attempts log.
 func (h *Handler) Analytics(w http.ResponseWriter, r *http.Request) {
 	if h.db == nil {
 		http.Error(w, "analytics not configured", http.StatusServiceUnavailable)

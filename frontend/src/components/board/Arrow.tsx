@@ -40,13 +40,13 @@ export default function Arrow({
 
   const ux = dx / len
   const uy = dy / len
-  const px = -uy // perpendicular (left of direction)
+  const px = -uy
   const py = ux
 
   const startOff = squareSize * 0.3
-  const sw = squareSize * 0.14 * scale // shaft half-width
-  const hw = squareSize * 0.44 * scale // head half-width
-  const hl = squareSize * 0.65 * scale // head length
+  const sw = squareSize * 0.14 * scale
+  const hw = squareSize * 0.44 * scale
+  const hl = squareSize * 0.65 * scale
 
   const sx = x1 + ux * startOff
   const sy = y1 + uy * startOff

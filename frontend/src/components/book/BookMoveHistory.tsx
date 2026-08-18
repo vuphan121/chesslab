@@ -10,8 +10,8 @@ interface Props {
   onGoto: (nodeId: string) => void
 }
 
-// A deliberately local move tree: it records only the student's current
-// exploration of this card and disappears when they choose another card.
+
+
 export default function BookMoveHistory({ moveTree, currentNodeId, busy, onGoto }: Props) {
   const mainline: MoveNode[] = []
   let node: MoveNode | undefined = moveTree
@@ -53,8 +53,8 @@ export default function BookMoveHistory({ moveTree, currentNodeId, busy, onGoto 
     )
   }
 
-  // Go omits empty slices in the game-tree JSON, so a leaf's children can be
-  // null rather than []. Treat both as an empty move list.
+
+
   const hasMoves = mainline.length > 0
   return (
     <section style={{ background: '#fff', borderRadius: 10, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.05)', overflow: 'hidden' }}>

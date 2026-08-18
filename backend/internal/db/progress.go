@@ -6,8 +6,6 @@ import (
 	"time"
 )
 
-// CardProgress mirrors the frontend's PersistedCardState (lib/trainer/types.ts)
-// field-for-field so the wire JSON needs no translation on either side.
 type CardProgress struct {
 	Box         int     `json:"box"`
 	Lapses      int     `json:"lapses"`
@@ -16,8 +14,6 @@ type CardProgress struct {
 	LastSeenISO *string `json:"lastSeenISO"`
 }
 
-// LineAttempt records one completed drill run for the analytics/retention
-// log (line_attempts) — see schema.sql for why this is a log, not state.
 type LineAttempt struct {
 	ChapterID   string
 	ChapterName string
@@ -53,17 +49,12 @@ func (s *Store) GetProgress(ctx context.Context, username, repertoireID string) 
 	return out, rows.Err()
 }
 
-// SaveProgress upserts every card in `cards` — called with a run's full
-// merged per-card state, the same shape mergeSessionIntoPersisted used to
-// write wholesale to localStorage — and, if attempt is non-nil, appends one
-// line_attempts row. Both writes share a transaction so a run's progress
-// and its analytics log entry never disagree about whether it happened.
 func (s *Store) SaveProgress(ctx context.Context, username, repertoireID string, cards map[string]CardProgress, attempt *LineAttempt) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin: %w", err)
 	}
-	defer tx.Rollback(ctx) //nolint:errcheck
+	defer tx.Rollback(ctx)
 
 	for cardID, cp := range cards {
 		var lastSeen *time.Time
@@ -121,10 +112,6 @@ type Analytics struct {
 	Last7Days      []DayCount     `json:"last7Days"`
 }
 
-// GetAnalytics aggregates straight from the line_attempts log — "today" and
-// "last 7 days" use the database session's own clock/timezone (UTC on
-// Neon), not the caller's; fine for a single-user app, worth revisiting if
-// that ever stops being true.
 func (s *Store) GetAnalytics(ctx context.Context, username string) (Analytics, error) {
 	var a Analytics
 
