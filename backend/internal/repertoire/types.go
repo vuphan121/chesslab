@@ -65,6 +65,7 @@ type Repertoire struct {
 	Side        chess.Color
 	Source      string
 	Description string
+	Config      *Config
 	Chapters    []*Chapter
 	Cards       []*Card
 	Replies     map[string][]Reply

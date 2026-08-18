@@ -32,6 +32,7 @@ export default function OpeningStudyPage() {
   const {
     phase,
     repertoire,
+    isTodayTraining,
     loadError,
     loading,
     boardState,
@@ -52,6 +53,8 @@ export default function OpeningStudyPage() {
     navForward,
     gotoPly,
     startSession,
+    startTodayTraining,
+    resumeTodayTraining,
     selectSquare,
     move,
     legalMovesFor,
@@ -108,7 +111,7 @@ export default function OpeningStudyPage() {
         <div style={outerWrapStyle}>
           <TopBar right={<span />} />
         </div>
-        <RepertoirePicker onStart={startSession} starting={loading} startError={loadError} />
+        <RepertoirePicker onStart={startSession} onStartToday={startTodayTraining} onResumeToday={resumeTodayTraining} starting={loading} startError={loadError} />
       </main>
     )
   }
@@ -157,7 +160,7 @@ export default function OpeningStudyPage() {
                 borderRadius: 8,
               }}
             >
-              {repertoire.name}
+              {isTodayTraining ? `Today’s Training · ${repertoire.name}` : repertoire.name}
             </span>
           }
         />

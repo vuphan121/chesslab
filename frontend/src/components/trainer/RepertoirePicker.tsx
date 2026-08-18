@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { listRepertoires, getRepertoire, getAnalytics } from '@/lib/api/client'
-import type { AnalyticsResponse } from '@/lib/api/client'
+import { listRepertoires, getRepertoire, getTodayTraining } from '@/lib/api/client'
+import type { TodayTrainingResponse } from '@/lib/api/client'
 import { toFigurine } from '@/lib/chess/figurine'
+import RepertoireManagement from '@/components/trainer/RepertoireManagement'
 import type { RepertoireSummary, Repertoire, RepNode } from '@/lib/trainer/types'
 import type { SessionOptions } from '@/lib/trainer/types'
 
@@ -44,6 +45,8 @@ function formatLine(sans: string[]): string {
 
 interface Props {
   onStart: (repertoireId: string, chapterIds: string[], opts: SessionOptions) => void
+  onStartToday: (repertoireIds: string[], linesPerDay: number) => void
+  onResumeToday: () => void
   starting: boolean
   startError: string | null
 }
@@ -84,7 +87,7 @@ function Segmented<T extends string | number>({
   )
 }
 
-export default function RepertoirePicker({ onStart, starting, startError }: Props) {
+export default function RepertoirePicker({ onStart, onStartToday, onResumeToday, starting, startError }: Props) {
   const [reps, setReps] = useState<RepertoireSummary[] | null>(null)
   const [listError, setListError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -101,7 +104,10 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
 
 
 
-  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null)
+  const [today, setToday] = useState<TodayTrainingResponse | null>(null)
+  const [todayRepertoireIds, setTodayRepertoireIds] = useState<Set<string>>(new Set())
+  const [todayLineCount, setTodayLineCount] = useState(10)
+  const [managing, setManaging] = useState(false)
 
   const fullRepReqId = useRef(0)
 
@@ -134,21 +140,28 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
   }
 
   useEffect(() => {
-    listRepertoires()
-      .then((list) => {
+    Promise.all([listRepertoires(), getTodayTraining().catch(() => null)])
+      .then(([list, queue]) => {
         setReps(list)
         if (list.length > 0) selectRepertoire(list[0].id, list[0].chapters.map((c) => c.id))
+        const settings = queue?.settings
+        setToday(queue)
+        setTodayRepertoireIds(new Set(settings?.repertoireIds.length ? settings.repertoireIds : list.map((rep) => rep.id)))
+        if (settings) setTodayLineCount(settings.linesPerDay)
       })
       .catch((err) => setListError(err instanceof Error ? err.message : 'Failed to reach the backend.'))
-    getAnalytics()
-      .then(setAnalytics)
-      .catch(() => {
-
-
-      })
   }, [])
 
   const selected = reps?.find((r) => r.id === selectedId) ?? null
+
+  const refreshCatalog = () => {
+    listRepertoires()
+      .then((list) => {
+        setReps(list)
+        if (!selectedId && list.length > 0) selectRepertoire(list[0].id, list[0].chapters.map((chapter) => chapter.id))
+      })
+      .catch(() => {})
+  }
 
   const toggleExpanded = (chapterId: string) => {
     setExpandedChapters((prev) => {
@@ -172,6 +185,20 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
     if (!selectedId || selectedChapters.size === 0) return
     onStart(selectedId, [...selectedChapters], { sessionLength: null, mode })
   }
+
+  const toggleTodayRepertoire = (id: string) => {
+    setTodayRepertoireIds((previous) => {
+      const next = new Set(previous)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const savedSettingsMatch =
+    today?.settings?.linesPerDay === todayLineCount &&
+    today?.settings.repertoireIds.length === todayRepertoireIds.size &&
+    today?.settings.repertoireIds.every((id) => todayRepertoireIds.has(id))
 
   const panelStyle: React.CSSProperties = {
     width: 'min(720px, calc(100vw - 32px))',
@@ -202,60 +229,84 @@ export default function RepertoirePicker({ onStart, starting, startError }: Prop
   }
 
   if (reps.length === 0) {
+    if (managing) {
+      return <RepertoireManagement repertoires={reps} onClose={() => setManaging(false)} onChanged={refreshCatalog} />
+    }
     return (
       <div style={panelStyle}>
         <p style={{ fontSize: 14, color: '#37352f', marginBottom: 10 }}>No repertoires loaded.</p>
-        <p style={{ fontSize: 12, color: '#a3a099', marginBottom: 10 }}>
-          Drop a study PGN + config into <code>backend/data/repertoires/</code>, e.g.:
-        </p>
-        <pre className="mono" style={{ fontSize: 12, background: '#fbfaf7', padding: 10, borderRadius: 6 }}>
-          curl -sL https:
-        </pre>
+        <p style={{ fontSize: 12, color: '#a3a099', marginBottom: 14 }}>Add your first Lichess study to build its complete drill tree.</p>
+        <button onClick={() => setManaging(true)} style={{ fontSize: 12, fontWeight: 700, padding: '8px 12px', borderRadius: 7, border: 'none', background: '#4a90d9', color: '#fff', cursor: 'pointer' }}>Manage repertoires</button>
       </div>
     )
   }
 
+  if (managing) {
+    return <RepertoireManagement repertoires={reps} onClose={() => setManaging(false)} onChanged={refreshCatalog} />
+  }
+
   return (
     <div style={panelStyle}>
-      <h1 className="serif" style={{ fontSize: 22, fontWeight: 500, marginBottom: 18 }}>
-        Opening Study
-      </h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 18 }}>
+        <h1 className="serif" style={{ fontSize: 22, fontWeight: 500 }}>Opening Study</h1>
+        <button onClick={() => setManaging(true)} style={{ fontSize: 12, fontWeight: 700, padding: '7px 10px', borderRadius: 7, border: '1px solid #dbe8f4', background: '#fff', color: '#3974ad', cursor: 'pointer' }}>Manage</button>
+      </div>
 
-      {analytics && analytics.todayTotal > 0 && (
+      <div
+        style={{
+          marginBottom: 24,
+          padding: '16px',
+          background: '#f7fbff',
+          border: '1px solid #d8e8f7',
+          borderRadius: 9,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 5 }}>
+          <h2 className="serif" style={{ fontSize: 18, fontWeight: 500 }}>Today&rsquo;s training</h2>
+          {today && <span className="mono" style={{ fontSize: 11, color: '#5c86ad' }}>{today.entries.length} in queue</span>}
+        </div>
+        <p style={{ fontSize: 12, color: '#6a675f', marginBottom: 13 }}>
+          Mix lines from the repertoires you choose. Missed lines return to the middle; correct lines go to the back.
+        </p>
         <div
           style={{
-            marginBottom: 18,
-            padding: '10px 14px',
-            background: '#fbfaf7',
-            border: '1px solid #eae8e2',
-            borderRadius: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 7,
+            marginBottom: 14,
           }}
         >
-          <div className="lbl" style={{ color: '#b4b1a8', marginBottom: 4 }}>
-            Today
-          </div>
-          <div style={{ fontSize: 13, color: '#37352f' }}>
-            <strong>{analytics.todayTotal}</strong> line{analytics.todayTotal === 1 ? '' : 's'} drilled
-            {analytics.todayByChapter.length > 0 && (
-              <span style={{ color: '#7a776f' }}>
-                {' — '}
-                {analytics.todayByChapter.map((c, i) => (
-                  <span key={c.chapterId}>
-                    {i > 0 && ', '}
-                    {c.chapterName} ({c.count})
-                  </span>
-                ))}
-              </span>
-            )}
-            {analytics.last7Days.length > 0 && (
-              <span style={{ color: '#a3a099' }}>
-                {' · '}
-                {analytics.last7Days.reduce((sum, d) => sum + d.total, 0)} this week
-              </span>
-            )}
-          </div>
+          {reps.map((rep) => (
+            <label key={rep.id} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12, color: '#37352f', cursor: 'pointer' }}>
+              <input type="checkbox" checked={todayRepertoireIds.has(rep.id)} onChange={() => toggleTodayRepertoire(rep.id)} />
+              {rep.name}
+            </label>
+          ))}
         </div>
-      )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#6a675f' }}>
+            Lines each day
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={todayLineCount}
+              onChange={(event) => setTodayLineCount(Math.max(1, Math.min(100, Number(event.target.value) || 1)))}
+              style={{ width: 58, border: '1px solid #cfe0ee', borderRadius: 6, padding: '5px 7px', color: '#37352f' }}
+            />
+          </label>
+          <button
+            onClick={() => {
+              if (savedSettingsMatch && (today?.entries.length ?? 0) > 0) onResumeToday()
+              else onStartToday([...todayRepertoireIds], todayLineCount)
+            }}
+            disabled={starting || todayRepertoireIds.size === 0}
+            style={{ fontSize: 12, fontWeight: 700, padding: '8px 13px', borderRadius: 7, border: 'none', background: starting ? '#a9c9e8' : '#4a90d9', color: '#fff', cursor: starting ? 'default' : 'pointer' }}
+          >
+            {starting ? 'Starting…' : savedSettingsMatch && (today?.entries.length ?? 0) > 0 ? 'Resume today' : 'Build today’s queue'}
+          </button>
+        </div>
+      </div>
 
       <div className="lbl" style={{ color: '#b4b1a8', marginBottom: 8 }}>
         Choose a repertoire

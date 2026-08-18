@@ -42,6 +42,8 @@ func NewRouter(h *Handler) http.Handler {
 
 		r.Route("/api/repertoires", func(r chi.Router) {
 			r.Get("/", h.ListRepertoires)
+			r.Post("/import", h.ImportRepertoire)
+			r.Post("/{id}/refresh", h.RefreshRepertoire)
 			r.Get("/{id}", h.GetRepertoire)
 		})
 
@@ -55,6 +57,9 @@ func NewRouter(h *Handler) http.Handler {
 			r.Get("/{repertoireId}", h.GetProgress)
 			r.Post("/{repertoireId}", h.SaveProgress)
 		})
+		r.Get("/api/today-training", h.GetTodayTraining)
+		r.Put("/api/today-training", h.SaveTodayTraining)
+		r.Post("/api/today-training/advance", h.AdvanceTodayTraining)
 
 		r.Route("/api/book-progress", func(r chi.Router) {
 			r.Get("/{bookId}", h.GetBookProgress)

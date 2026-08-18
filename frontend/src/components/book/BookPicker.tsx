@@ -16,6 +16,7 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null)
   const [completedChapterIds, setCompletedChapterIds] = useState<Set<string>>(() => new Set())
+  const [chapterProgress, setChapterProgress] = useState<Record<string, { done: number; total: number }>>({})
 
   useEffect(() => {
     listBooks()
@@ -34,6 +35,7 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
   useEffect(() => {
     if (!selectedId) {
       setCompletedChapterIds(new Set())
+      setChapterProgress({})
       return
     }
     let cancelled = false
@@ -41,11 +43,12 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
       .then(([book, progress]) => {
         if (cancelled) return
         const done = new Set(progress.done)
+        setChapterProgress(Object.fromEntries(book.chapters.map((chapter) => [chapter.id, { done: chapter.items.filter((item) => done.has(item.id)).length, total: chapter.items.length }])))
         setCompletedChapterIds(new Set(book.chapters
           .filter((chapter) => chapter.items.length > 0 && chapter.items.every((item) => done.has(item.id)))
           .map((chapter) => chapter.id)))
       })
-      .catch(() => { if (!cancelled) setCompletedChapterIds(new Set()) })
+      .catch(() => { if (!cancelled) { setCompletedChapterIds(new Set()); setChapterProgress({}) } })
     return () => { cancelled = true }
   }, [selectedId])
 
@@ -153,7 +156,7 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
           >
             {selected.chapters.map((ch) => (
               <option key={ch.id} value={ch.id}>
-                {completedChapterIds.has(ch.id) ? '✓ ' : ''}{ch.number}. {ch.name} — {ch.itemCount} item{ch.itemCount === 1 ? '' : 's'}
+                {completedChapterIds.has(ch.id) ? '✓ ' : ''}{ch.number}. {ch.name} — {chapterProgress[ch.id]?.done ?? 0}/{chapterProgress[ch.id]?.total ?? ch.itemCount} complete
               </option>
             ))}
           </select>

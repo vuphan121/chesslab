@@ -265,6 +265,23 @@ export const listRepertoires = (): Promise<RepertoireSummary[]> => request('/api
 export const getRepertoire = (id: string): Promise<Repertoire> =>
   request(`/api/repertoires/${id}`)
 
+export interface ImportRepertoireRequest {
+  sourceUrl: string
+  name: string
+  side: 'w' | 'b'
+  description: string
+}
+
+export const importRepertoire = (input: ImportRepertoireRequest): Promise<RepertoireSummary> =>
+  request('/api/repertoires/import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+
+export const refreshRepertoire = (id: string): Promise<RepertoireSummary> =>
+  request(`/api/repertoires/${encodeURIComponent(id)}/refresh`, { method: 'POST' })
+
 
 
 export const listBooks = (): Promise<BookSummary[]> => request('/api/books')
@@ -367,3 +384,38 @@ export interface AnalyticsResponse {
 }
 
 export const getAnalytics = (): Promise<AnalyticsResponse> => request('/api/analytics')
+
+export interface TodayTrainingSettings {
+  repertoireIds: string[]
+  linesPerDay: number
+}
+
+export interface TodayTrainingEntry {
+  repertoireId: string
+  cardId: string
+}
+
+export interface TodayTrainingResponse {
+  settings: TodayTrainingSettings | null
+  entries: TodayTrainingEntry[]
+}
+
+export const getTodayTraining = (): Promise<TodayTrainingResponse> => request('/api/today-training')
+
+export const saveTodayTraining = (settings: TodayTrainingSettings): Promise<TodayTrainingResponse> =>
+  request('/api/today-training', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  })
+
+export const advanceTodayTraining = (
+  repertoireId: string,
+  cardId: string,
+  incorrect: boolean,
+): Promise<TodayTrainingResponse> =>
+  request('/api/today-training/advance', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ repertoireId, cardId, incorrect }),
+  })

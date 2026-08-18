@@ -8,8 +8,11 @@ import {
   getRepertoire,
   getProgress as apiGetProgress,
   saveProgress as apiSaveProgress,
+  getTodayTraining,
+  saveTodayTraining,
+  advanceTodayTraining,
 } from '@/lib/api/client'
-import type { GameState } from '@/lib/api/client'
+import type { GameState, TodayTrainingEntry, TodayTrainingResponse } from '@/lib/api/client'
 import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
 import { flatten } from '@/lib/chess/moveTree'
 import type { Repertoire, RepCard, RepNode, SessionOptions, SessionState, PersistedCardState } from '@/lib/trainer/types'
@@ -130,6 +133,7 @@ export function useTrainerSession() {
   const [leadingMoves, setLeadingMoves] = useState<RunMove[]>([])
 
   const [summary, setSummary] = useState<ReturnType<typeof summarise> | null>(null)
+  const [isTodayTraining, setIsTodayTraining] = useState(false)
 
   const gameIdRef = useRef<string | null>(null)
   const sessionRef = useRef<SessionState | null>(null)
@@ -163,6 +167,8 @@ export function useTrainerSession() {
 
 
   const priorProgressRef = useRef<Record<string, PersistedCardState>>({})
+  const todayEntryRef = useRef<TodayTrainingEntry | null>(null)
+  const todayAdvanceRef = useRef<Promise<TodayTrainingResponse> | null>(null)
 
   const liveIndex = runSnapshots.length - 1
   const isViewingHistory = viewIndex !== null && viewIndex !== liveIndex
@@ -358,6 +364,11 @@ export function useTrainerSession() {
       })
     }
 
+    const todayEntry = todayEntryRef.current
+    if (todayEntry) {
+      todayAdvanceRef.current = advanceTodayTraining(todayEntry.repertoireId, todayEntry.cardId, runHadMistake)
+    }
+
 
 
     setHintUci(null)
@@ -406,6 +417,9 @@ export function useTrainerSession() {
 
   const startSession = useCallback(
     async (repertoireId: string, chapterIds: string[], opts: SessionOptions) => {
+      setIsTodayTraining(false)
+      todayEntryRef.current = null
+      todayAdvanceRef.current = null
       lastArgsRef.current = { repertoireId, chapterIds, opts }
       setLoading(true)
       setLoadError(null)
@@ -463,6 +477,80 @@ export function useTrainerSession() {
       }
     },
     [beginRun, resolveRunStartCard],
+  )
+
+  const startTodayEntry = useCallback(
+    async (entry: TodayTrainingEntry) => {
+      setLoading(true)
+      setLoadError(null)
+      try {
+        const rep = await getRepertoire(entry.repertoireId)
+        const dueCard = rep.cards.find((card) => card.id === entry.cardId)
+        if (!dueCard) throw new Error('This line is no longer available in its repertoire.')
+        setRepertoireState(rep)
+        setFlipped(rep.side === 'b')
+        selectedChapterIdsRef.current = new Set(rep.chapters.map((chapter) => chapter.id))
+        sessionCardsRef.current = rep.cards
+        let saved: Record<string, PersistedCardState> = {}
+        try {
+          saved = (await apiGetProgress(rep.id)).cards
+        } catch {
+
+        }
+        priorProgressRef.current = saved
+        sessionRef.current = createSession(rep.cards, { sessionLength: null, mode: 'mixed' }, saved, newRng())
+        const { card, targetPath, leadingMoves: leading } = resolveRunStartCard(rep, dueCard)
+        dueTargetPathRef.current = targetPath
+        leadingMovesRef.current = leading
+        const gs = await createGame(card.fen)
+        gameIdRef.current = gs.id
+        todayEntryRef.current = entry
+        beginRun(card, gs, leading)
+        setPhase('drilling')
+      } catch (err) {
+        setLoadError(err instanceof Error ? err.message : "Couldn't start today's line.")
+        setPhase('setup')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [beginRun, resolveRunStartCard],
+  )
+
+  const startTodayTraining = useCallback(
+    async (repertoireIds: string[], linesPerDay: number) => {
+      setIsTodayTraining(true)
+      setLoading(true)
+      setLoadError(null)
+      try {
+        const queue = await saveTodayTraining({ repertoireIds, linesPerDay })
+        const first = queue.entries[0]
+        if (!first) throw new Error('No lines are available in the selected repertoires.')
+        await startTodayEntry(first)
+      } catch (err) {
+        setLoadError(err instanceof Error ? err.message : "Couldn't build today's queue.")
+        setLoading(false)
+      }
+    },
+    [startTodayEntry],
+  )
+
+  const resumeTodayTraining = useCallback(
+    async () => {
+      setIsTodayTraining(true)
+      setLoading(true)
+      setLoadError(null)
+      try {
+        const queue = await getTodayTraining()
+        const first = queue.entries[0]
+        if (!first) throw new Error("Today's queue is empty.")
+        await startTodayEntry(first)
+      } catch (err) {
+        setLoadError(err instanceof Error ? err.message : "Couldn't resume today's queue.")
+        setLoading(false)
+      }
+    },
+    [startTodayEntry],
   )
 
   const submitMove = useCallback(
@@ -626,6 +714,25 @@ export function useTrainerSession() {
 
 
   const nextLine = useCallback(async () => {
+    if (todayEntryRef.current) {
+      setBusy(true)
+      try {
+        const queue = await (todayAdvanceRef.current ?? getTodayTraining())
+        todayAdvanceRef.current = null
+        const next = queue.entries[0]
+        if (!next) {
+          setLoadError("Today's queue is empty.")
+          setPhase('setup')
+          return
+        }
+        await startTodayEntry(next)
+      } catch (err) {
+        setLoadError(err instanceof Error ? err.message : "Couldn't advance today's queue.")
+      } finally {
+        setBusy(false)
+      }
+      return
+    }
     const session = sessionRef.current
     const gid = gameIdRef.current
     if (!session || !gid) return
@@ -653,7 +760,7 @@ export function useTrainerSession() {
     } finally {
       setBusy(false)
     }
-  }, [cardById, beginRun, repertoire, resolveRunStartCard])
+  }, [cardById, beginRun, repertoire, resolveRunStartCard, startTodayEntry])
 
 
 
@@ -709,6 +816,9 @@ export function useTrainerSession() {
     setRepertoireState(null)
     sessionRef.current = null
     gameIdRef.current = null
+    todayEntryRef.current = null
+    todayAdvanceRef.current = null
+    setIsTodayTraining(false)
     setPhase('setup')
   }, [])
 
@@ -731,12 +841,15 @@ export function useTrainerSession() {
     runMoves,
     leadingMoves,
     summary,
+    isTodayTraining,
     viewIndex,
     isViewingHistory,
     navBack,
     navForward,
     gotoPly,
     startSession,
+    startTodayTraining,
+    resumeTodayTraining,
     selectSquare,
     move: submitMove,
     legalMovesFor,

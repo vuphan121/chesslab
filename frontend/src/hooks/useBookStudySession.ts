@@ -78,6 +78,7 @@ export function useBookStudySession() {
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
   const [completedItemIds, setCompletedItemIds] = useState<Set<string>>(() => new Set())
+  const [bookmarkedItemIds, setBookmarkedItemIds] = useState<Set<string>>(() => new Set())
   const [completionBusy, setCompletionBusy] = useState(false)
   const [completionError, setCompletionError] = useState<string | null>(null)
 
@@ -150,6 +151,11 @@ export function useBookStudySession() {
         ])
         setBook(b)
         setCompletedItemIds(new Set(progress.done))
+        try {
+          setBookmarkedItemIds(new Set(JSON.parse(localStorage.getItem(`chesslab.book-bookmarks.${bookId}`) ?? '[]')))
+        } catch {
+          setBookmarkedItemIds(new Set())
+        }
         const items = b.chapters.flatMap((c) => c.items)
         if (items.length === 0) {
           setLoadError('This book has no study items yet.')
@@ -337,6 +343,17 @@ export function useBookStudySession() {
     }
   }, [book, current, completionBusy, completedItemIds])
 
+  const toggleCurrentBookmark = useCallback(() => {
+    if (!book || !current) return
+    setBookmarkedItemIds((previous) => {
+      const next = new Set(previous)
+      if (next.has(current.item.id)) next.delete(current.item.id)
+      else next.add(current.item.id)
+      localStorage.setItem(`chesslab.book-bookmarks.${book.id}`, JSON.stringify([...next]))
+      return next
+    })
+  }, [book, current])
+
   const restart = useCallback(() => {
     setPhase('setup')
     setBook(null)
@@ -347,6 +364,7 @@ export function useBookStudySession() {
     setAnalysis(null)
     setAnalysisError(null)
     setCompletedItemIds(new Set())
+    setBookmarkedItemIds(new Set())
     setCompletionError(null)
   }, [])
 
@@ -368,9 +386,11 @@ export function useBookStudySession() {
     analysisError,
     toggleAnalysis,
     completedItemIds,
+    bookmarkedItemIds,
     completionBusy,
     completionError,
     markCurrentComplete,
+    toggleCurrentBookmark,
     currentPly: currentTreeInfo.ply,
     canStepBack: currentTreeInfo.canBack,
     canStepForward: currentTreeInfo.canForward,

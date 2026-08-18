@@ -23,7 +23,7 @@ const EVAL_SLOT_WIDTH = 30
 export default function BookStudyPage() {
   const {
     phase, book, loadError, loading, flatItems, current, boardState,
-    busy, flipped, toggleFlipped, analysisEnabled, analysis, analysisLoading, toggleAnalysis, completedItemIds, completionBusy, completionError, markCurrentComplete, currentPly, canStepBack, canStepForward,
+    busy, flipped, toggleFlipped, analysisEnabled, analysis, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
     stepBack, stepForward, loadStart, goToIndex, goToMove, selectSquare,
     move, legalMovesFor, restart,
   } = useBookStudySession()
@@ -88,13 +88,14 @@ export default function BookStudyPage() {
         <TopBar right={<span style={{ fontSize: 12, fontWeight: 600, color: '#6a675f', background: '#f0efe9', padding: '6px 13px', borderRadius: 8 }}>{book.title}</span>} />
         <div style={{ display: 'grid', gridTemplateColumns: isNarrow ? '1fr' : `${SECTIONS_WIDTH}px ${centerWidth}px ${PDF_WIDTH}px`, gap: COLUMN_GAP, alignItems: 'stretch' }}>
           <aside style={{ height: isNarrow ? 260 : frameHeight, minHeight: 0, order: isNarrow ? 1 : undefined }}>
-            <ChapterSections items={chapterItems} activeItemId={current.item.id} completedItemIds={completedItemIds} busy={busy} onSelect={(localIndex) => goToIndex(chapterStartIndex + localIndex)} />
+            <ChapterSections items={chapterItems} startIndex={chapterStartIndex} activeItemId={current.item.id} completedItemIds={completedItemIds} bookmarkedItemIds={bookmarkedItemIds} busy={busy} onSelect={goToIndex} />
           </aside>
 
           <section style={{ width: isNarrow ? '100%' : centerWidth, display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'flex-start', order: isNarrow ? 2 : undefined }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: centerWidth, minHeight: 30 }}>
               <strong style={{ fontSize: 14, color: '#37352f' }}>{boardState.turn === 'w' ? 'White' : 'Black'} to move</strong>
               <div style={{ display: 'flex', gap: 7 }}>
+                <button onClick={toggleCurrentBookmark} title="Save this section" style={{ ...analysisButton, background: bookmarkedItemIds.has(current.item.id) ? '#fff5df' : '#fff', color: bookmarkedItemIds.has(current.item.id) ? '#a46b15' : '#77746c', borderColor: bookmarkedItemIds.has(current.item.id) ? '#edd9ae' : '#dbe8f4' }}>{bookmarkedItemIds.has(current.item.id) ? '★ Saved' : '☆ Save'}</button>
                 <button onClick={markCurrentComplete} disabled={completionBusy || completedItemIds.has(current.item.id)} style={{ ...completeButton, background: completedItemIds.has(current.item.id) ? '#e5f6eb' : '#fff', color: completedItemIds.has(current.item.id) ? '#25864d' : '#427e59', borderColor: completedItemIds.has(current.item.id) ? '#b9e5c8' : '#d6e8dd' }}>
                   {completedItemIds.has(current.item.id) ? '✓ Complete' : completionBusy ? 'Saving…' : 'Mark complete'}
                 </button>

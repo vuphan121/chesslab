@@ -36,6 +36,7 @@ func BuildRepertoire(chapters []*Chapter, cfg *Config) (*Repertoire, error) {
 
 	rep := &Repertoire{
 		Side:     side,
+		Config:   cfg,
 		Chapters: chapters,
 		Cards:    deriveCards(chapters, side),
 		Replies:  deriveReplies(chapters, side),

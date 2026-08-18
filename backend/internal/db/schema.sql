@@ -60,3 +60,32 @@ CREATE TABLE IF NOT EXISTS books (
     data JSONB NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS today_training_settings (
+    username TEXT PRIMARY KEY,
+    repertoire_ids JSONB NOT NULL,
+    lines_per_day INT NOT NULL CHECK (lines_per_day BETWEEN 1 AND 100),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS today_training_queue (
+    username TEXT NOT NULL,
+    queue_date DATE NOT NULL,
+    queue_position INT NOT NULL,
+    repertoire_id TEXT NOT NULL,
+    card_id TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (username, queue_date, queue_position),
+    UNIQUE (username, queue_date, repertoire_id, card_id)
+);
+
+CREATE INDEX IF NOT EXISTS today_training_queue_username_date_idx
+    ON today_training_queue (username, queue_date, queue_position);
+
+CREATE TABLE IF NOT EXISTS repertoire_sources (
+    id TEXT PRIMARY KEY,
+    source_url TEXT NOT NULL,
+    pgn TEXT NOT NULL,
+    config JSONB NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

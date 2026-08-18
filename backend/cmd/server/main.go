@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -72,9 +73,9 @@ func main() {
 	if repDir == "" {
 		repDir = "data/repertoires"
 	}
-	repertoires := repertoire.NewStore(repertoire.LoadDir(repDir))
-
 	dbStore := newDBStore()
+	repertoires := repertoire.NewStore(repertoire.LoadDir(repDir))
+	loadManagedRepertoires(dbStore, repertoires)
 
 	loadedBooks := loadBooks(dbStore)
 	books := book.NewStore(loadedBooks)
@@ -175,6 +176,33 @@ func loadBooks(dbStore *db.Store) []*book.Book {
 		booksDir = "data/books"
 	}
 	return book.LoadDir(booksDir)
+}
+
+func loadManagedRepertoires(dbStore *db.Store, store *repertoire.Store) {
+	if dbStore == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	sources, err := dbStore.LoadRepertoireSources(ctx)
+	if err != nil {
+		log.Printf("repertoire: failed to load managed repertoires (%v)", err)
+		return
+	}
+	for _, source := range sources {
+		var cfg repertoire.Config
+		if err := json.Unmarshal(source.Config, &cfg); err != nil {
+			log.Printf("repertoire: skipping managed %q due to invalid config (%v)", source.ID, err)
+			continue
+		}
+		rep, err := repertoire.ParseAndBuild(source.PGN, &cfg)
+		if err != nil {
+			log.Printf("repertoire: skipping managed %q due to parse error (%v)", source.ID, err)
+			continue
+		}
+		store.Upsert(rep)
+		log.Printf("repertoire: loaded managed %q (%d cards)", rep.ID, len(rep.Cards))
+	}
 }
 
 func newDBStore() *db.Store {
