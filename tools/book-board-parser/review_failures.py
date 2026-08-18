@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 from pathlib import Path
 
 import cv2
@@ -25,6 +26,7 @@ def main() -> None:
     args = cli.parse_args()
     root, output = Path(args.parser_root), Path(args.output)
     contexts = output.parent / "contexts"
+    crops = output.parent / "crops"
     items: list[dict] = []
     for chapter in range(3, 25):
         payload = json.loads((root / f"chapter-{chapter}" / "positions.json").read_text(encoding="utf-8"))
@@ -39,11 +41,16 @@ def main() -> None:
             context_name = f"{record['diagram']}.png"
             contexts.mkdir(parents=True, exist_ok=True)
             cv2.imwrite(str(contexts / context_name), context)
+            crop_name = f"{record['diagram']}.png"
+            crops.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(record["cropPath"], crops / crop_name)
+            placement, side = record.get("piecePlacement", ""), record.get("sideToMove", "")
             items.append({
                 "chapter": chapter, "diagram": record["diagram"], "reason": reason,
-                "piecePlacement": record.get("piecePlacement", ""), "sideToMove": record.get("sideToMove", ""),
+                "piecePlacement": placement, "sideToMove": side,
+                "parsedFen": f"{placement} {side if side in {'w', 'b'} else '?'} - - 0 1" if placement else "No parsed FEN",
                 "bookPage": record["bookPage"], "masterPDFPage": record["masterPDFPage"], "chapterPDFPage": record["chapterPDFPage"],
-                "context": f"contexts/{context_name}", "accepted": False,
+                "context": f"contexts/{context_name}", "crop": f"crops/{crop_name}", "accepted": False,
             })
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps({"items": items}, indent=2) + "\n", encoding="utf-8")

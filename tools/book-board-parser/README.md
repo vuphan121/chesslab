@@ -69,8 +69,10 @@ python tools/book-board-parser/review_failures.py
 python tools/book-board-parser/review_server.py
 ```
 
-Open `http://127.0.0.1:8787`. Check **Accept this correction**, set the missing
-piece placement and/or side, then save. This creates an ignored
+Open `http://127.0.0.1:8787`. Each card shows the tight original board crop,
+the surrounding turn-marker context, its read-only parsed FEN, a White/Black
+picker, and an editable full-FEN field. Check **Accept this correction**, set
+the missing piece placement and/or side, then save. This creates an ignored
 `work/review/overrides.json`; nothing is sent to the app yet.
 
 The Go importer turns every complete parser record into a free-play Lesson
