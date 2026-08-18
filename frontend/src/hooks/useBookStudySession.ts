@@ -255,9 +255,6 @@ export function useBookStudySession() {
       const gid = gameIdRef.current
       if (!gid || phase !== 'studying' || busy) return
 
-      // Capture the item before awaiting the move request. This keeps a
-      // successful move attributed to the position the student actually saw,
-      // even if the UI changes items while the request is in flight.
       const activity = book && current
         ? { bookId: book.id, chapterId: current.chapterId, itemId: current.item.id }
         : null
@@ -273,9 +270,6 @@ export function useBookStudySession() {
         setGameState(gs)
         setSelected(null)
 
-        // Keep the chess interaction instant: the server deduplicates this
-        // event per user/item/hour, and a failed analytics write never affects
-        // the move that was already accepted by the game API.
         if (activity) {
           void recordBookStudyActivity(activity.bookId, activity.chapterId, activity.itemId).catch(() => undefined)
         }

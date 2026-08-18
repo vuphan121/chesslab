@@ -58,10 +58,6 @@ CREATE TABLE IF NOT EXISTS book_item_progress (
     PRIMARY KEY (username, book_id, item_id)
 );
 
--- Book-study activity is an append-only learning log. One row represents the
--- first move a student made in one lesson or puzzle during a UTC clock hour.
--- The primary key makes retries and multiple browser tabs harmless, while
--- keeping the exact book/chapter/item context needed for future analytics.
 CREATE TABLE IF NOT EXISTS book_study_activity (
     username TEXT NOT NULL,
     book_id TEXT NOT NULL,

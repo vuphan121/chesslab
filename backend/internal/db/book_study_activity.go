@@ -5,8 +5,6 @@ import (
 	"fmt"
 )
 
-// BookStudyActivity is the immutable context of one lesson/puzzle move. The
-// database records it at most once per UTC clock hour for each user and item.
 type BookStudyActivity struct {
 	BookID      string
 	BookTitle   string
@@ -16,9 +14,6 @@ type BookStudyActivity struct {
 	ItemType    string
 }
 
-// RecordBookStudyActivity records the first move made in an item during the
-// current hour. PostgreSQL supplies the timestamp, so a browser's clock cannot
-// accidentally shift activity into the wrong window.
 func (s *Store) RecordBookStudyActivity(ctx context.Context, username string, activity BookStudyActivity) error {
 	_, err := s.pool.Exec(ctx, `
 		INSERT INTO book_study_activity

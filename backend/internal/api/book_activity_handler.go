@@ -8,9 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// RecordBookStudyActivity records a study event after a legal move. The book
-// store, rather than the browser, is the source of truth for chapter names and
-// whether an item is a lesson or puzzle.
 func (h *Handler) RecordBookStudyActivity(w http.ResponseWriter, r *http.Request) {
 	if h.db == nil {
 		http.Error(w, "study activity sync not configured", http.StatusServiceUnavailable)

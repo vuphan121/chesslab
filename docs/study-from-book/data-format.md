@@ -7,13 +7,12 @@ changing sections starts a fresh board.
 
 ## Study activity tracking
 
-When an authenticated student makes a legal move in a lesson or puzzle, the
-app records a study-activity event in Neon. Events are deduplicated by the
-database to one row per user, book, chapter, item, and UTC clock hour; extra
-moves, browser tabs, and retried requests within that hour do not inflate the
-count. Each row retains the book and chapter names, item type (`lesson` or
-`puzzle`), and the server timestamp of the first move. This is separate from
-completion: exploration never marks an item complete.
+The first successful move in a lesson or puzzle records one activity event for
+the authenticated student. Events are deduplicated to one per user, book,
+chapter, item, and UTC clock hour, so repeated moves, tabs, and request retries
+do not inflate the count. Each event keeps the book/chapter context, the item
+type (`lesson` or `puzzle`), and its server timestamp. Activity is separate
+from completion: a student can explore freely without marking an item complete.
 
 ## Content and copyright
 
