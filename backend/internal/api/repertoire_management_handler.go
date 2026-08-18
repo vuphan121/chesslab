@@ -1,11 +1,13 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/chesslab/backend/internal/db"
 	"github.com/chesslab/backend/internal/repertoire"
@@ -120,7 +122,15 @@ func (h *Handler) fetchAndSaveRepertoire(r *http.Request, cfg repertoire.Config)
 	if err := h.db.SaveRepertoireSource(r.Context(), db.RepertoireSource{ID: cfg.ID, SourceURL: canonicalSource, PGN: pgn, Config: rawConfig}); err != nil {
 		return nil, err
 	}
+	if err := h.db.DeleteLineImportance(r.Context(), cfg.ID); err != nil {
+		return nil, err
+	}
 	h.repertoires.Upsert(rep)
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+		defer cancel()
+		h.refreshLineImportance(ctx, rep)
+	}()
 	return rep, nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -22,6 +23,13 @@ type TodayTrainingEntry struct {
 type TodayTrainingQueue struct {
 	Settings *TodayTrainingSettings
 	Entries  []TodayTrainingEntry
+}
+
+const queueRankGap int64 = 1000000
+
+type rankedTodayTrainingEntry struct {
+	TodayTrainingEntry
+	rank int64
 }
 
 func (s *Store) GetTodayTraining(ctx context.Context, username string) (TodayTrainingQueue, error) {
@@ -47,7 +55,7 @@ func (s *Store) GetTodayTraining(ctx context.Context, username string) (TodayTra
 		SELECT repertoire_id, card_id
 		FROM today_training_queue
 		WHERE username = $1 AND queue_date = CURRENT_DATE
-		ORDER BY queue_position`, username)
+		ORDER BY queue_rank`, username)
 	if err != nil {
 		return out, fmt.Errorf("get today training queue: %w", err)
 	}
@@ -89,7 +97,7 @@ func (s *Store) SaveTodayTraining(ctx context.Context, username string, settings
 	return TodayTrainingQueue{Settings: &settings, Entries: entries}, nil
 }
 
-func (s *Store) AdvanceTodayTraining(ctx context.Context, username, repertoireID, cardID string, incorrect bool) (TodayTrainingQueue, error) {
+func (s *Store) AdvanceTodayTraining(ctx context.Context, username, repertoireID, cardID string, incorrect bool, importance float64) (TodayTrainingQueue, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return TodayTrainingQueue{}, fmt.Errorf("begin today training advance: %w", err)
@@ -110,18 +118,18 @@ func (s *Store) AdvanceTodayTraining(ctx context.Context, username, repertoireID
 	}
 
 	rows, err := tx.Query(ctx, `
-		SELECT repertoire_id, card_id
+		SELECT repertoire_id, card_id, queue_rank
 		FROM today_training_queue
 		WHERE username = $1 AND queue_date = CURRENT_DATE
-		ORDER BY queue_position
+		ORDER BY queue_rank
 		FOR UPDATE`, username)
 	if err != nil {
 		return TodayTrainingQueue{}, fmt.Errorf("lock today training queue: %w", err)
 	}
-	entries := []TodayTrainingEntry{}
+	entries := []rankedTodayTrainingEntry{}
 	for rows.Next() {
-		var entry TodayTrainingEntry
-		if err := rows.Scan(&entry.RepertoireID, &entry.CardID); err != nil {
+		var entry rankedTodayTrainingEntry
+		if err := rows.Scan(&entry.RepertoireID, &entry.CardID, &entry.rank); err != nil {
 			rows.Close()
 			return TodayTrainingQueue{}, fmt.Errorf("scan today training entry: %w", err)
 		}
@@ -143,23 +151,45 @@ func (s *Store) AdvanceTodayTraining(ctx context.Context, username, repertoireID
 	if found < 0 {
 		return TodayTrainingQueue{}, fmt.Errorf("today training entry not found")
 	}
-	moved := entries[found]
+	moved := entries[found].TodayTrainingEntry
 	entries = append(entries[:found], entries[found+1:]...)
+	if importance < 0 {
+		importance = 0
+	}
+	if importance > 1 {
+		importance = 1
+	}
 	insertAt := len(entries)
 	if incorrect {
-		insertAt = len(entries) / 2
+		insertAt = int(float64(len(entries)) * (0.5 - 0.25*importance))
+	} else {
+		insertAt = int(float64(len(entries)) * (1 - 0.25*importance))
 	}
-	entries = append(entries, TodayTrainingEntry{})
-	copy(entries[insertAt+1:], entries[insertAt:])
-	entries[insertAt] = moved
-
-	if err := replaceTodayTrainingQueue(ctx, tx, username, entries); err != nil {
-		return TodayTrainingQueue{}, err
+	rank, rebalance := rankForInsert(entries, insertAt)
+	if rebalance {
+		if err := rebalanceTodayTrainingQueue(ctx, tx, username, entries); err != nil {
+			return TodayTrainingQueue{}, err
+		}
+		rank, _ = rankForInsert(entries, insertAt)
+	}
+	if _, err := tx.Exec(ctx, `
+		UPDATE today_training_queue
+		SET queue_rank = $1
+		WHERE username = $2 AND queue_date = CURRENT_DATE AND repertoire_id = $3 AND card_id = $4`,
+		rank, username, moved.RepertoireID, moved.CardID); err != nil {
+		return TodayTrainingQueue{}, fmt.Errorf("move today training entry: %w", err)
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return TodayTrainingQueue{}, fmt.Errorf("commit today training advance: %w", err)
 	}
-	return TodayTrainingQueue{Settings: &settings, Entries: entries}, nil
+	entries = append(entries, rankedTodayTrainingEntry{})
+	copy(entries[insertAt+1:], entries[insertAt:])
+	entries[insertAt] = rankedTodayTrainingEntry{TodayTrainingEntry: moved, rank: rank}
+	out := make([]TodayTrainingEntry, 0, len(entries))
+	for _, entry := range entries {
+		out = append(out, entry.TodayTrainingEntry)
+	}
+	return TodayTrainingQueue{Settings: &settings, Entries: out}, nil
 }
 
 func replaceTodayTrainingQueue(ctx context.Context, tx pgx.Tx, username string, entries []TodayTrainingEntry) error {
@@ -168,9 +198,46 @@ func replaceTodayTrainingQueue(ctx context.Context, tx pgx.Tx, username string, 
 	}
 	for position, entry := range entries {
 		if _, err := tx.Exec(ctx, `
-			INSERT INTO today_training_queue (username, queue_date, queue_position, repertoire_id, card_id)
-			VALUES ($1, CURRENT_DATE, $2, $3, $4)`, username, position, entry.RepertoireID, entry.CardID); err != nil {
+			INSERT INTO today_training_queue (username, queue_date, queue_position, queue_rank, repertoire_id, card_id)
+			VALUES ($1, CURRENT_DATE, $2, $3, $4, $5)`, username, position, int64(position+1)*queueRankGap, entry.RepertoireID, entry.CardID); err != nil {
 			return fmt.Errorf("insert today training entry: %w", err)
+		}
+	}
+	return nil
+}
+
+func rankForInsert(entries []rankedTodayTrainingEntry, insertAt int) (int64, bool) {
+	if len(entries) == 0 {
+		return queueRankGap, false
+	}
+	if insertAt == 0 {
+		if entries[0].rank <= math.MinInt64+queueRankGap {
+			return 0, true
+		}
+		return entries[0].rank - queueRankGap, false
+	}
+	if insertAt >= len(entries) {
+		if entries[len(entries)-1].rank >= math.MaxInt64-queueRankGap {
+			return 0, true
+		}
+		return entries[len(entries)-1].rank + queueRankGap, false
+	}
+	left, right := entries[insertAt-1].rank, entries[insertAt].rank
+	if right-left <= 1 {
+		return 0, true
+	}
+	return left + (right-left)/2, false
+}
+
+func rebalanceTodayTrainingQueue(ctx context.Context, tx pgx.Tx, username string, entries []rankedTodayTrainingEntry) error {
+	for index := range entries {
+		entries[index].rank = int64(index+1) * queueRankGap
+		if _, err := tx.Exec(ctx, `
+			UPDATE today_training_queue
+			SET queue_rank = $1
+			WHERE username = $2 AND queue_date = CURRENT_DATE AND repertoire_id = $3 AND card_id = $4`,
+			entries[index].rank, username, entries[index].RepertoireID, entries[index].CardID); err != nil {
+			return fmt.Errorf("rebalance today training queue: %w", err)
 		}
 	}
 	return nil

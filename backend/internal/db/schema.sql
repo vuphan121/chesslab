@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS today_training_queue (
     username TEXT NOT NULL,
     queue_date DATE NOT NULL,
     queue_position INT NOT NULL,
+    queue_rank BIGINT NOT NULL,
     repertoire_id TEXT NOT NULL,
     card_id TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -82,10 +83,26 @@ CREATE TABLE IF NOT EXISTS today_training_queue (
 CREATE INDEX IF NOT EXISTS today_training_queue_username_date_idx
     ON today_training_queue (username, queue_date, queue_position);
 
+ALTER TABLE today_training_queue ADD COLUMN IF NOT EXISTS queue_rank BIGINT;
+UPDATE today_training_queue SET queue_rank = queue_position::BIGINT * 1000000 WHERE queue_rank IS NULL;
+ALTER TABLE today_training_queue ALTER COLUMN queue_rank SET NOT NULL;
+
+CREATE INDEX IF NOT EXISTS today_training_queue_username_date_rank_idx
+    ON today_training_queue (username, queue_date, queue_rank);
+
 CREATE TABLE IF NOT EXISTS repertoire_sources (
     id TEXT PRIMARY KEY,
     source_url TEXT NOT NULL,
     pgn TEXT NOT NULL,
     config JSONB NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS repertoire_line_importance (
+    repertoire_id TEXT NOT NULL,
+    card_id TEXT NOT NULL,
+    play_count BIGINT NOT NULL,
+    importance DOUBLE PRECISION NOT NULL,
+    calculated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (repertoire_id, card_id)
 );

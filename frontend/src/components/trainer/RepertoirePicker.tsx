@@ -106,7 +106,7 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
 
   const [today, setToday] = useState<TodayTrainingResponse | null>(null)
   const [todayRepertoireIds, setTodayRepertoireIds] = useState<Set<string>>(new Set())
-  const [todayLineCount, setTodayLineCount] = useState(10)
+  const [todayLineCountInput, setTodayLineCountInput] = useState('10')
   const [managing, setManaging] = useState(false)
 
   const fullRepReqId = useRef(0)
@@ -147,7 +147,7 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
         const settings = queue?.settings
         setToday(queue)
         setTodayRepertoireIds(new Set(settings?.repertoireIds.length ? settings.repertoireIds : list.map((rep) => rep.id)))
-        if (settings) setTodayLineCount(settings.linesPerDay)
+        if (settings) setTodayLineCountInput(String(settings.linesPerDay))
       })
       .catch((err) => setListError(err instanceof Error ? err.message : 'Failed to reach the backend.'))
   }, [])
@@ -195,6 +195,8 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
     })
   }
 
+  const todayLineCount = Number(todayLineCountInput)
+  const validTodayLineCount = Number.isInteger(todayLineCount) && todayLineCount >= 1 && todayLineCount <= 100
   const savedSettingsMatch =
     today?.settings?.linesPerDay === todayLineCount &&
     today?.settings.repertoireIds.length === todayRepertoireIds.size &&
@@ -290,20 +292,27 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
               type="number"
               min={1}
               max={100}
-              value={todayLineCount}
-              onChange={(event) => setTodayLineCount(Math.max(1, Math.min(100, Number(event.target.value) || 1)))}
+              value={todayLineCountInput}
+              onChange={(event) => setTodayLineCountInput(event.target.value)}
               style={{ width: 58, border: '1px solid #cfe0ee', borderRadius: 6, padding: '5px 7px', color: '#37352f' }}
             />
           </label>
           <button
+            onClick={() => validTodayLineCount && onStartToday([...todayRepertoireIds], todayLineCount)}
+            disabled={starting || todayRepertoireIds.size === 0 || !validTodayLineCount || savedSettingsMatch}
+            style={{ fontSize: 12, fontWeight: 700, padding: '8px 11px', borderRadius: 7, border: '1px solid #c5dcef', background: '#fff', color: '#3974ad', cursor: starting ? 'default' : 'pointer' }}
+          >
+            Update queue
+          </button>
+          <button
             onClick={() => {
-              if (savedSettingsMatch && (today?.entries.length ?? 0) > 0) onResumeToday()
+              if ((today?.entries.length ?? 0) > 0) onResumeToday()
               else onStartToday([...todayRepertoireIds], todayLineCount)
             }}
-            disabled={starting || todayRepertoireIds.size === 0}
+            disabled={starting || todayRepertoireIds.size === 0 || !validTodayLineCount}
             style={{ fontSize: 12, fontWeight: 700, padding: '8px 13px', borderRadius: 7, border: 'none', background: starting ? '#a9c9e8' : '#4a90d9', color: '#fff', cursor: starting ? 'default' : 'pointer' }}
           >
-            {starting ? 'Starting…' : savedSettingsMatch && (today?.entries.length ?? 0) > 0 ? 'Resume today' : 'Build today’s queue'}
+            {starting ? 'Starting…' : (today?.entries.length ?? 0) > 0 ? 'Resume today' : 'Build today’s queue'}
           </button>
         </div>
       </div>

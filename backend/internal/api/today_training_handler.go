@@ -2,9 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"math"
 	"math/rand/v2"
 	"net/http"
 	"slices"
+	"sort"
+	"time"
 
 	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/db"
@@ -84,7 +87,13 @@ func (h *Handler) AdvanceTodayTraining(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "repertoireId and cardId are required", http.StatusBadRequest)
 		return
 	}
-	queue, err := h.db.AdvanceTodayTraining(r.Context(), username, req.RepertoireID, req.CardID, req.Incorrect)
+	importance := 0.5
+	if cached, err := h.db.GetLineImportance(r.Context(), req.RepertoireID); err == nil {
+		if entry, ok := cached[req.CardID]; ok {
+			importance = entry.Importance
+		}
+	}
+	queue, err := h.db.AdvanceTodayTraining(r.Context(), username, req.RepertoireID, req.CardID, req.Incorrect, importance)
 	if err != nil {
 		http.Error(w, "failed to advance today's training: "+err.Error(), http.StatusBadRequest)
 		return
@@ -112,21 +121,62 @@ func (h *Handler) buildTodayTraining(r *http.Request, username string, settings 
 	if len(settings.RepertoireIDs) == 0 {
 		return db.TodayTrainingQueue{}, errTodayTraining("choose at least one repertoire")
 	}
-	entries := []db.TodayTrainingEntry{}
+	type candidate struct {
+		entry   db.TodayTrainingEntry
+		urgency int
+		score   float64
+	}
+	candidates := []candidate{}
 	for _, repertoireID := range settings.RepertoireIDs {
 		rep, ok := h.repertoires.Get(repertoireID)
 		if !ok {
 			return db.TodayTrainingQueue{}, errTodayTraining("repertoire not found: " + repertoireID)
 		}
+		importance := h.ensureLineImportance(r.Context(), rep)
+		progress, err := h.db.GetProgress(r.Context(), username, repertoireID)
+		if err != nil {
+			return db.TodayTrainingQueue{}, errTodayTraining("load repertoire progress: " + err.Error())
+		}
 		for _, card := range rep.Cards {
-			entries = append(entries, db.TodayTrainingEntry{RepertoireID: repertoireID, CardID: card.ID})
+			value := importance[card.ID]
+			candidates = append(candidates, candidate{
+				entry:   db.TodayTrainingEntry{RepertoireID: repertoireID, CardID: card.ID},
+				urgency: dailyUrgency(progress[card.ID], time.Now()),
+				score:   value*0.7 + rand.Float64()*0.7,
+			})
 		}
 	}
-	rand.Shuffle(len(entries), func(i, j int) { entries[i], entries[j] = entries[j], entries[i] })
+	sort.Slice(candidates, func(i, j int) bool {
+		if candidates[i].urgency != candidates[j].urgency {
+			return candidates[i].urgency > candidates[j].urgency
+		}
+		return candidates[i].score > candidates[j].score
+	})
+	entries := make([]db.TodayTrainingEntry, 0, len(candidates))
+	for _, candidate := range candidates {
+		entries = append(entries, candidate.entry)
+	}
 	if len(entries) > settings.LinesPerDay {
 		entries = entries[:settings.LinesPerDay]
 	}
 	return h.db.SaveTodayTraining(r.Context(), username, settings, entries)
+}
+
+func dailyUrgency(progress db.CardProgress, now time.Time) int {
+	if progress.Seen == 0 || progress.LastSeenISO == nil {
+		return 4
+	}
+	lastSeen, err := time.Parse(time.RFC3339, *progress.LastSeenISO)
+	if err != nil {
+		return 4
+	}
+	box := max(0, min(progress.Box, 5))
+	baseGap := []float64{2, 4, 8, 16, 32, 64}[box]
+	gap := baseGap * math.Pow(0.8, float64(progress.Lapses))
+	ageDays := max(0, now.Sub(lastSeen).Hours()/24)
+	ratio := ageDays / max(gap, 1)
+	ratio += min(float64(progress.Lapses)*0.12, 0.6)
+	return min(int(math.Floor(ratio*4)), 99)
 }
 
 func todayTrainingResponse(queue db.TodayTrainingQueue) TodayTrainingResponse {
