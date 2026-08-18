@@ -14,7 +14,7 @@ interface Props {
 export default function TopBar({ turn, isBookMove, right }: Props) {
   return (
     <div
-      className="flex-wrap gap-3 px-4 py-3 sm:gap-[22px] sm:px-[22px] sm:py-4"
+      className="flex-wrap gap-3 px-4 py-4 sm:gap-[22px] sm:px-[22px] sm:py-[18px]"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -24,7 +24,7 @@ export default function TopBar({ turn, isBookMove, right }: Props) {
         boxShadow: '0 1px 3px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.05)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '2px 0' }}>
         <span style={{ fontWeight: 600, fontSize: 17, letterSpacing: '-0.3px' }}>
           Chess<span style={{ color: '#2f6db0' }}>lab</span>
         </span>
