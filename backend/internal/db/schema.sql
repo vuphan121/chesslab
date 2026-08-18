@@ -58,6 +58,26 @@ CREATE TABLE IF NOT EXISTS book_item_progress (
     PRIMARY KEY (username, book_id, item_id)
 );
 
+-- Book-study activity is an append-only learning log. One row represents the
+-- first move a student made in one lesson or puzzle during a UTC clock hour.
+-- The primary key makes retries and multiple browser tabs harmless, while
+-- keeping the exact book/chapter/item context needed for future analytics.
+CREATE TABLE IF NOT EXISTS book_study_activity (
+    username TEXT NOT NULL,
+    book_id TEXT NOT NULL,
+    book_title TEXT NOT NULL,
+    chapter_id TEXT NOT NULL,
+    chapter_name TEXT NOT NULL,
+    item_id TEXT NOT NULL,
+    item_type TEXT NOT NULL CHECK (item_type IN ('lesson', 'puzzle')),
+    activity_hour TIMESTAMPTZ NOT NULL,
+    first_moved_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (username, book_id, chapter_id, item_id, activity_hour)
+);
+
+CREATE INDEX IF NOT EXISTS book_study_activity_username_first_moved_at_idx
+    ON book_study_activity (username, first_moved_at DESC);
+
 -- Book content for the "Study from Book" feature, stored here instead of a
 -- committed file so it never has to touch git — not even as a gitignored
 -- local file that a deploy target would need copied onto it by hand. What's

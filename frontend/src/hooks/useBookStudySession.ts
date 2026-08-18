@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createGame, setPosition as apiSetPosition, makeMove, gotoNode, getBook, getBookProgress, markItemDone, analyzeGame } from '@/lib/api/client'
+import { createGame, setPosition as apiSetPosition, makeMove, gotoNode, getBook, getBookProgress, markItemDone, analyzeGame, recordBookStudyActivity } from '@/lib/api/client'
 import type { Analysis, GameState } from '@/lib/api/client'
 import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
 import { flatten } from '@/lib/chess/moveTree'
@@ -255,6 +255,13 @@ export function useBookStudySession() {
       const gid = gameIdRef.current
       if (!gid || phase !== 'studying' || busy) return
 
+      // Capture the item before awaiting the move request. This keeps a
+      // successful move attributed to the position the student actually saw,
+      // even if the UI changes items while the request is in flight.
+      const activity = book && current
+        ? { bookId: book.id, chapterId: current.chapterId, itemId: current.item.id }
+        : null
+
       setBusy(true)
       const reqId = ++moveReqId.current
       try {
@@ -266,13 +273,20 @@ export function useBookStudySession() {
         setGameState(gs)
         setSelected(null)
 
+        // Keep the chess interaction instant: the server deduplicates this
+        // event per user/item/hour, and a failed analytics write never affects
+        // the move that was already accepted by the game API.
+        if (activity) {
+          void recordBookStudyActivity(activity.bookId, activity.chapterId, activity.itemId).catch(() => undefined)
+        }
+
       } catch {
         // network hiccup — leave the position untouched, allow retry
       } finally {
         if (reqId === moveReqId.current) setBusy(false)
       }
     },
-    [phase, busy, boardState],
+    [phase, busy, boardState, book, current],
   )
 
   const selectSquare = useCallback(

@@ -69,6 +69,7 @@ func NewRouter(h *Handler) http.Handler {
 			r.Get("/{bookId}", h.GetBookProgress)
 			r.Post("/{bookId}/{itemId}", h.MarkItemDone)
 		})
+		r.Post("/api/book-activity/{bookId}/{chapterId}/{itemId}", h.RecordBookStudyActivity)
 
 		r.Get("/api/analytics", h.Analytics)
 	})

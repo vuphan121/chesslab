@@ -5,6 +5,16 @@ selects a section, sees the corresponding PDF page, and explores the supplied
 position on the board. Their move tree exists only for that browser session;
 changing sections starts a fresh board.
 
+## Study activity tracking
+
+When an authenticated student makes a legal move in a lesson or puzzle, the
+app records a study-activity event in Neon. Events are deduplicated by the
+database to one row per user, book, chapter, item, and UTC clock hour; extra
+moves, browser tabs, and retried requests within that hour do not inflate the
+count. Each row retains the book and chapter names, item type (`lesson` or
+`puzzle`), and the server timestamp of the first move. This is separate from
+completion: exploration never marks an item complete.
+
 ## Content and copyright
 
 - Purchased source PDFs are private. The master PDF used for local preparation

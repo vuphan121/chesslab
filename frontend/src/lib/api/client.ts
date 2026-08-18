@@ -290,6 +290,17 @@ export const getBookProgress = (bookId: string): Promise<GetBookProgressResponse
 export const markItemDone = (bookId: string, itemId: string): Promise<{ ok: boolean }> =>
   request(`/api/book-progress/${bookId}/${itemId}`, { method: 'POST' })
 
+// Logged after a successful board move. The backend deduplicates this to one
+// event per user/item/hour, so callers can safely fire it for every move.
+export const recordBookStudyActivity = (
+  bookId: string,
+  chapterId: string,
+  itemId: string,
+): Promise<{ ok: boolean }> =>
+  request(`/api/book-activity/${encodeURIComponent(bookId)}/${encodeURIComponent(chapterId)}/${encodeURIComponent(itemId)}`, {
+    method: 'POST',
+  })
+
 // --- Auth ---
 
 export interface LoginResponse {
