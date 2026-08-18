@@ -58,3 +58,29 @@ It never corrects those diagrams or writes to Neon.
 ```powershell
 python tools/book-board-parser/parse_remaining.py 'book-sources/Book 1.pdf'
 ```
+
+## Import valid boards and review exceptions
+
+Build a local review queue for diagrams the parser could not fully read, then
+start its local-only review page:
+
+```powershell
+python tools/book-board-parser/review_failures.py
+python tools/book-board-parser/review_server.py
+```
+
+Open `http://127.0.0.1:8787`. Check **Accept this correction**, set the missing
+piece placement and/or side, then save. This creates an ignored
+`work/review/overrides.json`; nothing is sent to the app yet.
+
+The Go importer turns every complete parser record into a free-play Lesson
+(`"Explore the position on the board."`) and keeps incomplete diagrams out of
+production until an accepted review override is available. It merges Chapters
+3-24 into the existing Neon book without changing the hand-authored Chapters
+1-2. Preview first, then use `--apply` deliberately:
+
+```powershell
+cd backend
+go run ./cmd/importparsedboards
+go run ./cmd/importparsedboards --apply
+```

@@ -143,3 +143,21 @@ Chapter 2 also contains three recognized diagrams not yet used as study items.
 
 Older PaddleOCR/TroCR labeling and fine-tuning experiments remain retired. They
 are neither a production dependency nor part of the offline parser.
+
+### Importing parsed positions into Neon
+
+`backend/cmd/importparsedboards` is the scalable follow-up to the offline
+parser. It reads the ignored parser output, preserves the existing Chapters 1
+and 2 record data in Neon, and replaces only Chapters 3-24 with validated
+free-play lesson items. Every imported item has a source-page triple and the
+original app-authored prompt `Explore the position on the board.`; it does not
+copy book prose or invent a puzzle solution.
+
+The importer is a dry run by default. `--apply` is required to upsert the
+merged book data. A parsed diagram is excluded unless it has both a structurally
+valid piece placement and a `w`/`b` side to move. To review exclusions, run
+`tools/book-board-parser/review_failures.py` and then
+`review_server.py`; the local page saves accepted corrections in ignored
+`work/review/overrides.json`. Re-running the importer with that override file
+includes only those accepted corrections. This makes a later book import
+repeatable without ever hand-editing the production JSON blob.
