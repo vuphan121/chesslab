@@ -150,6 +150,9 @@ export default function Board({
       return
     }
 
+    setArrows([])
+    setCircles(new Set())
+
     const piece = boardState.pieces[sq]
     if (piece && piece.color === boardState.turn) {
       e.preventDefault()

@@ -175,6 +175,30 @@ export default function OpeningStudyPage() {
         >
           <div
             style={{
+              width: isNarrow ? '100%' : sideWidth,
+              height: isNarrow ? 320 : boardSize,
+              marginTop: isNarrow ? 0 : BOARD_TOP_OFFSET,
+              flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              order: isNarrow ? 2 : 0,
+            }}
+          >
+            <LinePanel
+              repertoire={repertoire}
+              runStartCard={runStartCard}
+              runMoves={runMoves}
+              leadingMoves={leadingMoves}
+              answerComment={feedback?.kind === 'correct' || feedback?.kind === 'correct-alt' ? feedback.comment : undefined}
+              viewIndex={viewIndex}
+              onGotoPly={gotoPly}
+              onNavBack={navBack}
+              onNavForward={navForward}
+            />
+          </div>
+
+          <div
+            style={{
               flexShrink: 0,
               display: 'flex',
               flexDirection: 'column',
@@ -270,30 +294,6 @@ export default function OpeningStudyPage() {
                 </div>
               </div>
             )}
-          </div>
-
-          <div
-            style={{
-              width: isNarrow ? '100%' : sideWidth,
-              height: isNarrow ? 320 : boardSize,
-              marginTop: isNarrow ? 0 : BOARD_TOP_OFFSET,
-              flexShrink: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              order: isNarrow ? 2 : 0,
-            }}
-          >
-            <LinePanel
-              repertoire={repertoire}
-              runStartCard={runStartCard}
-              runMoves={runMoves}
-              leadingMoves={leadingMoves}
-              answerComment={feedback?.kind === 'correct' || feedback?.kind === 'correct-alt' ? feedback.comment : undefined}
-              viewIndex={viewIndex}
-              onGotoPly={gotoPly}
-              onNavBack={navBack}
-              onNavForward={navForward}
-            />
           </div>
 
           {!isNarrow && <div style={{ width: sideWidth, marginTop: BOARD_TOP_OFFSET, flexShrink: 0 }} />}
