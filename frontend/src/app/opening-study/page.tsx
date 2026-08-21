@@ -19,6 +19,7 @@ const CAPTION_ROW_HEIGHT = 30
 const COLUMN_GAP = 14
 const BOARD_TOP_OFFSET = CAPTION_ROW_HEIGHT + COLUMN_GAP
 const ROW_GAP_DESKTOP = 20
+const STUDY_BACKGROUND = 'linear-gradient(135deg, #f1f0e9 0%, #eef1f0 52%, #e9edef 100%)'
 
 
 
@@ -107,7 +108,7 @@ export default function OpeningStudyPage() {
 
   if (phase === 'setup') {
     return (
-      <main className="min-h-screen bg-[#e8e8e6] py-6 sm:py-10">
+      <main className="min-h-screen py-6 sm:py-10" style={{ background: STUDY_BACKGROUND }}>
         <div style={outerWrapStyle}>
           <TopBar right={<span />} />
         </div>
@@ -118,7 +119,7 @@ export default function OpeningStudyPage() {
 
   if (phase === 'summary' && summary) {
     return (
-      <main className="min-h-screen bg-[#e8e8e6] py-6 sm:py-10">
+      <main className="min-h-screen py-6 sm:py-10" style={{ background: STUDY_BACKGROUND }}>
         <div style={outerWrapStyle}>
           <TopBar right={<span />} />
         </div>
@@ -135,7 +136,7 @@ export default function OpeningStudyPage() {
 
   if (!boardState || !repertoire || !currentCard || !runStartCard) {
     return (
-      <main className="min-h-screen bg-[#e8e8e6] py-6 sm:py-10">
+      <main className="min-h-screen py-6 sm:py-10" style={{ background: STUDY_BACKGROUND }}>
         <div style={outerWrapStyle}>
           <TopBar right={<span />} />
         </div>
@@ -146,8 +147,8 @@ export default function OpeningStudyPage() {
   const lineComplete = phase === 'line-complete'
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[#e8e8e6] py-6 sm:py-10">
-      <div style={{ width: isNarrow ? '100%' : containerWidth, maxWidth: '100vw', flexShrink: 0, background: '#e8e8e6', borderRadius: 16, padding: outerPadding }}>
+    <main className="min-h-screen flex items-center justify-center py-6 sm:py-10" style={{ background: STUDY_BACKGROUND }}>
+      <div style={{ width: isNarrow ? '100%' : containerWidth, maxWidth: '100vw', flexShrink: 0, background: 'transparent', borderRadius: 16, padding: outerPadding }}>
         <TopBar
           right={
             <span
@@ -210,23 +211,13 @@ export default function OpeningStudyPage() {
             <div
               style={{
                 display: 'flex',
-                alignItems: 'baseline',
-                justifyContent: 'space-between',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
                 gap: 12,
                 padding: '0 2px 2px',
                 width: boardSize,
               }}
             >
-              {isViewingHistory ? (
-                <span style={{ fontSize: 14, color: '#a3a099' }}>
-                  <strong style={{ color: '#37352f' }}>Reviewing</strong> — use ⟨ ⟩ or click a move to return
-                </span>
-              ) : (
-                <span style={{ fontSize: 14, color: '#37352f' }}>
-                  <strong>Your move as {boardState.turn === 'w' ? 'White' : 'Black'}</strong> — find the repertoire
-                  continuation
-                </span>
-              )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button
                   onClick={toggleFlipped}

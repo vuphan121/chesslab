@@ -77,7 +77,13 @@ export default function PageSwitcher() {
               <Link
                 key={p.href}
                 href={p.href}
-                onClick={() => setOpen(false)}
+                onClick={(event) => {
+                  setOpen(false)
+                  if (isCurrent) {
+                    event.preventDefault()
+                    window.location.assign(p.href)
+                  }
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',

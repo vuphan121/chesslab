@@ -51,52 +51,11 @@ interface Props {
   startError: string | null
 }
 
-function Segmented<T extends string | number>({
-  options,
-  value,
-  onChange,
-}: {
-  options: { label: string; value: T }[]
-  value: T
-  onChange: (v: T) => void
-}) {
-  return (
-    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-      {options.map((o) => {
-        const active = o.value === value
-        return (
-          <button
-            key={String(o.value)}
-            onClick={() => onChange(o.value)}
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              padding: '6px 12px',
-              borderRadius: 7,
-              border: active ? 'none' : '1px solid #eae8e2',
-              background: active ? '#4a90d9' : '#fff',
-              color: active ? '#fff' : '#6a675f',
-              cursor: 'pointer',
-            }}
-          >
-            {o.label}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
 export default function RepertoirePicker({ onStart, onStartToday, onResumeToday, starting, startError }: Props) {
   const [reps, setReps] = useState<RepertoireSummary[] | null>(null)
   const [listError, setListError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [selectedChapters, setSelectedChapters] = useState<Set<string>>(new Set())
-  const [mode, setMode] = useState<SessionOptions['mode']>('mixed')
-
-
-
-
   const [fullRep, setFullRep] = useState<Repertoire | null>(null)
   const [fullRepLoading, setFullRepLoading] = useState(false)
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
@@ -183,7 +142,7 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
 
   const handleStart = () => {
     if (!selectedId || selectedChapters.size === 0) return
-    onStart(selectedId, [...selectedChapters], { sessionLength: null, mode })
+    onStart(selectedId, [...selectedChapters], { sessionLength: null, mode: 'mixed' })
   }
 
   const toggleTodayRepertoire = (id: string) => {
@@ -263,13 +222,9 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
           borderRadius: 9,
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 5 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 13 }}>
           <h2 className="serif" style={{ fontSize: 18, fontWeight: 500 }}>Today&rsquo;s training</h2>
-          {today && <span className="mono" style={{ fontSize: 11, color: '#5c86ad' }}>{today.entries.length} in queue</span>}
         </div>
-        <p style={{ fontSize: 12, color: '#6a675f', marginBottom: 13 }}>
-          Mix lines from the repertoires you choose. Missed lines return to the middle; correct lines go to the back.
-        </p>
         <div
           style={{
             display: 'flex',
@@ -287,7 +242,7 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#6a675f' }}>
-            Lines each day
+            Lines
             <input
               type="number"
               min={1}
@@ -345,7 +300,6 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
                 </span>
                 <span style={{ fontSize: 11, color: '#a3a099' }}>{r.cardCount} positions</span>
               </div>
-              <div style={{ fontSize: 12, color: '#7a776f', marginTop: 4 }}>{r.description}</div>
               <div style={{ fontSize: 11, color: '#b4b1a8', marginTop: 2, overflowWrap: 'anywhere' }}>
                 {r.chapters.length} chapters
                 {r.source && (
@@ -453,24 +407,6 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
           </div>
         </>
       )}
-
-      <div className="lbl" style={{ color: '#b4b1a8', marginBottom: 8 }}>
-        Session
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, color: '#6a675f', width: 80 }}>Mode</span>
-          <Segmented
-            options={[
-              { label: 'Mixed', value: 'mixed' as const },
-              { label: 'Review only', value: 'review-only' as const },
-              { label: 'Mistakes', value: 'mistakes' as const },
-            ]}
-            value={mode}
-            onChange={setMode}
-          />
-        </div>
-      </div>
 
       {startError && <p style={{ fontSize: 12, color: '#c0392b', marginBottom: 10 }}>{startError}</p>}
 
