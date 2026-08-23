@@ -5,7 +5,6 @@ import EvalBar from '@/components/analysis/EvalBar'
 import MoveHistory from '@/components/history/MoveHistory'
 import TopBar from '@/components/layout/TopBar'
 import OpeningTree from '@/components/tree/OpeningTree'
-import Coach from '@/components/coach/Coach'
 import { useChessGame } from '@/hooks/useChessGame'
 import { Suspense, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -67,11 +66,6 @@ function HomeInner() {
     analysis,
     explorer,
     explorerLoading,
-    coachExplanation,
-    coachExplaining,
-    coachError,
-    askCoach,
-    sendCoachChat,
     flipped,
     toggleFlipped,
   } = useChessGame(initialGameId)
@@ -151,27 +145,6 @@ function HomeInner() {
             alignItems: isNarrow ? 'stretch' : 'flex-start',
           }}
         >
-          <div
-            style={{
-              width: isNarrow ? '100%' : sideWidth,
-              height: isNarrow ? 420 : boardSize,
-              marginTop: isNarrow ? 0 : BOARD_TOP_OFFSET,
-              flexShrink: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              order: 3,
-            }}
-          >
-            <Coach
-              explanation={coachExplanation}
-              explaining={coachExplaining}
-              explainError={coachError}
-              onAskCoach={askCoach}
-              canAsk={!atStart}
-              onSendChat={sendCoachChat}
-            />
-          </div>
-
           <div
             style={{
               flexShrink: 0,
@@ -284,6 +257,8 @@ function HomeInner() {
               onLoadPgn={loadPgn}
             />
           </div>
+
+          {!isNarrow && <div style={{ width: sideWidth, flexShrink: 0, order: 3 }} aria-hidden="true" />}
         </div>
       </div>
     </main>

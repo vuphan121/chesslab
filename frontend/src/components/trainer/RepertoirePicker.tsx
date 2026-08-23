@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { listRepertoires, getRepertoire, getTodayTraining } from '@/lib/api/client'
 import type { TodayTrainingResponse } from '@/lib/api/client'
 import { toFigurine } from '@/lib/chess/figurine'
@@ -45,13 +45,12 @@ function formatLine(sans: string[]): string {
 
 interface Props {
   onStart: (repertoireId: string, chapterIds: string[], opts: SessionOptions) => void
-  onStartToday: (repertoireIds: string[], linesPerDay: number) => void
   onResumeToday: () => void
   starting: boolean
   startError: string | null
 }
 
-export default function RepertoirePicker({ onStart, onStartToday, onResumeToday, starting, startError }: Props) {
+export default function RepertoirePicker({ onStart, onResumeToday, starting, startError }: Props) {
   const [reps, setReps] = useState<RepertoireSummary[] | null>(null)
   const [listError, setListError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -64,8 +63,6 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
 
 
   const [today, setToday] = useState<TodayTrainingResponse | null>(null)
-  const [todayRepertoireIds, setTodayRepertoireIds] = useState<Set<string>>(new Set())
-  const [todayLineCountInput, setTodayLineCountInput] = useState('10')
   const [managing, setManaging] = useState(false)
 
   const fullRepReqId = useRef(0)
@@ -98,18 +95,21 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
       })
   }
 
+  const loadTodayTraining = useCallback(() => {
+    getTodayTraining()
+      .then((queue) => setToday(queue))
+      .catch(() => setToday(null))
+  }, [])
+
   useEffect(() => {
-    Promise.all([listRepertoires(), getTodayTraining().catch(() => null)])
-      .then(([list, queue]) => {
+    listRepertoires()
+      .then((list) => {
         setReps(list)
         if (list.length > 0) selectRepertoire(list[0].id, list[0].chapters.map((c) => c.id))
-        const settings = queue?.settings
-        setToday(queue)
-        setTodayRepertoireIds(new Set(settings?.repertoireIds.length ? settings.repertoireIds : list.map((rep) => rep.id)))
-        if (settings) setTodayLineCountInput(String(settings.linesPerDay))
       })
       .catch((err) => setListError(err instanceof Error ? err.message : 'Failed to reach the backend.'))
-  }, [])
+    loadTodayTraining()
+  }, [loadTodayTraining])
 
   const selected = reps?.find((r) => r.id === selectedId) ?? null
 
@@ -145,22 +145,6 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
     onStart(selectedId, [...selectedChapters], { sessionLength: null, mode: 'mixed' })
   }
 
-  const toggleTodayRepertoire = (id: string) => {
-    setTodayRepertoireIds((previous) => {
-      const next = new Set(previous)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const todayLineCount = Number(todayLineCountInput)
-  const validTodayLineCount = Number.isInteger(todayLineCount) && todayLineCount >= 1 && todayLineCount <= 100
-  const savedSettingsMatch =
-    today?.settings?.linesPerDay === todayLineCount &&
-    today?.settings.repertoireIds.length === todayRepertoireIds.size &&
-    today?.settings.repertoireIds.every((id) => todayRepertoireIds.has(id))
-
   const panelStyle: React.CSSProperties = {
     width: 'min(720px, calc(100vw - 32px))',
     margin: '24px auto',
@@ -191,7 +175,7 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
 
   if (reps.length === 0) {
     if (managing) {
-      return <RepertoireManagement repertoires={reps} onClose={() => setManaging(false)} onChanged={refreshCatalog} />
+      return <RepertoireManagement repertoires={reps} onClose={() => { setManaging(false); loadTodayTraining() }} onChanged={refreshCatalog} />
     }
     return (
       <div style={panelStyle}>
@@ -203,7 +187,7 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
   }
 
   if (managing) {
-    return <RepertoireManagement repertoires={reps} onClose={() => setManaging(false)} onChanged={refreshCatalog} />
+    return <RepertoireManagement repertoires={reps} onClose={() => { setManaging(false); loadTodayTraining() }} onChanged={refreshCatalog} />
   }
 
   return (
@@ -225,49 +209,16 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 13 }}>
           <h2 className="serif" style={{ fontSize: 18, fontWeight: 500 }}>Today&rsquo;s training</h2>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 7,
-            marginBottom: 14,
-          }}
-        >
-          {reps.map((rep) => (
-            <label key={rep.id} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12, color: '#37352f', cursor: 'pointer' }}>
-              <input type="checkbox" checked={todayRepertoireIds.has(rep.id)} onChange={() => toggleTodayRepertoire(rep.id)} />
-              {rep.name}
-            </label>
-          ))}
-        </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#6a675f' }}>
-            Lines
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={todayLineCountInput}
-              onChange={(event) => setTodayLineCountInput(event.target.value)}
-              style={{ width: 58, border: '1px solid #cfe0ee', borderRadius: 6, padding: '5px 7px', color: '#37352f' }}
-            />
-          </label>
+          <span style={{ fontSize: 12, color: '#6a675f' }}>
+            {today?.settings ? `${today.entries.length} line${today.entries.length === 1 ? '' : 's'} ready` : 'Set up your daily queue in Manage'}
+          </span>
           <button
-            onClick={() => validTodayLineCount && onStartToday([...todayRepertoireIds], todayLineCount)}
-            disabled={starting || todayRepertoireIds.size === 0 || !validTodayLineCount || savedSettingsMatch}
-            style={{ fontSize: 12, fontWeight: 700, padding: '8px 11px', borderRadius: 7, border: '1px solid #c5dcef', background: '#fff', color: '#3974ad', cursor: starting ? 'default' : 'pointer' }}
-          >
-            Update queue
-          </button>
-          <button
-            onClick={() => {
-              if ((today?.entries.length ?? 0) > 0) onResumeToday()
-              else onStartToday([...todayRepertoireIds], todayLineCount)
-            }}
-            disabled={starting || todayRepertoireIds.size === 0 || !validTodayLineCount}
+            onClick={onResumeToday}
+            disabled={starting || !today?.settings || (today.entries.length ?? 0) === 0}
             style={{ fontSize: 12, fontWeight: 700, padding: '8px 13px', borderRadius: 7, border: 'none', background: starting ? '#a9c9e8' : '#4a90d9', color: '#fff', cursor: starting ? 'default' : 'pointer' }}
           >
-            {starting ? 'Starting…' : (today?.entries.length ?? 0) > 0 ? 'Resume today' : 'Build today’s queue'}
+            {starting ? 'Starting…' : 'Start today’s training'}
           </button>
         </div>
       </div>
@@ -298,7 +249,7 @@ export default function RepertoirePicker({ onStart, onStartToday, onResumeToday,
                 >
                   {r.side === 'w' ? 'White' : 'Black'}
                 </span>
-                <span style={{ fontSize: 11, color: '#a3a099' }}>{r.cardCount} positions</span>
+                <span style={{ fontSize: 11, color: '#a3a099' }}>{r.lineCount} line{r.lineCount === 1 ? '' : 's'}</span>
               </div>
               <div style={{ fontSize: 11, color: '#b4b1a8', marginTop: 2, overflowWrap: 'anywhere' }}>
                 {r.chapters.length} chapters

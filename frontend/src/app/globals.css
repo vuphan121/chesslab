@@ -1,5 +1,4 @@
 @import "tailwindcss";
-
 * {
   box-sizing: border-box;
   margin: 0;
@@ -41,8 +40,4 @@ body {
   font-weight: 600;
   letter-spacing: 1.3px;
   text-transform: uppercase;
-}
-
-.coach-input::placeholder {
-  color: #b4b1a8;
 }

@@ -23,6 +23,10 @@ type CloudEval struct {
 }
 
 func Fetch(fen string, multiPV int) (*CloudEval, error) {
+	return FetchWithTimeout(fen, multiPV, 3*time.Second)
+}
+
+func FetchWithTimeout(fen string, multiPV int, timeout time.Duration) (*CloudEval, error) {
 	u := fmt.Sprintf("https://lichess.org/api/cloud-eval?fen=%s&multiPv=%d",
 		url.QueryEscape(fen), multiPV)
 
@@ -32,7 +36,11 @@ func Fetch(fen string, multiPV int) (*CloudEval, error) {
 	}
 	req.Header.Set("User-Agent", "chesslab/1.0 github.com/chesslab")
 
-	resp, err := httpClient.Do(req)
+	client := httpClient
+	if timeout != httpClient.Timeout {
+		client = &http.Client{Timeout: timeout}
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}

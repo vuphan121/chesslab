@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/book"
@@ -32,10 +34,18 @@ type Handler struct {
 	bookChapterPrefix string
 	db                *db.Store
 	authCfg           auth.Config
+	prefetchMu        sync.Mutex
+	prefetchedCloud   map[string]prefetchedCloudEval
+	prefetchSem       chan struct{}
+}
+
+type prefetchedCloudEval struct {
+	value     *lichess.CloudEval
+	expiresAt time.Time
 }
 
 func NewHandler(store storage.Store, eng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config, bookSource booksource.Reader, bookChapterPrefix string) *Handler {
-	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix}
+	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix, prefetchedCloud: make(map[string]prefetchedCloudEval), prefetchSem: make(chan struct{}, 1)}
 }
 
 type PieceJSON struct {
@@ -251,38 +261,26 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 
 	fen := chess.FEN(g.Pos)
 	flipScore := g.Pos.Turn == chess.Black
+	depth := 20
+	cloudTimeout := 3 * time.Second
+	quick := r.URL.Query().Get("speed") == "quick"
+	if quick {
+		depth = 10
+		cloudTimeout = 400 * time.Millisecond
+	}
 
-	if cloud, err := lichess.Fetch(fen, 3); err == nil && cloud != nil {
-		result := AnalysisJSON{EngineName: "Lichess Cloud", Depth: cloud.Depth}
-		for i, pv := range cloud.PVs {
-			score, mate := 0, 0
-			if pv.CP != nil {
-				score = *pv.CP
-			}
-			if pv.Mate != nil {
-				mate = *pv.Mate
-			}
-			moves := strings.Fields(pv.Moves)
-			sans, fens := chess.MovesToSANAndFENs(g.Pos, moves)
-			if i == 0 {
-				result.Score = score
-				result.Mate = mate
-				if len(moves) > 0 {
-					result.BestMove = moves[0]
-				}
-			}
-			result.Lines = append(result.Lines, LineJSON{
-				Score:    score,
-				Mate:     mate,
-				Depth:    cloud.Depth,
-				Moves:    sans,
-				UCIMoves: moves,
-				FENs:     fens,
-			})
-		}
+	if cloud := h.takePrefetchedCloud(fen); cloud != nil {
+		result := cloudAnalysis(g.Pos, cloud)
 		respondJSON(w, http.StatusOK, result)
+		h.prefetchLikelyReplies(result.Lines)
 		return
-	} else if err != nil {
+	}
+	if cloud, err := lichess.FetchWithTimeout(fen, 3, cloudTimeout); err == nil && cloud != nil {
+		result := cloudAnalysis(g.Pos, cloud)
+		respondJSON(w, http.StatusOK, result)
+		h.prefetchLikelyReplies(result.Lines)
+		return
+	} else if err != nil && !quick {
 		log.Printf("lichess cloud eval: %v", err)
 	}
 
@@ -290,7 +288,7 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "engine not configured", http.StatusServiceUnavailable)
 		return
 	}
-	raw, err := h.engine.Analyze(fen, 3, 20)
+	raw, err := h.engine.Analyze(fen, 3, depth)
 	if err != nil {
 		http.Error(w, "analysis failed: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -318,6 +316,116 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	respondJSON(w, http.StatusOK, result)
+	h.prefetchLikelyReplies(result.Lines)
+}
+
+func cloudAnalysis(pos *chess.Position, cloud *lichess.CloudEval) AnalysisJSON {
+	result := AnalysisJSON{EngineName: "Lichess Cloud", Depth: cloud.Depth}
+	for i, pv := range cloud.PVs {
+		score, mate := 0, 0
+		if pv.CP != nil {
+			score = *pv.CP
+		}
+		if pv.Mate != nil {
+			mate = *pv.Mate
+		}
+		moves := strings.Fields(pv.Moves)
+		sans, fens := chess.MovesToSANAndFENs(pos, moves)
+		if i == 0 {
+			result.Score = score
+			result.Mate = mate
+			if len(moves) > 0 {
+				result.BestMove = moves[0]
+			}
+		}
+		result.Lines = append(result.Lines, LineJSON{Score: score, Mate: mate, Depth: cloud.Depth, Moves: sans, UCIMoves: moves, FENs: fens})
+	}
+	return result
+}
+
+// Prefetching is deliberately cloud-only: background Stockfish searches would contend with the
+// foreground engine and make a user's next move slower. This is a short-lived buffer for likely
+// child positions, not a general-purpose evaluation cache.
+func (h *Handler) prefetchLikelyReplies(lines []LineJSON) {
+	fens := make([]string, 0, 2)
+	for _, line := range lines {
+		if len(line.FENs) == 0 {
+			continue
+		}
+		fen := line.FENs[0]
+		duplicate := false
+		for _, existing := range fens {
+			duplicate = duplicate || existing == fen
+		}
+		if !duplicate {
+			fens = append(fens, fen)
+		}
+		if len(fens) == 2 {
+			break
+		}
+	}
+	if len(fens) == 0 {
+		return
+	}
+
+	go func() {
+		select {
+		case h.prefetchSem <- struct{}{}:
+			defer func() { <-h.prefetchSem }()
+		default:
+			return
+		}
+		for _, fen := range fens {
+			if h.hasPrefetchedCloud(fen) {
+				continue
+			}
+			cloud, err := lichess.FetchWithTimeout(fen, 3, 700*time.Millisecond)
+			if err == nil && cloud != nil {
+				h.rememberPrefetchedCloud(fen, cloud)
+			}
+		}
+	}()
+}
+
+func (h *Handler) takePrefetchedCloud(fen string) *lichess.CloudEval {
+	h.prefetchMu.Lock()
+	defer h.prefetchMu.Unlock()
+	entry, ok := h.prefetchedCloud[fen]
+	if !ok || time.Now().After(entry.expiresAt) {
+		delete(h.prefetchedCloud, fen)
+		return nil
+	}
+	delete(h.prefetchedCloud, fen)
+	return entry.value
+}
+
+func (h *Handler) hasPrefetchedCloud(fen string) bool {
+	h.prefetchMu.Lock()
+	defer h.prefetchMu.Unlock()
+	entry, ok := h.prefetchedCloud[fen]
+	if !ok || time.Now().After(entry.expiresAt) {
+		delete(h.prefetchedCloud, fen)
+		return false
+	}
+	return true
+}
+
+func (h *Handler) rememberPrefetchedCloud(fen string, cloud *lichess.CloudEval) {
+	h.prefetchMu.Lock()
+	defer h.prefetchMu.Unlock()
+	now := time.Now()
+	for key, entry := range h.prefetchedCloud {
+		if now.After(entry.expiresAt) {
+			delete(h.prefetchedCloud, key)
+		}
+	}
+	if len(h.prefetchedCloud) >= 6 {
+		for key := range h.prefetchedCloud {
+			delete(h.prefetchedCloud, key)
+			break
+		}
+	}
+	h.prefetchedCloud[fen] = prefetchedCloudEval{value: cloud, expiresAt: now.Add(15 * time.Second)}
 }
 
 type EvalFENResponse struct {

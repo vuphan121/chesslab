@@ -20,6 +20,7 @@ interface Props {
   legalMovesFor: (square: string) => string[]
   bestMove?: string
   analysisMoves?: { uci: string; scale: number }[]
+  animateLastMove?: boolean
   flipped?: boolean
   squareSize?: number
 }
@@ -31,6 +32,7 @@ export default function Board({
   legalMovesFor,
   bestMove,
   analysisMoves = [],
+  animateLastMove = true,
   flipped = false,
   squareSize = 80,
 }: Props) {
@@ -72,7 +74,10 @@ export default function Board({
     const previous = previousPosition.current
     const lastMove = boardState.lastMove
     previousPosition.current = { fen: boardState.fen, pieces: boardState.pieces }
-    if (previous.fen === boardState.fen || !lastMove) return
+    if (!animateLastMove || previous.fen === boardState.fen || !lastMove) {
+      setMoveAnimation(null)
+      return
+    }
     const piece = previous.pieces[lastMove.from]
     if (!piece || !boardState.pieces[lastMove.to]) return
 
@@ -93,7 +98,7 @@ export default function Board({
       window.cancelAnimationFrame(secondFrame)
       window.clearTimeout(timer)
     }
-  }, [boardState.fen, boardState.lastMove?.from, boardState.lastMove?.to])
+  }, [animateLastMove, boardState.fen, boardState.lastMove?.from, boardState.lastMove?.to])
 
   const toggleAnnotation = (from: string, to: string) => {
     if (from === to) {

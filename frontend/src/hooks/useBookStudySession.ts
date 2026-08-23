@@ -107,19 +107,29 @@ export function useBookStudySession() {
     const requestID = ++analysisReqId.current
     setAnalysisLoading(true)
     setAnalysisError(null)
-    analyzeGame(gid)
-      .then((result) => {
-        if (requestID === analysisReqId.current) setAnalysis(result)
-      })
-      .catch((err: unknown) => {
-        if (requestID === analysisReqId.current) {
+    const runAnalysis = async () => {
+      let quickResult: Analysis | null = null
+      try {
+        quickResult = await analyzeGame(gid, 'quick')
+        if (requestID === analysisReqId.current) setAnalysis(quickResult)
+
+        // Cloud analysis is already a deep cached result. A local quick result is useful right
+        // away, then gets replaced by the deeper pass without blocking the board.
+        if (quickResult.engineName === 'Lichess Cloud') return
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+        const refined = await analyzeGame(gid)
+        if (requestID === analysisReqId.current) setAnalysis(refined)
+      } catch (err: unknown) {
+        if (requestID === analysisReqId.current && !quickResult) {
           setAnalysis(null)
           setAnalysisError(err instanceof Error ? err.message : 'Analysis is unavailable.')
         }
-      })
-      .finally(() => {
+      } finally {
         if (requestID === analysisReqId.current) setAnalysisLoading(false)
-      })
+      }
+    }
+
+    void runAnalysis()
   }, [analysisEnabled, analysisNodeID])
 
   const currentTreeInfo = useMemo(() => {

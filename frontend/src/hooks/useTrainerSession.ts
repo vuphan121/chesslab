@@ -9,7 +9,6 @@ import {
   getProgress as apiGetProgress,
   saveProgress as apiSaveProgress,
   getTodayTraining,
-  saveTodayTraining,
   advanceTodayTraining,
 } from '@/lib/api/client'
 import type { GameState, TodayTrainingEntry, TodayTrainingResponse } from '@/lib/api/client'
@@ -115,6 +114,7 @@ export function useTrainerSession() {
   const [viewIndex, setViewIndex] = useState<number | null>(null)
   const [selected, setSelected] = useState<Square | null>(null)
   const [busy, setBusy] = useState(false)
+  const [animateLastMove, setAnimateLastMove] = useState(false)
   const [flipped, setFlipped] = useState(false)
 
   const [currentCard, setCurrentCard] = useState<RepCard | null>(null)
@@ -268,11 +268,12 @@ export function useTrainerSession() {
 
 
 
-  function pushSnapshot(gs: GameState) {
+  function pushSnapshot(gs: GameState, animateMove = false) {
     const next = [...runSnapshotsRef.current, gs]
     runSnapshotsRef.current = next
     setRunSnapshots(next)
     setViewIndex(null)
+    setAnimateLastMove(animateMove)
   }
 
 
@@ -284,6 +285,7 @@ export function useTrainerSession() {
     runSnapshotsRef.current = next
     setRunSnapshots(next)
     setViewIndex(null)
+    setAnimateLastMove(false)
   }
 
 
@@ -304,6 +306,7 @@ export function useTrainerSession() {
     runSnapshotsRef.current = [gs]
     setRunSnapshots([gs])
     setViewIndex(null)
+    setAnimateLastMove(false)
   }, [])
 
 
@@ -393,7 +396,7 @@ export function useTrainerSession() {
       const gs = await makeMove(gid, reply.uci.slice(0, 2), reply.uci.slice(2, 4), promotionFromUci(reply.uci))
       runMovesRef.current.push({ san: reply.san, uci: reply.uci, mover: 'opponent' })
       setRunMoves([...runMovesRef.current])
-      pushSnapshot(gs)
+      pushSnapshot(gs, true)
 
       const nextCard = cardById(cardKey(gs.fen))
       if (!nextCard) {
@@ -515,24 +518,6 @@ export function useTrainerSession() {
       }
     },
     [beginRun, resolveRunStartCard],
-  )
-
-  const startTodayTraining = useCallback(
-    async (repertoireIds: string[], linesPerDay: number) => {
-      setIsTodayTraining(true)
-      setLoading(true)
-      setLoadError(null)
-      try {
-        const queue = await saveTodayTraining({ repertoireIds, linesPerDay })
-        const first = queue.entries[0]
-        if (!first) throw new Error('No lines are available in the selected repertoires.')
-        await startTodayEntry(first)
-      } catch (err) {
-        setLoadError(err instanceof Error ? err.message : "Couldn't build today's queue.")
-        setLoading(false)
-      }
-    },
-    [startTodayEntry],
   )
 
   const resumeTodayTraining = useCallback(
@@ -668,6 +653,7 @@ export function useTrainerSession() {
 
 
   const navBack = useCallback(() => {
+    setAnimateLastMove(false)
     setViewIndex((v) => {
       const last = runSnapshotsRef.current.length - 1
       const current = v ?? last
@@ -676,6 +662,7 @@ export function useTrainerSession() {
   }, [])
 
   const navForward = useCallback(() => {
+    setAnimateLastMove(false)
     setViewIndex((v) => {
       if (v === null) return null
       const last = runSnapshotsRef.current.length - 1
@@ -688,6 +675,7 @@ export function useTrainerSession() {
 
 
   const gotoPly = useCallback((index: number) => {
+    setAnimateLastMove(false)
     const last = runSnapshotsRef.current.length - 1
     setViewIndex(index >= last ? null : Math.max(0, index))
   }, [])
@@ -831,6 +819,7 @@ export function useTrainerSession() {
     loading,
     boardState,
     busy,
+    animateLastMove,
     flipped,
     toggleFlipped,
     currentCard,
@@ -848,7 +837,6 @@ export function useTrainerSession() {
     navForward,
     gotoPly,
     startSession,
-    startTodayTraining,
     resumeTodayTraining,
     selectSquare,
     move: submitMove,

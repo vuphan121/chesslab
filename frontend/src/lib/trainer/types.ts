@@ -6,6 +6,7 @@ export interface RepertoireChapterSummary {
   id: string
   name: string
   cardCount: number
+  lineCount: number
 }
 
 export interface RepertoireSummary {
@@ -16,6 +17,7 @@ export interface RepertoireSummary {
   description: string
   chapters: RepertoireChapterSummary[]
   cardCount: number
+  lineCount: number
 }
 
 export interface RepNode {

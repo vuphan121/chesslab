@@ -9,33 +9,13 @@ import {
   getExplorer,
   gotoNode as apiGotoNode,
   loadPGN,
-  explainMove,
-  coachChat,
-  CoachUnavailableError,
 } from '@/lib/api/client'
-import type { GameState, Analysis, Explorer, ChatTurn } from '@/lib/api/client'
+import type { GameState, Analysis, Explorer } from '@/lib/api/client'
 import type { BoardState, Square } from '@/lib/chess/types'
 import { flatten, mainlineEnd, childrenOf } from '@/lib/chess/moveTree'
 
 
 
-
-function nodeMeta(gs: GameState, nodeId: string): { san: string; prevFen: string } {
-  const map = flatten(gs.moveTree)
-  const entry = map.get(nodeId)
-  const san = entry?.node.san ?? ''
-  const parentId = entry?.parentId
-  const prevFen = parentId != null ? (map.get(parentId)?.node.fen ?? '') : ''
-  return { san, prevFen }
-}
-
-
-function coachErrorMessage(err: unknown): string {
-  if (err instanceof CoachUnavailableError) {
-    return 'Coach is offline — start a local model (Ollama) to enable it.'
-  }
-  return 'Coach is unavailable right now. Please try again.'
-}
 
 function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
   const pieces: BoardState['pieces'] = {}
@@ -81,16 +61,8 @@ export function useChessGame(initialGameId?: string) {
   const [analyzing, setAnalyzing] = useState(false)
   const [explorer, setExplorer] = useState<Explorer | null>(null)
   const [explorerLoading, setExplorerLoading] = useState(false)
-  const [coachExplanation, setCoachExplanation] = useState<string | null>(null)
-  const [coachExplaining, setCoachExplaining] = useState(false)
-  const [coachError, setCoachError] = useState<string | null>(null)
-
-
   const [flipped, setFlipped] = useState(false)
   const moveSound = useRef<HTMLAudioElement | null>(null)
-
-
-  const explainReqId = useRef(0)
 
   const runAnalysis = useCallback(async (gameId: string): Promise<Analysis | null> => {
     setAnalyzing(true)
@@ -129,10 +101,6 @@ export function useChessGame(initialGameId?: string) {
 
   const refreshInsights = useCallback(
     async (gameId: string) => {
-      explainReqId.current++
-      setCoachExplanation(null)
-      setCoachError(null)
-      setCoachExplaining(false)
       await Promise.all([runAnalysis(gameId), runExplorer(gameId)])
     },
     [runAnalysis, runExplorer],
@@ -156,44 +124,8 @@ export function useChessGame(initialGameId?: string) {
 
 
 
-  const askCoach = useCallback(async () => {
-    if (!gs) return
-    const { san, prevFen } = nodeMeta(gs, gs.currentNodeId)
-    if (!san) return
-
-    const reqId = ++explainReqId.current
-    setCoachError(null)
-    setCoachExplaining(true)
-    setCoachExplanation(null)
-    try {
-      const res = await explainMove(gs.id, {
-        fen: gs.fen,
-        prevFen,
-        lastMoveSan: san,
-        viewerColor: flipped ? 'b' : 'w',
-        analysis,
-        explorer,
-      })
-      if (reqId === explainReqId.current) setCoachExplanation(res.explanation)
-    } catch (err) {
-      if (reqId === explainReqId.current) {
-        setCoachExplanation(null)
-        setCoachError(coachErrorMessage(err))
-      }
-    } finally {
-      if (reqId === explainReqId.current) setCoachExplaining(false)
-    }
-  }, [gs, analysis, explorer, flipped])
-
-
-
-
   const toggleFlipped = useCallback(() => {
     setFlipped((f) => !f)
-    explainReqId.current++
-    setCoachExplanation(null)
-    setCoachError(null)
-    setCoachExplaining(false)
   }, [])
 
   const boardState: BoardState | null = gs ? toBoardState(gs, selected) : null
@@ -359,19 +291,6 @@ export function useChessGame(initialGameId?: string) {
 
 
 
-  const sendCoachChat = useCallback(
-    async (message: string, history: ChatTurn[]): Promise<string> => {
-      if (!gs) throw new Error('Game not ready yet.')
-      try {
-        const res = await coachChat(gs.id, message, history)
-        return res.reply
-      } catch (err) {
-        throw new Error(coachErrorMessage(err))
-      }
-    },
-    [gs],
-  )
-
   return {
     boardState,
     selectSquare,
@@ -389,12 +308,7 @@ export function useChessGame(initialGameId?: string) {
     analyzing,
     explorer,
     explorerLoading,
-    coachExplanation,
-    coachExplaining,
-    coachError,
-    askCoach,
     flipped,
     toggleFlipped,
-    sendCoachChat,
   }
 }

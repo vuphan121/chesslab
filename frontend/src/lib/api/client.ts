@@ -137,8 +137,8 @@ export const makeMove = (
     body: JSON.stringify({ from, to, promotion: promotion ?? '' }),
   })
 
-export const analyzeGame = (id: string): Promise<Analysis> =>
-  request(`/api/games/${id}/analysis`)
+export const analyzeGame = (id: string, speed: 'quick' | 'full' = 'full'): Promise<Analysis> =>
+  request(`/api/games/${id}/analysis${speed === 'quick' ? '?speed=quick' : ''}`)
 
 export interface FenEval {
   score: number

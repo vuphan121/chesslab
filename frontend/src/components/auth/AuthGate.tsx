@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { getToken, onAuthChange } from '@/lib/auth/token'
-import { pingBackend } from '@/lib/api/client'
+import { getTodayTraining, pingBackend } from '@/lib/api/client'
 import Login from './Login'
 
 
@@ -17,8 +17,13 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     pingBackend()
-    setAuthed(!!getToken())
-    return onAuthChange(() => setAuthed(!!getToken()))
+    const syncAuth = () => {
+      const authenticated = !!getToken()
+      setAuthed(authenticated)
+      if (authenticated) getTodayTraining().catch(() => {})
+    }
+    syncAuth()
+    return onAuthChange(syncAuth)
   }, [])
 
   if (authed === null) return null

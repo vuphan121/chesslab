@@ -38,6 +38,7 @@ export default function OpeningStudyPage() {
     loading,
     boardState,
     busy,
+    animateLastMove,
     flipped,
     toggleFlipped,
     currentCard,
@@ -54,7 +55,6 @@ export default function OpeningStudyPage() {
     navForward,
     gotoPly,
     startSession,
-    startTodayTraining,
     resumeTodayTraining,
     selectSquare,
     move,
@@ -112,7 +112,7 @@ export default function OpeningStudyPage() {
         <div style={outerWrapStyle}>
           <TopBar right={<span />} />
         </div>
-        <RepertoirePicker onStart={startSession} onStartToday={startTodayTraining} onResumeToday={resumeTodayTraining} starting={loading} startError={loadError} />
+        <RepertoirePicker onStart={startSession} onResumeToday={resumeTodayTraining} starting={loading} startError={loadError} />
       </main>
     )
   }
@@ -250,6 +250,7 @@ export default function OpeningStudyPage() {
               legalMovesFor={legalMovesFor}
               squareSize={squareSize}
               flipped={flipped}
+              animateLastMove={animateLastMove}
               bestMove={isViewingHistory ? undefined : (hintUci ?? undefined)}
             />
 

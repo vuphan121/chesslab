@@ -11,6 +11,7 @@ type RepertoireChapterSummaryJSON struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
 	CardCount int    `json:"cardCount"`
+	LineCount int    `json:"lineCount"`
 }
 
 type RepertoireSummaryJSON struct {
@@ -21,6 +22,7 @@ type RepertoireSummaryJSON struct {
 	Description string                         `json:"description"`
 	Chapters    []RepertoireChapterSummaryJSON `json:"chapters"`
 	CardCount   int                            `json:"cardCount"`
+	LineCount   int                            `json:"lineCount"`
 }
 
 type RepNodeJSON struct {
@@ -115,7 +117,9 @@ func toRepertoireSummary(rep *repertoire.Repertoire) RepertoireSummaryJSON {
 				count++
 			}
 		}
-		chapters = append(chapters, RepertoireChapterSummaryJSON{ID: ch.ID, Name: ch.Name, CardCount: count})
+		chapters = append(chapters, RepertoireChapterSummaryJSON{
+			ID: ch.ID, Name: ch.Name, CardCount: count, LineCount: countIncludedLines(ch.Root),
+		})
 	}
 	return RepertoireSummaryJSON{
 		ID:          rep.ID,
@@ -125,7 +129,34 @@ func toRepertoireSummary(rep *repertoire.Repertoire) RepertoireSummaryJSON {
 		Description: rep.Description,
 		Chapters:    chapters,
 		CardCount:   len(rep.Cards),
+		LineCount:   countRepertoireLines(rep),
 	}
+}
+
+func countRepertoireLines(rep *repertoire.Repertoire) int {
+	count := 0
+	for _, chapter := range rep.Chapters {
+		count += countIncludedLines(chapter.Root)
+	}
+	return count
+}
+
+func countIncludedLines(node *repertoire.Node) int {
+	if node == nil || node.ExcludedSubtree {
+		return 0
+	}
+	if len(node.Children) == 0 {
+		if node.SAN == "" {
+			return 0
+		}
+		return 1
+	}
+
+	count := 0
+	for _, child := range node.Children {
+		count += countIncludedLines(child)
+	}
+	return count
 }
 
 func toRepertoireJSON(rep *repertoire.Repertoire) RepertoireJSON {
