@@ -62,8 +62,6 @@ export default function SavedPuzzlesPage() {
         <section style={{ background: '#fff', borderRadius: 14, padding: 'clamp(22px, 5vw, 38px)', boxShadow: '0 1px 4px rgba(0,0,0,0.07), inset 0 0 0 1px rgba(0,0,0,0.05)' }}>
           <div style={{ marginBottom: 26 }}>
             <div className="lbl" style={{ color: '#4a90d9', marginBottom: 7 }}>Puzzle collection</div>
-            <h1 className="serif" style={{ fontSize: 30, fontWeight: 500, letterSpacing: '-0.4px' }}>Saved ChessTempo Puzzles</h1>
-            <p style={{ fontSize: 14, color: '#6a675f', lineHeight: 1.55, marginTop: 7 }}>Keep the positions you want to come back to. Paste a ChessTempo puzzle link and it stays with your account.</p>
           </div>
 
           <form onSubmit={onSubmit} style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
