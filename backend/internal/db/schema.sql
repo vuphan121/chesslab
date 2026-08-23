@@ -106,3 +106,14 @@ CREATE TABLE IF NOT EXISTS repertoire_line_importance (
     calculated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (repertoire_id, card_id)
 );
+
+CREATE TABLE IF NOT EXISTS saved_puzzles (
+    id BIGSERIAL PRIMARY KEY,
+    username TEXT NOT NULL,
+    url TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (username, url)
+);
+
+CREATE INDEX IF NOT EXISTS saved_puzzles_username_created_at_idx
+    ON saved_puzzles (username, created_at DESC);

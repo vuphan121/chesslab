@@ -67,6 +67,12 @@ func NewRouter(h *Handler) http.Handler {
 		})
 		r.Post("/api/book-activity/{bookId}/{chapterId}/{itemId}", h.RecordBookStudyActivity)
 
+		r.Route("/api/saved-puzzles", func(r chi.Router) {
+			r.Get("/", h.ListSavedPuzzles)
+			r.Post("/", h.SavePuzzle)
+			r.Delete("/{id}", h.DeleteSavedPuzzle)
+		})
+
 		r.Get("/api/analytics", h.Analytics)
 	})
 

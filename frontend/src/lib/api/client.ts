@@ -409,6 +409,31 @@ export const saveTodayTraining = (settings: TodayTrainingSettings): Promise<Toda
     body: JSON.stringify(settings),
   })
 
+export interface SavedPuzzle {
+  id: number
+  url: string
+  createdAt: string
+}
+
+export const listSavedPuzzles = (): Promise<{ puzzles: SavedPuzzle[] }> =>
+  request('/api/saved-puzzles')
+
+export const savePuzzle = (url: string): Promise<SavedPuzzle> =>
+  request('/api/saved-puzzles', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  })
+
+export const deleteSavedPuzzle = async (id: number): Promise<void> => {
+  const res = await fetch(`${API}/api/saved-puzzles/${id}`, {
+    method: 'DELETE',
+    headers: authHeader(),
+  })
+  if (res.status === 401) clearToken()
+  if (!res.ok) throw new Error((await res.text()) || res.statusText)
+}
+
 export const advanceTodayTraining = (
   repertoireId: string,
   cardId: string,
