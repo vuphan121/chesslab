@@ -105,10 +105,10 @@ export default function BookStudyPage() {
                 <button onClick={toggleFlipped} title="Flip board" style={flipButton}>⇅</button>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: EVAL_SLOT_WIDTH - 15, alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: EVAL_SLOT_WIDTH - 22, alignItems: 'flex-start' }}>
               <Board boardState={boardState} onSquareClick={selectSquare} onMove={move} legalMovesFor={legalMovesFor} squareSize={squareSize} flipped={flipped} analysisMoves={analysisEnabled ? analysisMoves : []} />
-              <div style={{ width: 15, opacity: analysisEnabled ? 1 : 0, transition: 'opacity 160ms ease', pointerEvents: 'none' }}>
-                <EvalBar score={analysis?.score ?? 0} mate={analysis?.mate ?? 0} height={boardSize} />
+              <div style={{ width: 22, opacity: analysisEnabled ? 1 : 0, transition: 'opacity 160ms ease', pointerEvents: 'none' }}>
+                <EvalBar score={analysis?.score ?? 0} mate={analysis?.mate ?? 0} height={boardSize} flipped={flipped} hasEval={analysisEnabled && !!analysis?.depth} />
               </div>
             </div>
             <div style={{ width: boardSize, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

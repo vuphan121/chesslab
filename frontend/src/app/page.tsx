@@ -96,7 +96,7 @@ function HomeInner() {
   const boardSize = squareSize * 8
   const sideWidth = isNarrow ? SIDE_WIDTH : Math.floor(SIDE_WIDTH * desktopScale)
   const rowGap = isNarrow ? 16 : Math.max(12, Math.floor(ROW_GAP_DESKTOP * desktopScale))
-  const containerWidth = sideWidth * 2 + rowGap * 2 + boardSize + 11 + 15 + outerPadding * 2
+  const containerWidth = sideWidth * 2 + rowGap * 2 + boardSize + 11 + 22 + outerPadding * 2
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -162,7 +162,7 @@ function HomeInner() {
                 justifyContent: 'space-between',
                 gap: 12,
                 padding: '0 2px 2px',
-                width: boardSize + 11 + 15,
+                width: boardSize + 11 + 22,
               }}
             >
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
@@ -219,10 +219,16 @@ function HomeInner() {
                 squareSize={squareSize}
                 flipped={flipped}
               />
-              <EvalBar score={analysis?.score ?? 0} mate={analysis?.mate ?? 0} height={boardSize} />
+              <EvalBar
+                score={analysis?.score ?? 0}
+                mate={analysis?.mate ?? 0}
+                height={boardSize}
+                flipped={flipped}
+                hasEval={!!analysis?.depth}
+              />
             </div>
 
-            <div style={{ width: boardSize + 11 + 15 }}>
+            <div style={{ width: boardSize + 11 + 22 }}>
               <OpeningTree
                 moves={explorer?.moves ?? []}
                 totalGames={explorer?.totalGames ?? 0}
