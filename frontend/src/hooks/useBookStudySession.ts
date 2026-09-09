@@ -447,7 +447,7 @@ export function useBookStudySession() {
 
 
   const attemptMove = useCallback(
-    async (from: Square, to: Square) => {
+    async (from: Square, to: Square, promotion?: string) => {
       const gid = gameIdRef.current
       if (!gid || phase !== 'studying' || busy) return
 
@@ -461,7 +461,7 @@ export function useBookStudySession() {
         const piece = boardState?.pieces[from]
         const isPromo =
           piece?.type === 'p' && ((piece.color === 'w' && to[1] === '8') || (piece.color === 'b' && to[1] === '1'))
-        const gs = await makeMove(gid, from, to, isPromo ? 'q' : undefined)
+        const gs = await makeMove(gid, from, to, promotion ?? (isPromo ? 'q' : undefined))
         if (reqId !== moveReqId.current) return
         setGameState(gs)
         setSelected(null)

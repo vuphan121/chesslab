@@ -63,18 +63,39 @@ export function useChessGame(initialGameId?: string) {
   const [explorerLoading, setExplorerLoading] = useState(false)
   const [flipped, setFlipped] = useState(false)
   const moveSound = useRef<HTMLAudioElement | null>(null)
+  // Per-FEN analysis cache + request guard: revisiting a position (stepping
+  // back/forward) is instant, and a slow deep pass can't overwrite the readout
+  // for a position the user has already navigated away from.
+  const analysisCacheRef = useRef<Map<string, Analysis>>(new Map())
+  const analysisReqId = useRef(0)
 
-  const runAnalysis = useCallback(async (gameId: string): Promise<Analysis | null> => {
+  const runAnalysis = useCallback(async (gameId: string, fen?: string): Promise<Analysis | null> => {
+    if (fen) {
+      const cached = analysisCacheRef.current.get(fen)
+      if (cached) {
+        setAnalysis(cached)
+        setAnalyzing(false)
+        return cached
+      }
+    }
+    const reqId = ++analysisReqId.current
     setAnalyzing(true)
     try {
-      const a = await analyzeGame(gameId)
-      setAnalysis(a)
-      return a
+      // Quick pass first (depth-10 / short cloud timeout) so the bar updates
+      // almost immediately, then refine with a full-depth pass unless the quick
+      // result was already a deep cloud hit.
+      const quick = await analyzeGame(gameId, 'quick')
+      if (reqId === analysisReqId.current) setAnalysis(quick)
+      if (fen) analysisCacheRef.current.set(fen, quick)
+      if (quick.engineName === 'Lichess Cloud') return quick
+      const deep = await analyzeGame(gameId)
+      if (reqId === analysisReqId.current) setAnalysis(deep)
+      if (fen) analysisCacheRef.current.set(fen, deep)
+      return deep
     } catch {
-
       return null
     } finally {
-      setAnalyzing(false)
+      if (reqId === analysisReqId.current) setAnalyzing(false)
     }
   }, [])
 
@@ -100,8 +121,8 @@ export function useChessGame(initialGameId?: string) {
 
 
   const refreshInsights = useCallback(
-    async (gameId: string) => {
-      await Promise.all([runAnalysis(gameId), runExplorer(gameId)])
+    async (gameId: string, fen?: string) => {
+      await Promise.all([runAnalysis(gameId, fen), runExplorer(gameId)])
     },
     [runAnalysis, runExplorer],
   )
@@ -111,7 +132,7 @@ export function useChessGame(initialGameId?: string) {
     const load = initialGameId ? getGame(initialGameId) : createGame()
     load.then((g) => {
       setGs(g)
-      refreshInsights(g.id)
+      refreshInsights(g.id, g.fen)
     }).catch(console.error)
 
 
@@ -153,7 +174,7 @@ export function useChessGame(initialGameId?: string) {
             setGs(next)
             setSelected(null)
             moveSound.current?.play().catch(() => {})
-            refreshInsights(next.id)
+            refreshInsights(next.id, next.fen)
           } catch {
             setSelected(null)
           } finally {
@@ -174,7 +195,7 @@ export function useChessGame(initialGameId?: string) {
   )
 
   const move = useCallback(
-    async (from: Square, to: Square) => {
+    async (from: Square, to: Square, promotion?: string) => {
       if (!gs || busy) return
       setBusy(true)
       try {
@@ -182,11 +203,11 @@ export function useChessGame(initialGameId?: string) {
         const isPromo =
           piece?.type === 'p' &&
           ((piece.color === 'w' && to[1] === '8') || (piece.color === 'b' && to[1] === '1'))
-        const next = await makeMove(gs.id, from, to, isPromo ? 'q' : undefined)
+        const next = await makeMove(gs.id, from, to, promotion ?? (isPromo ? 'q' : undefined))
         setGs(next)
         setSelected(null)
         moveSound.current?.play().catch(() => {})
-        refreshInsights(next.id)
+        refreshInsights(next.id, next.fen)
       } catch {
         setSelected(null)
       } finally {
@@ -215,7 +236,7 @@ export function useChessGame(initialGameId?: string) {
         setGs(next)
         setSelected(null)
         moveSound.current?.play().catch(() => {})
-        refreshInsights(next.id)
+        refreshInsights(next.id, next.fen)
       } catch {
 
       } finally {
@@ -253,11 +274,12 @@ export function useChessGame(initialGameId?: string) {
     setBusy(true)
     try {
       const next = await createGame()
+      analysisCacheRef.current.clear()
       setGs(next)
       setSelected(null)
       setAnalysis(null)
       setExplorer(null)
-      refreshInsights(next.id)
+      refreshInsights(next.id, next.fen)
     } finally {
       setBusy(false)
     }
@@ -272,10 +294,11 @@ export function useChessGame(initialGameId?: string) {
       setBusy(true)
       try {
         const next = await loadPGN(gs.id, pgn)
+        analysisCacheRef.current.clear()
         setGs(next)
         setSelected(null)
         moveSound.current?.play().catch(() => {})
-        refreshInsights(next.id)
+        refreshInsights(next.id, next.fen)
         if (next.error) {
           throw new Error(
             `Loaded ${next.appliedPlies}/${next.totalTokens} moves — ${next.error}`,

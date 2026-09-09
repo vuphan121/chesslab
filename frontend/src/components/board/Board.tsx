@@ -13,10 +13,12 @@ const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1']
 const ANNOTATION_COLOR = 'rgba(255, 152, 0, 0.8)'
 const MOVE_ANIMATION_MS = 280
 
+type PromoPiece = 'q' | 'r' | 'b' | 'n'
+
 interface Props {
   boardState: BoardState
   onSquareClick: (square: string) => void
-  onMove: (from: string, to: string) => void
+  onMove: (from: string, to: string, promotion?: PromoPiece) => void
   legalMovesFor: (square: string) => string[]
   bestMove?: string
   analysisMoves?: { uci: string; scale: number }[]
@@ -60,11 +62,30 @@ export default function Board({
   const [rightDragTo, setRightDragTo] = useState<string | null>(null)
   const [arrows, setArrows] = useState<{ from: string; to: string }[]>([])
   const [circles, setCircles] = useState<Set<string>>(new Set())
+  const [promo, setPromo] = useState<{ from: string; to: string; color: 'w' | 'b' } | null>(null)
 
   useEffect(() => {
     setArrows([])
     setCircles(new Set())
+    setPromo(null)
   }, [boardState.fen])
+
+  useEffect(() => {
+    if (!promo) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPromo(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [promo])
+
+  const isPromotionMove = (from: string, to: string): 'w' | 'b' | null => {
+    const piece = boardState.pieces[from]
+    if (!piece || piece.type !== 'p') return null
+    if (piece.color === 'w' && to[1] === '8') return 'w'
+    if (piece.color === 'b' && to[1] === '1') return 'b'
+    return null
+  }
 
 
 
@@ -158,6 +179,11 @@ export default function Board({
     setArrows([])
     setCircles(new Set())
 
+    if (promo) {
+      setPromo(null)
+      return
+    }
+
     const piece = boardState.pieces[sq]
     if (piece && piece.color === boardState.turn) {
       e.preventDefault()
@@ -168,7 +194,13 @@ export default function Board({
       setDragPos({ x: e.clientX, y: e.clientY })
       setHasMoved(false)
     } else {
-      onSquareClick(sq)
+      const sel = boardState.selectedSquare
+      const promoColor = sel && boardState.legalMoves.includes(sq) ? isPromotionMove(sel, sq) : null
+      if (sel && promoColor) {
+        setPromo({ from: sel, to: sq, color: promoColor })
+      } else {
+        onSquareClick(sq)
+      }
     }
   }
 
@@ -208,7 +240,12 @@ export default function Board({
     if (!moved) {
       onSquareClick(from)
     } else if (target && dragTargets.has(target)) {
-      onMove(from, target)
+      const promoColor = isPromotionMove(from, target)
+      if (promoColor) {
+        setPromo({ from, to: target, color: promoColor })
+      } else {
+        onMove(from, target)
+      }
     }
   }
 
@@ -379,6 +416,56 @@ export default function Board({
             <Piece piece={moveAnimation.piece} size={squareSize * 0.9} />
           </div>
         )}
+
+        {promo && (() => {
+          const fi = files.indexOf(promo.to[0])
+          const ri = ranks.indexOf(promo.to[1])
+          if (fi < 0 || ri < 0) return null
+          const goingDown = ri === 0
+          const order: PromoPiece[] = goingDown ? ['q', 'n', 'r', 'b'] : ['b', 'r', 'n', 'q']
+          const top = goingDown ? 0 : (ri - 3) * squareSize
+          return (
+            <>
+              <div
+                onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); setPromo(null) }}
+                style={{ position: 'absolute', inset: 0, background: 'rgba(18,20,24,0.44)', zIndex: 30, cursor: 'pointer' }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  left: fi * squareSize,
+                  top,
+                  width: squareSize,
+                  zIndex: 31,
+                  borderRadius: 4,
+                  overflow: 'hidden',
+                  boxShadow: '0 6px 24px rgba(0,0,0,0.4)',
+                }}
+              >
+                {order.map((pc) => (
+                  <button
+                    key={pc}
+                    onPointerDown={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      const { from, to } = promo
+                      setPromo(null)
+                      onMove(from, to, pc)
+                    }}
+                    style={{
+                      display: 'block', width: squareSize, height: squareSize, padding: 0,
+                      border: 'none', background: '#f3f3f0', cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = '#cfe6f5')}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = '#f3f3f0')}
+                  >
+                    <Piece piece={{ type: pc, color: promo.color }} size={squareSize * 0.92} />
+                  </button>
+                ))}
+              </div>
+            </>
+          )
+        })()}
       </div>
 
       {isDragging &&

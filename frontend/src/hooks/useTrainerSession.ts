@@ -539,7 +539,7 @@ export function useTrainerSession() {
   )
 
   const submitMove = useCallback(
-    async (from: Square, to: Square) => {
+    async (from: Square, to: Square, promotion?: string) => {
       const gid = gameIdRef.current
       const card = currentCard
       if (!gid || !card || phase !== 'drilling' || busy || isViewingHistory) return
@@ -550,7 +550,8 @@ export function useTrainerSession() {
         const piece = boardState?.pieces[from]
         const isPromo =
           piece?.type === 'p' && ((piece.color === 'w' && to[1] === '8') || (piece.color === 'b' && to[1] === '1'))
-        const gs = await makeMove(gid, from, to, isPromo ? 'q' : undefined)
+        const promoChar = promotion ?? (isPromo ? 'q' : undefined)
+        const gs = await makeMove(gid, from, to, promoChar)
         if (reqId !== moveReqId.current) return
 
 
@@ -567,7 +568,7 @@ export function useTrainerSession() {
             grade(sessionRef.current!, card.id, true)
             gradedThisPresentationRef.current = true
           }
-          runMovesRef.current.push({ san: playedSan, uci: `${from}${to}${isPromo ? 'q' : ''}`, mover: 'user' })
+          runMovesRef.current.push({ san: playedSan, uci: `${from}${to}${promoChar ?? ''}`, mover: 'user' })
           setRunMoves([...runMovesRef.current])
           setSelected(null)
           pushSnapshot(gs)
