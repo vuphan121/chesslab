@@ -37,15 +37,6 @@ function linePreview(line: SavedLine): string {
   return parts.join(' ') + (line.moves.length > 8 ? ' …' : '')
 }
 
-function when(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  const now = new Date()
-  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-  if (now.getTime() - d.getTime() < 7 * 86_400_000) return d.toLocaleDateString([], { weekday: 'short' })
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
-}
-
 export default function BookMoveHistory({
   moveTree, currentNodeId, busy, evals, canSave, saving, saveNote, savedLines,
   onGoto, onDeleteMove, onSaveLine, onLoadSavedLine, onDeleteSavedLine,
@@ -149,14 +140,13 @@ export default function BookMoveHistory({
                   onClick={() => !busy && onLoadSavedLine(line)}
                   disabled={busy}
                   title="Load this saved line onto the board"
-                  style={{ flex: 1, minWidth: 0, textAlign: 'left', border: 'none', background: 'transparent', cursor: busy ? 'default' : 'pointer', padding: '2px 0' }}
+                  style={{ flex: 1, minWidth: 0, textAlign: 'left', border: 'none', background: 'transparent', cursor: busy ? 'default' : 'pointer', padding: '3px 0' }}
                   onMouseEnter={(e) => ((e.currentTarget.parentElement as HTMLElement).style.background = '#f4f3ee')}
                   onMouseLeave={(e) => ((e.currentTarget.parentElement as HTMLElement).style.background = 'transparent')}
                 >
                   <span className="mono" style={{ fontSize: 12, color: '#37352f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     ★ {linePreview(line)}
                   </span>
-                  <span style={{ fontSize: 10, color: '#b4b1a8' }}>{line.moves.length} moves · {when(line.createdAt)}</span>
                 </button>
                 <button
                   onClick={() => !busy && onDeleteSavedLine(line.id)}
