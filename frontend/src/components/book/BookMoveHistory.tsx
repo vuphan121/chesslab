@@ -134,33 +134,27 @@ export default function BookMoveHistory({
           >
             {saving ? 'Saving…' : 'Save line'}
           </button>
-          <button onClick={() => onGoto(moveTree.id)} disabled={busy || currentNodeId === moveTree.id} style={{ border: 'none', background: 'transparent', color: currentNodeId === moveTree.id ? '#c8c5bd' : '#4a90d9', fontSize: 11, cursor: busy || currentNodeId === moveTree.id ? 'default' : 'pointer' }}>Start</button>
         </div>
       </div>
 
-      <div style={{ maxHeight: 150, overflow: 'auto', padding: hasMoves ? 6 : '10px 12px' }}>
-        {hasMoves ? rows : <span style={{ color: '#a3a099', fontSize: 12 }}>No moves yet</span>}
-      </div>
+      <div style={{ maxHeight: 280, overflow: 'auto', padding: hasMoves || savedLines.length ? 6 : '10px 12px' }}>
+        {hasMoves && rows}
+        {!hasMoves && savedLines.length === 0 && <span style={{ color: '#a3a099', fontSize: 12 }}>No moves yet</span>}
 
-      {savedLines.length > 0 && (
-        <>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 12px', borderTop: '1px solid #efeee9', background: '#fbfaf7' }}>
-            <span className="lbl" style={{ color: '#b4b1a8' }}>Saved lines</span>
-            <span style={{ fontSize: 11, color: '#c0bdb4' }}>{savedLines.length}</span>
-          </div>
-          <div style={{ maxHeight: 132, overflow: 'auto', padding: 4 }}>
+        {savedLines.length > 0 && (
+          <div style={{ marginTop: hasMoves ? 8 : 0, paddingTop: hasMoves ? 8 : 0, borderTop: hasMoves ? '1px solid #efeee9' : 'none' }}>
             {savedLines.map((line) => (
               <div key={line.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 6px', borderRadius: 6 }}>
                 <button
                   onClick={() => !busy && onLoadSavedLine(line)}
                   disabled={busy}
-                  title="Load this line onto the board"
+                  title="Load this saved line onto the board"
                   style={{ flex: 1, minWidth: 0, textAlign: 'left', border: 'none', background: 'transparent', cursor: busy ? 'default' : 'pointer', padding: '2px 0' }}
                   onMouseEnter={(e) => ((e.currentTarget.parentElement as HTMLElement).style.background = '#f4f3ee')}
                   onMouseLeave={(e) => ((e.currentTarget.parentElement as HTMLElement).style.background = 'transparent')}
                 >
                   <span className="mono" style={{ fontSize: 12, color: '#37352f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {linePreview(line)}
+                    ★ {linePreview(line)}
                   </span>
                   <span style={{ fontSize: 10, color: '#b4b1a8' }}>{line.moves.length} moves · {when(line.createdAt)}</span>
                 </button>
@@ -177,8 +171,8 @@ export default function BookMoveHistory({
               </div>
             ))}
           </div>
-        </>
-      )}
+        )}
+      </div>
 
       {menu && (
         <div
