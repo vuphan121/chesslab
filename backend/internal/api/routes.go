@@ -69,9 +69,9 @@ func NewRouter(h *Handler) http.Handler {
 		r.Post("/api/book-activity/{bookId}/{chapterId}/{itemId}", h.RecordBookStudyActivity)
 
 		r.Route("/api/book-saved-lines", func(r chi.Router) {
-			r.Get("/{bookId}/{itemId}", h.GetBookSavedLines)
+			r.Get("/{bookId}/{itemId}", h.GetBookSavedLine)
 			r.Post("/{bookId}/{itemId}", h.SaveBookLine)
-			r.Delete("/{id}", h.DeleteBookSavedLine)
+			r.Delete("/{bookId}/{itemId}", h.DeleteBookSavedLine)
 		})
 
 		r.Route("/api/saved-puzzles", func(r chi.Router) {

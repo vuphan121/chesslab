@@ -3,15 +3,14 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/db"
 	"github.com/go-chi/chi/v5"
 )
 
-type SavedLinesResponse struct {
-	Lines []db.SavedLine `json:"lines"`
+type SavedLineResponse struct {
+	Line *db.SavedLine `json:"line"`
 }
 
 type SaveLineRequest struct {
@@ -19,7 +18,7 @@ type SaveLineRequest struct {
 	Moves    []db.SavedLineMove `json:"moves"`
 }
 
-func (h *Handler) GetBookSavedLines(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetBookSavedLine(w http.ResponseWriter, r *http.Request) {
 	if h.db == nil {
 		http.Error(w, "saved lines not configured", http.StatusServiceUnavailable)
 		return
@@ -29,12 +28,12 @@ func (h *Handler) GetBookSavedLines(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
-	lines, err := h.db.GetBookSavedLines(r.Context(), username, chi.URLParam(r, "bookId"), chi.URLParam(r, "itemId"))
+	line, err := h.db.GetBookSavedLine(r.Context(), username, chi.URLParam(r, "bookId"), chi.URLParam(r, "itemId"))
 	if err != nil {
-		http.Error(w, "failed to load saved lines: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to load saved line: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	respondJSON(w, http.StatusOK, SavedLinesResponse{Lines: lines})
+	respondJSON(w, http.StatusOK, SavedLineResponse{Line: line})
 }
 
 func (h *Handler) SaveBookLine(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +60,7 @@ func (h *Handler) SaveBookLine(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to save line: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	respondJSON(w, http.StatusOK, map[string]db.SavedLine{"line": line})
+	respondJSON(w, http.StatusOK, SavedLineResponse{Line: &line})
 }
 
 func (h *Handler) DeleteBookSavedLine(w http.ResponseWriter, r *http.Request) {
@@ -74,12 +73,7 @@ func (h *Handler) DeleteBookSavedLine(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
-		return
-	}
-	if err := h.db.DeleteBookSavedLine(r.Context(), username, id); err != nil {
+	if err := h.db.DeleteBookSavedLine(r.Context(), username, chi.URLParam(r, "bookId"), chi.URLParam(r, "itemId")); err != nil {
 		http.Error(w, "failed to delete saved line: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createGame, setPosition as apiSetPosition, makeMove, gotoNode, deleteGameNode, getBook, getBookProgress, markItemDone, analyzeGame, evalFen, recordBookStudyActivity, getBookSavedLines, saveBookLine, deleteBookSavedLine } from '@/lib/api/client'
+import { createGame, setPosition as apiSetPosition, makeMove, gotoNode, deleteGameNode, getBook, getBookProgress, markItemDone, analyzeGame, evalFen, recordBookStudyActivity, getBookSavedLine, saveBookLine } from '@/lib/api/client'
 import type { Analysis, GameState, FenEval, SavedLine, SavedLineMove } from '@/lib/api/client'
 import type { BoardState, Color, MoveNode, PieceType, Square } from '@/lib/chess/types'
 import { flatten } from '@/lib/chess/moveTree'
@@ -91,7 +91,7 @@ export function useBookStudySession() {
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
   const [moveEvals, setMoveEvals] = useState<Record<string, FenEval>>({})
-  const [savedLines, setSavedLines] = useState<SavedLine[]>([])
+  const [savedLine, setSavedLine] = useState<SavedLine | null>(null)
   const [savingLine, setSavingLine] = useState(false)
   const [saveNote, setSaveNote] = useState<string | null>(null)
   const [completedItemIds, setCompletedItemIds] = useState<Set<string>>(() => new Set())
@@ -216,24 +216,70 @@ export function useBookStudySession() {
     setGameState(gs)
   }, [])
 
-  // Load this item's saved lines whenever the item changes.
+  // Rebuild a saved line into the game's move tree, then sit the cursor back at
+  // the start position — the full line shows in the Moves panel, but the board
+  // stays on move 0 until the user steps forward (arrows) or clicks a move.
+  const replayLine = useCallback(async (line: SavedLine): Promise<GameState | null> => {
+    const gid = gameIdRef.current
+    if (!gid) return null
+    let gs = await apiSetPosition(gid, line.startFen)
+    for (const m of line.moves) {
+      if (m.uci.length < 4) continue
+      gs = await makeMove(gid, m.uci.slice(0, 2), m.uci.slice(2, 4), m.uci.slice(4) || undefined)
+    }
+    return gotoNode(gid, gs.moveTree.id)
+  }, [])
+
+  // One saved line per item. On entering an item, pull it and drop it straight
+  // onto the board — no click, no list — so the Moves panel just shows it.
   useEffect(() => {
     const bookId = book?.id
     const itemId = current?.item.id
     if (!bookId || !itemId) return
     let cancelled = false
-    getBookSavedLines(bookId, itemId)
-      .then((res) => {
-        if (!cancelled) setSavedLines(res.lines)
+    getBookSavedLine(bookId, itemId)
+      .then(async ({ line }) => {
+        if (cancelled) return
+        setSavedLine(line)
+        if (!line) return
+        setBusy(true)
+        try {
+          const gs = await replayLine(line)
+          if (!cancelled && gs) {
+            setGameState(gs)
+            setSelected(null)
+          }
+        } catch {
+          /* a saved move no longer applies — leave the plain position */
+        } finally {
+          if (!cancelled) setBusy(false)
+        }
       })
       .catch(() => {
-        // not logged in / no database / offline — just show none for this item
-        if (!cancelled) setSavedLines([])
+        // not logged in / no database / offline — just treat it as no saved line
+        if (!cancelled) setSavedLine(null)
       })
     return () => {
       cancelled = true
     }
-  }, [book?.id, current?.item.id])
+  }, [book?.id, current?.item.id, replayLine])
+
+  const restoreSavedLine = useCallback(async () => {
+    if (!savedLine || busy) return
+    setBusy(true)
+    setSaveNote(null)
+    try {
+      const gs = await replayLine(savedLine)
+      if (gs) {
+        setGameState(gs)
+        setSelected(null)
+      }
+    } catch {
+      /* ignore — saved line no longer replays cleanly */
+    } finally {
+      setBusy(false)
+    }
+  }, [savedLine, busy, replayLine])
 
   const loadStart = useCallback(
     async (bookId: string, chapterId?: string) => {
@@ -386,45 +432,17 @@ export function useBookStudySession() {
     setSavingLine(true)
     setSaveNote(null)
     try {
+      // One row per (user, book, item): the backend upserts, so this replaces
+      // whatever was saved for this lesson before.
       const { line } = await saveBookLine(bookId, itemId, current.item.fen, moves)
-      setSavedLines((prev) => [line, ...prev])
-      setSaveNote(`Saved ${moves.length}-move line`)
+      setSavedLine(line)
+      setSaveNote('Saved')
     } catch (err) {
       setSaveNote(err instanceof Error ? err.message : 'Could not save line.')
     } finally {
       setSavingLine(false)
     }
   }, [book, current, gameState, savingLine])
-
-  const loadSavedLine = useCallback(async (line: SavedLine) => {
-    const gid = gameIdRef.current
-    if (!gid || busy) return
-    setBusy(true)
-    setSaveNote(null)
-    try {
-      let gs = await apiSetPosition(gid, line.startFen)
-      for (const m of line.moves) {
-        if (m.uci.length < 4) continue
-        gs = await makeMove(gid, m.uci.slice(0, 2), m.uci.slice(2, 4), m.uci.slice(4) || undefined)
-      }
-      setGameState(gs)
-      setSelected(null)
-    } catch {
-      /* a move in the saved line no longer applies — keep whatever loaded */
-    } finally {
-      setBusy(false)
-    }
-  }, [busy])
-
-  const removeSavedLine = useCallback(async (id: number) => {
-    const prev = savedLines
-    setSavedLines((cur) => cur.filter((l) => l.id !== id))
-    try {
-      await deleteBookSavedLine(id)
-    } catch {
-      setSavedLines(prev)
-    }
-  }, [savedLines])
 
 
 
@@ -536,7 +554,7 @@ export function useBookStudySession() {
     setAnalysis(null)
     setAnalysisError(null)
     setMoveEvals({})
-    setSavedLines([])
+    setSavedLine(null)
     setSaveNote(null)
     analysisCacheRef.current = new Map()
     setCompletedItemIds(new Set())
@@ -562,13 +580,12 @@ export function useBookStudySession() {
     analysisError,
     toggleAnalysis,
     moveEvals,
-    savedLines,
+    savedLine,
     savingLine,
     saveNote,
     deleteMove,
     saveCurrentLine,
-    loadSavedLine,
-    removeSavedLine,
+    restoreSavedLine,
     completedItemIds,
     bookmarkedItemIds,
     completionBusy,

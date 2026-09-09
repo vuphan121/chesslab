@@ -26,7 +26,7 @@ export default function BookStudyPage() {
     busy, flipped, toggleFlipped, analysisEnabled, analysis, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
     stepBack, stepForward, loadStart, goToIndex, goToMove, selectSquare,
     move, legalMovesFor, restart,
-    moveEvals, savedLines, savingLine, saveNote, deleteMove, saveCurrentLine, loadSavedLine, removeSavedLine,
+    moveEvals, savedLine, savingLine, saveNote, deleteMove, saveCurrentLine, restoreSavedLine,
   } = useBookStudySession()
 
   const viewportWidth = useViewportWidth()
@@ -124,12 +124,11 @@ export default function BookStudyPage() {
                 canSave={(boardState.moveTree.children?.length ?? 0) > 0}
                 saving={savingLine}
                 saveNote={saveNote}
-                savedLines={savedLines}
+                hasSaved={!!savedLine}
                 onGoto={goToMove}
                 onDeleteMove={deleteMove}
                 onSaveLine={saveCurrentLine}
-                onLoadSavedLine={loadSavedLine}
-                onDeleteSavedLine={removeSavedLine}
+                onRestore={restoreSavedLine}
               />
             </div>
           </section>

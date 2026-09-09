@@ -65,8 +65,13 @@ CREATE TABLE IF NOT EXISTS book_saved_lines (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS book_saved_lines_user_item_idx
-    ON book_saved_lines (username, book_id, item_id, created_at DESC);
+DELETE FROM book_saved_lines a USING book_saved_lines b
+    WHERE a.id < b.id AND a.username = b.username AND a.book_id = b.book_id AND a.item_id = b.item_id;
+
+DROP INDEX IF EXISTS book_saved_lines_user_item_idx;
+
+CREATE UNIQUE INDEX IF NOT EXISTS book_saved_lines_uniq
+    ON book_saved_lines (username, book_id, item_id);
 
 CREATE TABLE IF NOT EXISTS books (
     id TEXT PRIMARY KEY,

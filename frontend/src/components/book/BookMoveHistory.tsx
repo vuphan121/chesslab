@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { MoveNode } from '@/lib/chess/types'
-import type { FenEval, SavedLine } from '@/lib/api/client'
+import type { FenEval } from '@/lib/api/client'
 import { toFigurine } from '@/lib/chess/figurine'
 
 interface Props {
@@ -13,12 +13,11 @@ interface Props {
   canSave: boolean
   saving: boolean
   saveNote: string | null
-  savedLines: SavedLine[]
+  hasSaved: boolean
   onGoto: (nodeId: string) => void
   onDeleteMove: (nodeId: string) => void
   onSaveLine: () => void
-  onLoadSavedLine: (line: SavedLine) => void
-  onDeleteSavedLine: (id: number) => void
+  onRestore: () => void
 }
 
 function fmtEval(e: FenEval | undefined): string {
@@ -28,18 +27,9 @@ function fmtEval(e: FenEval | undefined): string {
   return e.score >= 0 ? `+${v}` : `−${v}`
 }
 
-function linePreview(line: SavedLine): string {
-  const parts: string[] = []
-  line.moves.slice(0, 8).forEach((m, i) => {
-    if (i % 2 === 0) parts.push(`${i / 2 + 1}.`)
-    parts.push(toFigurine(m.san))
-  })
-  return parts.join(' ') + (line.moves.length > 8 ? ' …' : '')
-}
-
 export default function BookMoveHistory({
-  moveTree, currentNodeId, busy, evals, canSave, saving, saveNote, savedLines,
-  onGoto, onDeleteMove, onSaveLine, onLoadSavedLine, onDeleteSavedLine,
+  moveTree, currentNodeId, busy, evals, canSave, saving, saveNote, hasSaved,
+  onGoto, onDeleteMove, onSaveLine, onRestore,
 }: Props) {
   const [menu, setMenu] = useState<{ nodeId: string; san: string; x: number; y: number } | null>(null)
 
@@ -112,6 +102,16 @@ export default function BookMoveHistory({
         <span className="lbl" style={{ color: '#b4b1a8' }}>Moves</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {saveNote && <span style={{ fontSize: 11, color: saveNote.startsWith('Saved') ? '#25864d' : '#b1453b' }}>{saveNote}</span>}
+          {hasSaved && (
+            <button
+              onClick={onRestore}
+              disabled={busy}
+              title="Reload the saved line onto the board"
+              style={{ border: 'none', background: 'transparent', color: busy ? '#c8c5bd' : '#8a8780', fontSize: 11, fontWeight: 600, cursor: busy ? 'default' : 'pointer' }}
+            >
+              ↺ Restore
+            </button>
+          )}
           <button
             onClick={onSaveLine}
             disabled={!saveEnabled}
@@ -123,45 +123,13 @@ export default function BookMoveHistory({
               cursor: saveEnabled ? 'pointer' : 'default',
             }}
           >
-            {saving ? 'Saving…' : 'Save line'}
+            {saving ? 'Saving…' : hasSaved ? 'Update line' : 'Save line'}
           </button>
         </div>
       </div>
 
-      <div style={{ maxHeight: 280, overflow: 'auto', padding: hasMoves || savedLines.length ? 6 : '10px 12px' }}>
-        {hasMoves && rows}
-        {!hasMoves && savedLines.length === 0 && <span style={{ color: '#a3a099', fontSize: 12 }}>No moves yet</span>}
-
-        {savedLines.length > 0 && (
-          <div style={{ marginTop: hasMoves ? 8 : 0, paddingTop: hasMoves ? 8 : 0, borderTop: hasMoves ? '1px solid #efeee9' : 'none' }}>
-            {savedLines.map((line) => (
-              <div key={line.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 6px', borderRadius: 6 }}>
-                <button
-                  onClick={() => !busy && onLoadSavedLine(line)}
-                  disabled={busy}
-                  title="Load this saved line onto the board"
-                  style={{ flex: 1, minWidth: 0, textAlign: 'left', border: 'none', background: 'transparent', cursor: busy ? 'default' : 'pointer', padding: '3px 0' }}
-                  onMouseEnter={(e) => ((e.currentTarget.parentElement as HTMLElement).style.background = '#f4f3ee')}
-                  onMouseLeave={(e) => ((e.currentTarget.parentElement as HTMLElement).style.background = 'transparent')}
-                >
-                  <span className="mono" style={{ fontSize: 12, color: '#37352f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    ★ {linePreview(line)}
-                  </span>
-                </button>
-                <button
-                  onClick={() => !busy && onDeleteSavedLine(line.id)}
-                  disabled={busy}
-                  title="Delete this saved line"
-                  style={{ border: 'none', background: 'transparent', color: '#c0bdb4', cursor: busy ? 'default' : 'pointer', fontSize: 13, padding: '0 4px' }}
-                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#b1453b')}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#c0bdb4')}
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+      <div style={{ maxHeight: 280, overflow: 'auto', padding: hasMoves ? 6 : '10px 12px' }}>
+        {hasMoves ? rows : <span style={{ color: '#a3a099', fontSize: 12 }}>No moves yet</span>}
       </div>
 
       {menu && (

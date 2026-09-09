@@ -326,7 +326,7 @@ export interface SavedLine {
   createdAt: string
 }
 
-export const getBookSavedLines = (bookId: string, itemId: string): Promise<{ lines: SavedLine[] }> =>
+export const getBookSavedLine = (bookId: string, itemId: string): Promise<{ line: SavedLine | null }> =>
   request(`/api/book-saved-lines/${encodeURIComponent(bookId)}/${encodeURIComponent(itemId)}`)
 
 export const saveBookLine = (
@@ -341,8 +341,8 @@ export const saveBookLine = (
     body: JSON.stringify({ startFen, moves }),
   })
 
-export const deleteBookSavedLine = async (id: number): Promise<void> => {
-  const res = await fetch(`${API}/api/book-saved-lines/${id}`, {
+export const deleteBookSavedLine = async (bookId: string, itemId: string): Promise<void> => {
+  const res = await fetch(`${API}/api/book-saved-lines/${encodeURIComponent(bookId)}/${encodeURIComponent(itemId)}`, {
     method: 'DELETE',
     headers: authHeader(),
   })
