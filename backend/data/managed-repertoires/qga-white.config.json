@@ -1,0 +1,8 @@
+{
+  "id": "qga-white",
+  "name": "Queen's Gambit Accepted",
+  "side": "w",
+  "source": "https://lichess.org/study/m01Mk82i",
+  "description": "White repertoire against the Queen's Gambit Accepted. Chapters by Black's plan: ...e5, ...Nf6 (Alekhine), ...Nc6 (Modern), ...c5, and ...b5.",
+  "excluded": []
+}

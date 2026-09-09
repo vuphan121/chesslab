@@ -1,0 +1,14 @@
+{
+  "id": "grunfeld-black",
+  "name": "Grünfeld Defense",
+  "side": "b",
+  "source": "https://lichess.org/study/SiEkqW7i",
+  "description": "Black repertoire for the Grünfeld Defense, by White's system: Exchange variation, Exchange variation sidelines, Closed variation, Russian system (Qb3), Brinckmann Attack (Bf4), Neo-Grünfeld, Lutikov variation (f3), and Petrosian system (Bg5).",
+  "excluded": [
+    {
+      "chapter": "Exchange variation sidelines",
+      "path": ["Bc4"],
+      "reason": "Recorded in this chapter only as an anchor for the sibling first-move sidelines (Bg5/Bb5+/Qa4+/Be3) — 1.Bc4 itself has no continuation here and is already fully covered by the 'Exchange variation' chapter, so it isn't a real line of its own."
+    }
+  ]
+}
