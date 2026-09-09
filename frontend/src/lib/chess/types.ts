@@ -16,6 +16,9 @@ export interface MoveNode {
   san: string
   fen: string
   ply: number
+  from?: string
+  to?: string
+  promotion?: string
   children: MoveNode[]
 }
 

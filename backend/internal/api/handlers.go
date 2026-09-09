@@ -61,11 +61,14 @@ type MoveJSON struct {
 }
 
 type MoveNodeJSON struct {
-	ID       string         `json:"id"`
-	SAN      string         `json:"san"`
-	FEN      string         `json:"fen"`
-	Ply      int            `json:"ply"`
-	Children []MoveNodeJSON `json:"children"`
+	ID        string         `json:"id"`
+	SAN       string         `json:"san"`
+	FEN       string         `json:"fen"`
+	Ply       int            `json:"ply"`
+	From      string         `json:"from,omitempty"`
+	To        string         `json:"to,omitempty"`
+	Promotion string         `json:"promotion,omitempty"`
+	Children  []MoveNodeJSON `json:"children"`
 }
 
 type GameStateJSON struct {
@@ -242,6 +245,20 @@ func (h *Handler) MakeMove(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) DeleteGame(w http.ResponseWriter, r *http.Request) {
 	h.store.Delete(chi.URLParam(r, "id"))
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handler) DeleteNode(w http.ResponseWriter, r *http.Request) {
+	g, ok := h.store.Get(chi.URLParam(r, "id"))
+	if !ok {
+		http.Error(w, "game not found", http.StatusNotFound)
+		return
+	}
+	if err := g.DeleteNode(chi.URLParam(r, "nodeId")); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	h.store.Save(g)
+	respondJSON(w, http.StatusOK, toGameState(g))
 }
 
 func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
@@ -571,6 +588,13 @@ func toGameState(g *chess.Game) GameStateJSON {
 
 func toMoveNode(n *chess.Node, ply int) MoveNodeJSON {
 	mj := MoveNodeJSON{ID: n.ID, SAN: n.SAN, FEN: chess.FEN(n.Pos), Ply: ply}
+	if n.Parent != nil {
+		mj.From = n.Move.From.String()
+		mj.To = n.Move.To.String()
+		if n.Move.IsPromotion() {
+			mj.Promotion = n.Move.PromotionPiece().String()
+		}
+	}
 	for _, ch := range n.Children {
 		mj.Children = append(mj.Children, toMoveNode(ch, ply+1))
 	}

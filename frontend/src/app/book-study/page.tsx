@@ -5,6 +5,7 @@ import Board from '@/components/board/Board'
 import TopBar from '@/components/layout/TopBar'
 import BookPicker from '@/components/book/BookPicker'
 import BookMoveHistory from '@/components/book/BookMoveHistory'
+import BookSavedLines from '@/components/book/BookSavedLines'
 import EvalBar from '@/components/analysis/EvalBar'
 import ChapterSections from '@/components/book/ChapterSections'
 import BookPDFViewer from '@/components/book/BookPDFViewer'
@@ -26,6 +27,7 @@ export default function BookStudyPage() {
     busy, flipped, toggleFlipped, analysisEnabled, analysis, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
     stepBack, stepForward, loadStart, goToIndex, goToMove, selectSquare,
     move, legalMovesFor, restart,
+    moveEvals, savedLines, savingLine, saveNote, deleteMove, saveCurrentLine, loadSavedLine, removeSavedLine,
   } = useBookStudySession()
 
   const viewportWidth = useViewportWidth()
@@ -114,8 +116,20 @@ export default function BookStudyPage() {
               <div style={{ display: 'flex', gap: 6 }}><button onClick={stepBack} disabled={!canStepBack} title="Previous move (←)" style={navBtn(canStepBack)}>⟨</button><button onClick={stepForward} disabled={!canStepForward} title="Next move (→)" style={navBtn(canStepForward)}>⟩</button></div>
               <span className="mono" style={{ fontSize: 12, color: '#a3a099' }}>{currentPly > 0 || canStepBack ? `ply ${currentPly}` : ' '}</span>
             </div>
-            <div style={{ width: boardSize }}>
-              <BookMoveHistory moveTree={boardState.moveTree} currentNodeId={boardState.currentNodeId} busy={busy} onGoto={goToMove} />
+            <div style={{ width: boardSize, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <BookMoveHistory
+                moveTree={boardState.moveTree}
+                currentNodeId={boardState.currentNodeId}
+                busy={busy}
+                evals={moveEvals}
+                canSave={(boardState.moveTree.children?.length ?? 0) > 0}
+                saving={savingLine}
+                saveNote={saveNote}
+                onGoto={goToMove}
+                onDeleteMove={deleteMove}
+                onSaveLine={saveCurrentLine}
+              />
+              <BookSavedLines lines={savedLines} busy={busy} onLoad={loadSavedLine} onDelete={removeSavedLine} />
             </div>
           </section>
 

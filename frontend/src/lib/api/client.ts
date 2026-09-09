@@ -161,6 +161,9 @@ export const gotoNode = (id: string, nodeId: string): Promise<GameState> =>
     body: JSON.stringify({ nodeId }),
   })
 
+export const deleteGameNode = (id: string, nodeId: string): Promise<GameState> =>
+  request(`/api/games/${id}/nodes/${nodeId}`, { method: 'DELETE' })
+
 export interface LoadPGNResponse extends GameState {
   appliedPlies: number
   totalTokens: number
@@ -306,6 +309,46 @@ export const getBookProgress = (bookId: string): Promise<GetBookProgressResponse
 
 export const markItemDone = (bookId: string, itemId: string): Promise<{ ok: boolean }> =>
   request(`/api/book-progress/${bookId}/${itemId}`, { method: 'POST' })
+
+export interface SavedLineMove {
+  san: string
+  uci: string
+  fen: string
+  score: number
+  mate: number
+  hasEval: boolean
+}
+
+export interface SavedLine {
+  id: number
+  startFen: string
+  moves: SavedLineMove[]
+  createdAt: string
+}
+
+export const getBookSavedLines = (bookId: string, itemId: string): Promise<{ lines: SavedLine[] }> =>
+  request(`/api/book-saved-lines/${encodeURIComponent(bookId)}/${encodeURIComponent(itemId)}`)
+
+export const saveBookLine = (
+  bookId: string,
+  itemId: string,
+  startFen: string,
+  moves: SavedLineMove[],
+): Promise<{ line: SavedLine }> =>
+  request(`/api/book-saved-lines/${encodeURIComponent(bookId)}/${encodeURIComponent(itemId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ startFen, moves }),
+  })
+
+export const deleteBookSavedLine = async (id: number): Promise<void> => {
+  const res = await fetch(`${API}/api/book-saved-lines/${id}`, {
+    method: 'DELETE',
+    headers: authHeader(),
+  })
+  if (res.status === 401) clearToken()
+  if (!res.ok) throw new Error((await res.text()) || res.statusText)
+}
 
 export const recordBookStudyActivity = (
   bookId: string,

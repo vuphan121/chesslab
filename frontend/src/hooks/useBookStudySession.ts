@@ -1,9 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createGame, setPosition as apiSetPosition, makeMove, gotoNode, getBook, getBookProgress, markItemDone, analyzeGame, recordBookStudyActivity } from '@/lib/api/client'
-import type { Analysis, GameState } from '@/lib/api/client'
-import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
+import { createGame, setPosition as apiSetPosition, makeMove, gotoNode, deleteGameNode, getBook, getBookProgress, markItemDone, analyzeGame, evalFen, recordBookStudyActivity, getBookSavedLines, saveBookLine, deleteBookSavedLine } from '@/lib/api/client'
+import type { Analysis, GameState, FenEval, SavedLine, SavedLineMove } from '@/lib/api/client'
+import type { BoardState, Color, MoveNode, PieceType, Square } from '@/lib/chess/types'
 import { flatten } from '@/lib/chess/moveTree'
 import type { Book, BookItem } from '@/lib/books/types'
 
@@ -42,6 +42,19 @@ function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState 
 
 export type BookStudyPhase = 'setup' | 'studying' | 'done'
 
+// Walk the tree's main line (children[0] chain), skipping the root.
+function mainlineNodes(root: MoveNode): MoveNode[] {
+  const out: MoveNode[] = []
+  let node: MoveNode | undefined = root
+  while (node) {
+    const next: MoveNode | undefined = (node.children ?? [])[0]
+    if (!next) break
+    out.push(next)
+    node = next
+  }
+  return out
+}
+
 export interface FlatItem {
   item: BookItem
   chapterId: string
@@ -77,6 +90,10 @@ export function useBookStudySession() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
+  const [moveEvals, setMoveEvals] = useState<Record<string, FenEval>>({})
+  const [savedLines, setSavedLines] = useState<SavedLine[]>([])
+  const [savingLine, setSavingLine] = useState(false)
+  const [saveNote, setSaveNote] = useState<string | null>(null)
   const [completedItemIds, setCompletedItemIds] = useState<Set<string>>(() => new Set())
   const [bookmarkedItemIds, setBookmarkedItemIds] = useState<Set<string>>(() => new Set())
   const [completionBusy, setCompletionBusy] = useState(false)
@@ -85,6 +102,16 @@ export function useBookStudySession() {
   const gameIdRef = useRef<string | null>(null)
   const moveReqId = useRef(0)
   const analysisReqId = useRef(0)
+  const moveEvalsRef = useRef<Record<string, FenEval>>({})
+  // Per-FEN analysis cache so revisiting a position (stepping back/forward, or
+  // loading a saved line) is instant instead of another engine round-trip.
+  const analysisCacheRef = useRef<Map<string, Analysis>>(new Map())
+
+  // Mirror moveEvals into a ref so the fetch effects/callbacks below can read the
+  // latest map without taking it as a dependency (which would re-run them per fetch).
+  useEffect(() => {
+    moveEvalsRef.current = moveEvals
+  }, [moveEvals])
 
   const flatItems = useMemo<FlatItem[]>(() => {
     if (!book) return []
@@ -99,38 +126,72 @@ export function useBookStudySession() {
 
   const current = flatItems[flatIndex] ?? null
   const boardState: BoardState | null = gameState ? toBoardState(gameState, selected) : null
-  const analysisNodeID = gameState?.currentNodeId
+  const currentFen = gameState?.fen ?? null
 
+  // Engine analysis for the current position. Deliberately quick-only (depth-10 /
+  // cloud with a short timeout) — the deeper refinement pass this used to chain
+  // was the "couple seconds" lag on the board. Cache hits are instant.
   useEffect(() => {
     const gid = gameIdRef.current
-    if (!analysisEnabled || !gid || !analysisNodeID) return
+    if (!analysisEnabled || !gid || !currentFen) return
+
+    const cached = analysisCacheRef.current.get(currentFen)
+    if (cached) {
+      setAnalysis(cached)
+      setAnalysisLoading(false)
+      setAnalysisError(null)
+      return
+    }
+
     const requestID = ++analysisReqId.current
     setAnalysisLoading(true)
     setAnalysisError(null)
-    const runAnalysis = async () => {
-      let quickResult: Analysis | null = null
+    ;(async () => {
       try {
-        quickResult = await analyzeGame(gid, 'quick')
-        if (requestID === analysisReqId.current) setAnalysis(quickResult)
-
-        // Cloud analysis is already a deep cached result. A local quick result is useful right
-        // away, then gets replaced by the deeper pass without blocking the board.
-        if (quickResult.engineName === 'Lichess Cloud') return
-        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
-        const refined = await analyzeGame(gid)
-        if (requestID === analysisReqId.current) setAnalysis(refined)
+        const result = await analyzeGame(gid, 'quick')
+        analysisCacheRef.current.set(currentFen, result)
+        if (result.lines.length > 0 && !(currentFen in moveEvalsRef.current)) {
+          const top = result.lines[0]
+          setMoveEvals((prev) => ({ ...prev, [currentFen]: { score: top.score, mate: top.mate, depth: top.depth } }))
+        }
+        if (requestID === analysisReqId.current) setAnalysis(result)
       } catch (err: unknown) {
-        if (requestID === analysisReqId.current && !quickResult) {
+        if (requestID === analysisReqId.current) {
           setAnalysis(null)
           setAnalysisError(err instanceof Error ? err.message : 'Analysis is unavailable.')
         }
       } finally {
         if (requestID === analysisReqId.current) setAnalysisLoading(false)
       }
-    }
+    })()
+  }, [analysisEnabled, currentFen])
 
-    void runAnalysis()
-  }, [analysisEnabled, analysisNodeID])
+  // With Analysis on, fill in a light per-move eval for every move on the board's
+  // main line, so the move list can show "analysis of the moves" and a saved line
+  // can carry it. Gated on analysisEnabled — same opt-in as the eval bar — so a
+  // user who never opens analysis gets no extra engine traffic.
+  useEffect(() => {
+    if (!analysisEnabled || !gameState) return
+    const fens = mainlineNodes(gameState.moveTree).map((n) => n.fen)
+    const missing = fens.filter((f) => !(f in moveEvalsRef.current))
+    if (missing.length === 0) return
+
+    let cancelled = false
+    ;(async () => {
+      for (const fen of missing) {
+        if (cancelled) return
+        try {
+          const e = await evalFen(fen)
+          if (!cancelled) setMoveEvals((prev) => ({ ...prev, [fen]: e }))
+        } catch {
+          /* leave this move without an eval */
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [analysisEnabled, gameState])
 
   const currentTreeInfo = useMemo(() => {
     if (!gameState) return { ply: 0, canBack: false, canForward: false }
@@ -146,9 +207,33 @@ export function useBookStudySession() {
   const enterItem = useCallback(async (gid: string, item: BookItem) => {
     setSelected(null)
     setFlipped(item.sideToMove === 'b')
+    analysisCacheRef.current = new Map()
+    setMoveEvals({})
+    setAnalysis(null)
+    setAnalysisError(null)
+    setSaveNote(null)
     const gs = await apiSetPosition(gid, item.fen)
     setGameState(gs)
   }, [])
+
+  // Load this item's saved lines whenever the item changes.
+  useEffect(() => {
+    const bookId = book?.id
+    const itemId = current?.item.id
+    if (!bookId || !itemId) return
+    let cancelled = false
+    getBookSavedLines(bookId, itemId)
+      .then((res) => {
+        if (!cancelled) setSavedLines(res.lines)
+      })
+      .catch(() => {
+        // not logged in / no database / offline — just show none for this item
+        if (!cancelled) setSavedLines([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [book?.id, current?.item.id])
 
   const loadStart = useCallback(
     async (bookId: string, chapterId?: string) => {
@@ -264,6 +349,83 @@ export function useBookStudySession() {
     }
   }, [gameState, busy])
 
+  const deleteMove = useCallback(async (nodeId: string) => {
+    const gid = gameIdRef.current
+    if (!gid || !gameState || busy || nodeId === gameState.moveTree.id) return
+    setBusy(true)
+    try {
+      const gs = await deleteGameNode(gid, nodeId)
+      setGameState(gs)
+      setSelected(null)
+      setSaveNote(null)
+    } finally {
+      setBusy(false)
+    }
+  }, [gameState, busy])
+
+  const saveCurrentLine = useCallback(async () => {
+    const bookId = book?.id
+    const itemId = current?.item.id
+    if (!bookId || !itemId || !gameState || savingLine) return
+    const nodes = mainlineNodes(gameState.moveTree)
+    if (nodes.length === 0) {
+      setSaveNote('Play some moves first.')
+      return
+    }
+    const moves: SavedLineMove[] = nodes.map((n) => {
+      const e = moveEvalsRef.current[n.fen]
+      return {
+        san: n.san,
+        uci: (n.from ?? '') + (n.to ?? '') + (n.promotion ?? ''),
+        fen: n.fen,
+        score: e?.score ?? 0,
+        mate: e?.mate ?? 0,
+        hasEval: e != null,
+      }
+    })
+    setSavingLine(true)
+    setSaveNote(null)
+    try {
+      const { line } = await saveBookLine(bookId, itemId, current.item.fen, moves)
+      setSavedLines((prev) => [line, ...prev])
+      setSaveNote(`Saved ${moves.length}-move line`)
+    } catch (err) {
+      setSaveNote(err instanceof Error ? err.message : 'Could not save line.')
+    } finally {
+      setSavingLine(false)
+    }
+  }, [book, current, gameState, savingLine])
+
+  const loadSavedLine = useCallback(async (line: SavedLine) => {
+    const gid = gameIdRef.current
+    if (!gid || busy) return
+    setBusy(true)
+    setSaveNote(null)
+    try {
+      let gs = await apiSetPosition(gid, line.startFen)
+      for (const m of line.moves) {
+        if (m.uci.length < 4) continue
+        gs = await makeMove(gid, m.uci.slice(0, 2), m.uci.slice(2, 4), m.uci.slice(4) || undefined)
+      }
+      setGameState(gs)
+      setSelected(null)
+    } catch {
+      /* a move in the saved line no longer applies — keep whatever loaded */
+    } finally {
+      setBusy(false)
+    }
+  }, [busy])
+
+  const removeSavedLine = useCallback(async (id: number) => {
+    const prev = savedLines
+    setSavedLines((cur) => cur.filter((l) => l.id !== id))
+    try {
+      await deleteBookSavedLine(id)
+    } catch {
+      setSavedLines(prev)
+    }
+  }, [savedLines])
+
 
 
   const attemptMove = useCallback(
@@ -373,6 +535,10 @@ export function useBookStudySession() {
     setAnalysisEnabled(false)
     setAnalysis(null)
     setAnalysisError(null)
+    setMoveEvals({})
+    setSavedLines([])
+    setSaveNote(null)
+    analysisCacheRef.current = new Map()
     setCompletedItemIds(new Set())
     setBookmarkedItemIds(new Set())
     setCompletionError(null)
@@ -395,6 +561,14 @@ export function useBookStudySession() {
     analysisLoading,
     analysisError,
     toggleAnalysis,
+    moveEvals,
+    savedLines,
+    savingLine,
+    saveNote,
+    deleteMove,
+    saveCurrentLine,
+    loadSavedLine,
+    removeSavedLine,
     completedItemIds,
     bookmarkedItemIds,
     completionBusy,

@@ -168,6 +168,43 @@ func (g *Game) GotoNode(id string) error {
 	return fmt.Errorf("node not found: %s", id)
 }
 
+// DeleteNode removes the subtree rooted at the node with the given id. The root
+// ("0") cannot be deleted. If Current sits inside the removed subtree, Current
+// falls back to the deleted node's parent.
+func (g *Game) DeleteNode(id string) error {
+	if id == g.Root.ID {
+		return fmt.Errorf("cannot delete root node")
+	}
+	target := findNode(g.Root, id)
+	if target == nil {
+		return fmt.Errorf("node not found: %s", id)
+	}
+	parent := target.Parent
+	kept := make([]*Node, 0, len(parent.Children))
+	for _, ch := range parent.Children {
+		if ch != target {
+			kept = append(kept, ch)
+		}
+	}
+	parent.Children = kept
+	if isDescendant(target, g.Current) {
+		g.setCurrent(parent)
+	}
+	return nil
+}
+
+func isDescendant(root, n *Node) bool {
+	if root == n {
+		return true
+	}
+	for _, ch := range root.Children {
+		if isDescendant(ch, n) {
+			return true
+		}
+	}
+	return false
+}
+
 func findNode(n *Node, id string) *Node {
 	if n.ID == id {
 		return n

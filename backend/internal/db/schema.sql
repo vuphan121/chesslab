@@ -55,6 +55,19 @@ CREATE TABLE IF NOT EXISTS book_study_activity (
 CREATE INDEX IF NOT EXISTS book_study_activity_username_first_moved_at_idx
     ON book_study_activity (username, first_moved_at DESC);
 
+CREATE TABLE IF NOT EXISTS book_saved_lines (
+    id BIGSERIAL PRIMARY KEY,
+    username TEXT NOT NULL,
+    book_id TEXT NOT NULL,
+    item_id TEXT NOT NULL,
+    start_fen TEXT NOT NULL,
+    moves JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS book_saved_lines_user_item_idx
+    ON book_saved_lines (username, book_id, item_id, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS books (
     id TEXT PRIMARY KEY,
     data JSONB NOT NULL,

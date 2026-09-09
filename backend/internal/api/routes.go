@@ -32,6 +32,7 @@ func NewRouter(h *Handler) http.Handler {
 			r.Get("/{id}/analysis", h.AnalyzeGame)
 			r.Get("/{id}/explorer", h.Explorer)
 			r.Post("/{id}/goto", h.GotoNode)
+			r.Delete("/{id}/nodes/{nodeId}", h.DeleteNode)
 			r.Post("/{id}/pgn", h.LoadPGN)
 			r.Post("/{id}/position", h.SetPosition)
 			r.Post("/{id}/coach/explain", h.ExplainMove)
@@ -66,6 +67,12 @@ func NewRouter(h *Handler) http.Handler {
 			r.Post("/{bookId}/{itemId}", h.MarkItemDone)
 		})
 		r.Post("/api/book-activity/{bookId}/{chapterId}/{itemId}", h.RecordBookStudyActivity)
+
+		r.Route("/api/book-saved-lines", func(r chi.Router) {
+			r.Get("/{bookId}/{itemId}", h.GetBookSavedLines)
+			r.Post("/{bookId}/{itemId}", h.SaveBookLine)
+			r.Delete("/{id}", h.DeleteBookSavedLine)
+		})
 
 		r.Route("/api/saved-puzzles", func(r chi.Router) {
 			r.Get("/", h.ListSavedPuzzles)
