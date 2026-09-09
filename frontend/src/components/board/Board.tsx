@@ -57,6 +57,11 @@ export default function Board({
     hasStarted: boolean
   } | null>(null)
   const previousPosition = useRef({ fen: boardState.fen, pieces: boardState.pieces })
+  // Set when this board initiates a move (drag/click/promotion). The next
+  // position change then skips the slide animation — the user already made the
+  // move, replaying it as an animation looks like it happens twice. Navigation
+  // (arrows / clicking a move) still animates.
+  const justPlayedRef = useRef(false)
 
   const rightDownSquare = useRef<string | null>(null)
   const [rightDragTo, setRightDragTo] = useState<string | null>(null)
@@ -95,6 +100,11 @@ export default function Board({
     const previous = previousPosition.current
     const lastMove = boardState.lastMove
     previousPosition.current = { fen: boardState.fen, pieces: boardState.pieces }
+    if (justPlayedRef.current) {
+      justPlayedRef.current = false
+      setMoveAnimation(null)
+      return
+    }
     if (!animateLastMove || previous.fen === boardState.fen || !lastMove) {
       setMoveAnimation(null)
       return
@@ -195,10 +205,12 @@ export default function Board({
       setHasMoved(false)
     } else {
       const sel = boardState.selectedSquare
-      const promoColor = sel && boardState.legalMoves.includes(sq) ? isPromotionMove(sel, sq) : null
-      if (sel && promoColor) {
-        setPromo({ from: sel, to: sq, color: promoColor })
+      const isMoveTarget = !!sel && boardState.legalMoves.includes(sq)
+      const promoColor = isMoveTarget ? isPromotionMove(sel!, sq) : null
+      if (promoColor) {
+        setPromo({ from: sel!, to: sq, color: promoColor })
       } else {
+        if (isMoveTarget) justPlayedRef.current = true
         onSquareClick(sq)
       }
     }
@@ -244,6 +256,7 @@ export default function Board({
       if (promoColor) {
         setPromo({ from, to: target, color: promoColor })
       } else {
+        justPlayedRef.current = true
         onMove(from, target)
       }
     }
@@ -450,6 +463,7 @@ export default function Board({
                       e.stopPropagation()
                       const { from, to } = promo
                       setPromo(null)
+                      justPlayedRef.current = true
                       onMove(from, to, pc)
                     }}
                     style={{
