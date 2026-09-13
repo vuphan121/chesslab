@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { Chess } from 'chess.js'
 import {
   createGame,
@@ -607,14 +608,19 @@ export function useTrainerSession() {
             grade(sessionRef.current!, card.id, true)
             gradedThisPresentationRef.current = true
           }
-          runMovesRef.current.push({ san: playedSan, uci: `${from}${to}${promoChar ?? ''}`, mover: 'user' })
-          setRunMoves([...runMovesRef.current])
-          setSelected(null)
-          pushSnapshot(gs)
-          setFeedback({
-            kind: matchAnswer.primary ? 'correct' : 'correct-alt',
-            playedSan,
-            comment: matchAnswer.comment,
+          // Commit the player's move before waiting for the reply. Without this
+          // boundary React can batch both local updates, leaving no painted
+          // starting position for the opponent's slide animation.
+          flushSync(() => {
+            runMovesRef.current.push({ san: playedSan, uci: `${from}${to}${promoChar ?? ''}`, mover: 'user' })
+            setRunMoves([...runMovesRef.current])
+            setSelected(null)
+            pushSnapshot(gs)
+            setFeedback({
+              kind: matchAnswer.primary ? 'correct' : 'correct-alt',
+              playedSan,
+              comment: matchAnswer.comment,
+            })
           })
           await sleep(150)
           if (reqId !== moveReqId.current) return
