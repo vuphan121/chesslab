@@ -247,7 +247,7 @@ their history, changed ones simply appear as new cards.
 ## 10. Interaction with the existing app
 
 **Reused as-is:** `Board` (drag/drop, click-to-move, annotations, flip), the piece/texture assets,
-`POST /api/games/{id}/moves`, `POST /api/games/{id}/goto`, and the whole visual language.
+and the whole visual language.
 
 **Modified:** `POST /api/games` accepts an optional start FEN; a new
 `POST /api/games/{id}/position` re-points an existing game at an arbitrary FEN (so one game object
@@ -256,8 +256,10 @@ game-specific props become optional.
 
 **Deliberately not reused:** `useChessGame`. It fires analysis, explorer, and coach refreshes after
 every move. In a drill, the eval bar and the explorer would both **give away the answer**, and the
-coach calls are slow. The trainer gets its own thin `useTrainerSession` hook that talks to the same
-game endpoints and nothing else.
+coach calls are slow. The trainer gets its own thin `useTrainerSession` hook and uses `chess.js` in
+the browser for legal-move validation, SAN generation, and position updates. The full repertoire is
+loaded at session start, so answers and replies are already available locally. The backend receives
+progress at run boundaries and is used to create a fresh game only for **Analyze this line**.
 
 **No eval bar, no engine readout, no opening tree on the trainer page.** Not an oversight — showing
 an engine evaluation next to "what's your move here?" is showing the answer.

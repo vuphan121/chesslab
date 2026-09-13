@@ -107,18 +107,15 @@ right-hand pills. No backend change.
 ```
 GET  /api/repertoires                       once, on the setup screen
 GET  /api/repertoires/{id}                  once, when a repertoire is selected
-POST /api/games            {fen: card.fen}  once, when the session starts
-POST /api/games/{id}/position {fen}         at the start of every run, and to undo a wrong answer
-POST /api/games/{id}/moves {from,to}        every time the user moves
-POST /api/games/{id}/moves {from,to}        to play the opponent's reply
 POST /api/games            {fen}            to build a fresh game for "Analyze this line"
-DELETE /api/games/{id}                      on session end / unmount
 ```
 
-The undo-after-a-wrong-answer step turned out to use `/position` (not `/goto`) — the trainer never
-keeps a real multi-ply move-tree in the backend game object at all (see `useTrainerSession`'s note on
-why: a wrong-answer undo needs to discard back to a bare root, which `/goto` doesn't do, so every ply
-within a run goes through `/position` immediately before the single move that advances it).
+During a drill, no game endpoint is called. The selected repertoire already includes every answer,
+reply, and resulting FEN, and the frontend uses `chess.js` to validate legal moves, calculate SAN, and
+advance the board immediately. That makes the complete repertoire the effective prefetch cache rather
+than fetching a short look-ahead window. The opponent's local reply still uses the ordinary board move
+animation. Progress is saved at run boundaries; only **Analyze this line** creates a backend game and
+replays the moves actually made during the run.
 
 Explicitly **not** called: `/analysis`, `/eval`, `/explorer`, `/coach/*`. The first three would show
 the user the answer; the coach is slow and isn't part of v1. `useChessGame` calls all of them after

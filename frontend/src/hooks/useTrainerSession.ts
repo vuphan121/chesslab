@@ -1,9 +1,9 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
+import { Chess } from 'chess.js'
 import {
   createGame,
-  setPosition as apiSetPosition,
   makeMove,
   getRepertoire,
   getProgress as apiGetProgress,
@@ -13,7 +13,6 @@ import {
 } from '@/lib/api/client'
 import type { GameState, TodayTrainingEntry, TodayTrainingResponse } from '@/lib/api/client'
 import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
-import { flatten } from '@/lib/chess/moveTree'
 import type { Repertoire, RepCard, RepNode, SessionOptions, SessionState, PersistedCardState } from '@/lib/trainer/types'
 import { createSession, pickNext, grade, isComplete, summarise } from '@/lib/trainer/scheduler'
 import { newRng, weightedChoice } from '@/lib/trainer/rng'
@@ -22,12 +21,59 @@ import { mergeSessionCards } from '@/lib/trainer/persistence'
 
 const WEAKNESS_W = 0.75
 
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms))
-}
-
 function promotionFromUci(uci: string): string | undefined {
   return uci.length >= 5 ? uci[4] : undefined
+}
+
+/**
+ * Opening Study is intentionally self-contained while drilling.  The
+ * repertoire is already present in the browser, so using chess.js here keeps
+ * legal-move validation and board updates off the network.  We retain the
+ * GameState-shaped snapshots because the board and its history controls share
+ * that view model with the analysis board.
+ */
+function localGameState(fen: string, lastMove: GameState['lastMove'] = null): GameState {
+  const game = new Chess(fen)
+  const pieces: GameState['pieces'] = {}
+  const files = 'abcdefgh'
+  for (const [row, rank] of game.board().entries()) {
+    for (const [file, piece] of rank.entries()) {
+      if (piece) pieces[`${files[file]}${8 - row}`] = { type: piece.type, color: piece.color }
+    }
+  }
+  const legalMoves = game.moves({ verbose: true }).map((move) => ({
+    from: move.from,
+    to: move.to,
+    promotion: move.promotion,
+  }))
+  const fields = game.fen().split(' ')
+  const isCheckmate = game.isCheckmate()
+  const isStalemate = game.isStalemate()
+  const isDraw = game.isDraw()
+  return {
+    id: 'opening-study-local',
+    fen: game.fen(),
+    turn: game.turn(),
+    fullMove: Number(fields[5] ?? 1),
+    pieces,
+    legalMoves,
+    lastMove,
+    isCheck: game.isCheck(),
+    isCheckmate,
+    isStalemate,
+    isDraw,
+    isGameOver: game.isGameOver(),
+    gameOverReason: isCheckmate ? 'checkmate' : isStalemate ? 'stalemate' : isDraw ? 'draw' : '',
+    moveTree: { id: 'root', san: '', fen: game.fen(), ply: 0, children: [] },
+    currentNodeId: 'root',
+  }
+}
+
+function applyLocalMove(state: GameState, from: string, to: string, promotion?: string): { state: GameState; san: string } {
+  const game = new Chess(state.fen)
+  const move = game.move({ from, to, promotion })
+  if (!move) throw new Error('Illegal move')
+  return { state: localGameState(game.fen(), { from: move.from, to: move.to, promotion: move.promotion }), san: move.san }
 }
 
 
@@ -135,7 +181,6 @@ export function useTrainerSession() {
   const [summary, setSummary] = useState<ReturnType<typeof summarise> | null>(null)
   const [isTodayTraining, setIsTodayTraining] = useState(false)
 
-  const gameIdRef = useRef<string | null>(null)
   const sessionRef = useRef<SessionState | null>(null)
   const sessionCardsRef = useRef<RepCard[]>([])
   const selectedChapterIdsRef = useRef<Set<string>>(new Set())
@@ -382,18 +427,20 @@ export function useTrainerSession() {
 
 
   const proceedAfterCorrect = useCallback(
-    async (answerFen: string) => {
-      const gid = gameIdRef.current
-      if (!gid) return
+    async (answerState: GameState) => {
 
-      const reply = pickOpponentReply(answerFen)
+      const reply = pickOpponentReply(answerState.fen)
       if (!reply) {
         endRun()
         return
       }
 
-      await apiSetPosition(gid, answerFen)
-      const gs = await makeMove(gid, reply.uci.slice(0, 2), reply.uci.slice(2, 4), promotionFromUci(reply.uci))
+      const { state: gs } = applyLocalMove(
+        answerState,
+        reply.uci.slice(0, 2),
+        reply.uci.slice(2, 4),
+        promotionFromUci(reply.uci),
+      )
       runMovesRef.current.push({ san: reply.san, uci: reply.uci, mover: 'opponent' })
       setRunMoves([...runMovesRef.current])
       pushSnapshot(gs, true)
@@ -468,10 +515,7 @@ export function useTrainerSession() {
         dueTargetPathRef.current = targetPath
         leadingMovesRef.current = leading
 
-        const gs = await createGame(firstCard.fen)
-        gameIdRef.current = gs.id
-
-        beginRun(firstCard, gs, leading)
+        beginRun(firstCard, localGameState(firstCard.fen), leading)
         setPhase('drilling')
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : 'Failed to start session.')
@@ -505,10 +549,8 @@ export function useTrainerSession() {
         const { card, targetPath, leadingMoves: leading } = resolveRunStartCard(rep, dueCard)
         dueTargetPathRef.current = targetPath
         leadingMovesRef.current = leading
-        const gs = await createGame(card.fen)
-        gameIdRef.current = gs.id
         todayEntryRef.current = entry
-        beginRun(card, gs, leading)
+        beginRun(card, localGameState(card.fen), leading)
         setPhase('drilling')
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : "Couldn't start today's line.")
@@ -540,9 +582,8 @@ export function useTrainerSession() {
 
   const submitMove = useCallback(
     async (from: Square, to: Square, promotion?: string) => {
-      const gid = gameIdRef.current
       const card = currentCard
-      if (!gid || !card || phase !== 'drilling' || busy || isViewingHistory) return
+      if (!card || phase !== 'drilling' || busy || isViewingHistory || !liveGameState) return
 
       setBusy(true)
       const reqId = ++moveReqId.current
@@ -551,14 +592,8 @@ export function useTrainerSession() {
         const isPromo =
           piece?.type === 'p' && ((piece.color === 'w' && to[1] === '8') || (piece.color === 'b' && to[1] === '1'))
         const promoChar = promotion ?? (isPromo ? 'q' : undefined)
-        const gs = await makeMove(gid, from, to, promoChar)
+        const { state: gs, san: playedSan } = applyLocalMove(liveGameState, from, to, promoChar)
         if (reqId !== moveReqId.current) return
-
-
-
-
-        const played = flatten(gs.moveTree).get(gs.currentNodeId)?.node
-        const playedSan = played?.san ?? ''
 
         const matchAnswer = card.answers.find((a) => a.san === playedSan)
         const matchExcluded = card.excludedAnswers?.find((a) => a.san === playedSan)
@@ -577,15 +612,7 @@ export function useTrainerSession() {
             playedSan,
             comment: matchAnswer.comment,
           })
-          await sleep(450)
-          if (reqId !== moveReqId.current) return
-
-
-
-
-
-
-          await proceedAfterCorrect(gs.fen)
+          await proceedAfterCorrect(gs)
         } else {
           setRunHadMistake(true)
           if (!gradedThisPresentationRef.current) {
@@ -603,10 +630,9 @@ export function useTrainerSession() {
 
 
 
-          const back = await apiSetPosition(gid, card.fen)
           if (reqId !== moveReqId.current) return
           setSelected(null)
-          replaceLastSnapshot(back)
+          replaceLastSnapshot(localGameState(card.fen))
         }
       } catch {
 
@@ -614,7 +640,7 @@ export function useTrainerSession() {
         if (reqId === moveReqId.current) setBusy(false)
       }
     },
-    [currentCard, phase, busy, boardState, isViewingHistory, proceedAfterCorrect],
+    [currentCard, phase, busy, boardState, isViewingHistory, liveGameState, proceedAfterCorrect],
   )
 
 
@@ -684,15 +710,13 @@ export function useTrainerSession() {
 
 
   const redoLine = useCallback(async () => {
-    const gid = gameIdRef.current
     const startId = runStartCardIdRef.current
-    if (!gid || !startId) return
+    if (!startId) return
     const card = cardById(startId)
     if (!card) return
     setBusy(true)
     try {
-      const gs = await apiSetPosition(gid, card.fen)
-      beginRun(card, gs, leadingMovesRef.current)
+      beginRun(card, localGameState(card.fen), leadingMovesRef.current)
       setPhase('drilling')
     } finally {
       setBusy(false)
@@ -723,8 +747,7 @@ export function useTrainerSession() {
       return
     }
     const session = sessionRef.current
-    const gid = gameIdRef.current
-    if (!session || !gid) return
+    if (!session) return
     if (isComplete(session)) {
       setSummary(summarise(session))
       setPhase('summary')
@@ -743,8 +766,7 @@ export function useTrainerSession() {
     leadingMovesRef.current = leading
     setBusy(true)
     try {
-      const gs = await apiSetPosition(gid, card.fen)
-      beginRun(card, gs, leading)
+      beginRun(card, localGameState(card.fen), leading)
       setPhase('drilling')
     } finally {
       setBusy(false)
@@ -804,7 +826,6 @@ export function useTrainerSession() {
     setSummary(null)
     setRepertoireState(null)
     sessionRef.current = null
-    gameIdRef.current = null
     todayEntryRef.current = null
     todayAdvanceRef.current = null
     setIsTodayTraining(false)
