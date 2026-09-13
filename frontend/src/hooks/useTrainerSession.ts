@@ -21,6 +21,10 @@ import { mergeSessionCards } from '@/lib/trainer/persistence'
 
 const WEAKNESS_W = 0.75
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 function promotionFromUci(uci: string): string | undefined {
   return uci.length >= 5 ? uci[4] : undefined
 }
@@ -612,6 +616,8 @@ export function useTrainerSession() {
             playedSan,
             comment: matchAnswer.comment,
           })
+          await sleep(150)
+          if (reqId !== moveReqId.current) return
           await proceedAfterCorrect(gs)
         } else {
           setRunHadMistake(true)
