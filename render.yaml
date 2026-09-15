@@ -16,10 +16,18 @@
 #
 # The whole site sits behind one login (see internal/auth's package doc) and
 # trainer progress/analytics are backed by Postgres (see internal/db) — all
-# four secrets below (LICHESS_TOKEN, AUTH_PASSWORD, JWT_SECRET, DATABASE_URL)
-# are marked sync:false, meaning Render prompts for them at Blueprint apply
-# time and stores them outside this file; nothing here or in git holds an
-# actual credential.
+# five secrets below (LICHESS_TOKEN, AUTH_PASSWORD, JWT_SECRET, DATABASE_URL,
+# CRON_SECRET) are marked sync:false, meaning Render prompts for them at
+# Blueprint apply time and stores them outside this file; nothing here or in
+# git holds an actual credential.
+#
+# CRON_SECRET gates POST /api/cron/refresh-repertoires (see
+# backend/internal/api/cron_handler.go) — it re-downloads every managed
+# repertoire from its Lichess study daily. Setting the env var here only
+# configures the endpoint; something still has to call it on a schedule
+# (a Render Cron Job service, a GitHub Actions scheduled workflow, or an
+# external scheduler like cron-job.org) with header
+# "X-Cron-Secret: <the same value>".
 
 services:
   - type: web
@@ -44,6 +52,8 @@ services:
         sync: false # generate with: openssl rand -hex 32
       - key: DATABASE_URL
         sync: false # Postgres connection string (Neon or any Postgres) — trainer sync/analytics 503 without it
+      - key: CRON_SECRET
+        sync: false # generate with: openssl rand -hex 32 — see note above
 
   - type: web
     name: chesslab-frontend

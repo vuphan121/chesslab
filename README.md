@@ -101,6 +101,10 @@ Point it at a Lichess study export and it becomes a drilling deck, Chessbook/Lot
   position, every variation preserved as a real tree (not just the mainline), with inferior lines
   the study itself annotated as `?`/`??` — or explicitly listed in a sidecar config — excluded from
   drilling entirely, subtree and all.
+- **Stays in sync with the source study.** Add a chapter or edit a line on Lichess, then refresh —
+  it's a full re-download and re-parse each time, not an incremental diff, so additions, edits, and
+  removals are all picked up the same way. Refreshable on demand from the in-app repertoire manager,
+  or in one batch across every connected study via a daily-cron-ready endpoint.
 - **Leitner-box scheduler**, pure and fully unit-tested: promotion gaps widen on a correct answer,
   a lapse permanently shortens the gap for that card (not just the next rep), and every card is
   eligible from the first session — no artificial "new card" throttling.

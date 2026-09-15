@@ -2,6 +2,7 @@ package repertoire
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -27,9 +28,25 @@ func FetchStudyPGN(ctx context.Context, sourceURL, token string) (string, string
 		return "", "", err
 	}
 	canonical := "https://lichess.org/study/" + studyID
+
+	data, err := fetchStudyPGN(ctx, studyID, token)
+	// A 403 with a token means the token lacks the study:read scope; public
+	// studies export fine anonymously, so retry once without the header.
+	if err != nil && token != "" && errors.Is(err, errStudyForbidden) {
+		data, err = fetchStudyPGN(ctx, studyID, "")
+	}
+	if err != nil {
+		return "", "", err
+	}
+	return string(data), canonical, nil
+}
+
+var errStudyForbidden = errors.New("study fetch forbidden")
+
+func fetchStudyPGN(ctx context.Context, studyID, token string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://lichess.org/api/study/"+studyID+".pgn", nil)
 	if err != nil {
-		return "", "", fmt.Errorf("build study request: %w", err)
+		return nil, fmt.Errorf("build study request: %w", err)
 	}
 	req.Header.Set("Accept", "application/x-chess-pgn")
 	if token != "" {
@@ -38,21 +55,25 @@ func FetchStudyPGN(ctx context.Context, sourceURL, token string) (string, string
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", "", fmt.Errorf("fetch study: %w", err)
+		return nil, fmt.Errorf("fetch study: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return "", "", fmt.Errorf("fetch study: lichess returned %s: %s", resp.Status, strings.TrimSpace(string(body)))
+		msg := fmt.Errorf("fetch study: lichess returned %s: %s", resp.Status, strings.TrimSpace(string(body)))
+		if resp.StatusCode == http.StatusForbidden {
+			return nil, fmt.Errorf("%w: %w", errStudyForbidden, msg)
+		}
+		return nil, msg
 	}
 	data, err := io.ReadAll(io.LimitReader(resp.Body, 10<<20))
 	if err != nil {
-		return "", "", fmt.Errorf("read study: %w", err)
+		return nil, fmt.Errorf("read study: %w", err)
 	}
 	if len(data) == 10<<20 {
-		return "", "", fmt.Errorf("study export exceeds 10 MB")
+		return nil, fmt.Errorf("study export exceeds 10 MB")
 	}
-	return string(data), canonical, nil
+	return data, nil
 }
 
 func StudyID(sourceURL string) (string, error) {

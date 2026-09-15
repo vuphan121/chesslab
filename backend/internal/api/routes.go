@@ -21,6 +21,11 @@ func NewRouter(h *Handler) http.Handler {
 
 	r.Post("/api/auth/login", h.Login)
 
+	// Not behind the user JWT middleware — meant to be called by an external
+	// cron job/scheduler, not a signed-in user. Guarded by its own shared
+	// secret (CRON_SECRET) instead; see cron_handler.go.
+	r.Post("/api/cron/refresh-repertoires", h.RefreshAllRepertoires)
+
 	r.Group(func(r chi.Router) {
 		r.Use(h.authCfg.Middleware)
 
