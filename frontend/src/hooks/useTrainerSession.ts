@@ -16,11 +16,10 @@ import type { GameState, TodayTrainingEntry, TodayTrainingResponse } from '@/lib
 import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
 import type { Repertoire, RepCard, RepNode, SessionOptions, SessionState, PersistedCardState } from '@/lib/trainer/types'
 import { createSession, pickNext, grade, isComplete, summarise } from '@/lib/trainer/scheduler'
-import { newRng, weightedChoice } from '@/lib/trainer/rng'
+import { newRng } from '@/lib/trainer/rng'
 import { cardKey } from '@/lib/trainer/cardKey'
 import { mergeSessionCards } from '@/lib/trainer/persistence'
-
-const WEAKNESS_W = 0.75
+import { chooseOpponentReply } from '@/lib/trainer/replySelection'
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -372,19 +371,17 @@ export function useTrainerSession() {
       const replies = repertoire.replies[cardKey(fen)]
       if (!replies || replies.length === 0) return null
 
-      const target = dueTargetPathRef.current
-      const idx = runMovesRef.current.length
-      if (target && idx < target.length) {
-        const forced = replies.find((r) => r.san === target[idx])
-        if (forced) return forced
-      }
-
       const session = sessionRef.current
-      return weightedChoice(
+      const chosen = chooseOpponentReply(
         replies,
-        (r) => 1 + WEAKNESS_W * (session?.cards.get(cardKey(r.fen))?.lapses ?? 0),
+        dueTargetPathRef.current,
+        runMovesRef.current.length,
+        (replyFen) => session?.cards.get(cardKey(replyFen))?.lapses ?? 0,
         Math.random,
       )
+      if (!chosen) return null
+      dueTargetPathRef.current = chosen.nextTargetPath
+      return chosen.reply
     },
     [repertoire],
   )

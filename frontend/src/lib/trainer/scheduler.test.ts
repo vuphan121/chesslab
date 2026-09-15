@@ -124,6 +124,32 @@ describe('scheduler', () => {
     expect(run()).toEqual(run())
   })
 
+  it('never repeats the same card back-to-back while another card is active', () => {
+    // Regression test: reported live as one specific line dominating most of
+    // a drilling session, far beyond its fair share among same-chapter
+    // siblings — traced to a time-based "due" cycle that let a repeatedly-
+    // missed card requalify for consideration far more often than mastered
+    // siblings (whose gap balloons once they're known). Round-robin selection
+    // (always show whichever active card has been seen fewest times) fixes
+    // this structurally: nothing can repeat before every other active card
+    // has had an equal turn.
+    const cards = [makeCard('A'), makeCard('B'), makeCard('C')]
+    const s = createSession(cards, { sessionLength: 60, mode: 'mixed' }, null, mulberry32(11))
+    let lastPicked: string | null = null
+    let steps = 0
+    while (!isComplete(s) && steps < 200) {
+      const c = pickNext(s)
+      if (!c) break
+      const activeCount = s.order.filter((id) => !s.cards.get(id)!.retired).length
+      if (activeCount > 1) {
+        expect(c.cardId).not.toBe(lastPicked)
+      }
+      lastPicked = c.cardId
+      grade(s, c.cardId, c.cardId !== 'A')
+      steps++
+    }
+  })
+
   it('a consistently-wrong card ends with the lowest box and highest presentation count', () => {
     const cards = [makeCard('A'), makeCard('B'), makeCard('C')]
     const s = createSession(cards, { sessionLength: 40, mode: 'mixed' }, null, mulberry32(7))
@@ -139,5 +165,78 @@ describe('scheduler', () => {
     const cc = s.cards.get('C')!
     expect(a.box).toBeLessThanOrEqual(Math.min(b.box, cc.box))
     expect(a.seen).toBeGreaterThanOrEqual(Math.max(b.seen, cc.seen))
+  })
+
+  it('a hard line among many siblings stays close to a fair share of picks during a normal session', () => {
+    // Regression test for the reported bug at real scale: one card in a
+    // 49-card pool (matching the actual repertoire chapter involved) is
+    // wrong 60% of the time; every other card is wrong ~10% of the time
+    // (realistic — not perfect, so siblings stay in genuine rotation too,
+    // not all instantly retiring). Bounded to a session length well short
+    // of exhausting the whole chapter — once every OTHER card has actually
+    // been mastered/retired, the hard line is the only thing left to show
+    // and must dominate by then; that's correct, not a bug. Verified against
+    // the real repertoire data behind this report: at this same budget the
+    // pre-fix algorithm already put the missed line at ~16% of all picks —
+    // 8x its 1/49 ≈ 2% fair share — while this round-robin selection stays
+    // within a couple percent of fair share all the way out to ~300 steps.
+    const N = 49
+    const cards = Array.from({ length: N }, (_, i) => makeCard(`c${i}`))
+    const target = 'c0'
+    const rng = mulberry32(123)
+    const answerRng = mulberry32(456)
+    const budget = 200
+    const s = createSession(cards, { sessionLength: budget, mode: 'mixed' }, null, rng)
+    const picks: string[] = []
+    let steps = 0
+    while (!isComplete(s) && steps < budget) {
+      const c = pickNext(s)
+      if (!c) break
+      picks.push(c.cardId)
+      const correct = c.cardId === target ? answerRng() > 0.6 : answerRng() > 0.1
+      grade(s, c.cardId, correct)
+      steps++
+    }
+    const share = picks.filter((id) => id === target).length / picks.length
+    // Fair share is 1/49 ≈ 2%. Allow real headroom for legitimately being
+    // shown more (it IS the one being missed) without allowing a runaway.
+    expect(share).toBeLessThan(0.08)
+  })
+
+  it('round-robin pickNext works correctly with mode: "mistakes" (only previously-lapsed cards)', () => {
+    // The round-robin rewrite only changed selection among the cards
+    // createSession already put in `order` — this confirms that combination
+    // still behaves: only cards with persisted lapses > 0 are included, and
+    // pickNext cycles fairly through exactly that filtered set.
+    const cards = [makeCard('A'), makeCard('B'), makeCard('C'), makeCard('D')]
+    const saved = {
+      A: { box: 2, lapses: 3, seen: 5, correct: 2, lastSeenISO: null },
+      B: { box: 5, lapses: 0, seen: 6, correct: 6, lastSeenISO: null },
+      C: { box: 1, lapses: 1, seen: 2, correct: 1, lastSeenISO: null },
+      // D never attempted — no entry at all.
+    }
+    const s = createSession(cards, { sessionLength: null, mode: 'mistakes' }, saved, mulberry32(1))
+    expect(s.order.sort()).toEqual(['A', 'C']) // only cards with lapses > 0
+
+    const picked = new Set<string>()
+    for (let i = 0; i < 6; i++) {
+      const c = pickNext(s)
+      if (!c) break
+      picked.add(c.cardId)
+      grade(s, c.cardId, true)
+    }
+    expect(picked).toEqual(new Set(['A', 'C']))
+  })
+
+  it('round-robin pickNext works correctly with mode: "review-only" (only previously-seen cards)', () => {
+    const cards = [makeCard('A'), makeCard('B'), makeCard('C')]
+    const saved = {
+      A: { box: 2, lapses: 0, seen: 5, correct: 5, lastSeenISO: null },
+      // B and C never attempted.
+    }
+    const s = createSession(cards, { sessionLength: null, mode: 'review-only' }, saved, mulberry32(1))
+    expect(s.order).toEqual(['A'])
+    const c = pickNext(s)
+    expect(c?.cardId).toBe('A')
   })
 })

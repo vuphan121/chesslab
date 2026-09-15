@@ -112,6 +112,7 @@ export interface SessionState {
   opts: SessionOptions
   correctCount: number
   incorrectCount: number
+  lastCardId?: string | null
 }
 
 export interface SessionSummary {

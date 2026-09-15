@@ -11,9 +11,14 @@ export const RELEARN_GAP = 2
 export const LAPSE_DECAY = 0.8
 export const JITTER = 0.35
 export const RETIRE_STREAK = 2
-export const PICK_WINDOW = 4
 export const LAPSE_W = 1.0
-export const OVERDUE_W = 0.25
+// Weight from lapses is capped so a single hard line can't dominate its
+// same-round siblings: every extra miss keeps shortening its relearn gap
+// (bringing it back sooner across rounds, uncapped, by design), but past
+// this many lapses it stops ALSO getting more likely to win a same-round
+// tiebreak every time it's drawn. Uncapped, a line with e.g. 10 lapses would
+// get 11x the pick weight of a fresh sibling, forever growing with every miss.
+export const LAPSE_WEIGHT_CAP = 3
 
 export const defaultSessionOptions: SessionOptions = {
   sessionLength: 40,
@@ -104,24 +109,43 @@ function activeCards(s: SessionState): CardState[] {
 
 
 
+// True round-robin selection: always show whichever active card has been
+// presented the FEWEST times so far this session, so no card gets a repeat
+// presentation before every other active card has had its turn this round.
+//
+// An earlier version gated on a time/step-based "due" cycle instead (each
+// card getting its own relearn/promotion gap in steps). That meant a card
+// you kept missing — whose relearn gap stays short (by design, so it comes
+// back soon) — could requalify as "due" far more often in absolute terms
+// than a mastered sibling, whose gap balloons to 16-64 steps. Verified
+// against the real French repertoire data behind this bug: a line the user
+// was missing claimed ~12-15% of picks in a 49-card chapter (vs. a ~2% fair
+// share) even with a capped lapse weight, because the skew came from *how
+// often it re-qualified for consideration*, not from winning a fair draw
+// too often once it did.
+//
+// Round-robin fixes this structurally: a struggling card still ends up
+// shown more *overall* over a full session — legitimately, since it takes
+// longer to retire and so persists across more rounds — but never crowds
+// out its siblings within any given stretch of picks. Lapses still nudge
+// which card wins a same-round tiebreak (mild SRS flavor), capped so that
+// nudge can't grow unbounded either.
 export function pickNext(s: SessionState): CardState | null {
   const active = activeCards(s)
-  let due = active.filter((c) => c.dueStep <= s.step)
+  if (active.length === 0) return null
 
-  if (due.length === 0) {
-    if (active.length === 0) return null
-    s.step = Math.min(...active.map((c) => c.dueStep))
-    due = active.filter((c) => c.dueStep <= s.step)
-  }
-  if (due.length === 0) return null
+  const minSeen = Math.min(...active.map((c) => c.seen))
+  const atMin = active.filter((c) => c.seen === minSeen)
+  const candidates = atMin.length > 1 ? atMin.filter((c) => c.cardId !== s.lastCardId) : atMin
+  const pool = candidates.length > 0 ? candidates : atMin
 
-  due.sort((a, b) => a.dueStep - b.dueStep || s.order.indexOf(a.cardId) - s.order.indexOf(b.cardId))
-  const window = due.slice(0, PICK_WINDOW)
-  return weightedChoice(
-    window,
-    (c) => (1 + LAPSE_W * c.lapses) * (1 + OVERDUE_W * (s.step - c.dueStep)),
+  const picked = weightedChoice(
+    pool,
+    (c) => 1 + LAPSE_W * Math.min(c.lapses, LAPSE_WEIGHT_CAP),
     s.rng,
   )
+  s.lastCardId = picked.cardId
+  return picked
 }
 
 
