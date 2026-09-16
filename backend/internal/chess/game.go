@@ -5,6 +5,28 @@ import (
 	"strconv"
 )
 
+// hasAdjacentEnemyPawn reports whether a pawn of enemyColor sits beside sq
+// (same rank, adjacent file) able to capture it en passant next move. The EP
+// target square is only meaningful (and only included in the FEN by other
+// tools like chess.js/python-chess) when such a capture actually exists —
+// setting it unconditionally on every double push produced FENs that
+// disagreed with the frontend's chess.js-computed FEN for the same position
+// whenever no such pawn was present, breaking FEN-keyed lookups (e.g. the
+// opening trainer's CardKey) even though the position was otherwise identical.
+func hasAdjacentEnemyPawn(pos *Position, sq Square, enemyColor Color) bool {
+	rank := sq.Rank()
+	for _, file := range [2]int{sq.File() - 1, sq.File() + 1} {
+		s := NewSquare(file, rank)
+		if !s.Valid() {
+			continue
+		}
+		if p := pos.Board[s]; p != nil && p.Type == Pawn && p.Color == enemyColor {
+			return true
+		}
+	}
+	return false
+}
+
 func applyMove(pos *Position, m Move) *Position {
 	next := pos.Clone()
 	piece := next.Board[m.From]
@@ -19,7 +41,9 @@ func applyMove(pos *Position, m Move) *Position {
 		if pos.Turn == Black {
 			dir = -1
 		}
-		next.EP = NewSquare(m.From.File(), m.From.Rank()+dir)
+		if hasAdjacentEnemyPawn(next, m.To, pos.Turn.Opponent()) {
+			next.EP = NewSquare(m.From.File(), m.From.Rank()+dir)
+		}
 		next.HalfClock = 0
 
 	case EnPassant:
