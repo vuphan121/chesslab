@@ -81,22 +81,35 @@ describe('scheduler', () => {
     expect(pickNext(s)).toBeNull()
   })
 
-  it('pickNext never returns a card whose dueStep > step while another is due', () => {
-    const s = session([makeCard('A'), makeCard('B')])
-    pickNext(s)
-    grade(s, 'A', true)
-    const picked = pickNext(s)
-    expect(picked?.cardId).toBe('B')
-  })
-
-  it('fast-forwards step to the minimum dueStep without skipping a card', () => {
-    const s = session([makeCard('A'), makeCard('B')])
-    grade(s, 'A', true)
-    grade(s, 'B', true)
-    const before = s.step
-    const picked = pickNext(s)
-    expect(s.step).toBeGreaterThanOrEqual(before)
-    expect(picked).not.toBeNull()
+  it('pickNext ignores seen/box/lapses entirely and draws uniformly across active cards', () => {
+    // Full reversal of the earlier round-robin design (and its later
+    // chapter-aware tiebreak): both picked "whatever's least practiced"
+    // first, which produces a front-loaded order — whatever a session
+    // hadn't gotten to yet keeps winning until it's caught up. For a
+    // repertoire drilled unevenly across many real sessions (one chapter at
+    // seen: 500+, another still at seen: 0), that read as "stuck on one
+    // chapter" for as long as its backlog took to clear, even though the
+    // algorithm was working exactly as designed. Selection is now a plain
+    // uniform draw over every active card, regardless of seen/box/lapses —
+    // explicitly requested over the round-robin fix as the simpler, more
+    // predictable behavior.
+    const cards = [makeCard('lots'), makeCard('some'), makeCard('none')]
+    const saved = {
+      lots: { box: 3, lapses: 0, seen: 500, correct: 500, lastSeenISO: null },
+      some: { box: 1, lapses: 4, seen: 20, correct: 15, lastSeenISO: null },
+      // 'none' never attempted — seen: 0 by default.
+    }
+    const s = createSession(cards, { sessionLength: null, mode: 'mixed' }, saved, mulberry32(3))
+    const counts: Record<string, number> = { lots: 0, some: 0, none: 0 }
+    const draws = 3000
+    for (let i = 0; i < draws; i++) {
+      counts[pickNext(s)!.cardId]++
+    }
+    for (const id of ['lots', 'some', 'none']) {
+      const share = counts[id] / draws
+      expect(share).toBeGreaterThan(0.28)
+      expect(share).toBeLessThan(0.38)
+    }
   })
 
   it('every card is immediately eligible — no gradual new-card introduction', () => {
@@ -125,14 +138,11 @@ describe('scheduler', () => {
   })
 
   it('never repeats the same card back-to-back while another card is active', () => {
-    // Regression test: reported live as one specific line dominating most of
-    // a drilling session, far beyond its fair share among same-chapter
-    // siblings — traced to a time-based "due" cycle that let a repeatedly-
-    // missed card requalify for consideration far more often than mastered
-    // siblings (whose gap balloons once they're known). Round-robin selection
-    // (always show whichever active card has been seen fewest times) fixes
-    // this structurally: nothing can repeat before every other active card
-    // has had an equal turn.
+    // Selection is a plain uniform draw now (see the dedicated randomness
+    // test above) — the one guarantee still enforced is that the exact same
+    // card never repeats twice in a row while an alternative exists, the
+    // same way a shuffled playlist skips replaying the last track instead of
+    // drawing fully independently each time.
     const cards = [makeCard('A'), makeCard('B'), makeCard('C')]
     const s = createSession(cards, { sessionLength: 60, mode: 'mixed' }, null, mulberry32(11))
     let lastPicked: string | null = null
@@ -203,11 +213,11 @@ describe('scheduler', () => {
     expect(share).toBeLessThan(0.08)
   })
 
-  it('round-robin pickNext works correctly with mode: "mistakes" (only previously-lapsed cards)', () => {
-    // The round-robin rewrite only changed selection among the cards
-    // createSession already put in `order` — this confirms that combination
-    // still behaves: only cards with persisted lapses > 0 are included, and
-    // pickNext cycles fairly through exactly that filtered set.
+  it('pickNext works correctly with mode: "mistakes" (only previously-lapsed cards)', () => {
+    // Mode filtering happens in createSession, before pickNext ever sees the
+    // cards — this confirms that combination still behaves regardless of how
+    // pickNext itself selects among them: only cards with persisted lapses >
+    // 0 are included, and pickNext draws only from exactly that filtered set.
     const cards = [makeCard('A'), makeCard('B'), makeCard('C'), makeCard('D')]
     const saved = {
       A: { box: 2, lapses: 3, seen: 5, correct: 2, lastSeenISO: null },
@@ -228,7 +238,7 @@ describe('scheduler', () => {
     expect(picked).toEqual(new Set(['A', 'C']))
   })
 
-  it('round-robin pickNext works correctly with mode: "review-only" (only previously-seen cards)', () => {
+  it('pickNext works correctly with mode: "review-only" (only previously-seen cards)', () => {
     const cards = [makeCard('A'), makeCard('B'), makeCard('C')]
     const saved = {
       A: { box: 2, lapses: 0, seen: 5, correct: 5, lastSeenISO: null },

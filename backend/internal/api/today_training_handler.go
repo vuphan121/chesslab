@@ -114,6 +114,13 @@ func (h *Handler) todayTrainingUsername(w http.ResponseWriter, r *http.Request) 
 	return username, true
 }
 
+type todayTrainingCandidate struct {
+	entry      db.TodayTrainingEntry
+	urgency    int
+	score      float64
+	chapterKey string
+}
+
 func (h *Handler) buildTodayTraining(r *http.Request, username string, settings db.TodayTrainingSettings) (db.TodayTrainingQueue, error) {
 	if settings.LinesPerDay < 1 || settings.LinesPerDay > 100 {
 		return db.TodayTrainingQueue{}, errTodayTraining("linesPerDay must be between 1 and 100")
@@ -121,12 +128,7 @@ func (h *Handler) buildTodayTraining(r *http.Request, username string, settings 
 	if len(settings.RepertoireIDs) == 0 {
 		return db.TodayTrainingQueue{}, errTodayTraining("choose at least one repertoire")
 	}
-	type candidate struct {
-		entry   db.TodayTrainingEntry
-		urgency int
-		score   float64
-	}
-	candidates := []candidate{}
+	candidates := []todayTrainingCandidate{}
 	for _, repertoireID := range settings.RepertoireIDs {
 		rep, ok := h.repertoires.Get(repertoireID)
 		if !ok {
@@ -139,27 +141,93 @@ func (h *Handler) buildTodayTraining(r *http.Request, username string, settings 
 		}
 		for _, card := range rep.Cards {
 			value := importance[card.ID]
-			candidates = append(candidates, candidate{
-				entry:   db.TodayTrainingEntry{RepertoireID: repertoireID, CardID: card.ID},
-				urgency: dailyUrgency(progress[card.ID], time.Now()),
-				score:   value*0.7 + rand.Float64()*0.7,
+			chapterID := ""
+			if len(card.ChapterIDs) > 0 {
+				chapterID = card.ChapterIDs[0]
+			}
+			candidates = append(candidates, todayTrainingCandidate{
+				entry:      db.TodayTrainingEntry{RepertoireID: repertoireID, CardID: card.ID},
+				urgency:    dailyUrgency(progress[card.ID], time.Now()),
+				score:      value*0.7 + rand.Float64()*0.7,
+				chapterKey: repertoireID + "|" + chapterID,
 			})
 		}
 	}
-	sort.Slice(candidates, func(i, j int) bool {
-		if candidates[i].urgency != candidates[j].urgency {
-			return candidates[i].urgency > candidates[j].urgency
+	// Cards are grouped into bands by urgency (overdue lines strictly before
+	// fresher ones, per the daily-training design doc), but within a band
+	// candidates are interleaved round-robin by chapter rather than sorted
+	// purely by importance score. Line importance is Lichess popularity of
+	// each card's own early moves (see ensureLineImportance/popularityFEN),
+	// normalized across the WHOLE repertoire — so a repertoire's single most
+	// mainstream system (e.g. a Grunfeld repertoire's Petrosian System, which
+	// has vastly more games than a sideline chapter) scores near the top for
+	// nearly every one of its cards. A brand-new repertoire has every card
+	// tied on urgency (dailyUrgency returns a flat value for never-drilled
+	// cards), so a pure score sort left that one popular chapter filling
+	// almost every slot in `settings.LinesPerDay`, day after day, and other
+	// chapters never came up at all — reported live against a multi-chapter
+	// Grunfeld repertoire. Interleaving by chapter within each urgency band
+	// keeps importance as the in-chapter/in-band ranking signal (a chapter's
+	// own mainline still comes before its own rare tries) while guaranteeing
+	// every represented chapter gets a turn before any chapter repeats.
+	byUrgency := map[int][]todayTrainingCandidate{}
+	urgencies := []int{}
+	for _, c := range candidates {
+		if _, ok := byUrgency[c.urgency]; !ok {
+			urgencies = append(urgencies, c.urgency)
 		}
-		return candidates[i].score > candidates[j].score
-	})
-	entries := make([]db.TodayTrainingEntry, 0, len(candidates))
-	for _, candidate := range candidates {
-		entries = append(entries, candidate.entry)
+		byUrgency[c.urgency] = append(byUrgency[c.urgency], c)
+	}
+	sort.Sort(sort.Reverse(sort.IntSlice(urgencies)))
+	ordered := make([]todayTrainingCandidate, 0, len(candidates))
+	for _, urgency := range urgencies {
+		ordered = append(ordered, interleaveByChapter(byUrgency[urgency])...)
+	}
+	entries := make([]db.TodayTrainingEntry, 0, len(ordered))
+	for _, c := range ordered {
+		entries = append(entries, c.entry)
 	}
 	if len(entries) > settings.LinesPerDay {
 		entries = entries[:settings.LinesPerDay]
 	}
 	return h.db.SaveTodayTraining(r.Context(), username, settings, entries)
+}
+
+// interleaveByChapter takes one urgency band's candidates and reorders them
+// round-robin by chapter, highest score first within each chapter, so a
+// slice of the front of the result covers as many distinct chapters as
+// possible before repeating any one of them.
+func interleaveByChapter(band []todayTrainingCandidate) []todayTrainingCandidate {
+	sorted := make([]todayTrainingCandidate, len(band))
+	copy(sorted, band)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i].score > sorted[j].score })
+
+	groups := map[string][]todayTrainingCandidate{}
+	order := []string{}
+	for _, c := range sorted {
+		if _, ok := groups[c.chapterKey]; !ok {
+			order = append(order, c.chapterKey)
+		}
+		groups[c.chapterKey] = append(groups[c.chapterKey], c)
+	}
+
+	result := make([]todayTrainingCandidate, 0, len(band))
+	for {
+		added := false
+		for _, key := range order {
+			g := groups[key]
+			if len(g) == 0 {
+				continue
+			}
+			result = append(result, g[0])
+			groups[key] = g[1:]
+			added = true
+		}
+		if !added {
+			break
+		}
+	}
+	return result
 }
 
 func dailyUrgency(progress db.CardProgress, now time.Time) int {

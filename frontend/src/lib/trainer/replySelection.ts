@@ -2,10 +2,10 @@ import type { RepReply } from './types'
 import { weightedChoice } from './rng'
 
 export const WEAKNESS_W = 0.75
-// Same rationale as scheduler.ts's LAPSE_WEIGHT_CAP: without a cap, whichever
-// branch currently has the most recorded lapses keeps getting more and more
-// likely to be steered into every time, snowballing into one specific
-// sub-line dominating a chapter's practice runs.
+// Without a cap, whichever branch currently has the most recorded lapses
+// keeps getting more and more likely to be steered into every time,
+// snowballing into one specific sub-line dominating a chapter's practice
+// runs.
 export const WEAKNESS_LAPSE_CAP = 3
 
 export interface ChosenReply {

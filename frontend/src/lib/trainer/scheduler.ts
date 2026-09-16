@@ -2,7 +2,7 @@
 
 
 import type { RepCard, CardState, SessionOptions, SessionState, PersistedCardState, SessionSummary } from './types'
-import { uniform, weightedChoice, shuffle } from './rng'
+import { uniform, shuffle } from './rng'
 
 export const BASE_GAP = [2, 4, 8, 16, 32, 64]
 export const MAX_BOX = 5
@@ -11,14 +11,6 @@ export const RELEARN_GAP = 2
 export const LAPSE_DECAY = 0.8
 export const JITTER = 0.35
 export const RETIRE_STREAK = 2
-export const LAPSE_W = 1.0
-// Weight from lapses is capped so a single hard line can't dominate its
-// same-round siblings: every extra miss keeps shortening its relearn gap
-// (bringing it back sooner across rounds, uncapped, by design), but past
-// this many lapses it stops ALSO getting more likely to win a same-round
-// tiebreak every time it's drawn. Uncapped, a line with e.g. 10 lapses would
-// get 11x the pick weight of a fresh sibling, forever growing with every miss.
-export const LAPSE_WEIGHT_CAP = 3
 
 export const defaultSessionOptions: SessionOptions = {
   sessionLength: 40,
@@ -109,41 +101,36 @@ function activeCards(s: SessionState): CardState[] {
 
 
 
-// True round-robin selection: always show whichever active card has been
-// presented the FEWEST times so far this session, so no card gets a repeat
-// presentation before every other active card has had its turn this round.
+// Pure random selection: every active (non-retired) card in the current
+// selection — whether that's a whole repertoire or a hand-picked subset of
+// its chapters — has an equal chance of coming up next, with no preference
+// for less-practiced or more-lapsed material.
 //
-// An earlier version gated on a time/step-based "due" cycle instead (each
-// card getting its own relearn/promotion gap in steps). That meant a card
-// you kept missing — whose relearn gap stays short (by design, so it comes
-// back soon) — could requalify as "due" far more often in absolute terms
-// than a mastered sibling, whose gap balloons to 16-64 steps. Verified
-// against the real French repertoire data behind this bug: a line the user
-// was missing claimed ~12-15% of picks in a 49-card chapter (vs. a ~2% fair
-// share) even with a capped lapse weight, because the skew came from *how
-// often it re-qualified for consideration*, not from winning a fair draw
-// too often once it did.
+// Earlier versions here tried to be smarter than that: first a time/step-
+// based "due" cycle, then a strict round-robin by presentation count (always
+// show whichever active card has been seen fewest times), with lapses and
+// then chapter identity nudging same-round ties. Each version fixed one
+// reported skew (a missed card dominating its chapter, then one chapter's
+// pile of untouched cards dominating its siblings) by adding another rule —
+// but any rule that looks at seen-count/lapses/chapter size to decide what's
+// "due" next inherently produces a non-random, front-loaded order: whatever
+// a session hasn't gotten to yet keeps winning until it's caught up, which
+// is exactly what read as "stuck on one chapter" even when it was working
+// as designed. Removing the preference entirely removes that whole class of
+// bug at the root, at the cost of the round-robin's old guarantee that
+// nothing goes neglected for long — accepted tradeoff, not an oversight.
 //
-// Round-robin fixes this structurally: a struggling card still ends up
-// shown more *overall* over a full session — legitimately, since it takes
-// longer to retire and so persists across more rounds — but never crowds
-// out its siblings within any given stretch of picks. Lapses still nudge
-// which card wins a same-round tiebreak (mild SRS flavor), capped so that
-// nudge can't grow unbounded either.
+// Only exact back-to-back repeats of the same card are avoided (when a
+// different active card exists), matching how a shuffled playlist skips
+// immediately replaying the last track rather than true independent draws.
 export function pickNext(s: SessionState): CardState | null {
   const active = activeCards(s)
   if (active.length === 0) return null
 
-  const minSeen = Math.min(...active.map((c) => c.seen))
-  const atMin = active.filter((c) => c.seen === minSeen)
-  const candidates = atMin.length > 1 ? atMin.filter((c) => c.cardId !== s.lastCardId) : atMin
-  const pool = candidates.length > 0 ? candidates : atMin
+  const candidates = active.length > 1 ? active.filter((c) => c.cardId !== s.lastCardId) : active
+  const pool = candidates.length > 0 ? candidates : active
 
-  const picked = weightedChoice(
-    pool,
-    (c) => 1 + LAPSE_W * Math.min(c.lapses, LAPSE_WEIGHT_CAP),
-    s.rng,
-  )
+  const picked = pool[Math.floor(s.rng() * pool.length)]
   s.lastCardId = picked.cardId
   return picked
 }
