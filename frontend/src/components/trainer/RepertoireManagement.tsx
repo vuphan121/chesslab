@@ -19,7 +19,6 @@ export default function RepertoireManagement({ repertoires, onClose, onChanged }
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [todayRepertoireIds, setTodayRepertoireIds] = useState<Set<string>>(new Set())
-  const [todayLineCountInput, setTodayLineCountInput] = useState('10')
   const [todayLoading, setTodayLoading] = useState(true)
   const [todaySaving, setTodaySaving] = useState(false)
 
@@ -30,7 +29,6 @@ export default function RepertoireManagement({ repertoires, onClose, onChanged }
         if (!active) return
         const settings = queue.settings
         setTodayRepertoireIds(new Set(settings?.repertoireIds.length ? settings.repertoireIds : repertoires.map((rep) => rep.id)))
-        if (settings) setTodayLineCountInput(String(settings.linesPerDay))
       })
       .catch(() => {
         if (active) setTodayRepertoireIds(new Set(repertoires.map((rep) => rep.id)))
@@ -84,13 +82,12 @@ export default function RepertoireManagement({ repertoires, onClose, onChanged }
   }
 
   const updateTodayTraining = async () => {
-    const linesPerDay = Number(todayLineCountInput)
-    if (!Number.isInteger(linesPerDay) || linesPerDay < 1 || linesPerDay > 100 || todayRepertoireIds.size === 0) return
+    if (todayRepertoireIds.size === 0) return
     setTodaySaving(true)
     setError(null)
     setSuccess(null)
     try {
-      const queue = await saveTodayTraining({ repertoireIds: [...todayRepertoireIds], linesPerDay })
+      const queue = await saveTodayTraining({ repertoireIds: [...todayRepertoireIds] })
       setSuccess(`Today’s queue is ready with ${queue.entries.length} line${queue.entries.length === 1 ? '' : 's'}.`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update today’s queue.')
@@ -125,7 +122,7 @@ export default function RepertoireManagement({ repertoires, onClose, onChanged }
 
       <section style={{ padding: 15, border: '1px solid #d8e8f7', background: '#f7fbff', borderRadius: 9, marginBottom: 24 }}>
         <div className="lbl" style={{ color: '#5c86ad', marginBottom: 8 }}>Today&rsquo;s training</div>
-        <p style={{ fontSize: 12, color: '#6a675f', marginBottom: 12 }}>This queue is prepared automatically after you sign in. Change its repertoire or daily line count here.</p>
+        <p style={{ fontSize: 12, color: '#6a675f', marginBottom: 12 }}>Every scheduled line from the selected repertoires is shuffled into one continuous queue.</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 14 }}>
           {repertoires.map((rep) => (
             <label key={rep.id} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12, color: '#37352f', cursor: 'pointer' }}>
@@ -134,19 +131,7 @@ export default function RepertoireManagement({ repertoires, onClose, onChanged }
             </label>
           ))}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#6a675f' }}>
-            Lines
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={todayLineCountInput}
-              onChange={(event) => setTodayLineCountInput(event.target.value)}
-              disabled={todayLoading || todaySaving}
-              style={{ width: 58, border: '1px solid #cfe0ee', borderRadius: 6, padding: '5px 7px', color: '#37352f' }}
-            />
-          </label>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
           <button onClick={updateTodayTraining} disabled={todayLoading || todaySaving || todayRepertoireIds.size === 0} style={quietButton}>
             {todayLoading ? 'Loading…' : todaySaving ? 'Updating…' : 'Update queue'}
           </button>

@@ -447,7 +447,7 @@ export function useTrainerSession() {
 
     const todayEntry = todayEntryRef.current
     if (todayEntry) {
-      todayAdvanceRef.current = advanceTodayTraining(todayEntry.repertoireId, todayEntry.cardId, runHadMistake)
+      todayAdvanceRef.current = advanceTodayTraining(todayEntry.repertoireId, todayEntry.cardId)
     }
 
 

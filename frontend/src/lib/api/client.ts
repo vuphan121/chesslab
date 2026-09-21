@@ -430,7 +430,6 @@ export const getAnalytics = (): Promise<AnalyticsResponse> => request('/api/anal
 
 export interface TodayTrainingSettings {
   repertoireIds: string[]
-  linesPerDay: number
 }
 
 export interface TodayTrainingEntry {
@@ -480,12 +479,11 @@ export const deleteSavedPuzzle = async (id: number): Promise<void> => {
 export const advanceTodayTraining = (
   repertoireId: string,
   cardId: string,
-  incorrect: boolean,
 ): Promise<TodayTrainingResponse> =>
   request('/api/today-training/advance', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ repertoireId, cardId, incorrect }),
+    body: JSON.stringify({ repertoireId, cardId }),
   })
 
 export type PieceTheme = 'classic' | 'glass'

@@ -97,7 +97,7 @@ func (s *Store) SaveTodayTraining(ctx context.Context, username string, settings
 	return TodayTrainingQueue{Settings: &settings, Entries: entries}, nil
 }
 
-func (s *Store) AdvanceTodayTraining(ctx context.Context, username, repertoireID, cardID string, incorrect bool, importance float64) (TodayTrainingQueue, error) {
+func (s *Store) AdvanceTodayTraining(ctx context.Context, username, repertoireID, cardID string) (TodayTrainingQueue, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return TodayTrainingQueue{}, fmt.Errorf("begin today training advance: %w", err)
@@ -153,18 +153,7 @@ func (s *Store) AdvanceTodayTraining(ctx context.Context, username, repertoireID
 	}
 	moved := entries[found].TodayTrainingEntry
 	entries = append(entries[:found], entries[found+1:]...)
-	if importance < 0 {
-		importance = 0
-	}
-	if importance > 1 {
-		importance = 1
-	}
 	insertAt := len(entries)
-	if incorrect {
-		insertAt = int(float64(len(entries)) * (0.5 - 0.25*importance))
-	} else {
-		insertAt = int(float64(len(entries)) * (1 - 0.25*importance))
-	}
 	rank, rebalance := rankForInsert(entries, insertAt)
 	if rebalance {
 		if err := rebalanceTodayTrainingQueue(ctx, tx, username, entries); err != nil {

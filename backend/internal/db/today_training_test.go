@@ -19,3 +19,14 @@ func TestRankForInsertRequestsRebalanceWithoutGap(t *testing.T) {
 		t.Fatal("expected rebalance")
 	}
 }
+
+func TestRankForInsertAppendsAfterTail(t *testing.T) {
+	entries := []rankedTodayTrainingEntry{
+		{rank: queueRankGap},
+		{rank: queueRankGap * 2},
+	}
+	rank, rebalance := rankForInsert(entries, len(entries))
+	if rebalance || rank != queueRankGap*3 {
+		t.Fatalf("rankForInsert() = %d, %v; want tail rank %d without rebalance", rank, rebalance, queueRankGap*3)
+	}
+}
