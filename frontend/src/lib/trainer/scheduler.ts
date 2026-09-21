@@ -101,6 +101,10 @@ function activeCards(s: SessionState): CardState[] {
 
 
 
+// NOTE: the trainer no longer uses this to decide what to drill next — that's
+// lineQueue.ts (a shuffled deck of whole lines). It stays as the card-level
+// picker, and `grade`/`createSession` are still what drive per-card progress.
+//
 // Pure random selection: every active (non-retired) card in the current
 // selection — whether that's a whole repertoire or a hand-picked subset of
 // its chapters — has an equal chance of coming up next, with no preference

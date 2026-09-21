@@ -21,23 +21,30 @@ export interface ChosenReply {
 /**
  * Picks the opponent's reply at a branch point during a drill run.
  *
- * `targetPath`/`moveIndex` force the exact recorded continuation for as long
- * as one is available (reproducing the specific due line pickNext selected).
- * Once that recorded path is exhausted — or moveIndex is out of sync with it,
- * e.g. after the run diverged — the reply is chosen by weighted random
- * (favoring branches with more recorded lapses), and that choice is recorded
- * onto the returned targetPath so a later "Do it again" (which replays from
- * moveIndex 0 with the same starting targetPath) reproduces the exact same
- * line instead of re-rolling this part of it every time.
+ * `targetPath` forces the exact recorded continuation for as long as one is
+ * available (reproducing the specific line the run was started for). Once
+ * that recorded path is exhausted — or no longer matches, e.g. after the run
+ * diverged — the reply is chosen by weighted random (favoring branches with
+ * more recorded lapses), and the returned targetPath becomes the whole run so
+ * far plus that choice, so a later "Do it again" (which replays from the same
+ * start with that targetPath) reproduces the exact same line instead of
+ * re-rolling this part of it every time.
  */
 export function chooseOpponentReply(
   replies: RepReply[],
   targetPath: string[] | null,
-  moveIndex: number,
+  // SAN of every ply played so far this run, BOTH sides' — the target path is
+  // indexed the same way (it's a plain SAN path from the run's start), so the
+  // reply we're choosing now sits at index playedSans.length. An earlier
+  // version took a bare index and recorded a free pick at a slot that skipped
+  // the user's move in between, so a replay only ever reproduced the forced
+  // part of a line and re-rolled the rest.
+  playedSans: string[],
   lapsesFor: (fen: string) => number,
   rng: () => number,
 ): ChosenReply | null {
   if (replies.length === 0) return null
+  const moveIndex = playedSans.length
 
   if (targetPath && moveIndex < targetPath.length) {
     const forced = replies.find((r) => r.san === targetPath[moveIndex])
@@ -49,6 +56,6 @@ export function chooseOpponentReply(
     (r) => 1 + WEAKNESS_W * Math.min(lapsesFor(r.fen), WEAKNESS_LAPSE_CAP),
     rng,
   )
-  const nextTargetPath = targetPath ? [...targetPath.slice(0, moveIndex), reply.san] : targetPath
+  const nextTargetPath = targetPath ? [...playedSans, reply.san] : targetPath
   return { reply, nextTargetPath }
 }

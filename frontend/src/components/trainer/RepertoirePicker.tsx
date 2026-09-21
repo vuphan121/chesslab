@@ -5,29 +5,13 @@ import { listRepertoires, getRepertoire, getTodayTraining } from '@/lib/api/clie
 import type { TodayTrainingResponse } from '@/lib/api/client'
 import { toFigurine } from '@/lib/chess/figurine'
 import RepertoireManagement from '@/components/trainer/RepertoireManagement'
-import type { RepertoireSummary, Repertoire, RepNode } from '@/lib/trainer/types'
+import { enumerateLines } from '@/lib/trainer/lineQueue'
+import type { RepertoireSummary, Repertoire } from '@/lib/trainer/types'
 import type { SessionOptions } from '@/lib/trainer/types'
 
 
 
 
-
-interface ChapterLine {
-  sans: string[]
-  hasExcluded: boolean
-}
-
-function enumerateLines(node: RepNode, sans: string[] = [], hasExcluded = false): ChapterLine[] {
-  const children = node.children ?? []
-  if (children.length === 0) {
-    return sans.length > 0 ? [{ sans, hasExcluded }] : []
-  }
-  const lines: ChapterLine[] = []
-  for (const child of children) {
-    lines.push(...enumerateLines(child, [...sans, child.san], hasExcluded || child.excluded))
-  }
-  return lines
-}
 
 
 

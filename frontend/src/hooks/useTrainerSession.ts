@@ -14,12 +14,14 @@ import {
 } from '@/lib/api/client'
 import type { GameState, TodayTrainingEntry, TodayTrainingResponse } from '@/lib/api/client'
 import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
-import type { Repertoire, RepCard, RepNode, SessionOptions, SessionState, PersistedCardState } from '@/lib/trainer/types'
-import { createSession, pickNext, grade, isComplete, summarise } from '@/lib/trainer/scheduler'
+import type { Repertoire, RepCard, RepChapter, RepNode, SessionOptions, SessionState, PersistedCardState } from '@/lib/trainer/types'
+import { createSession, grade, isComplete, summarise } from '@/lib/trainer/scheduler'
 import { newRng } from '@/lib/trainer/rng'
 import { cardKey } from '@/lib/trainer/cardKey'
 import { mergeSessionCards } from '@/lib/trainer/persistence'
 import { chooseOpponentReply } from '@/lib/trainer/replySelection'
+import { buildDrillLines, createLineQueue, nextQueuedLine } from '@/lib/trainer/lineQueue'
+import type { DrillLine, LineQueue } from '@/lib/trainer/lineQueue'
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -96,6 +98,30 @@ function findPathInChapterTree(node: RepNode, targetKey: string, path: string[] 
     if (found) return found
   }
   return null
+}
+
+// Walks a chapter tree along `fullPath` (SAN from the chapter root) until it
+// reaches the first position that is a drillable card. The moves passed on the
+// way are the opponent's — they're played for the user before the first
+// prompt. `targetPath` is what's left of the path once those are stripped,
+// i.e. relative to where the run actually starts.
+function walkToFirstCard(
+  chapter: RepChapter,
+  fullPath: string[],
+  cardById: (id: string) => RepCard | undefined,
+): { card: RepCard | undefined; targetPath: string[]; leadingMoves: RunMove[] } {
+  let node = chapter.tree
+  let startCard = cardById(cardKey(node.fen))
+  const leadingMoves: RunMove[] = []
+  for (const san of fullPath) {
+    if (startCard) break
+    const next = (node.children ?? []).find((c) => c.san === san)
+    if (!next) break
+    node = next
+    leadingMoves.push({ san: next.san, uci: next.uci, mover: 'opponent' })
+    startCard = cardById(cardKey(node.fen))
+  }
+  return { card: startCard, targetPath: fullPath.slice(leadingMoves.length), leadingMoves }
 }
 
 function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
@@ -204,6 +230,15 @@ export function useTrainerSession() {
 
 
   const dueTargetPathRef = useRef<string[] | null>(null)
+  // The deck of lines for the current session (see lib/trainer/lineQueue.ts),
+  // and whether the current run is one of its lines. In line mode
+  // `dueTargetPathRef` holds the ENTIRE line, so every opponent reply is
+  // forced and the run ends where the line does — which is what makes "Do it
+  // again" replay the identical line and "Next line" a genuinely different
+  // one. Today's-training runs are still built around a single due card and
+  // free-walk past it, so they leave this off.
+  const lineQueueRef = useRef<LineQueue | null>(null)
+  const lineModeRef = useRef(false)
 
 
 
@@ -297,20 +332,8 @@ export function useTrainerSession() {
       const chapter = rep.chapters.find((c) => c.id === chapterId)
       if (!chapter) return { card: dueCard, targetPath: dueCard.pathSan, leadingMoves: [] }
       const fullPath = findPathInChapterTree(chapter.tree, cardKey(dueCard.fen)) ?? dueCard.pathSan
-
-      let node = chapter.tree
-      let startCard = cardById(cardKey(node.fen))
-      const leadingMoves: RunMove[] = []
-      for (const san of fullPath) {
-        if (startCard) break
-        const next = (node.children ?? []).find((c) => c.san === san)
-        if (!next) break
-        node = next
-        leadingMoves.push({ san: next.san, uci: next.uci, mover: 'opponent' })
-        startCard = cardById(cardKey(node.fen))
-      }
-
-      return { card: startCard ?? dueCard, targetPath: fullPath.slice(leadingMoves.length), leadingMoves }
+      const start = walkToFirstCard(chapter, fullPath, cardById)
+      return { card: start.card ?? dueCard, targetPath: start.targetPath, leadingMoves: start.leadingMoves }
     },
     [cardById],
   )
@@ -372,15 +395,23 @@ export function useTrainerSession() {
       if (!replies || replies.length === 0) return null
 
       const session = sessionRef.current
+      const playedSans = runMovesRef.current.map((m) => m.san)
+      // A queued line is a fixed path: once it's used up, the line is over.
+      // (Without this, a leaf that transposes into another chapter's
+      // position would keep going down whatever it happens to have there.)
+      if (lineModeRef.current && playedSans.length >= (dueTargetPathRef.current?.length ?? 0)) return null
       const chosen = chooseOpponentReply(
         replies,
         dueTargetPathRef.current,
-        runMovesRef.current.length,
+        playedSans,
         (replyFen) => session?.cards.get(cardKey(replyFen))?.lapses ?? 0,
         Math.random,
       )
       if (!chosen) return null
-      dueTargetPathRef.current = chosen.nextTargetPath
+      // Line mode never rewrites the line — even if the user played an
+      // alternate answer and a fallback reply had to be picked, a redo still
+      // has to retrace the original line.
+      if (!lineModeRef.current) dueTargetPathRef.current = chosen.nextTargetPath
       return chosen.reply
     },
     [repertoire],
@@ -448,7 +479,8 @@ export function useTrainerSession() {
       pushSnapshot(gs, true)
 
       const nextCard = cardById(cardKey(gs.fen))
-      if (!nextCard) {
+      const lineFinished = lineModeRef.current && runMovesRef.current.length >= (dueTargetPathRef.current?.length ?? 0)
+      if (!nextCard || lineFinished) {
         endRun()
         return
       }
@@ -466,6 +498,42 @@ export function useTrainerSession() {
   )
 
 
+
+  // Deals the next line off the session's deck and starts a run on it.
+  // Returns false when nothing is left to drill (the deck has no active line).
+  const startNextQueuedLine = useCallback(
+    (rep: Repertoire): boolean => {
+      const session = sessionRef.current
+      const queue = lineQueueRef.current
+      if (!session || !queue) return false
+
+      // A line is worth dealing while at least one of its positions is a
+      // card the session hasn't retired.
+      const isActive = (line: DrillLine) =>
+        line.positionKeys.some((key) => {
+          const card = session.cards.get(key)
+          return !!card && !card.retired
+        })
+
+      // An active line always has a card on it, so the first deal should
+      // resolve; the bound only guards against looping on bad data.
+      for (let attempt = 0; attempt < queue.lines.length; attempt++) {
+        const line = nextQueuedLine(queue, isActive)
+        if (!line) return false
+        const chapter = rep.chapters.find((c) => c.id === line.chapterId)
+        if (!chapter) continue
+        const start = walkToFirstCard(chapter, line.path, cardById)
+        if (!start.card) continue
+
+        dueTargetPathRef.current = start.targetPath
+        leadingMovesRef.current = start.leadingMoves
+        beginRun(start.card, localGameState(start.card.fen), start.leadingMoves)
+        return true
+      }
+      return false
+    },
+    [beginRun, cardById],
+  )
 
   const startSession = useCallback(
     async (repertoireId: string, chapterIds: string[], opts: SessionOptions) => {
@@ -505,19 +573,17 @@ export function useTrainerSession() {
         priorProgressRef.current = saved
         const session = createSession(cards, opts, saved, newRng())
         sessionRef.current = session
+        lineQueueRef.current = createLineQueue(
+          buildDrillLines(rep.chapters.filter((c) => selectedChapters.has(c.id))),
+          session.rng,
+        )
+        lineModeRef.current = true
 
-        const first = pickNext(session)
-        if (!first) {
+        if (!startNextQueuedLine(rep)) {
           setLoadError('Nothing to drill in this selection.')
           setLoading(false)
           return
         }
-        const dueCard = cards.find((c) => c.id === first.cardId)!
-        const { card: firstCard, targetPath, leadingMoves: leading } = resolveRunStartCard(rep, dueCard)
-        dueTargetPathRef.current = targetPath
-        leadingMovesRef.current = leading
-
-        beginRun(firstCard, localGameState(firstCard.fen), leading)
         setPhase('drilling')
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : 'Failed to start session.')
@@ -525,7 +591,7 @@ export function useTrainerSession() {
         setLoading(false)
       }
     },
-    [beginRun, resolveRunStartCard],
+    [startNextQueuedLine],
   )
 
   const startTodayEntry = useCallback(
@@ -549,6 +615,8 @@ export function useTrainerSession() {
         priorProgressRef.current = saved
         sessionRef.current = createSession(rep.cards, { sessionLength: null, mode: 'mixed' }, saved, newRng())
         const { card, targetPath, leadingMoves: leading } = resolveRunStartCard(rep, dueCard)
+        lineModeRef.current = false
+        lineQueueRef.current = null
         dueTargetPathRef.current = targetPath
         leadingMovesRef.current = leading
         todayEntryRef.current = entry
@@ -762,25 +830,14 @@ export function useTrainerSession() {
       setPhase('summary')
       return
     }
-    const next = pickNext(session)
-    if (!next) {
+    if (!repertoire) return
+    if (!startNextQueuedLine(repertoire)) {
       setSummary(summarise(session))
       setPhase('summary')
       return
     }
-    const dueCard = cardById(next.cardId)
-    if (!dueCard || !repertoire) return
-    const { card, targetPath, leadingMoves: leading } = resolveRunStartCard(repertoire, dueCard)
-    dueTargetPathRef.current = targetPath
-    leadingMovesRef.current = leading
-    setBusy(true)
-    try {
-      beginRun(card, localGameState(card.fen), leading)
-      setPhase('drilling')
-    } finally {
-      setBusy(false)
-    }
-  }, [cardById, beginRun, repertoire, resolveRunStartCard, startTodayEntry])
+    setPhase('drilling')
+  }, [repertoire, startNextQueuedLine, startTodayEntry])
 
 
 
