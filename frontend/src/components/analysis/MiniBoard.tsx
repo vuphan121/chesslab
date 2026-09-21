@@ -1,10 +1,11 @@
-import Image from 'next/image'
+import Piece from '@/components/board/Piece'
+import type { Piece as PieceType } from '@/lib/chess/types'
 
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1']
 
-function parseFen(fen: string): Record<string, { type: string; color: string }> {
-  const pieces: Record<string, { type: string; color: string }> = {}
+function parseFen(fen: string): Record<string, PieceType> {
+  const pieces: Record<string, PieceType> = {}
   const rows = fen.split(' ')[0].split('/')
   for (let r = 0; r < 8; r++) {
     let f = 0
@@ -14,7 +15,7 @@ function parseFen(fen: string): Record<string, { type: string; color: string }> 
       } else {
         pieces[`${FILES[f]}${RANKS[r]}`] = {
           color: ch === ch.toUpperCase() ? 'w' : 'b',
-          type: ch.toLowerCase(),
+          type: ch.toLowerCase() as PieceType['type'],
         }
         f++
       }
@@ -74,14 +75,7 @@ export default function MiniBoard({ fen, squareSize = 44 }: Props) {
                       justifyContent: 'center',
                     }}
                   >
-                    <Image
-                      src={`/pieces/${piece.color}${piece.type}.png`}
-                      alt=""
-                      width={squareSize * 0.85}
-                      height={squareSize * 0.85}
-                      style={{ width: squareSize * 0.85, height: squareSize * 0.85 }}
-                      draggable={false}
-                    />
+                    <Piece piece={piece} size={squareSize * 0.85} />
                   </div>
                 )}
               </div>

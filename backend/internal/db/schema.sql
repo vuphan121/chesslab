@@ -4,6 +4,14 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS user_settings (
+    username TEXT PRIMARY KEY CONSTRAINT user_settings_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    piece_theme TEXT NOT NULL DEFAULT 'classic'
+        CHECK (piece_theme IN ('classic', 'glass')),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS card_progress (
     username TEXT NOT NULL,
     repertoire_id TEXT NOT NULL,

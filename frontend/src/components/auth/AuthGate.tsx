@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { getToken, onAuthChange } from '@/lib/auth/token'
 import { getTodayTraining, pingBackend } from '@/lib/api/client'
 import Login from './Login'
+import UserSettingsProvider from '@/components/settings/UserSettingsProvider'
 
 
 
@@ -28,5 +29,5 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 
   if (authed === null) return null
   if (!authed) return <Login />
-  return <>{children}</>
+  return <UserSettingsProvider>{children}</UserSettingsProvider>
 }

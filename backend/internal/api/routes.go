@@ -85,6 +85,9 @@ func NewRouter(h *Handler) http.Handler {
 			r.Delete("/{id}", h.DeleteSavedPuzzle)
 		})
 
+		r.Get("/api/user-settings", h.GetUserSettings)
+		r.Put("/api/user-settings", h.SaveUserSettings)
+
 		r.Get("/api/analytics", h.Analytics)
 	})
 

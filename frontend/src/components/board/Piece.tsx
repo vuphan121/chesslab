@@ -1,5 +1,8 @@
+'use client'
+
 import Image from 'next/image'
 import type { Piece as PieceType } from '@/lib/chess/types'
+import { pieceImagePath, useUserSettings } from '@/components/settings/UserSettingsProvider'
 
 interface Props {
   piece: PieceType
@@ -8,10 +11,11 @@ interface Props {
 
 export default function Piece({ piece, size }: Props) {
   const filename = `${piece.color}${piece.type}.png`
+  const { settings } = useUserSettings()
 
   return (
     <Image
-      src={`/pieces/${filename}`}
+      src={pieceImagePath(settings.pieceTheme, filename)}
       alt={`${piece.color === 'w' ? 'White' : 'Black'} ${piece.type}`}
       width={size}
       height={size}

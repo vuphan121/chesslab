@@ -487,3 +487,18 @@ export const advanceTodayTraining = (
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ repertoireId, cardId, incorrect }),
   })
+
+export type PieceTheme = 'classic' | 'glass'
+
+export interface UserSettings {
+  pieceTheme: PieceTheme
+}
+
+export const getUserSettings = (): Promise<UserSettings> => request('/api/user-settings')
+
+export const saveUserSettings = (settings: UserSettings): Promise<UserSettings> =>
+  request('/api/user-settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  })
