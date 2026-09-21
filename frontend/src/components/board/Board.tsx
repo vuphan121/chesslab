@@ -64,15 +64,28 @@ export default function Board({
   const justPlayedRef = useRef(false)
 
   const rightDownSquare = useRef<string | null>(null)
+  const [rightDragFrom, setRightDragFrom] = useState<string | null>(null)
   const [rightDragTo, setRightDragTo] = useState<string | null>(null)
   const [arrows, setArrows] = useState<{ from: string; to: string }[]>([])
   const [circles, setCircles] = useState<Set<string>>(new Set())
   const [promo, setPromo] = useState<{ from: string; to: string; color: 'w' | 'b' } | null>(null)
+  const [positionState, setPositionState] = useState(() => ({
+    fen: boardState.fen,
+    pieces: boardState.pieces,
+    lastMove: boardState.lastMove,
+  }))
 
-  useEffect(() => {
+  if (positionState.fen !== boardState.fen) {
+    setPositionState({ fen: boardState.fen, pieces: boardState.pieces, lastMove: boardState.lastMove })
     setArrows([])
     setCircles(new Set())
     setPromo(null)
+    setRightDragFrom(null)
+    setRightDragTo(null)
+  }
+
+  useEffect(() => {
+    rightDownSquare.current = null
   }, [boardState.fen])
 
   useEffect(() => {
@@ -98,19 +111,19 @@ export default function Board({
 
   useLayoutEffect(() => {
     const previous = previousPosition.current
-    const lastMove = boardState.lastMove
-    previousPosition.current = { fen: boardState.fen, pieces: boardState.pieces }
+    const lastMove = positionState.lastMove
+    previousPosition.current = { fen: positionState.fen, pieces: positionState.pieces }
     if (justPlayedRef.current) {
       justPlayedRef.current = false
       setMoveAnimation(null)
       return
     }
-    if (!animateLastMove || previous.fen === boardState.fen || !lastMove) {
+    if (!animateLastMove || previous.fen === positionState.fen || !lastMove) {
       setMoveAnimation(null)
       return
     }
     const piece = previous.pieces[lastMove.from]
-    if (!piece || !boardState.pieces[lastMove.to]) return
+    if (!piece || !positionState.pieces[lastMove.to]) return
 
     let firstFrame = 0
     let secondFrame = 0
@@ -129,7 +142,7 @@ export default function Board({
       window.cancelAnimationFrame(secondFrame)
       window.clearTimeout(timer)
     }
-  }, [animateLastMove, boardState.fen, boardState.lastMove?.from, boardState.lastMove?.to])
+  }, [animateLastMove, positionState])
 
   const toggleAnnotation = (from: string, to: string) => {
     if (from === to) {
@@ -182,6 +195,7 @@ export default function Board({
       e.preventDefault()
       boardRef.current?.setPointerCapture(e.pointerId)
       rightDownSquare.current = sq
+      setRightDragFrom(sq)
       setRightDragTo(sq)
       return
     }
@@ -237,6 +251,7 @@ export default function Board({
       const from = rightDownSquare.current
       const to = squareFromPoint(e.clientX, e.clientY)
       rightDownSquare.current = null
+      setRightDragFrom(null)
       setRightDragTo(null)
       if (to) toggleAnnotation(from, to)
       return
@@ -394,9 +409,9 @@ export default function Board({
             />
           ))}
 
-          {rightDownSquare.current && rightDragTo && rightDownSquare.current !== rightDragTo && (
+          {rightDragFrom && rightDragTo && rightDragFrom !== rightDragTo && (
             <Arrow
-              from={rightDownSquare.current}
+              from={rightDragFrom}
               to={rightDragTo}
               squareSize={squareSize}
               flipped={flipped}

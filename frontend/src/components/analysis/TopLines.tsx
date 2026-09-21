@@ -60,7 +60,7 @@ export default function TopLines({ analysis, analyzing, turn, fullMove, height }
   const engineName = analysis?.engineName ?? 'Stockfish'
 
   const panelRef = useRef<HTMLDivElement>(null)
-  const [popup, setPopup] = useState<{ fen: string; y: number } | null>(null)
+  const [popup, setPopup] = useState<{ fen: string; x: number; y: number } | null>(null)
 
   const handleEnter = (fen: string, e: React.MouseEvent) => {
     const panelRect = panelRef.current?.getBoundingClientRect()
@@ -69,7 +69,7 @@ export default function TopLines({ analysis, analyzing, turn, fullMove, height }
       Math.max(e.clientY - MINI_SIZE / 2, 8),
       window.innerHeight - MINI_SIZE - 8,
     )
-    setPopup({ fen, y: clampedY })
+    setPopup({ fen, x: panelRect.left - MINI_SIZE - 16, y: clampedY })
   }
 
   const handleLeave = () => setPopup(null)
@@ -204,8 +204,7 @@ export default function TopLines({ analysis, analyzing, turn, fullMove, height }
           <div
             style={{
               position: 'fixed',
-              left:
-                (panelRef.current?.getBoundingClientRect()?.left ?? 0) - MINI_SIZE - 16,
+              left: popup.x,
               top: popup.y,
               zIndex: 1000,
               pointerEvents: 'none',

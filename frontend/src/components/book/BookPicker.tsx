@@ -33,11 +33,7 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
   const selected = books?.find((b) => b.id === selectedId) ?? null
 
   useEffect(() => {
-    if (!selectedId) {
-      setCompletedChapterIds(new Set())
-      setChapterProgress({})
-      return
-    }
+    if (!selectedId) return
     let cancelled = false
     Promise.all([getBook(selectedId), getBookProgress(selectedId).catch(() => ({ done: [] }))])
       .then(([book, progress]) => {
@@ -53,6 +49,8 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
   }, [selectedId])
 
   function selectBook(id: string) {
+    setCompletedChapterIds(new Set())
+    setChapterProgress({})
     setSelectedId(id)
     const book = books?.find((b) => b.id === id)
     setSelectedChapterId(book?.chapters[0]?.id ?? null)

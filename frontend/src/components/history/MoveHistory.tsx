@@ -108,7 +108,10 @@ export default function MoveHistory({
 
   const [evals, setEvals] = useState<Record<string, FenEval>>({})
   const evalsRef = useRef(evals)
-  evalsRef.current = evals
+
+  useEffect(() => {
+    evalsRef.current = evals
+  }, [evals])
 
   useEffect(() => {
 

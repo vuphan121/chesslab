@@ -6,17 +6,16 @@ import { getBookChapterPDF } from '@/lib/api/client'
 interface Props {
   bookId: string
   chapterId: string
+  navigationKey: string
   sourcePage?: number
 }
 
 
 
 
-export default function BookPDFViewer({ bookId, chapterId, sourcePage }: Props) {
+export default function BookPDFViewer({ bookId, chapterId, navigationKey, sourcePage }: Props) {
   const [url, setUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [page, setPage] = useState(sourcePage ?? 1)
-  const [draftPage, setDraftPage] = useState(String(sourcePage ?? 1))
 
   useEffect(() => {
     let active = true
@@ -36,11 +35,12 @@ export default function BookPDFViewer({ bookId, chapterId, sourcePage }: Props) 
     }
   }, [bookId, chapterId])
 
-  useEffect(() => {
-    const nextPage = sourcePage ?? 1
-    setPage(nextPage)
-    setDraftPage(String(nextPage))
-  }, [sourcePage])
+  return <BookPDFPage key={navigationKey} url={url} error={error} initialPage={sourcePage ?? 1} />
+}
+
+function BookPDFPage({ url, error, initialPage }: { url: string | null; error: string | null; initialPage: number }) {
+  const [page, setPage] = useState(initialPage)
+  const [draftPage, setDraftPage] = useState(String(initialPage))
 
   const goToPage = () => {
     const parsed = Number.parseInt(draftPage, 10)

@@ -1,4 +1,4 @@
-import type { MoveNode } from '@/lib/chess/types'
+import type { Color, MoveNode, PieceType } from '@/lib/chess/types'
 import type { Repertoire, RepertoireSummary } from '@/lib/trainer/types'
 import type { Book, BookSummary } from '@/lib/books/types'
 import { getToken, clearToken } from '@/lib/auth/token'
@@ -18,8 +18,8 @@ export function pingBackend(): void {
 }
 
 export interface PieceJSON {
-  type: string
-  color: string
+  type: PieceType
+  color: Color
 }
 
 export interface MoveJSON {

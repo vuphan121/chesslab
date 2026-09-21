@@ -20,7 +20,7 @@ import { flatten, mainlineEnd, childrenOf } from '@/lib/chess/moveTree'
 function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
   const pieces: BoardState['pieces'] = {}
   for (const [sq, p] of Object.entries(gs.pieces)) {
-    pieces[sq] = { type: p.type as any, color: p.color as any }
+    pieces[sq] = { type: p.type, color: p.color }
   }
 
   const legalMoves = selectedSquare
@@ -128,16 +128,18 @@ export function useChessGame(initialGameId?: string) {
   )
 
   useEffect(() => {
+    let cancelled = false
     moveSound.current = new Audio('/sounds/move.mp3')
     const load = initialGameId ? getGame(initialGameId) : createGame()
     load.then((g) => {
+      if (cancelled) return
       setGs(g)
       refreshInsights(g.id, g.fen)
     }).catch(console.error)
-
-
-
-  }, [refreshInsights])
+    return () => {
+      cancelled = true
+    }
+  }, [initialGameId, refreshInsights])
 
 
 
