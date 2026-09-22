@@ -8,6 +8,16 @@
 # service (name already taken), update both values to match after deploy —
 # see the deploy instructions for the manual dashboard equivalent.
 #
+# This actually happened: the plain names were taken, so Render appended a
+# random suffix to the public URLs (the `name:` fields below still match).
+# Live URLs as of 2026-09-22:
+#   frontend: https://chesslab-frontend-u5yv.onrender.com
+#   backend:  https://chesslab-backend-mhhj.onrender.com
+# The values below are stale placeholders from before that rename — the
+# actual deployed env vars were updated manually in the Render dashboard to
+# the URLs above, per the note just above. Re-applying this blueprint from
+# scratch would need the same manual fixup again.
+#
 # The AI coach (Ollama-backed /coach/explain, /coach/chat) is intentionally
 # NOT deployed here — no local LLM runs on Render. Those two endpoints will
 # return 503 in production, same as when Stockfish is unavailable; the rest
