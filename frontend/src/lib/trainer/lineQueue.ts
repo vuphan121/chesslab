@@ -4,6 +4,9 @@ import { shuffle } from './rng'
 
 export interface ChapterLine {
   sans: string[]
+  // uci of every ply along the line (same length as sans) — lets a hover
+  // preview show the move that was just played, not just the resting FEN.
+  ucis: string[]
   // cardKey of every position along the line, chapter root included — how a
   // line is matched against the session's per-card state.
   positionKeys: string[]
@@ -18,15 +21,22 @@ export function enumerateLines(
   sans: string[] = [],
   hasExcluded = false,
   positionKeys: string[] = [cardKey(node.fen)],
+  ucis: string[] = [],
 ): ChapterLine[] {
   const children = node.children ?? []
   if (children.length === 0) {
-    return sans.length > 0 ? [{ sans, positionKeys, hasExcluded }] : []
+    return sans.length > 0 ? [{ sans, ucis, positionKeys, hasExcluded }] : []
   }
   const lines: ChapterLine[] = []
   for (const child of children) {
     lines.push(
-      ...enumerateLines(child, [...sans, child.san], hasExcluded || child.excluded, [...positionKeys, cardKey(child.fen)]),
+      ...enumerateLines(
+        child,
+        [...sans, child.san],
+        hasExcluded || child.excluded,
+        [...positionKeys, cardKey(child.fen)],
+        [...ucis, child.uci],
+      ),
     )
   }
   return lines

@@ -1,31 +1,16 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { Listbox } from '@headlessui/react'
 import { listRepertoires, getRepertoire, getTodayTraining } from '@/lib/api/client'
 import type { TodayTrainingResponse } from '@/lib/api/client'
-import { toFigurine } from '@/lib/chess/figurine'
 import RepertoireManagement from '@/components/trainer/RepertoireManagement'
+import LineList from '@/components/trainer/LineList'
 import { enumerateLines } from '@/lib/trainer/lineQueue'
 import type { RepertoireSummary, Repertoire } from '@/lib/trainer/types'
 import type { SessionOptions } from '@/lib/trainer/types'
 
 
-
-
-
-
-
-function formatLine(sans: string[]): string {
-  return sans
-    .map((san, i) => {
-      const ply = i + 1
-      const num = Math.ceil(ply / 2)
-      const isWhite = ply % 2 === 1
-      const label = isWhite ? `${num}.` : i === 0 ? `${num}…` : ''
-      return `${label}${toFigurine(san)}`
-    })
-    .join(' ')
-}
 
 interface Props {
   onStart: (repertoireId: string, chapterIds: string[], opts: SessionOptions) => void
@@ -191,18 +176,20 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 13 }}>
-          <h2 className="serif" style={{ fontSize: 18, fontWeight: 500 }}>Today&rsquo;s training</h2>
+          <h2 className="serif" style={{ fontSize: 18, fontWeight: 500 }}>Mixed training</h2>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, color: '#6a675f' }}>
-            {today?.settings ? `${today.entries.length} line${today.entries.length === 1 ? '' : 's'} ready` : 'Set up your daily queue in Manage'}
-          </span>
+          {today?.settings && (
+            <span style={{ fontSize: 12, color: '#6a675f' }}>
+              {today.entries.length} line{today.entries.length === 1 ? '' : 's'} ready
+            </span>
+          )}
           <button
             onClick={onResumeToday}
             disabled={starting || !today?.settings || (today.entries.length ?? 0) === 0}
-            style={{ fontSize: 12, fontWeight: 700, padding: '8px 13px', borderRadius: 7, border: 'none', background: starting ? '#a9c9e8' : '#4a90d9', color: '#fff', cursor: starting ? 'default' : 'pointer' }}
+            style={{ fontSize: 12, fontWeight: 700, padding: '8px 13px', borderRadius: 7, border: 'none', background: starting ? '#a9c9e8' : '#4a90d9', color: '#fff', cursor: starting ? 'default' : 'pointer', marginLeft: 'auto' }}
           >
-            {starting ? 'Starting…' : 'Start today’s training'}
+            {starting ? 'Starting…' : 'Start mixed training'}
           </button>
         </div>
       </div>
@@ -210,44 +197,117 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
       <div className="lbl" style={{ color: '#b4b1a8', marginBottom: 8 }}>
         Choose a repertoire
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
-        {reps.map((r) => {
-          const active = r.id === selectedId
-          return (
-            <div
-              key={r.id}
-              onClick={() => selectRepertoire(r.id, r.chapters.map((c) => c.id))}
-              style={{
-                cursor: 'pointer',
-                padding: '12px 14px',
-                borderRadius: 8,
-                border: active ? '1px solid #4a90d9' : '1px solid #eae8e2',
-                background: active ? '#f2f8fd' : '#fff',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 14, fontWeight: 600 }}>{r.name}</span>
-                <span
-                  className="mono"
-                  style={{ fontSize: 11, color: '#2f6db0', background: '#ecf3fb', padding: '1px 7px', borderRadius: 5 }}
-                >
-                  {r.side === 'w' ? 'White' : 'Black'}
-                </span>
-                <span style={{ fontSize: 11, color: '#a3a099' }}>{r.lineCount} line{r.lineCount === 1 ? '' : 's'}</span>
+      <Listbox
+        value={selectedId}
+        onChange={(id) => {
+          const r = reps.find((x) => x.id === id)
+          if (r) selectRepertoire(r.id, r.chapters.map((c) => c.id))
+        }}
+      >
+        <div style={{ position: 'relative', marginBottom: 22 }}>
+          <Listbox.Button
+            style={{
+              width: '100%',
+              textAlign: 'left',
+              cursor: 'pointer',
+              padding: '12px 14px',
+              borderRadius: 8,
+              border: '1px solid #4a90d9',
+              background: '#f2f8fd',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
+            }}
+          >
+            {selected ? (
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 14, fontWeight: 600 }}>{selected.name}</span>
+                  <span
+                    className="mono"
+                    style={{ fontSize: 11, color: '#2f6db0', background: '#ecf3fb', padding: '1px 7px', borderRadius: 5 }}
+                  >
+                    {selected.side === 'w' ? 'White' : 'Black'}
+                  </span>
+                  <span style={{ fontSize: 11, color: '#a3a099' }}>
+                    {selected.lineCount} line{selected.lineCount === 1 ? '' : 's'}
+                  </span>
+                </div>
+                <div style={{ fontSize: 11, color: '#b4b1a8', marginTop: 2, overflowWrap: 'anywhere' }}>
+                  {selected.chapters.length} chapters
+                  {selected.source && (
+                    <>
+                      {' · '}
+                      <span className="mono">{selected.source}</span>
+                    </>
+                  )}
+                </div>
               </div>
-              <div style={{ fontSize: 11, color: '#b4b1a8', marginTop: 2, overflowWrap: 'anywhere' }}>
-                {r.chapters.length} chapters
-                {r.source && (
-                  <>
-                    {' · '}
-                    <span className="mono">{r.source}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+            ) : (
+              <span style={{ fontSize: 13, color: '#a3a099' }}>Select a repertoire…</span>
+            )}
+            <svg width="11" height="11" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0, color: '#3974ad' }}>
+              <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Listbox.Button>
+          <Listbox.Options
+            style={{
+              position: 'absolute',
+              zIndex: 20,
+              top: 'calc(100% + 6px)',
+              left: 0,
+              right: 0,
+              maxHeight: 320,
+              overflowY: 'auto',
+              background: '#fff',
+              border: '1px solid #eae8e2',
+              borderRadius: 8,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
+              padding: 6,
+              margin: 0,
+              listStyle: 'none',
+            }}
+          >
+            {reps.map((r) => (
+                <Listbox.Option key={r.id} value={r.id} as={Fragment}>
+                  {({ active, selected: isSel }) => (
+                    <li
+                      style={{
+                        cursor: 'pointer',
+                        padding: '10px 12px',
+                        borderRadius: 7,
+                        background: isSel ? '#f2f8fd' : active ? '#fbfaf7' : 'transparent',
+                        border: isSel ? '1px solid #4a90d9' : '1px solid transparent',
+                        marginBottom: 2,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 14, fontWeight: 600 }}>{r.name}</span>
+                        <span
+                          className="mono"
+                          style={{ fontSize: 11, color: '#2f6db0', background: '#ecf3fb', padding: '1px 7px', borderRadius: 5 }}
+                        >
+                          {r.side === 'w' ? 'White' : 'Black'}
+                        </span>
+                        <span style={{ fontSize: 11, color: '#a3a099' }}>{r.lineCount} line{r.lineCount === 1 ? '' : 's'}</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: '#b4b1a8', marginTop: 2, overflowWrap: 'anywhere' }}>
+                        {r.chapters.length} chapters
+                        {r.source && (
+                          <>
+                            {' · '}
+                            <span className="mono">{r.source}</span>
+                          </>
+                        )}
+                      </div>
+                    </li>
+                  )}
+                </Listbox.Option>
+              ))}
+          </Listbox.Options>
+        </div>
+      </Listbox>
 
       {selected && (
         <>
@@ -315,25 +375,15 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
                       style={{
                         marginTop: 6,
                         marginLeft: 22,
-                        padding: '8px 12px',
+                        padding: '4px',
                         background: '#fbfaf7',
                         border: '1px solid #eae8e2',
                         borderRadius: 7,
-                        maxHeight: 180,
+                        maxHeight: 260,
                         overflow: 'auto',
                       }}
                     >
-                      {fullRepLoading && !fullRep ? (
-                        <p style={{ fontSize: 12, color: '#a3a099' }}>Loading lines…</p>
-                      ) : lines.length === 0 ? (
-                        <p style={{ fontSize: 12, color: '#a3a099' }}>No lines to show.</p>
-                      ) : (
-                        lines.map((line, i) => (
-                          <p key={i} className="mono" style={{ fontSize: 12, lineHeight: 1.7, color: '#4a4740' }}>
-                            {formatLine(line.sans)}
-                          </p>
-                        ))
-                      )}
+                      <LineList lines={lines} loading={fullRepLoading && !fullRep} />
                     </div>
                   )}
                 </div>

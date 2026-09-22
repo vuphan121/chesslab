@@ -88,9 +88,9 @@ export default function RepertoireManagement({ repertoires, onClose, onChanged }
     setSuccess(null)
     try {
       const queue = await saveTodayTraining({ repertoireIds: [...todayRepertoireIds] })
-      setSuccess(`Today’s queue is ready with ${queue.entries.length} line${queue.entries.length === 1 ? '' : 's'}.`)
+      setSuccess(`Mixed training queue is ready with ${queue.entries.length} line${queue.entries.length === 1 ? '' : 's'}.`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not update today’s queue.')
+      setError(err instanceof Error ? err.message : 'Could not update the mixed training queue.')
     } finally {
       setTodaySaving(false)
     }
@@ -121,7 +121,7 @@ export default function RepertoireManagement({ repertoires, onClose, onChanged }
       </section>
 
       <section style={{ padding: 15, border: '1px solid #d8e8f7', background: '#f7fbff', borderRadius: 9, marginBottom: 24 }}>
-        <div className="lbl" style={{ color: '#5c86ad', marginBottom: 8 }}>Today&rsquo;s training</div>
+        <div className="lbl" style={{ color: '#5c86ad', marginBottom: 8 }}>Mixed training</div>
         <p style={{ fontSize: 12, color: '#6a675f', marginBottom: 12 }}>Every scheduled line from the selected repertoires is shuffled into one continuous queue.</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 14 }}>
           {repertoires.map((rep) => (

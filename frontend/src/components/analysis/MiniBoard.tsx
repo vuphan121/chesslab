@@ -27,9 +27,10 @@ function parseFen(fen: string): Record<string, PieceType> {
 interface Props {
   fen: string
   squareSize?: number
+  lastMove?: { from: string; to: string } | null
 }
 
-export default function MiniBoard({ fen, squareSize = 44 }: Props) {
+export default function MiniBoard({ fen, squareSize = 44, lastMove }: Props) {
   const pieces = parseFen(fen)
   const textureSize = squareSize * 8
 
@@ -52,6 +53,7 @@ export default function MiniBoard({ fen, squareSize = 44 }: Props) {
             const piece = pieces[square]
             const spriteCol = FILES.indexOf(file)
             const spriteRow = RANKS.indexOf(rank)
+            const isLastMove = lastMove?.from === square || lastMove?.to === square
 
             return (
               <div
@@ -59,9 +61,12 @@ export default function MiniBoard({ fen, squareSize = 44 }: Props) {
                 style={{
                   width: squareSize,
                   height: squareSize,
-                  backgroundImage: "url('/board-texture.png')",
-                  backgroundSize: `${textureSize}px ${textureSize}px`,
-                  backgroundPosition: `-${spriteCol * squareSize}px -${spriteRow * squareSize}px`,
+                  backgroundColor: isLastMove ? '#7ecae8' : undefined,
+                  backgroundImage: isLastMove ? undefined : "url('/board-texture.png')",
+                  backgroundSize: isLastMove ? undefined : `${textureSize}px ${textureSize}px`,
+                  backgroundPosition: isLastMove
+                    ? undefined
+                    : `-${spriteCol * squareSize}px -${spriteRow * squareSize}px`,
                   position: 'relative',
                 }}
               >
