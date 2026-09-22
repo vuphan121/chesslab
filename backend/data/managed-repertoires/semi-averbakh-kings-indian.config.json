@@ -1,0 +1,8 @@
+{
+  "id": "semi-averbakh-kings-indian",
+  "name": "Semi-Averbakh King's Indian",
+  "side": "b",
+  "source": "https://lichess.org/study/DP2kgzgL",
+  "description": "Black repertoire against the Semi-Averbakh setup in the King's Indian (Be3 + Be2, no Bg5 pin). Three chapters by Black's reply: ...e5, ...c5, and ...Nc6.",
+  "excluded": []
+}

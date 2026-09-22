@@ -1,0 +1,14 @@
+{
+  "id": "catalan-white",
+  "name": "Catalan",
+  "side": "w",
+  "source": "https://lichess.org/study/pYmWdR27",
+  "description": "White repertoire against the Catalan. Nine chapters: Open Catalan (...a6 b5, ...a6 Nc6, direct ...Nc6, and ...c5), Closed Catalan (...e6/...d5, and with ...dxc4 already played), and the ...Bb4+ check lines (Closed, Open, and Bogo move orders).",
+  "excluded": [
+    {
+      "chapter": "Open, a6 b5",
+      "path": ["a4"],
+      "reason": "Study annotates this as inferior: Nc6 follows and the b4 square is weak."
+    }
+  ]
+}

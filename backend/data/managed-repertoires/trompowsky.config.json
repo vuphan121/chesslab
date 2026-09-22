@@ -1,0 +1,8 @@
+{
+  "id": "trompowsky",
+  "name": "Trompowsky",
+  "side": "b",
+  "source": "https://lichess.org/study/gGYpOH20",
+  "description": "Black repertoire against the Trompowsky Attack (1.d4 Nf6 2.Bg5), meeting it with 2...c5. Four chapters by White's third move: 3.dxc5, 3.d5, 3.Nc3, and 3.Bxf6.",
+  "excluded": []
+}
