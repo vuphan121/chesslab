@@ -16,6 +16,13 @@ type requestClock struct {
 
 func localRequestClock(r *http.Request, now time.Time) requestClock {
 	zone := r.Header.Get(timeZoneHeader)
+	// "Local" is a Go stdlib special case, not a real IANA zone name — left
+	// unhandled, time.LoadLocation("Local") happily resolves to whatever
+	// zone this process happens to be running in, bypassing the UTC
+	// fallback every other invalid/missing zone gets.
+	if zone == "Local" {
+		zone = ""
+	}
 	location, err := time.LoadLocation(zone)
 	if err != nil || zone == "" {
 		zone = "UTC"

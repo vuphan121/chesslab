@@ -18,7 +18,7 @@ type LoginResponse struct {
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	clientKey := loginClientKey(r)
-	if allowed, retryAfter := h.loginLimiter.allowed(clientKey); !allowed {
+	if allowed, retryAfter := h.loginLimiter.reserve(clientKey); !allowed {
 		w.Header().Set("Retry-After", strconv.Itoa(max(1, int(retryAfter.Round(time.Second)/time.Second))))
 		http.Error(w, "too many login attempts; try again later", http.StatusTooManyRequests)
 		return
@@ -41,7 +41,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		ok = h.authCfg.CheckCredentials(req.Username, req.Password)
 	}
 	if !ok {
-		h.loginLimiter.failure(clientKey)
+		// reserve() above already recorded this attempt against the limit.
 		http.Error(w, "invalid username or password", http.StatusUnauthorized)
 		return
 	}

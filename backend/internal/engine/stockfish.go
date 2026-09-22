@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Line struct {
@@ -22,12 +23,24 @@ type Analysis struct {
 	Lines    []Line
 }
 
+// These bound how long we'll wait on the Stockfish subprocess before giving
+// up. Without them, a wedged/hung process blocked every read forever while
+// Analyze held Engine.mu — one stuck call meant every subsequent analysis
+// request, for any game, hung too, with no recovery short of a process
+// restart. A timeout turns that into a bounded per-request failure instead
+// of a permanent server-wide outage.
+const (
+	handshakeTimeout = 10 * time.Second
+	analyzeTimeout   = 30 * time.Second
+	closeTimeout     = 5 * time.Second
+)
+
 type Engine struct {
-	mu   sync.Mutex
-	cmd  *exec.Cmd
-	in   io.WriteCloser
-	out  *bufio.Scanner
-	Name string
+	mu    sync.Mutex
+	cmd   *exec.Cmd
+	in    io.WriteCloser
+	lines <-chan string
+	Name  string
 }
 
 func New(path string) (*Engine, error) {
@@ -43,7 +56,21 @@ func New(path string) (*Engine, error) {
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("start engine: %w", err)
 	}
-	e := &Engine{cmd: cmd, in: in, out: bufio.NewScanner(outPipe)}
+
+	// A dedicated reader goroutine decouples "wait for the next line" from
+	// "the actual blocking read" — Scan() itself has no timeout support, so
+	// the only portable way to bound a wait on it is to let it block in its
+	// own goroutine and have callers select on a channel with a deadline.
+	lines := make(chan string, 64)
+	go func() {
+		scanner := bufio.NewScanner(outPipe)
+		for scanner.Scan() {
+			lines <- scanner.Text()
+		}
+		close(lines)
+	}()
+
+	e := &Engine{cmd: cmd, in: in, lines: lines}
 	if err := e.handshake(); err != nil {
 		cmd.Process.Kill()
 		return nil, err
@@ -55,10 +82,31 @@ func (e *Engine) send(s string) {
 	fmt.Fprintln(e.in, s)
 }
 
+// readLine waits for the next engine output line. ok is false if the
+// process's stdout closed (it exited) or the timeout elapsed first.
+func (e *Engine) readLine(timeout time.Duration) (line string, ok bool) {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	select {
+	case l, open := <-e.lines:
+		return l, open
+	case <-timer.C:
+		return "", false
+	}
+}
+
 func (e *Engine) handshake() error {
 	e.send("uci")
-	for e.out.Scan() {
-		line := e.out.Text()
+	deadline := time.Now().Add(handshakeTimeout)
+	for {
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
+			return fmt.Errorf("engine handshake timed out")
+		}
+		line, ok := e.readLine(remaining)
+		if !ok {
+			return fmt.Errorf("engine closed before uciok")
+		}
 		if strings.HasPrefix(line, "id name ") {
 			e.Name = strings.TrimPrefix(line, "id name ")
 		}
@@ -66,7 +114,6 @@ func (e *Engine) handshake() error {
 			return nil
 		}
 	}
-	return fmt.Errorf("engine closed before uciok")
 }
 
 func (e *Engine) Analyze(fen string, multiPV, depth int) (*Analysis, error) {
@@ -75,7 +122,7 @@ func (e *Engine) Analyze(fen string, multiPV, depth int) (*Analysis, error) {
 
 	e.send(fmt.Sprintf("setoption name MultiPV value %d", multiPV))
 	e.send("isready")
-	if !e.waitFor("readyok") {
+	if !e.waitFor("readyok", analyzeTimeout) {
 		return nil, fmt.Errorf("engine not ready")
 	}
 	e.send("position fen " + fen)
@@ -84,8 +131,16 @@ func (e *Engine) Analyze(fen string, multiPV, depth int) (*Analysis, error) {
 	best := make(map[int]*parsedInfo)
 	var bestMove string
 
-	for e.out.Scan() {
-		text := e.out.Text()
+	deadline := time.Now().Add(analyzeTimeout)
+	for {
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
+			return nil, fmt.Errorf("engine analysis timed out")
+		}
+		text, ok := e.readLine(remaining)
+		if !ok {
+			return nil, fmt.Errorf("engine closed or timed out during analysis")
+		}
 		if strings.HasPrefix(text, "bestmove") {
 			parts := strings.Fields(text)
 			if len(parts) >= 2 && parts[1] != "(none)" {
@@ -114,18 +169,39 @@ func (e *Engine) Analyze(fen string, multiPV, depth int) (*Analysis, error) {
 	return a, nil
 }
 
-func (e *Engine) waitFor(prefix string) bool {
-	for e.out.Scan() {
-		if strings.HasPrefix(e.out.Text(), prefix) {
+func (e *Engine) waitFor(prefix string, timeout time.Duration) bool {
+	deadline := time.Now().Add(timeout)
+	for {
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
+			return false
+		}
+		line, ok := e.readLine(remaining)
+		if !ok {
+			return false
+		}
+		if strings.HasPrefix(line, prefix) {
 			return true
 		}
 	}
-	return false
 }
 
+// Close asks the engine to quit and waits for the process to exit, killing
+// it if it doesn't within closeTimeout — "quit" going unanswered by a wedged
+// process used to hang shutdown forever via an unbounded cmd.Wait().
 func (e *Engine) Close() {
 	e.send("quit")
-	e.cmd.Wait()
+	done := make(chan struct{})
+	go func() {
+		e.cmd.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(closeTimeout):
+		e.cmd.Process.Kill()
+		<-done
+	}
 }
 
 type parsedInfo struct {

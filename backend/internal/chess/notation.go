@@ -23,7 +23,12 @@ func SAN(pos *Position, m Move) string {
 
 	if piece.Type != Pawn {
 		lms := GenerateLegalMoves(pos)
-		var needFile, needRank bool
+		// Standard SAN disambiguation precedence: file alone if no competitor
+		// shares it, else rank alone if no competitor shares that, else both.
+		// Deciding needFile/needRank independently per competitor (the old
+		// approach) over-qualifies as soon as 3+ same-type pieces converge on
+		// one square with a mixed file/rank overlap — see notation_test.go.
+		var sameFile, sameRank, hasCompetitor bool
 		for _, lm := range lms {
 			if lm.From == m.From || lm.To != m.To {
 				continue
@@ -32,16 +37,23 @@ func SAN(pos *Position, m Move) string {
 			if op == nil || op.Type != piece.Type || op.Color != piece.Color {
 				continue
 			}
+			hasCompetitor = true
 			if lm.From.File() == m.From.File() {
-				needRank = true
-			} else {
-				needFile = true
+				sameFile = true
+			}
+			if lm.From.Rank() == m.From.Rank() {
+				sameRank = true
 			}
 		}
-		if needFile {
+		switch {
+		case !hasCompetitor:
+			// no disambiguation needed
+		case !sameFile:
 			sb.WriteByte('a' + byte(m.From.File()))
-		}
-		if needRank {
+		case !sameRank:
+			sb.WriteByte('1' + byte(m.From.Rank()))
+		default:
+			sb.WriteByte('a' + byte(m.From.File()))
 			sb.WriteByte('1' + byte(m.From.Rank()))
 		}
 	}

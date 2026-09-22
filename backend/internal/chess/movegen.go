@@ -176,7 +176,15 @@ func kingMoves(pos *Position, from Square) []Move {
 	return moves
 }
 
+func hasRook(pos *Position, file, rank int, color Color) bool {
+	p := pos.Board[NewSquare(file, rank)]
+	return p != nil && p.Type == Rook && p.Color == color
+}
+
 func castleKSClear(pos *Position, rank int, opp Color) bool {
+	if !hasRook(pos, 7, rank, opp.Opponent()) {
+		return false
+	}
 	sqF := NewSquare(5, rank)
 	sqG := NewSquare(6, rank)
 	if pos.Board[sqF] != nil || pos.Board[sqG] != nil {
@@ -189,6 +197,9 @@ func castleKSClear(pos *Position, rank int, opp Color) bool {
 }
 
 func castleQSClear(pos *Position, rank int, opp Color) bool {
+	if !hasRook(pos, 0, rank, opp.Opponent()) {
+		return false
+	}
 	sqB := NewSquare(1, rank)
 	sqC := NewSquare(2, rank)
 	sqD := NewSquare(3, rank)

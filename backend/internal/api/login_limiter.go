@@ -24,27 +24,23 @@ func newLoginLimiter(limit int, window time.Duration, now func() time.Time) *log
 	return &loginLimiter{attempts: make(map[string]loginAttempt), limit: limit, window: window, now: now}
 }
 
-func (l *loginLimiter) allowed(key string) (bool, time.Duration) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	entry, ok := l.attempts[key]
-	now := l.now()
-	if !ok || now.Sub(entry.windowStart) >= l.window {
-		return true, 0
-	}
-	if entry.count < l.limit {
-		return true, 0
-	}
-	return false, l.window - now.Sub(entry.windowStart)
-}
-
-func (l *loginLimiter) failure(key string) {
+// reserve atomically checks the caller is under the limit AND records this
+// attempt in one critical section. Splitting that into a separate
+// allowed()-then-failure() pair (the earlier shape) left a check-then-act
+// race: concurrent requests can all pass the check before any of them
+// records a failure, so a burst of parallel attempts defeats the limit
+// entirely — only sequential attempts were actually throttled. success()
+// still clears the window on a correct login.
+func (l *loginLimiter) reserve(key string) (bool, time.Duration) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	now := l.now()
 	entry, ok := l.attempts[key]
 	if !ok || now.Sub(entry.windowStart) >= l.window {
 		entry = loginAttempt{windowStart: now}
+	}
+	if entry.count >= l.limit {
+		return false, l.window - now.Sub(entry.windowStart)
 	}
 	entry.count++
 	l.attempts[key] = entry
@@ -66,6 +62,7 @@ func (l *loginLimiter) failure(key string) {
 			delete(l.attempts, oldestKey)
 		}
 	}
+	return true, 0
 }
 
 func (l *loginLimiter) success(key string) {

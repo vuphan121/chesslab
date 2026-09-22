@@ -301,14 +301,40 @@ func (g *Game) IsCheckmate() bool   { return g.IsCheck() && !g.HasLegalMoves() }
 func (g *Game) IsStalemate() bool   { return !g.IsCheck() && !g.HasLegalMoves() }
 func (g *Game) Is50MoveRule() bool  { return g.Pos.HalfClock >= 100 }
 
+// IsInsufficientMaterial reports the standard automatic-draw set: bare king
+// vs king, king+minor vs king, and king+bishop vs king+bishop where both
+// bishops sit on the same square color (they can never deliver checkmate).
+// King+knight+knight vs king is deliberately NOT included — checkmate is
+// possible there against a cooperating defender, just not forceable, which
+// matches how Lichess/python-chess/FIDE draw detection treats it.
 func (g *Game) IsInsufficientMaterial() bool {
-	var pieces int
-	for _, p := range g.Pos.Board {
-		if p != nil {
-			pieces++
+	knights := 0
+	var bishopSquares []Square
+	for sq, p := range g.Pos.Board {
+		if p == nil || p.Type == King {
+			continue
+		}
+		switch p.Type {
+		case Knight:
+			knights++
+		case Bishop:
+			bishopSquares = append(bishopSquares, Square(sq))
+		default:
+			return false
 		}
 	}
-	return pieces == 2
+	minors := knights + len(bishopSquares)
+	switch {
+	case minors == 0:
+		return true
+	case minors == 1:
+		return true
+	case minors == 2 && knights == 0:
+		a, b := bishopSquares[0], bishopSquares[1]
+		return (a.File()+a.Rank())%2 == (b.File()+b.Rank())%2
+	default:
+		return false
+	}
 }
 
 func (g *Game) IsDraw() bool {

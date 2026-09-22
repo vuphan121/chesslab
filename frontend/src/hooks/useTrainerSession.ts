@@ -435,7 +435,11 @@ export function useTrainerSession() {
       priorProgressRef.current = merged
 
       const startCard = runStartCardIdRef.current ? cardById(runStartCardIdRef.current) : undefined
-      const chapterId = startCard?.chapterIds[0]
+      // Prefer the chapter the user actually selected/drilled — a card
+      // shared across chapters via transposition can list a different
+      // chapter first, which used to misattribute this run's line_attempts
+      // analytics row (see resolveRunStartCard, which already gets this right).
+      const chapterId = startCard?.chapterIds.find((id) => selectedChapterIdsRef.current.has(id)) ?? startCard?.chapterIds[0]
       const chapter = chapterId ? repertoire.chapters.find((c) => c.id === chapterId) : undefined
       const lineAttempt =
         startCard && chapter

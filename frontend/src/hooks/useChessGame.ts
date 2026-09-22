@@ -86,12 +86,16 @@ export function useChessGame(initialGameId?: string) {
       // almost immediately, then refine with a full-depth pass unless the quick
       // result was already a deep cloud hit.
       const quick = await analyzeGame(gameId, 'quick', fen)
-      if (reqId === analysisReqId.current) setAnalysis(quick)
-      if (fen) analysisCacheRef.current.set(fen, quick)
+      if (reqId === analysisReqId.current) {
+        setAnalysis(quick)
+        if (fen) analysisCacheRef.current.set(fen, quick)
+      }
       if (quick.engineName === 'Lichess Cloud') return quick
       const deep = await analyzeGame(gameId, 'full', fen)
-      if (reqId === analysisReqId.current) setAnalysis(deep)
-      if (fen) analysisCacheRef.current.set(fen, deep)
+      if (reqId === analysisReqId.current) {
+        setAnalysis(deep)
+        if (fen) analysisCacheRef.current.set(fen, deep)
+      }
       return deep
     } catch {
       return null

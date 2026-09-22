@@ -26,6 +26,9 @@ func ParseFEN(fen string) (*Position, error) {
 		for _, ch := range rankStr {
 			if ch >= '1' && ch <= '8' {
 				file += int(ch - '0')
+				if file > 8 {
+					return nil, fmt.Errorf("invalid FEN: rank %d has too many squares", 8-ri)
+				}
 				continue
 			}
 			color := White
@@ -40,8 +43,14 @@ func ParseFEN(fen string) (*Position, error) {
 				return nil, fmt.Errorf("unknown piece char %q", ch)
 			}
 			sq := NewSquare(file, rank)
+			if sq == NoSquare {
+				return nil, fmt.Errorf("invalid FEN: rank %d has too many squares", 8-ri)
+			}
 			pos.Board[sq] = &Piece{Type: pt, Color: color}
 			file++
+		}
+		if file != 8 {
+			return nil, fmt.Errorf("invalid FEN: rank %d does not sum to 8 squares", 8-ri)
 		}
 	}
 
