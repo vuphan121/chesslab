@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { Chess } from 'chess.js'
 import {
   createGame,
@@ -171,6 +172,7 @@ interface RunMove {
 }
 
 export function useTrainerSession() {
+  const router = useRouter()
   const [phase, setPhase] = useState<TrainerPhase>('setup')
   const [repertoire, setRepertoireState] = useState<Repertoire | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -856,11 +858,11 @@ export function useTrainerSession() {
         const to = mv.uci.slice(2, 4)
         await makeMove(gid, from, to, promotionFromUci(mv.uci))
       }
-      window.location.href = `/?gameId=${gid}`
+      router.push(`/?gameId=${gid}`)
     } finally {
       setBusy(false)
     }
-  }, [cardById])
+  }, [cardById, router])
 
   const endSession = useCallback(() => {
     const session = sessionRef.current

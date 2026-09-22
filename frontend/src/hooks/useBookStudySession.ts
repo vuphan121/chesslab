@@ -148,7 +148,7 @@ export function useBookStudySession() {
     setAnalysisError(null)
     ;(async () => {
       try {
-        const result = await analyzeGame(gid, 'quick')
+        const result = await analyzeGame(gid, 'quick', currentFen)
         analysisCacheRef.current.set(currentFen, result)
         if (result.lines.length > 0 && !(currentFen in moveEvalsRef.current)) {
           const top = result.lines[0]

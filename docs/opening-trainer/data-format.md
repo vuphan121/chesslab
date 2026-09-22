@@ -544,6 +544,10 @@ CREATE TABLE line_attempts (
   they're rebuilt at session start per `scheduler.md` §8.
 - `card_id` is `CardKey(FEN)` (clock-stripped FEN), so editing the study only invalidates the
   positions that actually changed — same invalidation property the old localStorage keying had.
+- “Today” and the seven-day analytics buckets are calculated in the browser's IANA time zone,
+  supplied through `X-Chesslab-Time-Zone`. SQL receives an explicit local date and time zone rather
+  than relying on the Postgres session's `CURRENT_DATE` or UTC day boundary. Invalid or absent zones
+  fall back to UTC.
 
 <details>
 <summary>Original design (localStorage, pre-Postgres) — kept for historical context</summary>

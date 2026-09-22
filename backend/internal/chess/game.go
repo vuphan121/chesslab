@@ -3,6 +3,7 @@ package chess
 import (
 	"fmt"
 	"strconv"
+	"sync"
 )
 
 // hasAdjacentEnemyPawn reports whether a pawn of enemyColor sits beside sq
@@ -126,6 +127,8 @@ type Node struct {
 }
 
 type Game struct {
+	mu sync.RWMutex
+
 	ID      string
 	Root    *Node
 	Current *Node
@@ -134,6 +137,15 @@ type Game struct {
 	LastMove *Move
 	counter  int
 }
+
+// Lock exposes the per-game lock to API handlers that need to make a compound
+// operation (for example, apply a move and serialize the resulting tree)
+// atomic. Chess methods themselves intentionally remain lock-free so callers
+// can compose several operations while holding one lock.
+func (g *Game) Lock()    { g.mu.Lock() }
+func (g *Game) Unlock()  { g.mu.Unlock() }
+func (g *Game) RLock()   { g.mu.RLock() }
+func (g *Game) RUnlock() { g.mu.RUnlock() }
 
 func NewGame(id string) *Game {
 	g, _ := NewGameFromFEN(id, StartFEN)

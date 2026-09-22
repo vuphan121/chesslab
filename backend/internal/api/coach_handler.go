@@ -97,6 +97,7 @@ func (h *Handler) CoachChat(w http.ResponseWriter, r *http.Request) {
 		history = append(history, coach.ChatTurn{Role: t.Role, Content: t.Content})
 	}
 
+	g.RLock()
 	posCtx := coach.PositionContext{
 		FEN:         chess.FEN(g.Current.Pos),
 		LastMoveSAN: g.Current.SAN,
@@ -104,6 +105,7 @@ func (h *Handler) CoachChat(w http.ResponseWriter, r *http.Request) {
 	if g.Current.Parent != nil {
 		posCtx.PrevFEN = chess.FEN(g.Current.Parent.Pos)
 	}
+	g.RUnlock()
 
 	reply, err := h.coachAgent.Chat(r.Context(), posCtx, history, req.Message)
 	if err != nil {

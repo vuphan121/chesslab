@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 type LoginRequest struct {
@@ -15,6 +17,12 @@ type LoginResponse struct {
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+	clientKey := loginClientKey(r)
+	if allowed, retryAfter := h.loginLimiter.allowed(clientKey); !allowed {
+		w.Header().Set("Retry-After", strconv.Itoa(max(1, int(retryAfter.Round(time.Second)/time.Second))))
+		http.Error(w, "too many login attempts; try again later", http.StatusTooManyRequests)
+		return
+	}
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
@@ -33,6 +41,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		ok = h.authCfg.CheckCredentials(req.Username, req.Password)
 	}
 	if !ok {
+		h.loginLimiter.failure(clientKey)
 		http.Error(w, "invalid username or password", http.StatusUnauthorized)
 		return
 	}
@@ -43,5 +52,6 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.loginLimiter.success(clientKey)
 	respondJSON(w, http.StatusOK, LoginResponse{Token: token})
 }

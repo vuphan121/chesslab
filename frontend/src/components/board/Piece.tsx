@@ -19,6 +19,7 @@ export default function Piece({ piece, size }: Props) {
       alt={`${piece.color === 'w' ? 'White' : 'Black'} ${piece.type}`}
       width={size}
       height={size}
+      loading="eager"
       draggable={false}
       className="pointer-events-none select-none drop-shadow-md"
       style={{ width: size, height: size }}

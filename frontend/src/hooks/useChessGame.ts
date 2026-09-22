@@ -68,8 +68,10 @@ export function useChessGame(initialGameId?: string) {
   // for a position the user has already navigated away from.
   const analysisCacheRef = useRef<Map<string, Analysis>>(new Map())
   const analysisReqId = useRef(0)
+  const explorerReqId = useRef(0)
 
   const runAnalysis = useCallback(async (gameId: string, fen?: string): Promise<Analysis | null> => {
+    const reqId = ++analysisReqId.current
     if (fen) {
       const cached = analysisCacheRef.current.get(fen)
       if (cached) {
@@ -78,17 +80,16 @@ export function useChessGame(initialGameId?: string) {
         return cached
       }
     }
-    const reqId = ++analysisReqId.current
     setAnalyzing(true)
     try {
       // Quick pass first (depth-10 / short cloud timeout) so the bar updates
       // almost immediately, then refine with a full-depth pass unless the quick
       // result was already a deep cloud hit.
-      const quick = await analyzeGame(gameId, 'quick')
+      const quick = await analyzeGame(gameId, 'quick', fen)
       if (reqId === analysisReqId.current) setAnalysis(quick)
       if (fen) analysisCacheRef.current.set(fen, quick)
       if (quick.engineName === 'Lichess Cloud') return quick
-      const deep = await analyzeGame(gameId)
+      const deep = await analyzeGame(gameId, 'full', fen)
       if (reqId === analysisReqId.current) setAnalysis(deep)
       if (fen) analysisCacheRef.current.set(fen, deep)
       return deep
@@ -99,17 +100,18 @@ export function useChessGame(initialGameId?: string) {
     }
   }, [])
 
-  const runExplorer = useCallback(async (gameId: string): Promise<Explorer | null> => {
+  const runExplorer = useCallback(async (gameId: string, fen?: string): Promise<Explorer | null> => {
+    const reqId = ++explorerReqId.current
     setExplorerLoading(true)
     try {
-      const e = await getExplorer(gameId)
-      setExplorer(e)
+      const e = await getExplorer(gameId, fen)
+      if (reqId === explorerReqId.current) setExplorer(e)
       return e
     } catch {
 
       return null
     } finally {
-      setExplorerLoading(false)
+      if (reqId === explorerReqId.current) setExplorerLoading(false)
     }
   }, [])
 
@@ -122,7 +124,7 @@ export function useChessGame(initialGameId?: string) {
 
   const refreshInsights = useCallback(
     async (gameId: string, fen?: string) => {
-      await Promise.all([runAnalysis(gameId, fen), runExplorer(gameId)])
+      await Promise.all([runAnalysis(gameId, fen), runExplorer(gameId, fen)])
     },
     [runAnalysis, runExplorer],
   )

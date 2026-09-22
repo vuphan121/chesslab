@@ -176,7 +176,7 @@ universal position identifier passed between them.
 
 ### Prerequisites
 
-- **Go** 1.21+ and **Node.js** 18+
+- **Go** 1.26+ and **Node.js** 20+
 - **Stockfish** — a binary on your `PATH`, or point `STOCKFISH_PATH` at one directly
 - Optional: a free [Lichess API token](https://lichess.org/account/oauth/token) (powers the Opening
   Explorer panel — without it, everything else still works)
@@ -187,6 +187,10 @@ universal position identifier passed between them.
 
 None of the optional pieces block startup — each missing dependency degrades that one feature to a
 clear error response instead of failing the whole app.
+
+Operational safeguards for concurrent game access, bounded in-memory games, analysis request
+deduplication, login throttling, HTTP limits, and local-day handling are documented in
+[`docs/runtime-reliability.md`](docs/runtime-reliability.md).
 
 ### 1. Clone and configure the backend
 

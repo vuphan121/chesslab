@@ -112,23 +112,27 @@ type Analytics struct {
 	Last7Days      []DayCount     `json:"last7Days"`
 }
 
-func (s *Store) GetAnalytics(ctx context.Context, username string) (Analytics, error) {
+func (s *Store) GetAnalytics(ctx context.Context, username, localDate, timeZone string) (Analytics, error) {
 	var a Analytics
 
 	if err := s.pool.QueryRow(ctx, `
 		SELECT COUNT(*) FROM line_attempts
-		WHERE username = $1 AND played_at >= date_trunc('day', now())`,
-		username).Scan(&a.TodayTotal); err != nil {
+		WHERE username = $1
+		  AND played_at >= ($2::date::timestamp AT TIME ZONE $3)
+		  AND played_at < (($2::date + 1)::timestamp AT TIME ZONE $3)`,
+		username, localDate, timeZone).Scan(&a.TodayTotal); err != nil {
 		return a, fmt.Errorf("today total: %w", err)
 	}
 
 	chapterRows, err := s.pool.Query(ctx, `
 		SELECT repertoire_id, chapter_id, chapter_name, COUNT(*)
 		FROM line_attempts
-		WHERE username = $1 AND played_at >= date_trunc('day', now())
+		WHERE username = $1
+		  AND played_at >= ($2::date::timestamp AT TIME ZONE $3)
+		  AND played_at < (($2::date + 1)::timestamp AT TIME ZONE $3)
 		GROUP BY repertoire_id, chapter_id, chapter_name
 		ORDER BY COUNT(*) DESC`,
-		username)
+		username, localDate, timeZone)
 	if err != nil {
 		return a, fmt.Errorf("today by chapter: %w", err)
 	}
@@ -146,12 +150,14 @@ func (s *Store) GetAnalytics(ctx context.Context, username string) (Analytics, e
 	}
 
 	dayRows, err := s.pool.Query(ctx, `
-		SELECT date_trunc('day', played_at)::date::text AS d, COUNT(*)
+		SELECT (played_at AT TIME ZONE $2)::date::text AS d, COUNT(*)
 		FROM line_attempts
-		WHERE username = $1 AND played_at >= now() - interval '7 days'
+		WHERE username = $1
+		  AND played_at >= (($3::date - 6)::timestamp AT TIME ZONE $2)
+		  AND played_at < (($3::date + 1)::timestamp AT TIME ZONE $2)
 		GROUP BY d
 		ORDER BY d`,
-		username)
+		username, timeZone, localDate)
 	if err != nil {
 		return a, fmt.Errorf("last 7 days: %w", err)
 	}

@@ -106,7 +106,16 @@ func main() {
 	}
 	addr := ":" + port
 	log.Printf("chesslab backend listening on %s", addr)
-	if err := http.ListenAndServe(addr, router); err != nil {
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      3 * time.Minute,
+		IdleTimeout:       2 * time.Minute,
+		MaxHeaderBytes:    1 << 20,
+	}
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

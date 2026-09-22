@@ -34,7 +34,8 @@ func (h *Handler) GetTodayTraining(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	queue, err := h.db.GetTodayTraining(r.Context(), username)
+	queueDate := currentRequestClock(r).date
+	queue, err := h.db.GetTodayTraining(r.Context(), username, queueDate)
 	if err != nil {
 		http.Error(w, "failed to load today's training: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -46,7 +47,7 @@ func (h *Handler) GetTodayTraining(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if !sameTodayTrainingEntries(queue.Entries, expected) {
-			queue, err = h.saveTodayTraining(r, username, *queue.Settings, expected)
+			queue, err = h.saveTodayTraining(r, username, queueDate, *queue.Settings, expected)
 		}
 		if err != nil {
 			http.Error(w, "failed to prepare today's training: "+err.Error(), http.StatusBadRequest)
@@ -69,7 +70,7 @@ func (h *Handler) SaveTodayTraining(w http.ResponseWriter, r *http.Request) {
 	// LinesPerDay is retained only in the database schema for backwards
 	// compatibility. Today's queue now always contains every eligible entry.
 	settings := db.TodayTrainingSettings{RepertoireIDs: uniqueIDs(req.RepertoireIDs), LinesPerDay: 1}
-	queue, err := h.buildTodayTraining(r, username, settings)
+	queue, err := h.buildTodayTraining(r, username, currentRequestClock(r).date, settings)
 	if err != nil {
 		http.Error(w, "failed to prepare today's training: "+err.Error(), http.StatusBadRequest)
 		return
@@ -91,7 +92,7 @@ func (h *Handler) AdvanceTodayTraining(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "repertoireId and cardId are required", http.StatusBadRequest)
 		return
 	}
-	queue, err := h.db.AdvanceTodayTraining(r.Context(), username, req.RepertoireID, req.CardID)
+	queue, err := h.db.AdvanceTodayTraining(r.Context(), username, currentRequestClock(r).date, req.RepertoireID, req.CardID)
 	if err != nil {
 		http.Error(w, "failed to advance today's training: "+err.Error(), http.StatusBadRequest)
 		return
@@ -112,12 +113,12 @@ func (h *Handler) todayTrainingUsername(w http.ResponseWriter, r *http.Request) 
 	return username, true
 }
 
-func (h *Handler) buildTodayTraining(r *http.Request, username string, settings db.TodayTrainingSettings) (db.TodayTrainingQueue, error) {
+func (h *Handler) buildTodayTraining(r *http.Request, username, queueDate string, settings db.TodayTrainingSettings) (db.TodayTrainingQueue, error) {
 	entries, err := h.todayTrainingEntries(settings)
 	if err != nil {
 		return db.TodayTrainingQueue{}, err
 	}
-	return h.saveTodayTraining(r, username, settings, entries)
+	return h.saveTodayTraining(r, username, queueDate, settings, entries)
 }
 
 func (h *Handler) todayTrainingEntries(settings db.TodayTrainingSettings) ([]db.TodayTrainingEntry, error) {
@@ -137,9 +138,9 @@ func (h *Handler) todayTrainingEntries(settings db.TodayTrainingSettings) ([]db.
 	return entries, nil
 }
 
-func (h *Handler) saveTodayTraining(r *http.Request, username string, settings db.TodayTrainingSettings, entries []db.TodayTrainingEntry) (db.TodayTrainingQueue, error) {
+func (h *Handler) saveTodayTraining(r *http.Request, username, queueDate string, settings db.TodayTrainingSettings, entries []db.TodayTrainingEntry) (db.TodayTrainingQueue, error) {
 	entries = shuffleTodayTrainingEntries(entries, rand.IntN)
-	return h.db.SaveTodayTraining(r.Context(), username, settings, entries)
+	return h.db.SaveTodayTraining(r.Context(), username, queueDate, settings, entries)
 }
 
 func shuffleTodayTrainingEntries(entries []db.TodayTrainingEntry, intN func(int) int) []db.TodayTrainingEntry {

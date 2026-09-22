@@ -108,7 +108,8 @@ func (h *Handler) Analytics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a, err := h.db.GetAnalytics(r.Context(), username)
+	clock := currentRequestClock(r)
+	a, err := h.db.GetAnalytics(r.Context(), username, clock.date, clock.timeZone)
 	if err != nil {
 		http.Error(w, "failed to load analytics: "+err.Error(), http.StatusInternalServerError)
 		return

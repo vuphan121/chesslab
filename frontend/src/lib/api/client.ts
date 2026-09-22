@@ -7,7 +7,11 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
 
 function authHeader(): Record<string, string> {
   const token = getToken()
-  return token ? { Authorization: `Bearer ${token}` } : {}
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+  if (typeof Intl !== 'undefined') {
+    headers['X-Chesslab-Time-Zone'] = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  }
+  return headers
 }
 
 
@@ -137,8 +141,17 @@ export const makeMove = (
     body: JSON.stringify({ from, to, promotion: promotion ?? '' }),
   })
 
-export const analyzeGame = (id: string, speed: 'quick' | 'full' = 'full'): Promise<Analysis> =>
-  request(`/api/games/${id}/analysis${speed === 'quick' ? '?speed=quick' : ''}`)
+export const analyzeGame = (
+  id: string,
+  speed: 'quick' | 'full' = 'full',
+  fen?: string,
+): Promise<Analysis> => {
+  const query = new URLSearchParams()
+  if (speed === 'quick') query.set('speed', 'quick')
+  if (fen) query.set('fen', fen)
+  const suffix = query.size > 0 ? `?${query.toString()}` : ''
+  return request(`/api/games/${id}/analysis${suffix}`)
+}
 
 export interface FenEval {
   score: number
@@ -151,8 +164,8 @@ export interface FenEval {
 export const evalFen = (fen: string): Promise<FenEval> =>
   request(`/api/eval?fen=${encodeURIComponent(fen)}`)
 
-export const getExplorer = (id: string): Promise<Explorer> =>
-  request(`/api/games/${id}/explorer`)
+export const getExplorer = (id: string, fen?: string): Promise<Explorer> =>
+  request(`/api/games/${id}/explorer${fen ? `?fen=${encodeURIComponent(fen)}` : ''}`)
 
 export const gotoNode = (id: string, nodeId: string): Promise<GameState> =>
   request(`/api/games/${id}/goto`, {

@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -21,6 +22,7 @@ import (
 	"github.com/chesslab/backend/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"golang.org/x/sync/singleflight"
 )
 
 type Handler struct {
@@ -37,6 +39,10 @@ type Handler struct {
 	prefetchMu        sync.Mutex
 	prefetchedCloud   map[string]prefetchedCloudEval
 	prefetchSem       chan struct{}
+	analysisMu        sync.Mutex
+	analysisCache     map[string]cachedAnalysis
+	analysisGroup     singleflight.Group
+	loginLimiter      *loginLimiter
 }
 
 type prefetchedCloudEval struct {
@@ -44,8 +50,15 @@ type prefetchedCloudEval struct {
 	expiresAt time.Time
 }
 
+type cachedAnalysis struct {
+	value     AnalysisJSON
+	expiresAt time.Time
+}
+
+var errEngineUnavailable = errors.New("engine not configured")
+
 func NewHandler(store storage.Store, eng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config, bookSource booksource.Reader, bookChapterPrefix string) *Handler {
-	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix, prefetchedCloud: make(map[string]prefetchedCloudEval), prefetchSem: make(chan struct{}, 1)}
+	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix, prefetchedCloud: make(map[string]prefetchedCloudEval), prefetchSem: make(chan struct{}, 1), analysisCache: make(map[string]cachedAnalysis), loginLimiter: newLoginLimiter(5, 5*time.Minute, time.Now)}
 }
 
 type PieceJSON struct {
@@ -183,13 +196,15 @@ func (h *Handler) SetPosition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	g.Lock()
+	defer g.Unlock()
 	if err := g.ResetTo(req.FEN); err != nil {
 		http.Error(w, "invalid fen: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	h.store.Save(g)
-	respondJSON(w, http.StatusOK, toGameState(g))
+	respondJSON(w, http.StatusOK, toGameStateLocked(g))
 }
 
 func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
@@ -233,13 +248,15 @@ func (h *Handler) MakeMove(w http.ResponseWriter, r *http.Request) {
 		flag = chess.PromoN
 	}
 
+	g.Lock()
+	defer g.Unlock()
 	if err := g.ApplyMove(chess.Move{From: from, To: to, Flag: flag}); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	h.store.Save(g)
-	respondJSON(w, http.StatusOK, toGameState(g))
+	respondJSON(w, http.StatusOK, toGameStateLocked(g))
 }
 
 func (h *Handler) DeleteGame(w http.ResponseWriter, r *http.Request) {
@@ -253,12 +270,14 @@ func (h *Handler) DeleteNode(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "game not found", http.StatusNotFound)
 		return
 	}
+	g.Lock()
+	defer g.Unlock()
 	if err := g.DeleteNode(chi.URLParam(r, "nodeId")); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	h.store.Save(g)
-	respondJSON(w, http.StatusOK, toGameState(g))
+	respondJSON(w, http.StatusOK, toGameStateLocked(g))
 }
 
 func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
@@ -267,48 +286,87 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "game not found", http.StatusNotFound)
 		return
 	}
-	if g.IsGameOver() {
+
+	fen := r.URL.Query().Get("fen")
+	if fen == "" {
+		g.RLock()
+		fen = chess.FEN(g.Pos)
+		g.RUnlock()
+	}
+	pos, err := chess.ParseFEN(fen)
+	if err != nil {
+		http.Error(w, "invalid fen", http.StatusBadRequest)
+		return
+	}
+
+	quick := r.URL.Query().Get("speed") == "quick"
+	cacheKey := fen + "|deep"
+	if quick {
+		cacheKey = fen + "|quick"
+	}
+	if result, ok := h.cachedAnalysis(cacheKey); ok {
+		respondJSON(w, http.StatusOK, result)
+		h.prefetchLikelyReplies(result.Lines)
+		return
+	}
+
+	value, err, _ := h.analysisGroup.Do(cacheKey, func() (any, error) {
+		if result, ok := h.cachedAnalysis(cacheKey); ok {
+			return result, nil
+		}
+		result, analyzeErr := h.analyzePosition(fen, pos, quick)
+		if analyzeErr != nil {
+			return AnalysisJSON{}, analyzeErr
+		}
+		h.rememberAnalysis(cacheKey, result)
+		return result, nil
+	})
+	if err != nil {
+		if errors.Is(err, errEngineUnavailable) {
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		} else {
+			http.Error(w, "analysis failed: "+err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+	result := value.(AnalysisJSON)
+	respondJSON(w, http.StatusOK, result)
+	h.prefetchLikelyReplies(result.Lines)
+}
+
+func (h *Handler) analyzePosition(fen string, pos *chess.Position, quick bool) (AnalysisJSON, error) {
+	probe, _ := chess.NewGameFromFEN("", fen)
+	if probe.IsGameOver() {
 		name := "Stockfish"
 		if h.engine != nil {
 			name = h.engine.Name
 		}
-		respondJSON(w, http.StatusOK, AnalysisJSON{EngineName: name})
-		return
+		return AnalysisJSON{EngineName: name}, nil
 	}
 
-	fen := chess.FEN(g.Pos)
-	flipScore := g.Pos.Turn == chess.Black
+	flipScore := pos.Turn == chess.Black
 	depth := 20
 	cloudTimeout := 3 * time.Second
-	quick := r.URL.Query().Get("speed") == "quick"
 	if quick {
 		depth = 10
 		cloudTimeout = 400 * time.Millisecond
 	}
 
 	if cloud := h.takePrefetchedCloud(fen); cloud != nil {
-		result := cloudAnalysis(g.Pos, cloud)
-		respondJSON(w, http.StatusOK, result)
-		h.prefetchLikelyReplies(result.Lines)
-		return
+		return cloudAnalysis(pos, cloud), nil
 	}
 	if cloud, err := lichess.FetchWithTimeout(fen, 3, cloudTimeout); err == nil && cloud != nil {
-		result := cloudAnalysis(g.Pos, cloud)
-		respondJSON(w, http.StatusOK, result)
-		h.prefetchLikelyReplies(result.Lines)
-		return
+		return cloudAnalysis(pos, cloud), nil
 	} else if err != nil && !quick {
 		log.Printf("lichess cloud eval: %v", err)
 	}
 
 	if h.engine == nil {
-		http.Error(w, "engine not configured", http.StatusServiceUnavailable)
-		return
+		return AnalysisJSON{}, errEngineUnavailable
 	}
 	raw, err := h.engine.Analyze(fen, 3, depth)
 	if err != nil {
-		http.Error(w, "analysis failed: "+err.Error(), http.StatusInternalServerError)
-		return
+		return AnalysisJSON{}, err
 	}
 
 	result := AnalysisJSON{BestMove: raw.BestMove, EngineName: h.engine.Name}
@@ -322,7 +380,7 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 			result.Mate = mate
 			result.Depth = l.Depth
 		}
-		sans, fens := chess.MovesToSANAndFENs(g.Pos, l.Moves)
+		sans, fens := chess.MovesToSANAndFENs(pos, l.Moves)
 		result.Lines = append(result.Lines, LineJSON{
 			Score:    score,
 			Mate:     mate,
@@ -332,8 +390,36 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 			FENs:     fens,
 		})
 	}
-	respondJSON(w, http.StatusOK, result)
-	h.prefetchLikelyReplies(result.Lines)
+	return result, nil
+}
+
+func (h *Handler) cachedAnalysis(key string) (AnalysisJSON, bool) {
+	h.analysisMu.Lock()
+	defer h.analysisMu.Unlock()
+	entry, ok := h.analysisCache[key]
+	if !ok || time.Now().After(entry.expiresAt) {
+		delete(h.analysisCache, key)
+		return AnalysisJSON{}, false
+	}
+	return entry.value, true
+}
+
+func (h *Handler) rememberAnalysis(key string, result AnalysisJSON) {
+	h.analysisMu.Lock()
+	defer h.analysisMu.Unlock()
+	now := time.Now()
+	for cacheKey, entry := range h.analysisCache {
+		if now.After(entry.expiresAt) {
+			delete(h.analysisCache, cacheKey)
+		}
+	}
+	if len(h.analysisCache) >= 256 {
+		for cacheKey := range h.analysisCache {
+			delete(h.analysisCache, cacheKey)
+			break
+		}
+	}
+	h.analysisCache[key] = cachedAnalysis{value: result, expiresAt: now.Add(10 * time.Minute)}
 }
 
 func cloudAnalysis(pos *chess.Position, cloud *lichess.CloudEval) AnalysisJSON {
@@ -496,7 +582,18 @@ func (h *Handler) Explorer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := lichess.FetchExplorer(chess.FEN(g.Pos))
+	fen := r.URL.Query().Get("fen")
+	if fen == "" {
+		g.RLock()
+		fen = chess.FEN(g.Pos)
+		g.RUnlock()
+	}
+	if _, err := chess.ParseFEN(fen); err != nil {
+		http.Error(w, "invalid fen", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := lichess.FetchExplorer(fen)
 	if err != nil {
 		http.Error(w, "explorer unavailable: "+err.Error(), http.StatusServiceUnavailable)
 		return
@@ -539,15 +636,23 @@ func (h *Handler) GotoNode(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
+	g.Lock()
+	defer g.Unlock()
 	if err := g.GotoNode(req.NodeID); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	h.store.Save(g)
-	respondJSON(w, http.StatusOK, toGameState(g))
+	respondJSON(w, http.StatusOK, toGameStateLocked(g))
 }
 
 func toGameState(g *chess.Game) GameStateJSON {
+	g.RLock()
+	defer g.RUnlock()
+	return toGameStateLocked(g)
+}
+
+func toGameStateLocked(g *chess.Game) GameStateJSON {
 	pieces := map[string]PieceJSON{}
 	for sq := chess.Square(0); sq <= 63; sq++ {
 		p := g.Pos.Board[sq]
@@ -567,22 +672,41 @@ func toGameState(g *chess.Game) GameStateJSON {
 		mj := toMoveJSON(*g.LastMove)
 		lastMove = &mj
 	}
+	isCheck := chess.InCheck(g.Pos, g.Pos.Turn)
+	hasLegalMoves := len(lms) > 0
+	isCheckmate := isCheck && !hasLegalMoves
+	isStalemate := !isCheck && !hasLegalMoves
+	is50MoveRule := g.Is50MoveRule()
+	isInsufficientMaterial := g.IsInsufficientMaterial()
+	isDraw := isStalemate || is50MoveRule || isInsufficientMaterial
+	gameOverReason := ""
+	switch {
+	case isCheckmate:
+		gameOverReason = "checkmate"
+	case isStalemate:
+		gameOverReason = "stalemate"
+	case is50MoveRule:
+		gameOverReason = "50-move rule"
+	case isInsufficientMaterial:
+		gameOverReason = "insufficient material"
+	}
 
 	return GameStateJSON{
-		ID:            g.ID,
-		FEN:           chess.FEN(g.Pos),
-		Turn:          g.Pos.Turn.String(),
-		FullMove:      g.Pos.FullMove,
-		Pieces:        pieces,
-		LegalMoves:    legalMoves,
-		LastMove:      lastMove,
-		IsCheck:       g.IsCheck(),
-		IsCheckmate:   g.IsCheckmate(),
-		IsStalemate:   g.IsStalemate(),
-		IsDraw:        g.IsDraw(),
-		IsGameOver:    g.IsGameOver(),
-		MoveTree:      toMoveNode(g.Root, 0),
-		CurrentNodeID: g.Current.ID,
+		ID:             g.ID,
+		FEN:            chess.FEN(g.Pos),
+		Turn:           g.Pos.Turn.String(),
+		FullMove:       g.Pos.FullMove,
+		Pieces:         pieces,
+		LegalMoves:     legalMoves,
+		LastMove:       lastMove,
+		IsCheck:        isCheck,
+		IsCheckmate:    isCheckmate,
+		IsStalemate:    isStalemate,
+		IsDraw:         isDraw,
+		IsGameOver:     isCheckmate || isDraw,
+		GameOverReason: gameOverReason,
+		MoveTree:       toMoveNode(g.Root, 0),
+		CurrentNodeID:  g.Current.ID,
 	}
 }
 

@@ -39,6 +39,8 @@ func (h *Handler) LoadPGN(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	g.Lock()
+	defer g.Unlock()
 	g.Reset()
 
 	applied := 0
@@ -63,7 +65,7 @@ func (h *Handler) LoadPGN(w http.ResponseWriter, r *http.Request) {
 		status = http.StatusUnprocessableEntity
 	}
 	respondJSON(w, status, LoadPGNResponse{
-		GameStateJSON: toGameState(g),
+		GameStateJSON: toGameStateLocked(g),
 		AppliedPlies:  applied,
 		TotalTokens:   len(tokens),
 		Error:         loadErr,

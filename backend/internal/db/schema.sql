@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS user_settings (
 );
 
 CREATE TABLE IF NOT EXISTS card_progress (
-    username TEXT NOT NULL,
+    username TEXT NOT NULL CONSTRAINT card_progress_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
     repertoire_id TEXT NOT NULL,
     card_id TEXT NOT NULL,
     box INT NOT NULL DEFAULT 0,
@@ -27,7 +28,8 @@ CREATE TABLE IF NOT EXISTS card_progress (
 
 CREATE TABLE IF NOT EXISTS line_attempts (
     id BIGSERIAL PRIMARY KEY,
-    username TEXT NOT NULL,
+    username TEXT NOT NULL CONSTRAINT line_attempts_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
     repertoire_id TEXT NOT NULL,
     chapter_id TEXT NOT NULL,
     chapter_name TEXT NOT NULL,
@@ -40,7 +42,8 @@ CREATE INDEX IF NOT EXISTS line_attempts_username_played_at_idx
     ON line_attempts (username, played_at DESC);
 
 CREATE TABLE IF NOT EXISTS book_item_progress (
-    username TEXT NOT NULL,
+    username TEXT NOT NULL CONSTRAINT book_item_progress_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
     book_id TEXT NOT NULL,
     item_id TEXT NOT NULL,
     completed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -48,7 +51,8 @@ CREATE TABLE IF NOT EXISTS book_item_progress (
 );
 
 CREATE TABLE IF NOT EXISTS book_study_activity (
-    username TEXT NOT NULL,
+    username TEXT NOT NULL CONSTRAINT book_study_activity_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
     book_id TEXT NOT NULL,
     book_title TEXT NOT NULL,
     chapter_id TEXT NOT NULL,
@@ -65,7 +69,8 @@ CREATE INDEX IF NOT EXISTS book_study_activity_username_first_moved_at_idx
 
 CREATE TABLE IF NOT EXISTS book_saved_lines (
     id BIGSERIAL PRIMARY KEY,
-    username TEXT NOT NULL,
+    username TEXT NOT NULL CONSTRAINT book_saved_lines_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
     book_id TEXT NOT NULL,
     item_id TEXT NOT NULL,
     start_fen TEXT NOT NULL,
@@ -88,14 +93,16 @@ CREATE TABLE IF NOT EXISTS books (
 );
 
 CREATE TABLE IF NOT EXISTS today_training_settings (
-    username TEXT PRIMARY KEY,
+    username TEXT PRIMARY KEY CONSTRAINT today_training_settings_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
     repertoire_ids JSONB NOT NULL,
     lines_per_day INT NOT NULL CHECK (lines_per_day BETWEEN 1 AND 100),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS today_training_queue (
-    username TEXT NOT NULL,
+    username TEXT NOT NULL CONSTRAINT today_training_queue_settings_fk
+        REFERENCES today_training_settings (username) ON DELETE CASCADE,
     queue_date DATE NOT NULL,
     queue_position INT NOT NULL,
     queue_rank BIGINT NOT NULL,
@@ -135,7 +142,8 @@ CREATE TABLE IF NOT EXISTS repertoire_line_importance (
 
 CREATE TABLE IF NOT EXISTS saved_puzzles (
     id BIGSERIAL PRIMARY KEY,
-    username TEXT NOT NULL,
+    username TEXT NOT NULL CONSTRAINT saved_puzzles_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
     url TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (username, url)
