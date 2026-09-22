@@ -150,6 +150,30 @@ export default function OpeningStudyPage() {
     <main className="min-h-screen flex items-center justify-center py-6 sm:py-10" style={{ background: STUDY_BACKGROUND }}>
       <div style={{ width: isNarrow ? '100%' : containerWidth, maxWidth: '100vw', flexShrink: 0, background: 'transparent', borderRadius: 16, padding: outerPadding }}>
         <TopBar
+          leftExtra={
+            <button
+              onClick={changeRepertoire}
+              title="Back to line picker"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 12,
+                fontWeight: 600,
+                color: '#6a675f',
+                background: '#f0efe9',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: 8,
+                cursor: 'pointer',
+              }}
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M6.5 1.5L2.5 5L6.5 8.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Back
+            </button>
+          }
           right={
             <span
               style={{
@@ -258,34 +282,31 @@ export default function OpeningStudyPage() {
               <FeedbackStrip feedback={feedback} />
             </div>
 
-            {lineComplete && (
-              <div
-                style={{
-                  width: boardSize,
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 10,
-                  padding: '10px 4px 0',
-                }}
-              >
-                <span style={{ fontSize: 13, color: runHadMistake ? '#c0392b' : '#2e7d32', fontWeight: 600 }}>
-                  {runHadMistake ? 'You made a mistake in this line — let’s do it again.' : 'Clean line — nice work.'}
-                </span>
-                <div style={{ display: 'flex', gap: 8 }}>
+            <div
+              style={{
+                width: boardSize,
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                gap: 8,
+                padding: '10px 4px 0',
+              }}
+            >
+              {lineComplete && (
+                <>
                   <button onClick={analyzeLine} disabled={busy} style={endBtn(false)}>
                     Analyze
                   </button>
                   <button onClick={redoLine} disabled={busy} style={endBtn(runHadMistake)}>
                     Do it again
                   </button>
-                  <button onClick={nextLine} disabled={busy} style={endBtn(!runHadMistake)}>
-                    Next line
-                  </button>
-                </div>
-              </div>
-            )}
+                </>
+              )}
+              <button onClick={nextLine} disabled={busy} style={endBtn(lineComplete && !runHadMistake)}>
+                Next line
+              </button>
+            </div>
           </div>
 
           {!isNarrow && <div style={{ width: sideWidth, marginTop: BOARD_TOP_OFFSET, flexShrink: 0 }} />}

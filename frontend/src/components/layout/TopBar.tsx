@@ -7,11 +7,11 @@ interface Props {
   turn?: Color
   isBookMove?: boolean
 
-
+  leftExtra?: ReactNode
   right?: ReactNode
 }
 
-export default function TopBar({ turn, isBookMove, right }: Props) {
+export default function TopBar({ turn, isBookMove, leftExtra, right }: Props) {
   return (
     <div
       className="flex-wrap"
@@ -33,6 +33,8 @@ export default function TopBar({ turn, isBookMove, right }: Props) {
           Chess<span style={{ color: '#2f6db0' }}>lab</span>
         </span>
       </div>
+
+      {leftExtra}
 
       <PageSwitcher />
 

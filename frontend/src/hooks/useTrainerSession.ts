@@ -428,23 +428,33 @@ export function useTrainerSession() {
 
 
 
-  const endRun = useCallback(() => {
+  // logAttempt=false is a mid-line skip (the user hit "Next line" before
+  // finishing): whatever cards were actually graded up to this point still
+  // get persisted, but no line_attempts row is logged and the run doesn't
+  // count as done — see nextLine below, which is the only other caller that
+  // passes false. The line is still "consumed" from the queue either way
+  // (todayAdvanceRef/startNextQueuedLine run the same regardless).
+  const endRun = useCallback((opts?: { logAttempt?: boolean }) => {
+    const logAttempt = opts?.logAttempt ?? true
     const session = sessionRef.current
     if (session && repertoire) {
       const merged = mergeSessionCards(priorProgressRef.current, session)
       priorProgressRef.current = merged
 
-      const startCard = runStartCardIdRef.current ? cardById(runStartCardIdRef.current) : undefined
-      // Prefer the chapter the user actually selected/drilled — a card
-      // shared across chapters via transposition can list a different
-      // chapter first, which used to misattribute this run's line_attempts
-      // analytics row (see resolveRunStartCard, which already gets this right).
-      const chapterId = startCard?.chapterIds.find((id) => selectedChapterIdsRef.current.has(id)) ?? startCard?.chapterIds[0]
-      const chapter = chapterId ? repertoire.chapters.find((c) => c.id === chapterId) : undefined
-      const lineAttempt =
-        startCard && chapter
-          ? { chapterId: chapter.id, chapterName: chapter.name, cardId: startCard.id, hadMistake: runHadMistake }
-          : undefined
+      let lineAttempt: { chapterId: string; chapterName: string; cardId: string; hadMistake: boolean } | undefined
+      if (logAttempt) {
+        const startCard = runStartCardIdRef.current ? cardById(runStartCardIdRef.current) : undefined
+        // Prefer the chapter the user actually selected/drilled — a card
+        // shared across chapters via transposition can list a different
+        // chapter first, which used to misattribute this run's line_attempts
+        // analytics row (see resolveRunStartCard, which already gets this right).
+        const chapterId = startCard?.chapterIds.find((id) => selectedChapterIdsRef.current.has(id)) ?? startCard?.chapterIds[0]
+        const chapter = chapterId ? repertoire.chapters.find((c) => c.id === chapterId) : undefined
+        lineAttempt =
+          startCard && chapter
+            ? { chapterId: chapter.id, chapterName: chapter.name, cardId: startCard.id, hadMistake: runHadMistake }
+            : undefined
+      }
 
       apiSaveProgress(repertoire.id, merged, lineAttempt).catch(() => {
 
@@ -459,7 +469,7 @@ export function useTrainerSession() {
 
 
     setHintUci(null)
-    setPhase('line-complete')
+    if (logAttempt) setPhase('line-complete')
   }, [repertoire, cardById, runHadMistake])
 
 
@@ -809,7 +819,10 @@ export function useTrainerSession() {
 
 
 
-  const nextLine = useCallback(async () => {
+  // The "what comes after this line" logic, shared by a normal finish (user
+  // already saw line-complete and clicked Next line) and a mid-line skip
+  // (see nextLine below, which calls endRun({logAttempt:false}) first).
+  const advanceToNextLine = useCallback(async () => {
     if (todayEntryRef.current) {
       setBusy(true)
       try {
@@ -844,6 +857,16 @@ export function useTrainerSession() {
     }
     setPhase('drilling')
   }, [repertoire, startNextQueuedLine, startTodayEntry])
+
+  // Exposed to the always-visible "Next line" button. Mid-line (phase still
+  // 'drilling') this is a skip: end the current run without logging it as a
+  // completed attempt, then advance exactly like a normal finish would.
+  const nextLine = useCallback(async () => {
+    if (phase === 'drilling') {
+      endRun({ logAttempt: false })
+    }
+    await advanceToNextLine()
+  }, [phase, endRun, advanceToNextLine])
 
 
 
