@@ -1,12 +1,13 @@
 'use client'
 
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Listbox } from '@headlessui/react'
 import { listRepertoires, getRepertoire, getTodayTraining } from '@/lib/api/client'
 import type { TodayTrainingResponse } from '@/lib/api/client'
 import RepertoireManagement from '@/components/trainer/RepertoireManagement'
 import LineList from '@/components/trainer/LineList'
 import { enumerateLines } from '@/lib/trainer/lineQueue'
+import type { ChapterLine } from '@/lib/trainer/lineQueue'
 import type { RepertoireSummary, Repertoire } from '@/lib/trainer/types'
 import type { SessionOptions } from '@/lib/trainer/types'
 
@@ -81,6 +82,19 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
   }, [loadTodayTraining])
 
   const selected = reps?.find((r) => r.id === selectedId) ?? null
+
+  // Walking every chapter's full move tree is real recursive work; without
+  // memoizing it, it reran for every chapter on every render of this
+  // component — including one caused by toggling a different chapter's
+  // checkbox or expanding a different chapter's "Lines" panel.
+  const chapterLinesById = useMemo(() => {
+    const map: Record<string, ChapterLine[]> = {}
+    if (fullRep?.id !== selectedId) return map
+    for (const chapter of fullRep.chapters) {
+      map[chapter.id] = enumerateLines(chapter.tree).filter((l) => !l.hasExcluded)
+    }
+    return map
+  }, [fullRep, selectedId])
 
   const refreshCatalog = () => {
     listRepertoires()
@@ -319,11 +333,7 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
               const isExpanded = expandedChapters.has(ch.id)
               const chapterTree =
                 fullRep?.id === selectedId ? fullRep.chapters.find((c) => c.id === ch.id)?.tree : undefined
-
-
-
-
-              const lines = chapterTree ? enumerateLines(chapterTree).filter((l) => !l.hasExcluded) : []
+              const lines = chapterLinesById[ch.id] ?? []
               return (
                 <div key={ch.id}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>

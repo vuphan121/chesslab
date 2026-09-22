@@ -102,6 +102,7 @@ export function useBookStudySession() {
   const gameIdRef = useRef<string | null>(null)
   const moveReqId = useRef(0)
   const analysisReqId = useRef(0)
+  const itemReqId = useRef(0)
   const moveEvalsRef = useRef<Record<string, FenEval>>({})
   // Per-FEN analysis cache so revisiting a position (stepping back/forward, or
   // loading a saved line) is instant instead of another engine round-trip.
@@ -204,7 +205,11 @@ export function useBookStudySession() {
 
 
 
-  const enterItem = useCallback(async (gid: string, item: BookItem) => {
+  // Returns whether this call's result was actually applied — false means a
+  // newer enterItem call started before this one's apiSetPosition resolved,
+  // so callers (goToIndex) know not to trust this call's target as current.
+  const enterItem = useCallback(async (gid: string, item: BookItem): Promise<boolean> => {
+    const reqId = ++itemReqId.current
     setSelected(null)
     setFlipped(item.sideToMove === 'b')
     analysisCacheRef.current = new Map()
@@ -213,7 +218,9 @@ export function useBookStudySession() {
     setAnalysisError(null)
     setSaveNote(null)
     const gs = await apiSetPosition(gid, item.fen)
+    if (reqId !== itemReqId.current) return false
     setGameState(gs)
+    return true
   }, [])
 
   // Rebuild a saved line into the game's move tree, then sit the cursor back at
@@ -329,8 +336,8 @@ export function useBookStudySession() {
       if (!gid || !target) return
       setBusy(true)
       try {
-        await enterItem(gid, target.item)
-        setFlatIndex(index)
+        const applied = await enterItem(gid, target.item)
+        if (applied) setFlatIndex(index)
       } finally {
         setBusy(false)
       }
@@ -535,16 +542,25 @@ export function useBookStudySession() {
 
   const toggleCurrentBookmark = useCallback(() => {
     if (!book || !current) return
-    setBookmarkedItemIds((previous) => {
-      const next = new Set(previous)
-      if (next.has(current.item.id)) next.delete(current.item.id)
-      else next.add(current.item.id)
-      localStorage.setItem(`chesslab.book-bookmarks.${book.id}`, JSON.stringify([...next]))
-      return next
-    })
-  }, [book, current])
+    // localStorage.setItem used to run inside the setBookmarkedItemIds
+    // updater; React only guarantees updaters are pure and may invoke them
+    // more than once (e.g. Strict Mode's dev double-invoke), which doesn't
+    // guarantee the write happens exactly once per toggle.
+    const next = new Set(bookmarkedItemIds)
+    if (next.has(current.item.id)) next.delete(current.item.id)
+    else next.add(current.item.id)
+    localStorage.setItem(`chesslab.book-bookmarks.${book.id}`, JSON.stringify([...next]))
+    setBookmarkedItemIds(next)
+  }, [book, current, bookmarkedItemIds])
 
   const restart = useCallback(() => {
+    // Invalidate any in-flight move/analysis request from the session being
+    // left — without this, its `reqId === *.current` guard still passes
+    // once it resolves (nothing bumped the counter), resurrecting stale
+    // board/analysis state moments after landing back on the setup screen.
+    moveReqId.current++
+    analysisReqId.current++
+    itemReqId.current++
     setPhase('setup')
     setBook(null)
     gameIdRef.current = null

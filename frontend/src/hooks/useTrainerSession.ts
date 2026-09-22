@@ -247,6 +247,10 @@ export function useTrainerSession() {
   const leadingMovesRef = useRef<RunMove[]>([])
   const gradedThisPresentationRef = useRef(false)
   const moveReqId = useRef(0)
+  // startSession has two awaits (getRepertoire, then getProgress) before it
+  // commits any state; without this, picking repertoire A then quickly B
+  // could let A's slower response land after B's and silently overwrite it.
+  const startSessionReqId = useRef(0)
   const lastArgsRef = useRef<{ repertoireId: string; chapterIds: string[]; opts: SessionOptions } | null>(null)
 
 
@@ -463,6 +467,12 @@ export function useTrainerSession() {
 
     const todayEntry = todayEntryRef.current
     if (todayEntry) {
+      // A redo before the previous advance call was ever consumed (e.g. two
+      // "Do it again"s in a row) would otherwise orphan that promise —
+      // nothing awaits it once this overwrites the ref, so its rejection
+      // would surface as an unhandled rejection instead of the graceful
+      // "couldn't advance the queue" handling in advanceToNextLine.
+      todayAdvanceRef.current?.catch(() => {})
       todayAdvanceRef.current = advanceTodayTraining(todayEntry.repertoireId, todayEntry.cardId)
     }
 
@@ -553,6 +563,7 @@ export function useTrainerSession() {
 
   const startSession = useCallback(
     async (repertoireId: string, chapterIds: string[], opts: SessionOptions) => {
+      const reqId = ++startSessionReqId.current
       setIsTodayTraining(false)
       todayEntryRef.current = null
       todayAdvanceRef.current = null
@@ -561,6 +572,7 @@ export function useTrainerSession() {
       setLoadError(null)
       try {
         const rep = await getRepertoire(repertoireId)
+        if (reqId !== startSessionReqId.current) return
         setRepertoireState(rep)
         setFlipped(rep.side === 'b')
 
@@ -586,6 +598,7 @@ export function useTrainerSession() {
         } catch {
 
         }
+        if (reqId !== startSessionReqId.current) return
         priorProgressRef.current = saved
         const session = createSession(cards, opts, saved, newRng())
         sessionRef.current = session
@@ -602,9 +615,11 @@ export function useTrainerSession() {
         }
         setPhase('drilling')
       } catch (err) {
-        setLoadError(err instanceof Error ? err.message : 'Failed to start session.')
+        if (reqId === startSessionReqId.current) {
+          setLoadError(err instanceof Error ? err.message : 'Failed to start session.')
+        }
       } finally {
-        setLoading(false)
+        if (reqId === startSessionReqId.current) setLoading(false)
       }
     },
     [startNextQueuedLine],

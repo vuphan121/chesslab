@@ -68,6 +68,12 @@ export function useChessGame(initialGameId?: string) {
   // for a position the user has already navigated away from.
   const analysisCacheRef = useRef<Map<string, Analysis>>(new Map())
   const analysisReqId = useRef(0)
+  // Shared across selectSquare/move/gotoNodeId — they all mutate the same
+  // `gs`, so only the most recently started one's result should ever land.
+  // `busy` alone isn't enough: it's a state update, not synchronous, so two
+  // calls issued in the same tick (before a re-render disables the button
+  // that triggered them) can both see busy=false and both proceed.
+  const gameActionReqId = useRef(0)
   const explorerReqId = useRef(0)
 
   const runAnalysis = useCallback(async (gameId: string, fen?: string): Promise<Analysis | null> => {
@@ -172,6 +178,7 @@ export function useChessGame(initialGameId?: string) {
         const isLegal = gs.legalMoves.some((m) => m.from === selected && m.to === square)
         if (isLegal) {
           setBusy(true)
+          const reqId = ++gameActionReqId.current
           try {
             const piece = gs.pieces[selected]
             const isPromo =
@@ -179,14 +186,15 @@ export function useChessGame(initialGameId?: string) {
               ((piece.color === 'w' && square[1] === '8') ||
                 (piece.color === 'b' && square[1] === '1'))
             const next = await makeMove(gs.id, selected, square, isPromo ? 'q' : undefined)
+            if (reqId !== gameActionReqId.current) return
             setGs(next)
             setSelected(null)
             moveSound.current?.play().catch(() => {})
             refreshInsights(next.id, next.fen)
           } catch {
-            setSelected(null)
+            if (reqId === gameActionReqId.current) setSelected(null)
           } finally {
-            setBusy(false)
+            if (reqId === gameActionReqId.current) setBusy(false)
           }
           return
         }
@@ -206,20 +214,22 @@ export function useChessGame(initialGameId?: string) {
     async (from: Square, to: Square, promotion?: string) => {
       if (!gs || busy) return
       setBusy(true)
+      const reqId = ++gameActionReqId.current
       try {
         const piece = gs.pieces[from]
         const isPromo =
           piece?.type === 'p' &&
           ((piece.color === 'w' && to[1] === '8') || (piece.color === 'b' && to[1] === '1'))
         const next = await makeMove(gs.id, from, to, promotion ?? (isPromo ? 'q' : undefined))
+        if (reqId !== gameActionReqId.current) return
         setGs(next)
         setSelected(null)
         moveSound.current?.play().catch(() => {})
         refreshInsights(next.id, next.fen)
       } catch {
-        setSelected(null)
+        if (reqId === gameActionReqId.current) setSelected(null)
       } finally {
-        setBusy(false)
+        if (reqId === gameActionReqId.current) setBusy(false)
       }
     },
     [gs, busy, refreshInsights],
@@ -239,8 +249,10 @@ export function useChessGame(initialGameId?: string) {
     async (nodeId: string) => {
       if (!gs || busy || nodeId === gs.currentNodeId) return
       setBusy(true)
+      const reqId = ++gameActionReqId.current
       try {
         const next = await apiGotoNode(gs.id, nodeId)
+        if (reqId !== gameActionReqId.current) return
         setGs(next)
         setSelected(null)
         moveSound.current?.play().catch(() => {})
@@ -248,7 +260,7 @@ export function useChessGame(initialGameId?: string) {
       } catch {
 
       } finally {
-        setBusy(false)
+        if (reqId === gameActionReqId.current) setBusy(false)
       }
     },
     [gs, busy, refreshInsights],

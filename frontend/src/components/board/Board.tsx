@@ -193,6 +193,16 @@ export default function Board({
 
     if (e.button === 2) {
       e.preventDefault()
+      // A right-click chorded in mid-left-drag would otherwise leave that
+      // drag's state (and floating piece) stuck, since the right-click flow
+      // short-circuits handlePointerMove/Up before they reach the left-drag
+      // cleanup below.
+      if (dragFrom) {
+        setDragFrom(null)
+        setDragOver(null)
+        setHasMoved(false)
+        dragMovedRef.current = false
+      }
       boardRef.current?.setPointerCapture(e.pointerId)
       rightDownSquare.current = sq
       setRightDragFrom(sq)
@@ -277,6 +287,21 @@ export default function Board({
     }
   }
 
+  // Fires when the browser/OS interrupts an in-progress pointer session
+  // (alt-tab, a touch-gesture cancellation, a dialog stealing the pointer)
+  // instead of a normal pointerup — without this, dragFrom/rightDownSquare
+  // and the floating dragged-piece portal are left stuck since only
+  // handlePointerUp otherwise clears them.
+  const handlePointerCancel = () => {
+    rightDownSquare.current = null
+    setRightDragFrom(null)
+    setRightDragTo(null)
+    setDragFrom(null)
+    setDragOver(null)
+    setHasMoved(false)
+    dragMovedRef.current = false
+  }
+
   const dragPiece = dragFrom ? (boardState.pieces[dragFrom] ?? null) : null
   const boardSize = squareSize * 8
   const animationFromFile = moveAnimation ? files.indexOf(moveAnimation.from[0]) : -1
@@ -301,6 +326,7 @@ export default function Board({
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
           onContextMenu={(e) => e.preventDefault()}
         >
           {ranks.map((rank) => (
