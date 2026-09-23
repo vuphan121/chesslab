@@ -14,12 +14,8 @@ interface Props {
   repertoire: Repertoire
   runStartCard: RepCard
   runMoves: RunMove[]
-
-
-
-
-
   leadingMoves?: RunMove[]
+  isTodayTraining?: boolean
   answerComment?: string
   viewIndex: number | null
   onGotoPly: (index: number) => void
@@ -57,6 +53,7 @@ export default function LinePanel({
   runStartCard,
   runMoves,
   leadingMoves = [],
+  isTodayTraining,
   answerComment,
   viewIndex,
   onGotoPly,
@@ -70,8 +67,6 @@ export default function LinePanel({
   const activeIndex = viewIndex ?? liveIndex
   const atStart = activeIndex <= 0
   const atLive = activeIndex >= liveIndex
-
-
 
   type Cell = { san: string; index: number | null }
   const rows: { num: number; white?: Cell; black?: Cell }[] = []
@@ -90,14 +85,13 @@ export default function LinePanel({
     }
   }
 
-
   const leadingBasePly = runStartCard.ply - leadingMoves.length
   leadingMoves.forEach((m, j) => addCell(leadingBasePly + 1 + j, { san: toFigurine(m.san), index: null }))
   runMoves.forEach((m, i) => addCell(runStartCard.ply + 1 + i, { san: toFigurine(m.san), index: i + 1 }))
   if (pending) rows.push(pending)
 
   const renderCell = (cell: Cell | undefined) => {
-    if (!cell) return <span style={{ flex: 1 }} />
+    if (!cell) return <span style={{ flex: '0 0 60px' }} />
     const clickable = cell.index !== null
     const isActive = clickable && cell.index === activeIndex
     return (
@@ -105,7 +99,7 @@ export default function LinePanel({
         onClick={clickable ? () => onGotoPly(cell.index as number) : undefined}
         className="mono"
         style={{
-          flex: 1,
+          flex: '0 0 60px',
           cursor: clickable ? 'pointer' : 'default',
           padding: '1px 5px',
           borderRadius: 5,
@@ -150,15 +144,13 @@ export default function LinePanel({
     >
       <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid #efeee9' }}>
         <div className="lbl" style={{ color: '#b4b1a8', marginBottom: 6 }}>
-          Chapter
+          {repertoire.name}
+          {isTodayTraining ? ' · Today’s Training' : ''}
         </div>
         <div className="serif" style={{ fontSize: 17, fontWeight: 500, lineHeight: 1.3 }}>
           {chapterName}
         </div>
       </div>
-
-      {
-}
 
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: '10px 16px 12px' }}>
         <div

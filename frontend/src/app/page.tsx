@@ -124,7 +124,9 @@ function HomeInner() {
   const playContinuation = (uci: string) => move(uci.slice(0, 2), uci.slice(2, 4))
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[#e8e8e6] py-6 sm:py-10">
+    <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10">
+      <TopBar turn={boardState.turn} isBookMove={isBookMove} />
+      <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 84px)', paddingTop: isNarrow ? 20 : 28 }}>
       <div
         style={{
           width: isNarrow ? '100%' : containerWidth,
@@ -135,8 +137,6 @@ function HomeInner() {
           padding: outerPadding,
         }}
       >
-        <TopBar turn={boardState.turn} isBookMove={isBookMove} />
-
         <div
           style={{
             display: 'flex',
@@ -266,6 +266,7 @@ function HomeInner() {
 
           {!isNarrow && <div style={{ width: sideWidth, flexShrink: 0, order: 3 }} aria-hidden="true" />}
         </div>
+      </div>
       </div>
     </main>
   )

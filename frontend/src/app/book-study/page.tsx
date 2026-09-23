@@ -67,12 +67,12 @@ export default function BookStudyPage() {
   }
 
   if (phase === 'setup') {
-    return <main className="min-h-screen bg-[#e8e8e6] py-6 sm:py-10"><div style={topWrap}><TopBar right={<span />} /></div><BookPicker onStart={loadStart} starting={loading} startError={loadError} /></main>
+    return <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10"><TopBar right={<span />} /><BookPicker onStart={loadStart} starting={loading} startError={loadError} /></main>
   }
   if (phase === 'done') {
     return (
-      <main className="min-h-screen bg-[#e8e8e6] py-6 sm:py-10">
-        <div style={topWrap}><TopBar right={<span />} /></div>
+      <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10">
+        <TopBar right={<span />} />
         <div style={{ width: 'min(480px, calc(100vw - 32px))', margin: '24px auto', background: '#fff', borderRadius: 11, boxShadow: '0 1px 3px rgba(0,0,0,.06)', padding: 28, textAlign: 'center' }}>
           <h1 className="serif" style={{ fontSize: 20, fontWeight: 500, marginBottom: 10 }}>Chapter complete</h1>
           <p style={{ fontSize: 13, color: '#7a776f', marginBottom: 20 }}>You&rsquo;ve worked through every position in {book?.title}.</p>
@@ -81,12 +81,12 @@ export default function BookStudyPage() {
       </main>
     )
   }
-  if (!boardState || !book || !current) return <main className="min-h-screen bg-[#e8e8e6] py-6 sm:py-10"><div style={topWrap}><TopBar right={<span />} /></div></main>
+  if (!boardState || !book || !current) return <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10"><TopBar right={<span />} /></main>
 
   return (
-    <main className="min-h-screen bg-[#e8e8e6] py-6 sm:py-10">
-      <div style={{ ...topWrap, background: '#e8e8e6' }}>
-        <TopBar right={<span style={{ fontSize: 12, fontWeight: 600, color: '#6a675f', background: '#f0efe9', padding: '6px 13px', borderRadius: 8 }}>{book.title}</span>} />
+    <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10">
+      <TopBar right={<span style={{ fontSize: 12, fontWeight: 600, color: '#6a675f', background: '#f0efe9', padding: '6px 13px', borderRadius: 8 }}>{book.title}</span>} />
+      <div style={{ ...topWrap, background: '#e8e8e6', marginTop: 24 }}>
         <div style={{ display: 'grid', gridTemplateColumns: isNarrow ? '1fr' : `${SECTIONS_WIDTH}px ${centerWidth}px ${PDF_WIDTH}px`, gap: COLUMN_GAP, alignItems: 'stretch' }}>
           <aside style={{ height: isNarrow ? 260 : frameHeight, minHeight: 0, order: isNarrow ? 1 : undefined }}>
             <ChapterSections items={chapterItems} startIndex={chapterStartIndex} activeItemId={current.item.id} completedItemIds={completedItemIds} bookmarkedItemIds={bookmarkedItemIds} busy={busy} onSelect={goToIndex} />

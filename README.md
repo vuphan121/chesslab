@@ -27,6 +27,7 @@ board.
 - [Testing](#testing)
 - [Project layout](#project-layout)
 - [Deployment](#deployment)
+- [Known issues](#known-issues)
 - [License](#license)
 
 ## What it does
@@ -275,6 +276,44 @@ of the deployed stack — there's no hosted Ollama instance — so `/coach/*` en
 production while the rest of the app (board, engine analysis, opening explorer, opening trainer) is
 fully functional. See `backend/.env.example` and `frontend/.env.example` for what each service
 needs.
+
+## Known issues
+
+Found in a full-repo bug scan (2026-09-23), not yet fixed. Kept here as a backlog rather than
+tracked issues since there's no issue tracker for this repo.
+
+**Confirmed:**
+- **[useChessGame.ts:293](frontend/src/hooks/useChessGame.ts)** — `reset()` skips the hook's
+  busy/reqId race-guard that every other mutating action uses, so a slower in-flight request (a
+  move, a PGN load, the initial mount fetch) can resolve after a reset and silently un-reset the
+  board.
+- **[stockfish.go:134](backend/internal/engine/stockfish.go)** — `Analyze()` never sends UCI `stop`
+  on timeout. The abandoned search keeps running, and its late output can be read as the *next*
+  analysis request's result — a wrong eval for the wrong position, no error surfaced.
+- **[scheduler.ts:76](frontend/src/lib/trainer/scheduler.ts)** — staleness decay compares elapsed
+  days to the raw Leitner box index (0–5) instead of that box's actual gap (`BASE_GAP[box]`, up to
+  64 days) — well-learned cards in high boxes get spuriously demoted after short absences.
+
+**Plausible (strong reasoning, not independently verified against live infra):**
+- **[login_limiter.go:74](backend/internal/api/login_limiter.go)** — rate-limit key is raw
+  `r.RemoteAddr`, with no `X-Forwarded-For` handling. Behind Render's proxy this likely collapses
+  every user into one bucket — a few failed logins from anyone locks out the whole site's one login
+  gate for 5 minutes.
+- **stockfish.go** — no respawn logic if the Stockfish subprocess dies; analysis stays broken until
+  a full server restart.
+- **[build.go:146](backend/internal/repertoire/build.go)** (`mergeAnswer`) — when two chapters
+  transpose into the same card, an excluded answer in one chapter and an accepted answer in another
+  aren't cross-checked, so a merged card can list the same move as both correct and excluded.
+- **[tools.go:32](backend/internal/coach/tools.go)** — the White-relative→side-to-move eval flip is
+  silently skipped when FEN parsing fails, reintroducing this codebase's own previously-fixed
+  eval-sign bug class.
+- **[build.go:27](backend/internal/repertoire/build.go)** — a misspelled `side` value in a
+  repertoire's `config.json` is silently ignored instead of rejected, falling back to an inferred
+  side.
+- **[game.go:340](backend/internal/chess/game.go)** — no threefold-repetition detection anywhere in
+  the engine.
+- **[token.ts](frontend/src/lib/auth/token.ts)** — no cross-tab sync (`storage` event) for sign-out;
+  another open tab keeps using the cleared token.
 
 ## License
 

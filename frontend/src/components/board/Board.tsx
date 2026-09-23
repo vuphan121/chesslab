@@ -390,6 +390,7 @@ export default function Board({
               to={bestMove.slice(2, 4)}
               squareSize={squareSize}
               flipped={flipped}
+              scale={0.8}
             />
           )}
 

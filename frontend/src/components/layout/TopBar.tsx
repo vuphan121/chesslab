@@ -20,12 +20,12 @@ export default function TopBar({ turn, isBookMove, leftExtra, right }: Props) {
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: 18,
+        width: '100%',
         background: '#fff',
-        borderRadius: 11,
-        padding: '11px 20px',
-        minHeight: 52,
-        marginBottom: 20,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.05)',
+        padding: '13px 24px',
+        minHeight: 58,
+        boxShadow: '0 1px 0 rgba(28,27,24,0.07), 0 4px 16px rgba(28,27,24,0.03)',
+        boxSizing: 'border-box',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', padding: '2px 0' }}>

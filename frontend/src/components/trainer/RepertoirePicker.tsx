@@ -1,7 +1,6 @@
 'use client'
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Listbox } from '@headlessui/react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { listRepertoires, getRepertoire, getTodayTraining } from '@/lib/api/client'
 import type { TodayTrainingResponse } from '@/lib/api/client'
 import RepertoireManagement from '@/components/trainer/RepertoireManagement'
@@ -10,8 +9,6 @@ import { enumerateLines } from '@/lib/trainer/lineQueue'
 import type { ChapterLine } from '@/lib/trainer/lineQueue'
 import type { RepertoireSummary, Repertoire } from '@/lib/trainer/types'
 import type { SessionOptions } from '@/lib/trainer/types'
-
-
 
 interface Props {
   onStart: (repertoireId: string, chapterIds: string[], opts: SessionOptions) => void
@@ -28,22 +25,13 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
   const [fullRep, setFullRep] = useState<Repertoire | null>(null)
   const [fullRepLoading, setFullRepLoading] = useState(false)
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
-
-
-
+  const [mode, setMode] = useState<'repertoire' | 'mixed'>('repertoire')
+  const [search, setSearch] = useState('')
 
   const [today, setToday] = useState<TodayTrainingResponse | null>(null)
   const [managing, setManaging] = useState(false)
 
   const fullRepReqId = useRef(0)
-
-
-
-
-
-
-
-
 
   function selectRepertoire(id: string, chapterIds: string[]) {
     setSelectedId(id)
@@ -58,7 +46,7 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
         if (reqId === fullRepReqId.current) setFullRep(rep)
       })
       .catch(() => {
-
+        // degrade gracefully — chapter line previews just stay unavailable
       })
       .finally(() => {
         if (reqId === fullRepReqId.current) setFullRepLoading(false)
@@ -129,28 +117,27 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
   }
 
   const panelStyle: React.CSSProperties = {
-    width: 'min(720px, calc(100vw - 32px))',
-    margin: '24px auto',
-    background: '#fff',
-    borderRadius: 11,
-    boxShadow: '0 1px 3px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.05)',
-    padding: 'clamp(16px, 4vw, 28px)',
+    width: 'min(900px, calc(100vw - 32px))',
+    margin: '32px auto',
+    padding: '0 4px',
   }
 
   if (listError) {
     return (
-      <div style={panelStyle}>
-        <p style={{ fontSize: 14, color: '#37352f', marginBottom: 10 }}>Can&rsquo;t reach the backend.</p>
-        <pre className="mono" style={{ fontSize: 12, background: '#fbfaf7', padding: 10, borderRadius: 6 }}>
-          cd backend{'\n'}go run ./cmd/server/
-        </pre>
+      <div style={{ ...panelStyle, width: 'min(560px, calc(100vw - 32px))' }}>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 2px rgba(28,27,24,0.04), 0 8px 24px rgba(28,27,24,0.05)' }}>
+          <p style={{ fontSize: 14, color: '#37352f', marginBottom: 10 }}>Can&rsquo;t reach the backend.</p>
+          <pre className="mono" style={{ fontSize: 12, background: '#fbfaf7', padding: 10, borderRadius: 6 }}>
+            cd backend{'\n'}go run ./cmd/server/
+          </pre>
+        </div>
       </div>
     )
   }
 
   if (!reps) {
     return (
-      <div style={panelStyle}>
+      <div style={{ ...panelStyle, width: 'min(560px, calc(100vw - 32px))' }}>
         <p style={{ fontSize: 13, color: '#a3a099' }}>Loading repertoires…</p>
       </div>
     )
@@ -161,10 +148,12 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
       return <RepertoireManagement repertoires={reps} onClose={() => { setManaging(false); loadTodayTraining() }} onChanged={refreshCatalog} />
     }
     return (
-      <div style={panelStyle}>
-        <p style={{ fontSize: 14, color: '#37352f', marginBottom: 10 }}>No repertoires loaded.</p>
-        <p style={{ fontSize: 12, color: '#a3a099', marginBottom: 14 }}>Add your first Lichess study to build its complete drill tree.</p>
-        <button onClick={() => setManaging(true)} style={{ fontSize: 12, fontWeight: 700, padding: '8px 12px', borderRadius: 7, border: 'none', background: '#4a90d9', color: '#fff', cursor: 'pointer' }}>Manage repertoires</button>
+      <div style={{ ...panelStyle, width: 'min(560px, calc(100vw - 32px))' }}>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 2px rgba(28,27,24,0.04), 0 8px 24px rgba(28,27,24,0.05)' }}>
+          <p style={{ fontSize: 14, color: '#37352f', marginBottom: 10 }}>No repertoires loaded.</p>
+          <p style={{ fontSize: 12, color: '#a3a099', marginBottom: 14 }}>Add your first Lichess study to build its complete drill tree.</p>
+          <button onClick={() => setManaging(true)} style={primaryPillStyle}>Manage repertoires</button>
+        </div>
       </div>
     )
   }
@@ -173,256 +162,295 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
     return <RepertoireManagement repertoires={reps} onClose={() => { setManaging(false); loadTodayTraining() }} onChanged={refreshCatalog} />
   }
 
+  const todayReady = today?.settings ? today.entries.length : 0
+  const filteredReps = search.trim()
+    ? reps.filter((r) => r.name.toLowerCase().includes(search.trim().toLowerCase()))
+    : reps
+
+  const selectedChapterCount = selectedChapters.size
+
   return (
     <div style={panelStyle}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 18 }}>
-        <h1 className="serif" style={{ fontSize: 22, fontWeight: 500 }}>Opening Study</h1>
-        <button onClick={() => setManaging(true)} style={{ fontSize: 12, fontWeight: 700, padding: '7px 10px', borderRadius: 7, border: '1px solid #dbe8f4', background: '#fff', color: '#3974ad', cursor: 'pointer' }}>Manage</button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+        <div style={modeSegStyle}>
+          <button
+            onClick={() => setMode('repertoire')}
+            style={{ ...modeTabStyle, ...(mode === 'repertoire' ? modeTabOnStyle : {}) }}
+          >
+            By repertoire
+          </button>
+          <button
+            onClick={() => setMode('mixed')}
+            style={{ ...modeTabStyle, ...(mode === 'mixed' ? modeTabOnStyle : {}) }}
+          >
+            Mixed training
+          </button>
+        </div>
+        <button onClick={() => setManaging(true)} style={ghostPillStyle}>Manage</button>
       </div>
 
-      <div
-        style={{
-          marginBottom: 24,
-          padding: '16px',
-          background: '#f7fbff',
-          border: '1px solid #d8e8f7',
-          borderRadius: 9,
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 13 }}>
-          <h2 className="serif" style={{ fontSize: 18, fontWeight: 500 }}>Mixed training</h2>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-          {today?.settings && (
-            <span style={{ fontSize: 12, color: '#6a675f' }}>
-              {today.entries.length} line{today.entries.length === 1 ? '' : 's'} ready
-            </span>
-          )}
+      {mode === 'mixed' ? (
+        <div style={{ background: '#fff', borderRadius: 20, padding: 40, boxShadow: '0 1px 2px rgba(28,27,24,0.04), 0 12px 32px rgba(28,27,24,0.06)', textAlign: 'center' }}>
+          <h1 className="serif" style={{ margin: '0 0 8px', fontSize: 32, fontWeight: 500 }}>Mixed training</h1>
+          <p style={{ fontSize: 14, color: '#6a675f', margin: '0 0 26px' }}>
+            A shuffled queue across every repertoire you&rsquo;re due for.
+          </p>
           <button
             onClick={onResumeToday}
-            disabled={starting || !today?.settings || (today.entries.length ?? 0) === 0}
-            style={{ fontSize: 12, fontWeight: 700, padding: '8px 13px', borderRadius: 7, border: 'none', background: starting ? '#a9c9e8' : '#4a90d9', color: '#fff', cursor: starting ? 'default' : 'pointer', marginLeft: 'auto' }}
+            disabled={starting || !today?.settings || todayReady === 0}
+            style={{ ...darkPillStyle, opacity: starting || todayReady === 0 ? 0.5 : 1, cursor: starting || todayReady === 0 ? 'default' : 'pointer' }}
           >
             {starting ? 'Starting…' : 'Start mixed training'}
           </button>
         </div>
-      </div>
-
-      <div className="lbl" style={{ color: '#b4b1a8', marginBottom: 8 }}>
-        Choose a repertoire
-      </div>
-      <Listbox
-        value={selectedId}
-        onChange={(id) => {
-          const r = reps.find((x) => x.id === id)
-          if (r) selectRepertoire(r.id, r.chapters.map((c) => c.id))
-        }}
-      >
-        <div style={{ position: 'relative', marginBottom: 22 }}>
-          <Listbox.Button
-            style={{
-              width: '100%',
-              textAlign: 'left',
-              cursor: 'pointer',
-              padding: '12px 14px',
-              borderRadius: 8,
-              border: '1px solid #4a90d9',
-              background: '#f2f8fd',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 10,
-            }}
-          >
-            {selected ? (
-              <div style={{ minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 14, fontWeight: 600 }}>{selected.name}</span>
-                  <span
-                    className="mono"
-                    style={{ fontSize: 11, color: '#2f6db0', background: '#ecf3fb', padding: '1px 7px', borderRadius: 5 }}
-                  >
-                    {selected.side === 'w' ? 'White' : 'Black'}
-                  </span>
-                  <span style={{ fontSize: 11, color: '#a3a099' }}>
-                    {selected.lineCount} line{selected.lineCount === 1 ? '' : 's'}
-                  </span>
-                </div>
-                <div style={{ fontSize: 11, color: '#b4b1a8', marginTop: 2, overflowWrap: 'anywhere' }}>
-                  {selected.chapters.length} chapters
-                  {selected.source && (
-                    <>
-                      {' · '}
-                      <span className="mono">{selected.source}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <span style={{ fontSize: 13, color: '#a3a099' }}>Select a repertoire…</span>
-            )}
-            <svg width="11" height="11" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0, color: '#3974ad' }}>
-              <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Listbox.Button>
-          <Listbox.Options
-            style={{
-              position: 'absolute',
-              zIndex: 20,
-              top: 'calc(100% + 6px)',
-              left: 0,
-              right: 0,
-              maxHeight: 320,
-              overflowY: 'auto',
-              background: '#fff',
-              border: '1px solid #eae8e2',
-              borderRadius: 8,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
-              padding: 6,
-              margin: 0,
-              listStyle: 'none',
-            }}
-          >
-            {reps.map((r) => (
-                <Listbox.Option key={r.id} value={r.id} as={Fragment}>
-                  {({ active, selected: isSel }) => (
-                    <li
-                      style={{
-                        cursor: 'pointer',
-                        padding: '10px 12px',
-                        borderRadius: 7,
-                        background: isSel ? '#f2f8fd' : active ? '#fbfaf7' : 'transparent',
-                        border: isSel ? '1px solid #4a90d9' : '1px solid transparent',
-                        marginBottom: 2,
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 14, fontWeight: 600 }}>{r.name}</span>
-                        <span
-                          className="mono"
-                          style={{ fontSize: 11, color: '#2f6db0', background: '#ecf3fb', padding: '1px 7px', borderRadius: 5 }}
-                        >
-                          {r.side === 'w' ? 'White' : 'Black'}
-                        </span>
-                        <span style={{ fontSize: 11, color: '#a3a099' }}>{r.lineCount} line{r.lineCount === 1 ? '' : 's'}</span>
-                      </div>
-                      <div style={{ fontSize: 11, color: '#b4b1a8', marginTop: 2, overflowWrap: 'anywhere' }}>
-                        {r.chapters.length} chapters
-                        {r.source && (
-                          <>
-                            {' · '}
-                            <span className="mono">{r.source}</span>
-                          </>
-                        )}
-                      </div>
-                    </li>
-                  )}
-                </Listbox.Option>
-              ))}
-          </Listbox.Options>
-        </div>
-      </Listbox>
-
-      {selected && (
+      ) : (
         <>
-          <div className="lbl" style={{ color: '#b4b1a8', marginBottom: 8 }}>
-            Chapters
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 22 }}>
-            {selected.chapters.map((ch) => {
-              const isExpanded = expandedChapters.has(ch.id)
-              const chapterTree =
-                fullRep?.id === selectedId ? fullRep.chapters.find((c) => c.id === ch.id)?.tree : undefined
-              const lines = chapterLinesById[ch.id] ?? []
-              return (
-                <div key={ch.id}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', flex: 1 }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedChapters.has(ch.id)}
-                        onChange={() => toggleChapter(ch.id)}
-                      />
-                      {ch.name}
-                      {chapterTree && (
-                        <span style={{ fontSize: 11, color: '#a3a099' }}>
-                          {lines.length} line{lines.length === 1 ? '' : 's'}
-                        </span>
-                      )}
-                    </label>
-                    <button
-                      onClick={() => toggleExpanded(ch.id)}
-                      title={isExpanded ? 'Hide lines' : 'Show lines'}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: '#6a675f',
-                        background: '#f0efe9',
-                        border: 'none',
-                        borderRadius: 6,
-                        padding: '4px 9px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Lines
-                      <svg
-                        width="9"
-                        height="9"
-                        viewBox="0 0 10 10"
-                        fill="none"
-                        style={{ transform: isExpanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.1s' }}
-                      >
-                        <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button>
-                  </div>
+          {selected && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
+              <h1 className="serif" style={{ margin: 0, fontSize: 40, fontWeight: 500, letterSpacing: '-0.5px' }}>
+                {selected.name}
+              </h1>
+              <span
+                className="mono"
+                style={{ fontSize: 11, fontWeight: 700, color: '#2f6db0', background: '#ecf3fb', padding: '4px 10px', borderRadius: 6 }}
+              >
+                {selected.side === 'w' ? 'WHITE' : 'BLACK'}
+              </span>
+            </div>
+          )}
 
-                  {isExpanded && (
-                    <div
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div className="lbl" style={{ color: '#b4b1a8' }}>Repertoire</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 999, background: '#f5f4ef', width: 180 }}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <circle cx="5" cy="5" r="3.6" stroke="#b4b1a8" strokeWidth="1.3" />
+                  <path d="M7.7 7.7L10.5 10.5" stroke="#b4b1a8" strokeWidth="1.3" strokeLinecap="round" />
+                </svg>
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search"
+                  style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 12.5, color: '#37352f', width: '100%' }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {filteredReps.map((r) => {
+                const isSel = r.id === selectedId
+                const isWhite = r.side === 'w'
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => selectRepertoire(r.id, r.chapters.map((c) => c.id))}
+                    style={{ ...pillStyle, ...(isSel ? pillOnStyle : {}) }}
+                  >
+                    <span
+                      title={isWhite ? 'White' : 'Black'}
                       style={{
-                        marginTop: 6,
-                        marginLeft: 22,
-                        padding: '4px',
-                        background: '#fbfaf7',
-                        border: '1px solid #eae8e2',
-                        borderRadius: 7,
-                        maxHeight: 260,
-                        overflow: 'auto',
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        background: isWhite ? '#fff' : '#1c1b18',
+                        boxShadow: isWhite ? 'inset 0 0 0 1.5px #c9c6bc' : 'inset 0 0 0 1.5px #1c1b18',
+                        flexShrink: 0,
                       }}
-                    >
-                      <LineList lines={lines} loading={fullRepLoading && !fullRep} />
+                    />
+                    {r.name}
+                    <span style={{ fontSize: 11, color: isSel ? '#3974ad' : '#a3a099' }}>
+                      {r.chapters.length} chapter{r.chapters.length === 1 ? '' : 's'}
+                    </span>
+                  </button>
+                )
+              })}
+              {filteredReps.length === 0 && (
+                <span style={{ fontSize: 13, color: '#a3a099', padding: '8px 4px' }}>No repertoires match &ldquo;{search}&rdquo;.</span>
+              )}
+            </div>
+          </div>
+
+          {selected && (
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div className="lbl" style={{ color: '#b4b1a8' }}>Chapters</div>
+                <span style={{ fontSize: 12, color: '#a3a099' }}>{selectedChapterCount} of {selected.chapters.length} selected</span>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {selected.chapters.map((ch) => {
+                  const isOn = selectedChapters.has(ch.id)
+                  const lines = chapterLinesById[ch.id] ?? []
+                  const isExpanded = expandedChapters.has(ch.id)
+                  return (
+                    <div key={ch.id} style={{ ...chipStyle, ...(isOn ? chipOnStyle : {}) }}>
+                      <button
+                        onClick={() => toggleChapter(ch.id)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', color: 'inherit' }}
+                      >
+                        {isOn && (
+                          <svg width="9" height="7" viewBox="0 0 10 8" fill="none">
+                            <path d="M1 4L3.5 6.5L9 1" stroke="#2f6db0" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                        {ch.name}
+                        <span style={{ color: isOn ? '#6a675f' : '#a3a099' }}>
+                          &middot; {fullRep?.id === selectedId ? lines.length : '…'}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => toggleExpanded(ch.id)}
+                        title={isExpanded ? 'Hide lines' : 'Show lines'}
+                        style={{ display: 'flex', alignItems: 'center', background: 'none', border: 'none', padding: '0 0 0 4px', cursor: 'pointer', color: '#a3a099' }}
+                      >
+                        <svg width="9" height="9" viewBox="0 0 10 10" fill="none" style={{ transform: isExpanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.1s' }}>
+                          <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
                     </div>
-                  )}
-                </div>
-              )
-            })}
+                  )
+                })}
+              </div>
+
+              {[...expandedChapters].map((chapterId) => {
+                const ch = selected.chapters.find((c) => c.id === chapterId)
+                if (!ch) return null
+                return (
+                  <div
+                    key={chapterId}
+                    style={{
+                      marginTop: 10,
+                      padding: 6,
+                      background: '#fbfaf7',
+                      border: '1px solid #eae8e2',
+                      borderRadius: 12,
+                      maxHeight: 220,
+                      overflow: 'auto',
+                    }}
+                  >
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#a3a099', padding: '6px 8px 2px' }}>{ch.name}</div>
+                    <LineList lines={chapterLinesById[chapterId] ?? []} loading={fullRepLoading && !fullRep} />
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {startError && <p style={{ fontSize: 12, color: '#c0392b', marginBottom: 12 }}>{startError}</p>}
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingTop: 8 }}>
+            <button
+              onClick={handleStart}
+              disabled={starting || !selectedId || selectedChapterCount === 0}
+              style={{ ...darkPillStyle, opacity: starting || !selectedId || selectedChapterCount === 0 ? 0.5 : 1, cursor: starting || !selectedId || selectedChapterCount === 0 ? 'default' : 'pointer' }}
+            >
+              {starting ? 'Starting…' : 'Start session'}
+              {!starting && (
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
           </div>
         </>
       )}
-
-      {startError && <p style={{ fontSize: 12, color: '#c0392b', marginBottom: 10 }}>{startError}</p>}
-
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <button
-          onClick={handleStart}
-          disabled={starting || !selectedId || selectedChapters.size === 0}
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            padding: '9px 20px',
-            borderRadius: 8,
-            border: 'none',
-            background: starting ? '#a9c9e8' : '#4a90d9',
-            color: '#fff',
-            cursor: starting ? 'default' : 'pointer',
-          }}
-        >
-          {starting ? 'Starting…' : 'Start session'}
-        </button>
-      </div>
     </div>
   )
+}
+
+const modeSegStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  background: '#f0efe9',
+  borderRadius: 999,
+  padding: 4,
+  gap: 2,
+}
+
+const modeTabStyle: React.CSSProperties = {
+  padding: '9px 18px',
+  borderRadius: 999,
+  fontSize: 13,
+  fontWeight: 600,
+  color: '#6a675f',
+  display: 'flex',
+  alignItems: 'center',
+  border: 'none',
+  background: 'transparent',
+  cursor: 'pointer',
+}
+
+const modeTabOnStyle: React.CSSProperties = {
+  background: '#4a90d9',
+  color: '#fff',
+  boxShadow: '0 4px 12px rgba(74,144,217,0.35)',
+}
+
+const ghostPillStyle: React.CSSProperties = {
+  fontSize: 12.5,
+  fontWeight: 600,
+  color: '#3974ad',
+  background: '#f2f8fd',
+  border: 'none',
+  borderRadius: 10,
+  padding: '9px 15px',
+  cursor: 'pointer',
+}
+
+const primaryPillStyle: React.CSSProperties = {
+  fontSize: 13,
+  fontWeight: 700,
+  padding: '10px 16px',
+  borderRadius: 10,
+  border: 'none',
+  background: '#4a90d9',
+  color: '#fff',
+  cursor: 'pointer',
+}
+
+const darkPillStyle: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 700,
+  color: '#fff',
+  background: '#1c1b18',
+  border: 'none',
+  borderRadius: 999,
+  padding: '15px 28px',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 9,
+  boxShadow: '0 12px 26px rgba(28,27,24,0.18)',
+}
+
+const pillStyle: React.CSSProperties = {
+  border: '1.5px solid #e3e0d6',
+  borderRadius: 999,
+  padding: '8px 16px 8px 12px',
+  fontSize: 13,
+  fontWeight: 500,
+  color: '#37352f',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
+  background: '#fff',
+  cursor: 'pointer',
+}
+
+const pillOnStyle: React.CSSProperties = {
+  border: '1.5px solid #4a90d9',
+  background: '#eef6fd',
+}
+
+const chipStyle: React.CSSProperties = {
+  border: '1.5px solid #e3e0d6',
+  borderRadius: 999,
+  padding: '9px 14px',
+  fontSize: 13.5,
+  color: '#a3a099',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+}
+
+const chipOnStyle: React.CSSProperties = {
+  border: '1.5px solid #4a90d9',
+  background: '#eef6fd',
+  color: '#1c1b18',
 }
