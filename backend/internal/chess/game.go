@@ -3,6 +3,7 @@ package chess
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -302,8 +303,8 @@ func (g *Game) IsStalemate() bool   { return !g.IsCheck() && !g.HasLegalMoves() 
 func (g *Game) Is50MoveRule() bool  { return g.Pos.HalfClock >= 100 }
 
 // IsInsufficientMaterial reports the standard automatic-draw set: bare king
-// vs king, king+minor vs king, and king+bishop vs king+bishop where both
-// bishops sit on the same square color (they can never deliver checkmate).
+// vs king, king+minor vs king, and positions containing only bishops where
+// every bishop is confined to the same square color (they can never mate).
 // King+knight+knight vs king is deliberately NOT included — checkmate is
 // possible there against a cooperating defender, just not forceable, which
 // matches how Lichess/python-chess/FIDE draw detection treats it.
@@ -329,16 +330,46 @@ func (g *Game) IsInsufficientMaterial() bool {
 		return true
 	case minors == 1:
 		return true
-	case minors == 2 && knights == 0:
-		a, b := bishopSquares[0], bishopSquares[1]
-		return (a.File()+a.Rank())%2 == (b.File()+b.Rank())%2
+	case knights == 0:
+		color := (bishopSquares[0].File() + bishopSquares[0].Rank()) % 2
+		for _, sq := range bishopSquares[1:] {
+			if (sq.File()+sq.Rank())%2 != color {
+				return false
+			}
+		}
+		return true
 	default:
 		return false
 	}
 }
 
+// IsThreefoldRepetition counts equal positions along the active path only.
+// Sibling variations in the move tree are different game histories and must
+// not contribute. The first four FEN fields are the complete repetition key.
+func (g *Game) IsThreefoldRepetition() bool {
+	want := repetitionKey(g.Pos)
+	count := 0
+	for n := g.Current; n != nil; n = n.Parent {
+		if repetitionKey(n.Pos) == want {
+			count++
+			if count >= 3 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func repetitionKey(pos *Position) string {
+	fields := strings.Fields(FEN(pos))
+	if len(fields) < 4 {
+		return FEN(pos)
+	}
+	return strings.Join(fields[:4], " ")
+}
+
 func (g *Game) IsDraw() bool {
-	return g.IsStalemate() || g.Is50MoveRule() || g.IsInsufficientMaterial()
+	return g.IsStalemate() || g.Is50MoveRule() || g.IsThreefoldRepetition() || g.IsInsufficientMaterial()
 }
 func (g *Game) IsGameOver() bool { return g.IsCheckmate() || g.IsDraw() }
 
@@ -350,6 +381,8 @@ func (g *Game) GameOverReason() string {
 		return "stalemate"
 	case g.Is50MoveRule():
 		return "50-move rule"
+	case g.IsThreefoldRepetition():
+		return "threefold repetition"
 	case g.IsInsufficientMaterial():
 		return "insufficient material"
 	}

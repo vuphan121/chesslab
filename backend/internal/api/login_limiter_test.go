@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/http/httptest"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -32,11 +33,8 @@ func TestLoginLimiterBlocksAndResets(t *testing.T) {
 	}
 }
 
-// Regression test for the check-then-act race: allowed()/failure() used to
-// be two separate lock acquisitions with real work (the credential check)
-// happening in between, so concurrent requests could all pass the check
-// before any of them recorded an attempt. reserve() closes that by checking
-// and incrementing atomically in one critical section.
+// Regression test for the check-then-act race: reserve must check and
+// increment each client's count atomically.
 func TestLoginLimiterReserveIsAtomicUnderConcurrency(t *testing.T) {
 	limiter := newLoginLimiter(5, time.Minute, time.Now)
 	const attempts = 50
@@ -54,5 +52,22 @@ func TestLoginLimiterReserveIsAtomicUnderConcurrency(t *testing.T) {
 	wg.Wait()
 	if allowedCount != 5 {
 		t.Fatalf("expected exactly 5 reservations to succeed under concurrent load, got %d", allowedCount)
+	}
+}
+
+func TestLoginClientKeyUsesForwardedClientIP(t *testing.T) {
+	r := httptest.NewRequest("POST", "/api/login", nil)
+	r.RemoteAddr = "10.0.0.2:4321"
+	r.Header.Set("X-Forwarded-For", "203.0.113.8, 10.0.0.2")
+	if got := loginClientKey(r); got != "203.0.113.8" {
+		t.Fatalf("loginClientKey = %q", got)
+	}
+}
+
+func TestLoginClientKeyFallsBackToRemoteAddr(t *testing.T) {
+	r := httptest.NewRequest("POST", "/api/login", nil)
+	r.RemoteAddr = "192.0.2.4:4321"
+	if got := loginClientKey(r); got != "192.0.2.4" {
+		t.Fatalf("loginClientKey = %q", got)
 	}
 }

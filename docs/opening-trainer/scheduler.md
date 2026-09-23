@@ -182,13 +182,15 @@ At session start, for each card with stored state:
 
 ```
 days = floor((now - lastSeenISO) / 1 day)
-if days > box:  box = max(0, box - 1)
+box = clamp(box, 0, MAX_BOX)
+if days > BASE_GAP[box]:  box = max(0, box - 1)
 dueStep = 0                    // unused by pickNext now, but still initialized for grade()'s sake
 retired = false
 ```
 
-A box-5 card left alone for six days drops to box 4 and gets asked once more; a box-1 card left for
-two days drops to 0. Crude on purpose — see `design.md` §9. Anything more principled means
+A card decays by one box only after it exceeds that box's actual review interval: 2, 4, 8, 16, 32,
+or 64 days. A box-5 card therefore stays in box 5 after a short absence instead of being demoted
+merely because the numeric box index is 5. Crude on purpose — see `design.md` §9. Anything more principled means
 implementing SM-2 or FSRS, which is a separate decision with its own doc.
 
 ## 9. Testing
@@ -216,3 +218,4 @@ implementing SM-2 or FSRS, which is a separate decision with its own doc.
     selection, since once its siblings retire (by answering correctly) it's the only card left to
     draw.
 11. Mode filtering (`mistakes` / `review-only`) restricts the pool `pickNext` draws from correctly.
+12. Cross-session decay uses `BASE_GAP[box]`, including the high-box short-absence regression case.

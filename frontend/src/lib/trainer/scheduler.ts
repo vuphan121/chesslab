@@ -65,7 +65,7 @@ export function createSession(
     const st = freshCardState(card.id)
     const persisted = saved?.[card.id]
     if (persisted) {
-      st.box = persisted.box
+      st.box = Math.min(MAX_BOX, Math.max(0, persisted.box))
       st.lapses = persisted.lapses
       st.seen = persisted.seen
       st.correct = persisted.correct
@@ -73,7 +73,7 @@ export function createSession(
 
       if (persisted.lastSeenISO) {
         const days = Math.floor((Date.now() - Date.parse(persisted.lastSeenISO)) / 86_400_000)
-        if (days > st.box) st.box = Math.max(0, st.box - 1)
+        if (days > BASE_GAP[st.box]) st.box = Math.max(0, st.box - 1)
       }
       if (opts.mode === 'review-only' && st.seen === 0) continue
     } else {

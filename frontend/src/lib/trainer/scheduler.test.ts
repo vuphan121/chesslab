@@ -22,6 +22,22 @@ function session(cards: RepCard[], opts?: Partial<SessionOptions>, rng: () => nu
 }
 
 describe('scheduler', () => {
+  it('uses the box review gap before applying staleness decay', () => {
+    const now = Date.now()
+    const recent = {
+      A: { box: 5, lapses: 0, seen: 8, correct: 8, lastSeenISO: new Date(now - 7 * 86_400_000).toISOString() },
+    }
+    const overdue = {
+      A: { box: 3, lapses: 0, seen: 8, correct: 8, lastSeenISO: new Date(now - 17 * 86_400_000).toISOString() },
+    }
+
+    const recentSession = createSession([makeCard('A')], { sessionLength: null, mode: 'mixed' }, recent, mulberry32(1))
+    const overdueSession = createSession([makeCard('A')], { sessionLength: null, mode: 'mixed' }, overdue, mulberry32(1))
+
+    expect(recentSession.cards.get('A')?.box).toBe(5)
+    expect(overdueSession.cards.get('A')?.box).toBe(2)
+  })
+
   it('a correct answer reschedules further out than a wrong one from the same state', () => {
     const s1 = session([makeCard('A')])
     pickNext(s1)

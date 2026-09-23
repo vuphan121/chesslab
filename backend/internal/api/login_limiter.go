@@ -3,6 +3,7 @@ package api
 import (
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -72,6 +73,17 @@ func (l *loginLimiter) success(key string) {
 }
 
 func loginClientKey(r *http.Request) string {
+	// Render terminates TLS at its proxy and supplies the original address in
+	// X-Forwarded-For. Use the left-most valid IP so unrelated users do not
+	// share the proxy's single rate-limit bucket.
+	for _, candidate := range strings.Split(r.Header.Get("X-Forwarded-For"), ",") {
+		if ip := net.ParseIP(strings.TrimSpace(candidate)); ip != nil {
+			return ip.String()
+		}
+	}
+	if ip := net.ParseIP(strings.TrimSpace(r.Header.Get("X-Real-IP"))); ip != nil {
+		return ip.String()
+	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err == nil {
 		return host

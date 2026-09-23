@@ -67,6 +67,33 @@ func TestGameResetToDiscardsTree(t *testing.T) {
 	}
 }
 
+func TestGameDetectsThreefoldRepetitionOnCurrentPath(t *testing.T) {
+	g := NewGame("repetition")
+	for cycle := 0; cycle < 2; cycle++ {
+		for _, move := range [][2]string{{"g1", "f3"}, {"g8", "f6"}, {"f3", "g1"}, {"f6", "g8"}} {
+			if err := g.ApplyMove(findMove(t, g, move[0], move[1])); err != nil {
+				t.Fatalf("cycle %d move %s-%s: %v", cycle, move[0], move[1], err)
+			}
+		}
+	}
+	if !g.IsThreefoldRepetition() || !g.IsDraw() {
+		t.Fatal("expected threefold repetition draw")
+	}
+	if got := g.GameOverReason(); got != "threefold repetition" {
+		t.Fatalf("GameOverReason() = %q", got)
+	}
+}
+
+func TestInsufficientMaterialWithMultipleSameColorBishops(t *testing.T) {
+	g, err := NewGameFromFEN("bishops", "4k3/8/8/8/8/8/6B1/1B3BK1 w - - 0 1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !g.IsInsufficientMaterial() {
+		t.Fatal("same-color bishops cannot produce mate")
+	}
+}
+
 func findMove(t *testing.T, g *Game, from, to string) Move {
 	t.Helper()
 	fromSq := ParseSquare(from)

@@ -27,6 +27,34 @@ func TestBuildRepertoire_Side(t *testing.T) {
 	}
 }
 
+func TestBuildRepertoireRejectsInvalidConfiguredSide(t *testing.T) {
+	_, err := BuildRepertoire(nil, &Config{Side: "black"})
+	if err == nil {
+		t.Fatal("BuildRepertoire accepted invalid side \"black\"")
+	}
+}
+
+func TestMergeAnswerAcceptedMoveWinsAcrossChapters(t *testing.T) {
+	for _, excludedFirst := range []bool{true, false} {
+		card := &Card{}
+		accepted := &Node{SAN: "Nc6", UCI: "b8c6", FEN: "accepted"}
+		excluded := &Node{SAN: "Nc6", UCI: "b8c6", Excluded: true, ExcludedReason: "not in this chapter"}
+		if excludedFirst {
+			mergeAnswer(card, "excluded", excluded)
+			mergeAnswer(card, "accepted", accepted)
+		} else {
+			mergeAnswer(card, "accepted", accepted)
+			mergeAnswer(card, "excluded", excluded)
+		}
+		if len(card.Answers) != 1 || card.Answers[0].SAN != "Nc6" {
+			t.Fatalf("excludedFirst=%v answers=%+v, want accepted Nc6", excludedFirst, card.Answers)
+		}
+		if len(card.ExcludedAnswers) != 0 {
+			t.Fatalf("excludedFirst=%v excludedAnswers=%+v, want none", excludedFirst, card.ExcludedAnswers)
+		}
+	}
+}
+
 func TestBuildRepertoire_CardCount(t *testing.T) {
 	rep := buildDemo(t)
 	if len(rep.Cards) != 130 {

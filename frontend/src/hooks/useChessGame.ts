@@ -141,10 +141,11 @@ export function useChessGame(initialGameId?: string) {
 
   useEffect(() => {
     let cancelled = false
+    const reqId = ++gameActionReqId.current
     moveSound.current = new Audio('/sounds/move.mp3')
     const load = initialGameId ? getGame(initialGameId) : createGame()
     load.then((g) => {
-      if (cancelled) return
+      if (cancelled || reqId !== gameActionReqId.current) return
       setGs(g)
       refreshInsights(g.id, g.fen)
     }).catch(console.error)
@@ -291,9 +292,11 @@ export function useChessGame(initialGameId?: string) {
   }, [gs, gotoNodeId])
 
   const reset = useCallback(async () => {
+    const reqId = ++gameActionReqId.current
     setBusy(true)
     try {
       const next = await createGame()
+      if (reqId !== gameActionReqId.current) return
       analysisCacheRef.current.clear()
       setGs(next)
       setSelected(null)
@@ -301,7 +304,7 @@ export function useChessGame(initialGameId?: string) {
       setExplorer(null)
       refreshInsights(next.id, next.fen)
     } finally {
-      setBusy(false)
+      if (reqId === gameActionReqId.current) setBusy(false)
     }
   }, [refreshInsights])
 
@@ -312,8 +315,10 @@ export function useChessGame(initialGameId?: string) {
     async (pgn: string) => {
       if (!gs || busy) return
       setBusy(true)
+      const reqId = ++gameActionReqId.current
       try {
         const next = await loadPGN(gs.id, pgn)
+        if (reqId !== gameActionReqId.current) return
         analysisCacheRef.current.clear()
         setGs(next)
         setSelected(null)
@@ -325,7 +330,7 @@ export function useChessGame(initialGameId?: string) {
           )
         }
       } finally {
-        setBusy(false)
+        if (reqId === gameActionReqId.current) setBusy(false)
       }
     },
     [gs, busy, refreshInsights],

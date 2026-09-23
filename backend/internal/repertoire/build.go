@@ -16,6 +16,9 @@ func CardKey(fen string) string {
 }
 
 func BuildRepertoire(chapters []*Chapter, cfg *Config) (*Repertoire, error) {
+	if cfg != nil && cfg.Side != "" && cfg.Side != "w" && cfg.Side != "b" {
+		return nil, fmt.Errorf("invalid repertoire side %q: want \"w\" or \"b\"", cfg.Side)
+	}
 	if err := applyExclusions(chapters, cfg); err != nil {
 		return nil, err
 	}
@@ -145,8 +148,16 @@ func walkCards(ch *Chapter, n *Node, side chess.Color, byID map[string]*Card, or
 
 func mergeAnswer(card *Card, chapterID string, child *Node) {
 	if child.Excluded {
+		// A transposition can make the same move accepted in one chapter and
+		// excluded in another. Accepted repertoire theory wins: never expose a
+		// move as both correct and excluded on the merged card.
+		for i := range card.Answers {
+			if sameAnswer(card.Answers[i].SAN, card.Answers[i].UCI, child.SAN, child.UCI) {
+				return
+			}
+		}
 		for i := range card.ExcludedAnswers {
-			if card.ExcludedAnswers[i].SAN == child.SAN {
+			if sameAnswer(card.ExcludedAnswers[i].SAN, card.ExcludedAnswers[i].UCI, child.SAN, child.UCI) {
 				return
 			}
 		}
@@ -155,8 +166,13 @@ func mergeAnswer(card *Card, chapterID string, child *Node) {
 		})
 		return
 	}
+	for i := len(card.ExcludedAnswers) - 1; i >= 0; i-- {
+		if sameAnswer(card.ExcludedAnswers[i].SAN, card.ExcludedAnswers[i].UCI, child.SAN, child.UCI) {
+			card.ExcludedAnswers = append(card.ExcludedAnswers[:i], card.ExcludedAnswers[i+1:]...)
+		}
+	}
 	for i := range card.Answers {
-		if card.Answers[i].SAN == child.SAN {
+		if sameAnswer(card.Answers[i].SAN, card.Answers[i].UCI, child.SAN, child.UCI) {
 			if !containsStr(card.Answers[i].ChapterIDs, chapterID) {
 				card.Answers[i].ChapterIDs = append(card.Answers[i].ChapterIDs, chapterID)
 			}
@@ -171,6 +187,13 @@ func mergeAnswer(card *Card, chapterID string, child *Node) {
 		Comment:    child.Comment,
 		ChapterIDs: []string{chapterID},
 	})
+}
+
+func sameAnswer(aSAN, aUCI, bSAN, bUCI string) bool {
+	if aUCI != "" && bUCI != "" {
+		return aUCI == bUCI
+	}
+	return aSAN == bSAN
 }
 
 func deriveReplies(chapters []*Chapter, side chess.Color) map[string][]Reply {

@@ -1,5 +1,9 @@
 # Opening Trainer — design
 
+> Historical design rationale. The feature is implemented and some early decisions here—especially
+> local-only persistence, new-card limits, and fixed session lengths—have since been superseded.
+> See `README.md`, `ui-spec.md`, and `data-format.md` for current behavior.
+
 ## 1. Goal
 
 Let a user drill an opening repertoire until they can play it from memory, the way Chessbook and

@@ -28,10 +28,12 @@ func NewTools(eng *engine.Engine, index *Index, overview *OverviewIndex) *Tools 
 }
 
 func (t *Tools) AnalyzePosition(fen string) (*PositionEval, error) {
+	pos, err := chess.ParseFEN(fen)
+	if err != nil {
+		return nil, fmt.Errorf("invalid fen: %w", err)
+	}
 	if cloud, err := lichess.Fetch(fen, 3); err == nil && cloud != nil {
-		pos, perr := chess.ParseFEN(fen)
-
-		flip := perr == nil && pos.Turn == chess.Black
+		flip := pos.Turn == chess.Black
 		result := &PositionEval{EngineName: "Lichess Cloud", Depth: cloud.Depth}
 		for i, pv := range cloud.PVs {
 			score, mate := 0, 0
@@ -45,9 +47,7 @@ func (t *Tools) AnalyzePosition(fen string) (*PositionEval, error) {
 				score, mate = -score, -mate
 			}
 			var sans []string
-			if perr == nil {
-				sans, _ = chess.MovesToSANAndFENs(pos, strings.Fields(pv.Moves))
-			}
+			sans, _ = chess.MovesToSANAndFENs(pos, strings.Fields(pv.Moves))
 			if i == 0 {
 				result.Score = score
 				result.Mate = mate
@@ -64,13 +64,10 @@ func (t *Tools) AnalyzePosition(fen string) (*PositionEval, error) {
 	if err != nil {
 		return nil, fmt.Errorf("stockfish analysis failed: %w", err)
 	}
-	pos, perr := chess.ParseFEN(fen)
 	result := &PositionEval{EngineName: t.Engine.Name}
 	for i, l := range raw.Lines {
 		var sans []string
-		if perr == nil {
-			sans, _ = chess.MovesToSANAndFENs(pos, l.Moves)
-		}
+		sans, _ = chess.MovesToSANAndFENs(pos, l.Moves)
 		if i == 0 {
 			result.Score = l.Score
 			result.Mate = l.Mate
