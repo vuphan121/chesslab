@@ -31,7 +31,13 @@ An evicted game returns the normal `404 game not found` response.
 
 - Request bodies are capped at 4 MiB.
 - A client address is allowed five failed login attempts per five-minute window. Further attempts
-  receive `429 Too Many Requests` with `Retry-After`; a successful login clears the failures.
+  receive `429 Too Many Requests` with `Retry-After`; a successful login clears the failures. The
+  client address is resolved by `loginClientKey` (`backend/internal/api/login_limiter.go`): it prefers
+  `CF-Connecting-IP`/`True-Client-IP` when present (set authoritatively by a fronting Cloudflare edge,
+  not spoofable by the caller), falling back to the right-most `X-Forwarded-For` entry — never the
+  left-most, which is caller-controlled and would make the whole limiter a no-op. That XFF fallback
+  assumes exactly one trusted proxy hop in front of this app; that assumption has **not** been
+  empirically verified against the live Render deployment (see the comment in `loginClientKey` itself).
 - The HTTP server applies header, read, write, idle, and maximum-header-size limits. The three-minute
   write timeout deliberately remains longer than the frontend's two-minute local-coach timeout.
 - Browser time-zone values are validated against the embedded IANA database and fall back to UTC.
