@@ -34,6 +34,19 @@ func TestBuildRepertoireRejectsInvalidConfiguredSide(t *testing.T) {
 	}
 }
 
+func TestBuildRepertoireRejectsAmbiguousExclusionChapterName(t *testing.T) {
+	chapters := []*Chapter{
+		{ID: "first", Name: "Sidelines"},
+		{ID: "second", Name: "Sidelines"},
+	}
+	cfg := &Config{Excluded: []ExclusionRule{{Chapter: "Sidelines", Path: []string{"e4"}}}}
+
+	_, err := BuildRepertoire(chapters, cfg)
+	if err == nil {
+		t.Fatal("BuildRepertoire accepted an exclusion with an ambiguous chapter name")
+	}
+}
+
 func TestMergeAnswerAcceptedMoveWinsAcrossChapters(t *testing.T) {
 	for _, excludedFirst := range []bool{true, false} {
 		card := &Card{}

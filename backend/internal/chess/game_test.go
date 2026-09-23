@@ -84,6 +84,26 @@ func TestGameDetectsThreefoldRepetitionOnCurrentPath(t *testing.T) {
 	}
 }
 
+func TestThreefoldIgnoresEnPassantWhenCaptureIsIllegal(t *testing.T) {
+	// e5xd6 en passant would expose the white king on e1 to the rook on e8,
+	// so the initial EP target does not distinguish this position for
+	// repetition purposes.
+	g, err := NewGameFromFEN("pinned-ep", "k3r3/8/8/3pP3/8/8/8/4K3 w - d6 0 1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for cycle := 0; cycle < 2; cycle++ {
+		for _, move := range [][2]string{{"e1", "f1"}, {"a8", "b8"}, {"f1", "e1"}, {"b8", "a8"}} {
+			if err := g.ApplyMove(findMove(t, g, move[0], move[1])); err != nil {
+				t.Fatalf("cycle %d move %s-%s: %v", cycle, move[0], move[1], err)
+			}
+		}
+	}
+	if !g.IsThreefoldRepetition() {
+		t.Fatal("expected initial pinned-EP position to count toward threefold repetition")
+	}
+}
+
 func TestInsufficientMaterialWithMultipleSameColorBishops(t *testing.T) {
 	g, err := NewGameFromFEN("bishops", "4k3/8/8/8/8/8/6B1/1B3BK1 w - - 0 1")
 	if err != nil {

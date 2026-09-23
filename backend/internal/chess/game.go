@@ -365,6 +365,22 @@ func repetitionKey(pos *Position) string {
 	if len(fields) < 4 {
 		return FEN(pos)
 	}
+	// An en-passant target distinguishes positions only when the side to move
+	// can legally capture there. A merely adjacent but pinned pawn does not
+	// change the set of legal moves, so FIDE repetition treats the position as
+	// identical to the same board with no EP target.
+	if pos.EP.Valid() {
+		legalEP := false
+		for _, move := range GenerateLegalMoves(pos) {
+			if move.Flag == EnPassant {
+				legalEP = true
+				break
+			}
+		}
+		if !legalEP {
+			fields[3] = "-"
+		}
+	}
 	return strings.Join(fields[:4], " ")
 }
 

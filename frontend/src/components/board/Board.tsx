@@ -82,10 +82,14 @@ export default function Board({
     setPromo(null)
     setRightDragFrom(null)
     setRightDragTo(null)
+    setDragFrom(null)
+    setDragOver(null)
+    setHasMoved(false)
   }
 
   useEffect(() => {
     rightDownSquare.current = null
+    dragMovedRef.current = false
   }, [boardState.fen])
 
   useEffect(() => {

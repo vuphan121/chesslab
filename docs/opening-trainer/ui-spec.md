@@ -68,7 +68,12 @@ the move panel. The board width follows the available viewport width.
 The move panel header shows the repertoire and chapter. It lists the known path and moves played in
 the current run in figurine notation. Completed moves are clickable for review; arrow buttons and
 the keyboard's Left/Right keys step through that history. While reviewing, a link returns to the
-live position. Study comments appear at the bottom after a correct answer.
+live position. Study comments appear at the bottom after a correct answer. There is no separate
+`Line so far` heading.
+
+Setup-screen line previews are keyed by their root position and move sequence rather than their
+array position. A repertoire refresh therefore cannot transfer expanded or hovered state to a
+different line after reordering.
 
 ## Run completion
 

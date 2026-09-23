@@ -409,6 +409,9 @@ replayed move is character-for-character what the tree recorded, not just *a* le
   `name` = `StudyName`, and `side` inferred from the root (§2.2).
 - A `path` that doesn't resolve is a **load error**, not a warning — a silently-ignored exclusion
   means the user gets drilled on a move the author marked as bad.
+- `chapter` must identify exactly one chapter. Lichess permits duplicate chapter names, so an
+  exclusion using an ambiguous duplicate name is a load error rather than silently applying only to
+  the first chapter.
 
 Moves carrying a `$2`/`$4`/`$6` NAG are excluded automatically with `reason` = "annotated ?/??/?! in
 the study", no sidecar entry needed.

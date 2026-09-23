@@ -14,11 +14,25 @@ interface Props {
   loading: boolean
 }
 
+function lineId(line: ChapterLine): string {
+  return `${line.positionKeys[0]}:${line.ucis.join(' ')}`
+}
+
 export default function LineList({ lines, loading }: Props) {
   const [popup, setPopup] = useState<{ fen: string; from: string; to: string; x: number; y: number } | null>(
     null,
   )
-  const [expanded, setExpanded] = useState<Set<number>>(new Set())
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const currentLineIds = lines.map(lineId)
+  const currentSignature = currentLineIds.join('\n')
+  const [lineSignature, setLineSignature] = useState(currentSignature)
+
+  if (lineSignature !== currentSignature) {
+    setLineSignature(currentSignature)
+    setPopup(null)
+    const valid = new Set(currentLineIds)
+    setExpanded((prev) => new Set([...prev].filter((id) => valid.has(id))))
+  }
 
   const handleEnter = (fen: string, uci: string, e: React.MouseEvent) => {
     const clampedX = Math.min(Math.max(e.clientX - MINI_SIZE / 2, 8), window.innerWidth - MINI_SIZE - 8)
@@ -29,11 +43,11 @@ export default function LineList({ lines, loading }: Props) {
 
   const handleLeave = () => setPopup(null)
 
-  const toggleLine = (i: number) => {
+  const toggleLine = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev)
-      if (next.has(i)) next.delete(i)
-      else next.add(i)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -45,10 +59,11 @@ export default function LineList({ lines, loading }: Props) {
     <>
       <div>
         {lines.map((line, li) => {
-          const isOpen = expanded.has(li)
+          const id = lineId(line)
+          const isOpen = expanded.has(id)
           return (
             <div
-              key={li}
+              key={id}
               style={{
                 display: 'flex',
                 alignItems: isOpen ? 'flex-start' : 'center',
@@ -113,7 +128,7 @@ export default function LineList({ lines, loading }: Props) {
                 })}
               </div>
               <button
-                onClick={() => toggleLine(li)}
+                onClick={() => toggleLine(id)}
                 title={isOpen ? 'Collapse line' : 'Expand line'}
                 style={{
                   flexShrink: 0,

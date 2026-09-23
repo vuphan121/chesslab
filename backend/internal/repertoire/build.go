@@ -58,16 +58,19 @@ func applyExclusions(chapters []*Chapter, cfg *Config) error {
 		return nil
 	}
 	for _, rule := range cfg.Excluded {
-		var ch *Chapter
+		var matches []*Chapter
 		for _, c := range chapters {
 			if c.Name == rule.Chapter {
-				ch = c
-				break
+				matches = append(matches, c)
 			}
 		}
-		if ch == nil {
+		if len(matches) == 0 {
 			return fmt.Errorf("exclusion rule references unknown chapter %q", rule.Chapter)
 		}
+		if len(matches) > 1 {
+			return fmt.Errorf("exclusion rule chapter %q is ambiguous: %d chapters have that name", rule.Chapter, len(matches))
+		}
+		ch := matches[0]
 
 		node := ch.Root
 		for _, san := range rule.Path {
