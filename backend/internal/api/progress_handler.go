@@ -95,7 +95,7 @@ func (h *Handler) SaveProgress(w http.ResponseWriter, r *http.Request) {
 
 	cards := make(map[string]db.CardProgress, len(req.Cards))
 	for id, c := range req.Cards {
-		if strings.TrimSpace(id) == "" || c.Box < 0 || c.Box > 5 || c.Lapses < 0 || c.Seen < 0 || c.Correct < 0 || c.Correct > c.Seen || c.Lapses > c.Seen {
+		if strings.TrimSpace(id) == "" || c.Box < 0 || c.Box > 5 || c.Lapses < 0 || c.Seen < 0 || c.Correct < 0 || c.Correct > c.Seen || c.Lapses > c.Seen || c.Correct+c.Lapses > c.Seen {
 			http.Error(w, "invalid card progress", http.StatusBadRequest)
 			return
 		}
@@ -105,7 +105,7 @@ func (h *Handler) SaveProgress(w http.ResponseWriter, r *http.Request) {
 	if req.Deltas != nil {
 		deltas = make(map[string]db.CardProgressDelta, len(req.Deltas))
 		for id, delta := range req.Deltas {
-			if _, ok := cards[id]; !ok || delta.Lapses < 0 || delta.Seen < 0 || delta.Correct < 0 || delta.Lapses > delta.Seen || delta.Correct > delta.Seen {
+			if _, ok := cards[id]; !ok || delta.Lapses < 0 || delta.Seen < 0 || delta.Correct < 0 || delta.Lapses > delta.Seen || delta.Correct > delta.Seen || delta.Correct+delta.Lapses > delta.Seen {
 				http.Error(w, "invalid progress delta", http.StatusBadRequest)
 				return
 			}

@@ -374,16 +374,20 @@ export function useBookStudySession() {
     if (!gid || !gameState || busy) return
     const parentId = flatten(gameState.moveTree).get(gameState.currentNodeId)?.parentId
     if (parentId == null) return
+    const expectedItemRequest = itemReqId.current
     setBusy(true)
     try {
       const gs = await gotoNode(gid, parentId)
+      if (expectedItemRequest !== itemReqId.current) return
       setGameState(gs)
       setSelected(null)
       setMoveError(null)
     } catch (error) {
-      setMoveError(error instanceof Error ? error.message : 'Could not go back. Please try again.')
+      if (expectedItemRequest === itemReqId.current) {
+        setMoveError(error instanceof Error ? error.message : 'Could not go back. Please try again.')
+      }
     } finally {
-      setBusy(false)
+      if (expectedItemRequest === itemReqId.current) setBusy(false)
     }
   }, [gameState, busy])
 
@@ -393,49 +397,61 @@ export function useBookStudySession() {
     const entry = flatten(gameState.moveTree).get(gameState.currentNodeId)
     const child = entry?.node.children?.[0]
     if (!child) return
+    const expectedItemRequest = itemReqId.current
     setBusy(true)
     try {
       const gs = await gotoNode(gid, child.id)
+      if (expectedItemRequest !== itemReqId.current) return
       setGameState(gs)
       setSelected(null)
       setMoveError(null)
     } catch (error) {
-      setMoveError(error instanceof Error ? error.message : 'Could not go forward. Please try again.')
+      if (expectedItemRequest === itemReqId.current) {
+        setMoveError(error instanceof Error ? error.message : 'Could not go forward. Please try again.')
+      }
     } finally {
-      setBusy(false)
+      if (expectedItemRequest === itemReqId.current) setBusy(false)
     }
   }, [gameState, busy])
 
   const goToMove = useCallback(async (nodeId: string) => {
     const gid = gameIdRef.current
     if (!gid || !gameState || busy) return
+    const expectedItemRequest = itemReqId.current
     setBusy(true)
     try {
       const gs = await gotoNode(gid, nodeId)
+      if (expectedItemRequest !== itemReqId.current) return
       setGameState(gs)
       setSelected(null)
       setMoveError(null)
     } catch (error) {
-      setMoveError(error instanceof Error ? error.message : 'Could not open that move. Please try again.')
+      if (expectedItemRequest === itemReqId.current) {
+        setMoveError(error instanceof Error ? error.message : 'Could not open that move. Please try again.')
+      }
     } finally {
-      setBusy(false)
+      if (expectedItemRequest === itemReqId.current) setBusy(false)
     }
   }, [gameState, busy])
 
   const deleteMove = useCallback(async (nodeId: string) => {
     const gid = gameIdRef.current
     if (!gid || !gameState || busy || nodeId === gameState.moveTree.id) return
+    const expectedItemRequest = itemReqId.current
     setBusy(true)
     try {
       const gs = await deleteGameNode(gid, nodeId)
+      if (expectedItemRequest !== itemReqId.current) return
       setGameState(gs)
       setSelected(null)
       setSaveNote(null)
       setMoveError(null)
     } catch (error) {
-      setMoveError(error instanceof Error ? error.message : 'Could not delete that move. Please try again.')
+      if (expectedItemRequest === itemReqId.current) {
+        setMoveError(error instanceof Error ? error.message : 'Could not delete that move. Please try again.')
+      }
     } finally {
-      setBusy(false)
+      if (expectedItemRequest === itemReqId.current) setBusy(false)
     }
   }, [gameState, busy])
 
@@ -588,6 +604,11 @@ export function useBookStudySession() {
     // left — without this, its `reqId === *.current` guard still passes
     // once it resolves (nothing bumped the counter), resurrecting stale
     // board/analysis state moments after landing back on the setup screen.
+    // Bumping itemReqId also makes the saved-line-replay effect's own
+    // finally skip its setBusy(false) (its reqId no longer matches), so
+    // restart() must clear busy itself — otherwise a restart mid-replay
+    // leaves busy stuck true for the rest of the hook's lifetime, silently
+    // blocking every move (including in the *next* book session).
     moveReqId.current++
     analysisReqId.current++
     itemReqId.current++
@@ -596,6 +617,7 @@ export function useBookStudySession() {
     gameIdRef.current = null
     setGameReadyVersion(0)
     setGameState(null)
+    setBusy(false)
     setMoveError(null)
     setFlatIndex(0)
     setAnalysisEnabled(false)

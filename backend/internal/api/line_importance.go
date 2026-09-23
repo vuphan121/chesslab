@@ -18,7 +18,30 @@ func (h *Handler) ensureLineImportance(ctx context.Context, rep *repertoire.Repe
 	return h.refreshLineImportance(ctx, rep)
 }
 
+// startLineImportanceRefresh and isLatestLineImportanceRefresh together guard
+// the DB write at the end of refreshLineImportance against concurrent
+// refreshes of the SAME repertoire ID racing each other — e.g. a user
+// double-clicking "refresh", or a manual refresh overlapping the daily cron
+// batch. Each refresh registers itself as the latest attempt for that ID
+// before doing any (slow, per-card Lichess-explorer) work; if a newer
+// refresh registers itself before this one finishes, this one's result is
+// for a repertoire snapshot that's no longer current and must not overwrite
+// what the newer refresh already wrote (or is about to write).
+func (h *Handler) startLineImportanceRefresh(repID string) int64 {
+	h.lineImportanceMu.Lock()
+	defer h.lineImportanceMu.Unlock()
+	h.lineImportanceGen[repID]++
+	return h.lineImportanceGen[repID]
+}
+
+func (h *Handler) isLatestLineImportanceRefresh(repID string, gen int64) bool {
+	h.lineImportanceMu.Lock()
+	defer h.lineImportanceMu.Unlock()
+	return h.lineImportanceGen[repID] == gen
+}
+
 func (h *Handler) refreshLineImportance(ctx context.Context, rep *repertoire.Repertoire) map[string]float64 {
+	gen := h.startLineImportanceRefresh(rep.ID)
 	countsByFEN := map[string]int64{}
 	entries := make([]db.LineImportance, 0, len(rep.Cards))
 	fetchEnabled := true
@@ -63,6 +86,17 @@ func (h *Handler) refreshLineImportance(ctx context.Context, rep *repertoire.Rep
 		} else {
 			entries[index].Importance = (math.Log1p(float64(entries[index].PlayCount)) - minLog) / (maxLog - minLog)
 		}
+	}
+	if !h.isLatestLineImportanceRefresh(rep.ID, gen) {
+		// A newer refresh for this repertoire has already started (and may
+		// already have written); persisting this stale snapshot now would
+		// silently clobber fresher data. Just return the computed values for
+		// this call's own immediate caller without writing them.
+		values := map[string]float64{}
+		for _, entry := range entries {
+			values[entry.CardID] = entry.Importance
+		}
+		return values
 	}
 	if err := h.db.ReplaceLineImportance(ctx, rep.ID, entries); err != nil {
 		return neutralImportance(rep)

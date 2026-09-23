@@ -32,42 +32,77 @@ type rankedTodayTrainingEntry struct {
 	rank int64
 }
 
-func (s *Store) GetTodayTraining(ctx context.Context, username, queueDate string) (TodayTrainingQueue, error) {
-	var out TodayTrainingQueue
+// pgxQuerier is the read-only subset of *pgxpool.Pool and pgx.Tx that the
+// settings/entries fetch helpers below need, so the same query logic runs
+// unchanged whether it's called outside a transaction (GetTodayTraining) or
+// inside one that already holds the per-user advisory lock (RefreshTodayTraining,
+// AdvanceTodayTraining) — this used to be copy-pasted once per caller.
+type pgxQuerier interface {
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+}
+
+func fetchTodayTrainingSettings(ctx context.Context, q pgxQuerier, username string) (TodayTrainingSettings, error) {
 	var raw []byte
 	var settings TodayTrainingSettings
-	err := s.pool.QueryRow(ctx, `
+	if err := q.QueryRow(ctx, `
 		SELECT repertoire_ids, lines_per_day
 		FROM today_training_settings
-		WHERE username = $1`, username).Scan(&raw, &settings.LinesPerDay)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return out, nil
-		}
-		return out, fmt.Errorf("get today training settings: %w", err)
+		WHERE username = $1`, username).Scan(&raw, &settings.LinesPerDay); err != nil {
+		return TodayTrainingSettings{}, fmt.Errorf("get today training settings: %w", err)
 	}
 	if err := json.Unmarshal(raw, &settings.RepertoireIDs); err != nil {
-		return out, fmt.Errorf("decode today training settings: %w", err)
+		return TodayTrainingSettings{}, fmt.Errorf("decode today training settings: %w", err)
 	}
-	out.Settings = &settings
+	return settings, nil
+}
 
-	rows, err := s.pool.Query(ctx, `
+func fetchTodayTrainingEntries(ctx context.Context, q pgxQuerier, username, queueDate string) ([]TodayTrainingEntry, error) {
+	rows, err := q.Query(ctx, `
 		SELECT repertoire_id, card_id
 		FROM today_training_queue
 		WHERE username = $1 AND queue_date = $2::date
 		ORDER BY queue_rank`, username, queueDate)
 	if err != nil {
-		return out, fmt.Errorf("get today training queue: %w", err)
+		return nil, fmt.Errorf("get today training queue: %w", err)
 	}
 	defer rows.Close()
+	var entries []TodayTrainingEntry
 	for rows.Next() {
 		var entry TodayTrainingEntry
 		if err := rows.Scan(&entry.RepertoireID, &entry.CardID); err != nil {
-			return out, fmt.Errorf("scan today training entry: %w", err)
+			return nil, fmt.Errorf("scan today training entry: %w", err)
 		}
-		out.Entries = append(out.Entries, entry)
+		entries = append(entries, entry)
 	}
-	return out, rows.Err()
+	return entries, rows.Err()
+}
+
+// fetchTodayTraining is GetTodayTraining's actual implementation, generalized
+// over pgxQuerier so RefreshTodayTraining can call it against its own tx
+// (previously duplicated as getTodayTrainingTx). No settings row is not an
+// error — a user who's never configured mixed training just gets an empty
+// queue.
+func fetchTodayTraining(ctx context.Context, q pgxQuerier, username, queueDate string) (TodayTrainingQueue, error) {
+	var out TodayTrainingQueue
+	settings, err := fetchTodayTrainingSettings(ctx, q, username)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return out, nil
+		}
+		return out, err
+	}
+	out.Settings = &settings
+	entries, err := fetchTodayTrainingEntries(ctx, q, username, queueDate)
+	if err != nil {
+		return out, err
+	}
+	out.Entries = entries
+	return out, nil
+}
+
+func (s *Store) GetTodayTraining(ctx context.Context, username, queueDate string) (TodayTrainingQueue, error) {
+	return fetchTodayTraining(ctx, s.pool, username, queueDate)
 }
 
 func (s *Store) SaveTodayTraining(ctx context.Context, username, queueDate string, settings TodayTrainingSettings, entries []TodayTrainingEntry) (TodayTrainingQueue, error) {
@@ -113,7 +148,7 @@ func (s *Store) RefreshTodayTraining(ctx context.Context, username, queueDate st
 		return TodayTrainingQueue{}, err
 	}
 
-	current, err := getTodayTrainingTx(ctx, tx, username, queueDate)
+	current, err := fetchTodayTraining(ctx, tx, username, queueDate)
 	if err != nil {
 		return TodayTrainingQueue{}, err
 	}
@@ -142,17 +177,9 @@ func (s *Store) AdvanceTodayTraining(ctx context.Context, username, queueDate, r
 		return TodayTrainingQueue{}, err
 	}
 
-	var raw []byte
-	var settings TodayTrainingSettings
-	err = tx.QueryRow(ctx, `
-		SELECT repertoire_ids, lines_per_day
-		FROM today_training_settings
-		WHERE username = $1`, username).Scan(&raw, &settings.LinesPerDay)
+	settings, err := fetchTodayTrainingSettings(ctx, tx, username)
 	if err != nil {
-		return TodayTrainingQueue{}, fmt.Errorf("get today training settings: %w", err)
-	}
-	if err := json.Unmarshal(raw, &settings.RepertoireIDs); err != nil {
-		return TodayTrainingQueue{}, fmt.Errorf("decode today training settings: %w", err)
+		return TodayTrainingQueue{}, err
 	}
 
 	rows, err := tx.Query(ctx, `
@@ -228,38 +255,6 @@ func lockTodayTraining(ctx context.Context, tx pgx.Tx, username string) error {
 		return fmt.Errorf("lock today training: %w", err)
 	}
 	return nil
-}
-
-func getTodayTrainingTx(ctx context.Context, tx pgx.Tx, username, queueDate string) (TodayTrainingQueue, error) {
-	var out TodayTrainingQueue
-	var raw []byte
-	var settings TodayTrainingSettings
-	if err := tx.QueryRow(ctx, `
-		SELECT repertoire_ids, lines_per_day FROM today_training_settings WHERE username = $1`, username).Scan(&raw, &settings.LinesPerDay); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return out, nil
-		}
-		return out, fmt.Errorf("get today training settings: %w", err)
-	}
-	if err := json.Unmarshal(raw, &settings.RepertoireIDs); err != nil {
-		return out, fmt.Errorf("decode today training settings: %w", err)
-	}
-	out.Settings = &settings
-	rows, err := tx.Query(ctx, `
-		SELECT repertoire_id, card_id FROM today_training_queue
-		WHERE username = $1 AND queue_date = $2::date ORDER BY queue_rank`, username, queueDate)
-	if err != nil {
-		return out, fmt.Errorf("get today training queue: %w", err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var entry TodayTrainingEntry
-		if err := rows.Scan(&entry.RepertoireID, &entry.CardID); err != nil {
-			return out, fmt.Errorf("scan today training entry: %w", err)
-		}
-		out.Entries = append(out.Entries, entry)
-	}
-	return out, rows.Err()
 }
 
 func sameTodayTrainingSettings(left, right TodayTrainingSettings) bool {

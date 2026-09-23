@@ -84,11 +84,24 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
     return map
   }, [fullRep, selectedId])
 
-  const refreshCatalog = () => {
+  const refreshCatalog = (changedId?: string) => {
     listRepertoires()
       .then((list) => {
         setReps(list)
-        if (!selectedId && list.length > 0) selectRepertoire(list[0].id, list[0].chapters.map((chapter) => chapter.id))
+        // A refresh is a full rebuild (see backend CLAUDE.md's "Repertoire
+        // management"), so when the CHANGED repertoire is the one currently
+        // selected, its chapter ids can no longer match what's already in
+        // `selectedChapters`/`fullRep` — re-select it against the fresh list
+        // rather than leaving the panel showing stale chapter ids and a line
+        // preview built from the pre-refresh tree. An unrelated repertoire
+        // changing (import, or refreshing a different row) must NOT reset
+        // this one's selection.
+        const changed = changedId ? list.find((r) => r.id === changedId) : undefined
+        if (changed && changed.id === selectedId) {
+          selectRepertoire(changed.id, changed.chapters.map((chapter) => chapter.id))
+        } else if (!selectedId && list.length > 0) {
+          selectRepertoire(list[0].id, list[0].chapters.map((chapter) => chapter.id))
+        }
       })
       .catch(() => {})
   }

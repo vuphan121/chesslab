@@ -55,12 +55,43 @@ func TestLoginLimiterReserveIsAtomicUnderConcurrency(t *testing.T) {
 	}
 }
 
-func TestLoginClientKeyUsesForwardedClientIP(t *testing.T) {
+// Fallback path (no CF-Connecting-IP/True-Client-IP present): assumes a
+// single trusted proxy hop that appends the connecting address it actually
+// saw to whatever X-Forwarded-For the caller sent, rather than discarding
+// it — so the right-most entry is the one that hop itself appended
+// (trustworthy); a caller can prepend anything it likes before that.
+// RemoteAddr is deliberately set to something OTHER than the expected
+// answer, so this can't pass by silently falling through to the
+// RemoteAddr fallback instead of actually parsing the header.
+func TestLoginClientKeyUsesRightmostForwardedIP(t *testing.T) {
 	r := httptest.NewRequest("POST", "/api/login", nil)
-	r.RemoteAddr = "10.0.0.2:4321"
+	r.RemoteAddr = "203.0.113.8:4321"
 	r.Header.Set("X-Forwarded-For", "203.0.113.8, 10.0.0.2")
-	if got := loginClientKey(r); got != "203.0.113.8" {
-		t.Fatalf("loginClientKey = %q", got)
+	if got := loginClientKey(r); got != "10.0.0.2" {
+		t.Fatalf("loginClientKey = %q, want the proxy-appended (right-most) entry", got)
+	}
+}
+
+// Regression test: a caller must not be able to get a fresh rate-limit
+// bucket on every request just by sending a different fake left-most
+// X-Forwarded-For entry — that made the login limiter a no-op. RemoteAddr
+// is deliberately NOT the shared right-most entry, so this can't pass via
+// the RemoteAddr fallback either.
+func TestLoginClientKeyIgnoresSpoofedLeftmostEntry(t *testing.T) {
+	r1 := httptest.NewRequest("POST", "/api/login", nil)
+	r1.RemoteAddr = "203.0.113.1:4321"
+	r1.Header.Set("X-Forwarded-For", "1.1.1.1, 10.0.0.2")
+
+	r2 := httptest.NewRequest("POST", "/api/login", nil)
+	r2.RemoteAddr = "203.0.113.2:4321"
+	r2.Header.Set("X-Forwarded-For", "2.2.2.2, 10.0.0.2")
+
+	key1, key2 := loginClientKey(r1), loginClientKey(r2)
+	if key1 != key2 {
+		t.Fatalf("loginClientKey differed for the same real client with only the spoofed entry changed: %q vs %q", key1, key2)
+	}
+	if key1 != "10.0.0.2" {
+		t.Fatalf("loginClientKey = %q, want the shared proxy-appended entry", key1)
 	}
 }
 
@@ -69,5 +100,30 @@ func TestLoginClientKeyFallsBackToRemoteAddr(t *testing.T) {
 	r.RemoteAddr = "192.0.2.4:4321"
 	if got := loginClientKey(r); got != "192.0.2.4" {
 		t.Fatalf("loginClientKey = %q", got)
+	}
+}
+
+// CF-Connecting-IP, when present, is preferred over X-Forwarded-For
+// entirely — it's set authoritatively by a fronting Cloudflare edge, which
+// discards any client-supplied value of the same header name.
+func TestLoginClientKeyPrefersCFConnectingIP(t *testing.T) {
+	r := httptest.NewRequest("POST", "/api/login", nil)
+	r.RemoteAddr = "10.0.0.2:4321"
+	r.Header.Set("X-Forwarded-For", "1.1.1.1, 10.0.0.2")
+	r.Header.Set("CF-Connecting-IP", "198.51.100.7")
+	if got := loginClientKey(r); got != "198.51.100.7" {
+		t.Fatalf("loginClientKey = %q, want CF-Connecting-IP to win", got)
+	}
+}
+
+// True-Client-IP is the second preference, used when CF-Connecting-IP is
+// absent but a CDN still set this alternative header.
+func TestLoginClientKeyFallsBackToTrueClientIP(t *testing.T) {
+	r := httptest.NewRequest("POST", "/api/login", nil)
+	r.RemoteAddr = "10.0.0.2:4321"
+	r.Header.Set("X-Forwarded-For", "1.1.1.1, 10.0.0.2")
+	r.Header.Set("True-Client-IP", "198.51.100.9")
+	if got := loginClientKey(r); got != "198.51.100.9" {
+		t.Fatalf("loginClientKey = %q, want True-Client-IP to win over X-Forwarded-For", got)
 	}
 }

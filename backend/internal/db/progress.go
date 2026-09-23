@@ -78,6 +78,16 @@ func (s *Store) SaveProgress(ctx context.Context, username, repertoireID string,
 	}
 
 	for cardID, cp := range cards {
+		// Check hasDelta BEFORE parsing LastSeenISO: with the delta protocol,
+		// `cards` carries the client's full historical snapshot but only
+		// touched cards get written (see the skip below) — a malformed
+		// timestamp on some untouched card elsewhere in that snapshot must
+		// not abort the whole save over a field that was never going to be
+		// read.
+		delta, hasDelta := deltas[cardID]
+		if deltas != nil && !hasDelta {
+			continue
+		}
 		var lastSeen *time.Time
 		if cp.LastSeenISO != nil {
 			t, err := time.Parse(time.RFC3339, *cp.LastSeenISO)
@@ -85,10 +95,6 @@ func (s *Store) SaveProgress(ctx context.Context, username, repertoireID string,
 				return fmt.Errorf("parse lastSeenISO for card %s: %w", cardID, err)
 			}
 			lastSeen = &t
-		}
-		delta, hasDelta := deltas[cardID]
-		if deltas != nil && !hasDelta {
-			continue
 		}
 		var query string
 		var args []any

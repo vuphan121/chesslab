@@ -43,6 +43,8 @@ type Handler struct {
 	analysisCache     map[string]cachedAnalysis
 	analysisGroup     singleflight.Group
 	loginLimiter      *loginLimiter
+	lineImportanceMu  sync.Mutex
+	lineImportanceGen map[string]int64
 }
 
 type prefetchedCloudEval struct {
@@ -58,7 +60,7 @@ type cachedAnalysis struct {
 var errEngineUnavailable = errors.New("engine not configured")
 
 func NewHandler(store storage.Store, eng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config, bookSource booksource.Reader, bookChapterPrefix string) *Handler {
-	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix, prefetchedCloud: make(map[string]prefetchedCloudEval), prefetchSem: make(chan struct{}, 1), analysisCache: make(map[string]cachedAnalysis), loginLimiter: newLoginLimiter(5, 5*time.Minute, time.Now)}
+	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix, prefetchedCloud: make(map[string]prefetchedCloudEval), prefetchSem: make(chan struct{}, 1), analysisCache: make(map[string]cachedAnalysis), loginLimiter: newLoginLimiter(5, 5*time.Minute, time.Now), lineImportanceGen: make(map[string]int64)}
 }
 
 type PieceJSON struct {

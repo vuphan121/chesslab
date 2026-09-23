@@ -7,7 +7,7 @@ import type { RepertoireSummary } from '@/lib/trainer/types'
 interface Props {
   repertoires: RepertoireSummary[]
   onClose: () => void
-  onChanged: () => void
+  onChanged: (changedId?: string) => void
 }
 
 export default function RepertoireManagement({ repertoires, onClose, onChanged }: Props) {
@@ -49,7 +49,7 @@ export default function RepertoireManagement({ repertoires, onClose, onChanged }
       setName('')
       setDescription('')
       setSuccess(`${rep.name} was added with ${rep.lineCount} line${rep.lineCount === 1 ? '' : 's'}.`)
-      onChanged()
+      onChanged(rep.id)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add repertoire.')
     } finally {
@@ -64,7 +64,7 @@ export default function RepertoireManagement({ repertoires, onClose, onChanged }
     try {
       const updated = await refreshRepertoire(rep.id)
       setSuccess(`${updated.name} was refreshed: ${updated.chapters.length} chapters and ${updated.lineCount} line${updated.lineCount === 1 ? '' : 's'}.`)
-      onChanged()
+      onChanged(updated.id)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not refresh repertoire.')
     } finally {

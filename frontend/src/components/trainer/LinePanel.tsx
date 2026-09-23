@@ -161,6 +161,9 @@ export default function LinePanel({
             marginBottom: 8,
           }}
         >
+          <div className="lbl" style={{ color: '#b4b1a8' }}>
+            Line so far
+          </div>
           <div style={{ display: 'flex', gap: 4 }}>
             <NavBtn label="⟨" disabled={rows.length === 0 || atStart} onClick={onNavBack} title="Back" />
             <NavBtn label="⟩" disabled={rows.length === 0 || atLive} onClick={onNavForward} title="Forward" />

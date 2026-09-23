@@ -2,45 +2,32 @@
 
 import { useEffect, useState } from 'react'
 
-
-
-
-
-export function useViewportWidth(): number | null {
-  const [width, setWidth] = useState<number | null>(null)
+// `dimension` is a stable primitive (not a closure) so the effect below can
+// keep an empty dependency array — a function prop recreated every render
+// would otherwise tear down and re-add the resize listener on every render.
+function useWindowDimension(dimension: 'width' | 'height'): number | null {
+  const [value, setValue] = useState<number | null>(null)
 
   useEffect(() => {
-    const update = () => setWidth(window.innerWidth)
+    const update = () => setValue(dimension === 'width' ? window.innerWidth : window.innerHeight)
     update()
     window.addEventListener('resize', update)
-
-
     window.addEventListener('orientationchange', update)
     return () => {
       window.removeEventListener('resize', update)
       window.removeEventListener('orientationchange', update)
     }
-  }, [])
+  }, [dimension])
 
-  return width
+  return value
 }
 
+export function useViewportWidth(): number | null {
+  return useWindowDimension('width')
+}
 
 export function useViewportHeight(): number | null {
-  const [height, setHeight] = useState<number | null>(null)
-
-  useEffect(() => {
-    const update = () => setHeight(window.innerHeight)
-    update()
-    window.addEventListener('resize', update)
-    window.addEventListener('orientationchange', update)
-    return () => {
-      window.removeEventListener('resize', update)
-      window.removeEventListener('orientationchange', update)
-    }
-  }, [])
-
-  return height
+  return useWindowDimension('height')
 }
 
 export function clamp(n: number, min: number, max: number): number {

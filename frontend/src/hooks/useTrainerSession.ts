@@ -868,21 +868,31 @@ export function useTrainerSession() {
   // (see nextLine below, which calls endRun({logAttempt:false}) first).
   const advanceToNextLine = useCallback(async () => {
     if (todayEntryRef.current) {
+      // Without a reqId guard here, clicking "Back" (changeRepertoire, which
+      // bumps startSessionReqId and nulls todayEntryRef) while this await is
+      // in flight didn't stop it: the response would still call
+      // startTodayEntry and flip phase back to 'drilling', silently
+      // resurrecting the session the user had already navigated away from —
+      // not just a stale error banner.
+      const reqId = ++startSessionReqId.current
       setBusy(true)
       try {
         const queue = await (todayAdvanceRef.current ?? getTodayTraining())
         todayAdvanceRef.current = null
+        if (reqId !== startSessionReqId.current) return
         const next = queue.entries[0]
         if (!next) {
           setLoadError("Today's queue is empty.")
           setPhase('setup')
           return
         }
-        await startTodayEntry(next)
+        await startTodayEntry(next, reqId)
       } catch (err) {
-        setLoadError(err instanceof Error ? err.message : "Couldn't advance today's queue.")
+        if (reqId === startSessionReqId.current) {
+          setLoadError(err instanceof Error ? err.message : "Couldn't advance today's queue.")
+        }
       } finally {
-        setBusy(false)
+        if (reqId === startSessionReqId.current) setBusy(false)
       }
       return
     }
