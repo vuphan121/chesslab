@@ -23,7 +23,7 @@ const EVAL_SLOT_WIDTH = 30
 export default function BookStudyPage() {
   const {
     phase, book, loadError, loading, flatItems, current, boardState,
-    busy, flipped, toggleFlipped, analysisEnabled, analysis, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
+    busy, moveError, flipped, toggleFlipped, analysisEnabled, analysis, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
     stepBack, stepForward, loadStart, goToIndex, goToMove, selectSquare,
     move, legalMovesFor, restart,
     moveEvals, savedLine, savingLine, saveNote, deleteMove, saveCurrentLine, restoreSavedLine,
@@ -101,6 +101,7 @@ export default function BookStudyPage() {
                   {completedItemIds.has(current.item.id) ? '✓ Complete' : completionBusy ? 'Saving…' : 'Mark complete'}
                 </button>
                 {completionError && <span title={completionError} style={{ color: '#b1453b', fontSize: 11 }}>Not saved</span>}
+                {moveError && <span role="alert" title={moveError} style={{ color: '#b1453b', fontSize: 11 }}>Move failed — try again</span>}
                 <button onClick={toggleAnalysis} title="Toggle engine analysis" style={{ ...analysisButton, background: analysisEnabled ? '#e8f3fd' : '#fff', color: analysisEnabled ? '#2f6db0' : '#77746c' }}>{analysisLoading ? 'Analyzing…' : 'Analysis'}</button>
                 <button onClick={toggleFlipped} title="Flip board" style={flipButton}>⇅</button>
               </div>

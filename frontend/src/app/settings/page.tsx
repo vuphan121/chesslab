@@ -33,9 +33,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#e8e8e6] py-6 sm:py-10">
+    <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10">
+      <TopBar right={<span />} />
       <div style={{ width: 'min(1120px, calc(100vw - 32px))', margin: '0 auto' }}>
-        <TopBar right={<span />} />
 
         <section
           style={{

@@ -92,6 +92,7 @@ visual recommendation, not a restriction.
 - A catalog failure displays a concise backend connection message.
 - A session cannot start with zero selected chapters.
 - Network failures during drilling leave the current position available for retry and do not grade
-  the card.
+  the card; the feedback card shows `Move failed — try again`.
 - Setup, drilling, line completion, and summary are separate phases; changing repertoire returns to
-  setup without retaining stale board state.
+  setup without retaining stale board state. It also invalidates pending starts and delayed move
+  continuations so an abandoned run cannot reappear.

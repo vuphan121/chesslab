@@ -1,5 +1,10 @@
 # AI Coach — Design Doc (Draft)
 
+> **Archived / out of scope.** The frontend Coach panel was removed and this subsystem is not part
+> of current product work or bug-fix scans. Backend experiments and this design history remain in
+> the repository for reference only. Do not restore, extend, or audit the coach unless the user
+> explicitly reopens that work.
+
 ## Problem
 
 The Coach panel started as a static placeholder chat. The goal was to make it actually explain

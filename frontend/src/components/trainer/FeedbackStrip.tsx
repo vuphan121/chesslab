@@ -14,6 +14,7 @@ const COLORS = {
 export default function FeedbackStrip({ feedback }: Props) {
   const isCorrect = feedback?.kind === 'correct' || feedback?.kind === 'correct-alt'
   const colors = isCorrect ? COLORS.correct : COLORS.incorrect
+  const label = feedback?.kind === 'error' ? 'Move failed — try again' : isCorrect ? 'Correct' : 'Incorrect'
 
   return (
     <div
@@ -33,7 +34,7 @@ export default function FeedbackStrip({ feedback }: Props) {
       }}
     >
       {feedback && (
-        <span style={{ fontSize: 18, fontWeight: 700 }}>{isCorrect ? 'Correct' : 'Incorrect'}</span>
+        <span title={feedback.reason} style={{ fontSize: 18, fontWeight: 700 }}>{label}</span>
       )}
     </div>
   )

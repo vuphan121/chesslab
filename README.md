@@ -1,9 +1,8 @@
 # Chesslab
 
-**A chess study tool** with a real-time analysis board, Stockfish, an AI trainer, opening-study
-drills, and a private PDF book workspace. Study your repertoire with spaced repetition, explore
-positions with engine-backed coaching, or work directly from your chess books on an interactive
-board.
+**A chess study tool** with a real-time Stockfish analysis board, opening-study drills, and a
+private PDF book workspace. Study your repertoire with spaced repetition, explore positions with
+engine analysis, or work directly from your chess books on an interactive board.
 
 [![Go](https://img.shields.io/badge/backend-Go-00ADD8?logo=go&logoColor=white)](backend)
 [![Next.js](https://img.shields.io/badge/frontend-Next.js-000000?logo=nextdotjs&logoColor=white)](frontend)
@@ -17,7 +16,7 @@ board.
 
 - [What it does](#what-it-does)
 - [Analysis Board](#analysis-board)
-- [AI Coach](#ai-coach)
+- [Archived AI Coach](#archived-ai-coach)
 - [Opening Study (spaced-repetition trainer)](#opening-study-spaced-repetition-trainer)
 - [Study from Book](#study-from-book)
 - [Architecture](#architecture)
@@ -36,18 +35,19 @@ Chesslab brings several study tools together behind one Go chess engine and one 
 
 | | |
 |---|---|
-| **Analysis Board** (`/`) | A Lichess-style opening database + Stockfish analysis board, with move-tree navigation (sidelines included) and an AI coach that explains *this* position, grounded in real engine and book data — not a chatbot guessing at chess. |
+| **Analysis Board** (`/`) | A Lichess-style opening database + Stockfish analysis board with move-tree navigation, sidelines, and live opening statistics. |
 | **Opening Study** (`/opening-study`) | Feed it a Lichess study URL and it becomes a spaced-repetition drilling deck: play your repertoire from memory, get corrected instantly, and let a Leitner-style scheduler decide what you see next. |
 | **Study from Book** (`/book-study`) | Read one private book chapter at a time beside an interactive board, freely explore each supplied lesson or puzzle position, and keep completion progress per user. |
 
 Everything below the UI is real: legal-move generation, check/mate/stalemate detection, SAN
 notation with disambiguation, and move trees with non-destructive sideline navigation are all
 hand-written in Go — no chess.js, no python-chess. Stockfish and Lichess's public APIs do the
-engine work; a local LLM (via Ollama) does the explaining.
+engine work.
 
 ## Analysis Board
 
-A three-column workspace — **Coach | Board | Move order** — around a custom chess.com-styled board.
+A centered board workspace with move order, evaluation, and opening statistics around a custom
+chess.com-styled board.
 
 - **Full legal-move chess engine**, written from scratch in Go: castling (both sides), en passant,
   promotion, check/checkmate/stalemate, the 50-move rule, threefold repetition, and
@@ -69,7 +69,12 @@ A three-column workspace — **Coach | Board | Move order** — around a custom 
   (discards the board and replays from scratch — a partial/illegal paste loads whatever prefix
   parsed cleanly), and keyboard move navigation.
 
-## AI Coach
+## Archived AI Coach
+
+> The Coach panel has been removed from the frontend. Its backend experiments are retained only as
+> historical/reference code and are intentionally excluded from current product work and bug scans.
+> See [the archived design note](docs/ai-coach-design.md). The description below records the former
+> design; it is not an active user-facing feature.
 
 Grounded chess coaching, not free-associated chatbot chess. A local LLM (Ollama + `llama3.1:8b` by
 default — **no Anthropic API key, no cloud LLM cost**) writes the prose, but it never invents a

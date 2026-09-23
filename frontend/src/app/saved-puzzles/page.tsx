@@ -55,9 +55,9 @@ export default function SavedPuzzlesPage() {
   }
 
   return (
-    <main className="min-h-screen py-6 sm:py-10" style={{ background: 'linear-gradient(135deg, #f1f0e9 0%, #eef1f0 52%, #e9edef 100%)' }}>
-      <div style={{ width: '100%', maxWidth: PAGE_WIDTH, margin: '0 auto', padding: '0 24px' }}>
-        <TopBar right={<span />} />
+    <main className="min-h-screen pb-6 sm:pb-10" style={{ background: 'linear-gradient(135deg, #f1f0e9 0%, #eef1f0 52%, #e9edef 100%)' }}>
+      <TopBar right={<span />} />
+      <div style={{ width: '100%', maxWidth: PAGE_WIDTH, margin: '32px auto 0', padding: '0 24px' }}>
 
         <section style={{ background: '#fff', borderRadius: 14, padding: 'clamp(22px, 5vw, 38px)', boxShadow: '0 1px 4px rgba(0,0,0,0.07), inset 0 0 0 1px rgba(0,0,0,0.05)' }}>
           <div style={{ marginBottom: 26 }}>

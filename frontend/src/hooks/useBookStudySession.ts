@@ -85,6 +85,7 @@ export function useBookStudySession() {
   const [selected, setSelected] = useState<Square | null>(null)
 
   const [busy, setBusy] = useState(false)
+  const [moveError, setMoveError] = useState<string | null>(null)
   const [flipped, setFlipped] = useState(false)
   const [analysisEnabled, setAnalysisEnabled] = useState(false)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
@@ -211,6 +212,7 @@ export function useBookStudySession() {
   const enterItem = useCallback(async (gid: string, item: BookItem): Promise<boolean> => {
     const reqId = ++itemReqId.current
     setSelected(null)
+    setMoveError(null)
     setFlipped(item.sideToMove === 'b')
     analysisCacheRef.current = new Map()
     setMoveEvals({})
@@ -463,6 +465,7 @@ export function useBookStudySession() {
         : null
 
       setBusy(true)
+      setMoveError(null)
       const reqId = ++moveReqId.current
       try {
         const piece = boardState?.pieces[from]
@@ -477,8 +480,10 @@ export function useBookStudySession() {
           void recordBookStudyActivity(activity.bookId, activity.chapterId, activity.itemId).catch(() => undefined)
         }
 
-      } catch {
-
+      } catch (error) {
+        if (reqId === moveReqId.current) {
+          setMoveError(error instanceof Error ? error.message : 'Could not make that move. Please try again.')
+        }
       } finally {
         if (reqId === moveReqId.current) setBusy(false)
       }
@@ -565,6 +570,7 @@ export function useBookStudySession() {
     setBook(null)
     gameIdRef.current = null
     setGameState(null)
+    setMoveError(null)
     setFlatIndex(0)
     setAnalysisEnabled(false)
     setAnalysis(null)
@@ -588,6 +594,7 @@ export function useBookStudySession() {
     current,
     boardState,
     busy,
+    moveError,
     flipped,
     toggleFlipped,
     analysisEnabled,
