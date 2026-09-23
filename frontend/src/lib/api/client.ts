@@ -410,15 +410,23 @@ export interface LineAttempt {
   hadMistake: boolean
 }
 
+export interface CardProgressDelta {
+  lapses: number
+  seen: number
+  correct: number
+}
+
 export const saveProgress = (
   repertoireId: string,
   cards: Record<string, ServerCardState>,
   lineAttempt?: LineAttempt,
+  deltas?: Record<string, CardProgressDelta>,
+  operationId?: string,
 ): Promise<{ ok: boolean }> =>
   request(`/api/progress/${repertoireId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ cards, lineAttempt }),
+    body: JSON.stringify({ cards, lineAttempt, deltas, operationId }),
   })
 
 export interface ChapterCount {

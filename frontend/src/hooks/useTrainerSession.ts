@@ -19,7 +19,7 @@ import type { Repertoire, RepCard, RepChapter, RepNode, SessionOptions, SessionS
 import { createSession, grade, isComplete, summarise } from '@/lib/trainer/scheduler'
 import { newRng } from '@/lib/trainer/rng'
 import { cardKey } from '@/lib/trainer/cardKey'
-import { mergeSessionCards } from '@/lib/trainer/persistence'
+import { mergeSessionCards, progressDeltas } from '@/lib/trainer/persistence'
 import { chooseOpponentReply } from '@/lib/trainer/replySelection'
 import { buildDrillLines, createLineQueue, nextQueuedLine } from '@/lib/trainer/lineQueue'
 import type { DrillLine, LineQueue } from '@/lib/trainer/lineQueue'
@@ -256,7 +256,8 @@ export function useTrainerSession() {
 
 
 
-  const priorProgressRef = useRef<Record<string, PersistedCardState>>({})
+  const sessionProgressRef = useRef<Record<string, PersistedCardState>>({})
+  const progressSaveChainRef = useRef<Promise<void>>(Promise.resolve())
   const todayEntryRef = useRef<TodayTrainingEntry | null>(null)
   const todayAdvanceRef = useRef<Promise<TodayTrainingResponse> | null>(null)
 
@@ -442,8 +443,9 @@ export function useTrainerSession() {
     const logAttempt = opts?.logAttempt ?? true
     const session = sessionRef.current
     if (session && repertoire) {
-      const merged = mergeSessionCards(priorProgressRef.current, session)
-      priorProgressRef.current = merged
+      const merged = mergeSessionCards(sessionProgressRef.current, session)
+      const deltas = progressDeltas(sessionProgressRef.current, merged)
+      sessionProgressRef.current = merged
 
       let lineAttempt: { chapterId: string; chapterName: string; cardId: string; hadMistake: boolean } | undefined
       if (logAttempt) {
@@ -460,9 +462,21 @@ export function useTrainerSession() {
             : undefined
       }
 
-      apiSaveProgress(repertoire.id, merged, lineAttempt).catch(() => {
-
-      })
+      const operationId = crypto.randomUUID()
+      progressSaveChainRef.current = progressSaveChainRef.current
+        .catch(() => undefined)
+        .then(async () => {
+          if (Object.keys(deltas).length === 0 && !lineAttempt) return
+          try {
+            await apiSaveProgress(repertoire.id, merged, lineAttempt, deltas, operationId)
+          } catch {
+            // A response can be lost after the transaction commits. Retrying
+            // with the same operation id is safe and avoids silently dropping
+            // a run on an ordinary transient network failure.
+            await apiSaveProgress(repertoire.id, merged, lineAttempt, deltas, operationId)
+          }
+        })
+        .catch(() => undefined)
     }
 
     const todayEntry = todayEntryRef.current
@@ -599,7 +613,7 @@ export function useTrainerSession() {
 
         }
         if (reqId !== startSessionReqId.current) return
-        priorProgressRef.current = saved
+        sessionProgressRef.current = saved
         const session = createSession(cards, opts, saved, newRng())
         sessionRef.current = session
         lineQueueRef.current = createLineQueue(
@@ -646,7 +660,7 @@ export function useTrainerSession() {
 
         }
         if (reqId !== startSessionReqId.current) return
-        priorProgressRef.current = saved
+        sessionProgressRef.current = saved
         sessionRef.current = createSession(rep.cards, { sessionLength: null, mode: 'mixed' }, saved, newRng())
         const { card, targetPath, leadingMoves: leading } = resolveRunStartCard(rep, dueCard)
         lineModeRef.current = false

@@ -89,8 +89,8 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
       <div style={panelStyle}>
         <p style={{ fontSize: 14, color: '#37352f', marginBottom: 10 }}>No books loaded.</p>
         <p style={{ fontSize: 12, color: '#a3a099' }}>
-          Drop an extracted book JSON into <code>backend/data/books/</code> (gitignored — see root{' '}
-          <code>CLAUDE.md</code>&rsquo;s &ldquo;Study from Book&rdquo; section).
+          Drop an extracted book JSON into <code>backend/data/books/</code> (gitignored — see{' '}
+          <code>docs/study-from-book/data-format.md</code>).
         </p>
       </div>
     )

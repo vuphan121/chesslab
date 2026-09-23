@@ -82,6 +82,7 @@ export function useBookStudySession() {
 
   const [flatIndex, setFlatIndex] = useState(0)
   const [gameState, setGameState] = useState<GameState | null>(null)
+  const [gameReadyVersion, setGameReadyVersion] = useState(0)
   const [selected, setSelected] = useState<Square | null>(null)
 
   const [busy, setBusy] = useState(false)
@@ -211,6 +212,7 @@ export function useBookStudySession() {
   // so callers (goToIndex) know not to trust this call's target as current.
   const enterItem = useCallback(async (gid: string, item: BookItem): Promise<boolean> => {
     const reqId = ++itemReqId.current
+    moveReqId.current++
     setSelected(null)
     setMoveError(null)
     setFlipped(item.sideToMove === 'b')
@@ -228,15 +230,18 @@ export function useBookStudySession() {
   // Rebuild a saved line into the game's move tree, then sit the cursor back at
   // the start position — the full line shows in the Moves panel, but the board
   // stays on move 0 until the user steps forward (arrows) or clicks a move.
-  const replayLine = useCallback(async (line: SavedLine): Promise<GameState | null> => {
+  const replayLine = useCallback(async (line: SavedLine, expectedItemRequest = itemReqId.current): Promise<GameState | null> => {
     const gid = gameIdRef.current
-    if (!gid) return null
+    if (!gid || expectedItemRequest !== itemReqId.current) return null
     let gs = await apiSetPosition(gid, line.startFen)
+    if (expectedItemRequest !== itemReqId.current) return null
     for (const m of line.moves) {
       if (m.uci.length < 4) continue
       gs = await makeMove(gid, m.uci.slice(0, 2), m.uci.slice(2, 4), m.uci.slice(4) || undefined)
+      if (expectedItemRequest !== itemReqId.current) return null
     }
-    return gotoNode(gid, gs.moveTree.id)
+    const reset = await gotoNode(gid, gs.moveTree.id)
+    return expectedItemRequest === itemReqId.current ? reset : null
   }, [])
 
   // One saved line per item. On entering an item, pull it and drop it straight
@@ -245,23 +250,24 @@ export function useBookStudySession() {
     const bookId = book?.id
     const itemId = current?.item.id
     if (!bookId || !itemId) return
+    const expectedItemRequest = itemReqId.current
     let cancelled = false
     getBookSavedLine(bookId, itemId)
       .then(async ({ line }) => {
-        if (cancelled) return
+        if (cancelled || expectedItemRequest !== itemReqId.current) return
         setSavedLine(line)
         if (!line) return
         setBusy(true)
         try {
-          const gs = await replayLine(line)
-          if (!cancelled && gs) {
+          const gs = await replayLine(line, expectedItemRequest)
+          if (!cancelled && expectedItemRequest === itemReqId.current && gs) {
             setGameState(gs)
             setSelected(null)
           }
         } catch {
           /* a saved move no longer applies — leave the plain position */
         } finally {
-          if (!cancelled) setBusy(false)
+          if (!cancelled && expectedItemRequest === itemReqId.current) setBusy(false)
         }
       })
       .catch(() => {
@@ -271,7 +277,7 @@ export function useBookStudySession() {
     return () => {
       cancelled = true
     }
-  }, [book?.id, current?.item.id, replayLine])
+  }, [book?.id, current?.item.id, gameReadyVersion, replayLine])
 
   const restoreSavedLine = useCallback(async () => {
     if (!savedLine || busy) return
@@ -320,6 +326,7 @@ export function useBookStudySession() {
         const gs = await createGame(startItem.fen)
         gameIdRef.current = gs.id
         await enterItem(gs.id, startItem)
+        setGameReadyVersion((version) => version + 1)
 
         setPhase('studying')
       } catch (err) {
@@ -340,6 +347,8 @@ export function useBookStudySession() {
       try {
         const applied = await enterItem(gid, target.item)
         if (applied) setFlatIndex(index)
+      } catch (error) {
+        setMoveError(error instanceof Error ? error.message : 'Could not open that item. Please try again.')
       } finally {
         setBusy(false)
       }
@@ -370,6 +379,9 @@ export function useBookStudySession() {
       const gs = await gotoNode(gid, parentId)
       setGameState(gs)
       setSelected(null)
+      setMoveError(null)
+    } catch (error) {
+      setMoveError(error instanceof Error ? error.message : 'Could not go back. Please try again.')
     } finally {
       setBusy(false)
     }
@@ -386,6 +398,9 @@ export function useBookStudySession() {
       const gs = await gotoNode(gid, child.id)
       setGameState(gs)
       setSelected(null)
+      setMoveError(null)
+    } catch (error) {
+      setMoveError(error instanceof Error ? error.message : 'Could not go forward. Please try again.')
     } finally {
       setBusy(false)
     }
@@ -399,6 +414,9 @@ export function useBookStudySession() {
       const gs = await gotoNode(gid, nodeId)
       setGameState(gs)
       setSelected(null)
+      setMoveError(null)
+    } catch (error) {
+      setMoveError(error instanceof Error ? error.message : 'Could not open that move. Please try again.')
     } finally {
       setBusy(false)
     }
@@ -413,6 +431,9 @@ export function useBookStudySession() {
       setGameState(gs)
       setSelected(null)
       setSaveNote(null)
+      setMoveError(null)
+    } catch (error) {
+      setMoveError(error instanceof Error ? error.message : 'Could not delete that move. Please try again.')
     } finally {
       setBusy(false)
     }
@@ -422,6 +443,7 @@ export function useBookStudySession() {
     const bookId = book?.id
     const itemId = current?.item.id
     if (!bookId || !itemId || !gameState || savingLine) return
+    const expectedItemRequest = itemReqId.current
     const nodes = mainlineNodes(gameState.moveTree)
     if (nodes.length === 0) {
       setSaveNote('Play some moves first.')
@@ -444,10 +466,13 @@ export function useBookStudySession() {
       // One row per (user, book, item): the backend upserts, so this replaces
       // whatever was saved for this lesson before.
       const { line } = await saveBookLine(bookId, itemId, current.item.fen, moves)
+      if (expectedItemRequest !== itemReqId.current) return
       setSavedLine(line)
       setSaveNote('Saved')
     } catch (err) {
-      setSaveNote(err instanceof Error ? err.message : 'Could not save line.')
+      if (expectedItemRequest === itemReqId.current) {
+        setSaveNote(err instanceof Error ? err.message : 'Could not save line.')
+      }
     } finally {
       setSavingLine(false)
     }
@@ -569,6 +594,7 @@ export function useBookStudySession() {
     setPhase('setup')
     setBook(null)
     gameIdRef.current = null
+    setGameReadyVersion(0)
     setGameState(null)
     setMoveError(null)
     setFlatIndex(0)

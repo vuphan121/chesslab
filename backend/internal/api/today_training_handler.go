@@ -47,7 +47,8 @@ func (h *Handler) GetTodayTraining(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if !sameTodayTrainingEntries(queue.Entries, expected) {
-			queue, err = h.saveTodayTraining(r, username, queueDate, *queue.Settings, expected)
+			expected = shuffleTodayTrainingEntries(expected, rand.IntN)
+			queue, err = h.db.RefreshTodayTraining(r.Context(), username, queueDate, *queue.Settings, expected)
 		}
 		if err != nil {
 			http.Error(w, "failed to prepare today's training: "+err.Error(), http.StatusBadRequest)

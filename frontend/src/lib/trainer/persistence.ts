@@ -6,6 +6,29 @@
 
 import type { PersistedCardState, SessionState } from './types'
 
+export interface ProgressDelta {
+  lapses: number
+  seen: number
+  correct: number
+}
+
+export function progressDeltas(
+  prior: Record<string, PersistedCardState>,
+  next: Record<string, PersistedCardState>,
+): Record<string, ProgressDelta> {
+  return Object.fromEntries(
+    Object.entries(next).flatMap(([id, card]) => {
+      const before = prior[id]
+      const delta = {
+        lapses: Math.max(0, card.lapses - (before?.lapses ?? 0)),
+        seen: Math.max(0, card.seen - (before?.seen ?? 0)),
+        correct: Math.max(0, card.correct - (before?.correct ?? 0)),
+      }
+      return delta.lapses || delta.seen || delta.correct ? [[id, delta]] : []
+    }),
+  )
+}
+
 export function mergeSessionCards(
   prior: Record<string, PersistedCardState>,
   session: SessionState,

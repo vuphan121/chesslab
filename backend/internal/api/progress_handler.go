@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/db"
@@ -25,8 +26,16 @@ type LineAttemptJSON struct {
 }
 
 type SaveProgressRequest struct {
-	Cards       map[string]CardProgressJSON `json:"cards"`
-	LineAttempt *LineAttemptJSON            `json:"lineAttempt,omitempty"`
+	Cards       map[string]CardProgressJSON      `json:"cards"`
+	LineAttempt *LineAttemptJSON                 `json:"lineAttempt,omitempty"`
+	Deltas      map[string]CardProgressDeltaJSON `json:"deltas,omitempty"`
+	OperationID string                           `json:"operationId,omitempty"`
+}
+
+type CardProgressDeltaJSON struct {
+	Lapses  int `json:"lapses"`
+	Seen    int `json:"seen"`
+	Correct int `json:"correct"`
 }
 
 type GetProgressResponse struct {
@@ -75,10 +84,33 @@ func (h *Handler) SaveProgress(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
+	if req.Deltas != nil && (req.OperationID == "" || len(req.OperationID) > 128) {
+		http.Error(w, "a valid operationId is required for progress deltas", http.StatusBadRequest)
+		return
+	}
+	if len(req.Cards) > 10000 {
+		http.Error(w, "too many progress cards", http.StatusBadRequest)
+		return
+	}
 
 	cards := make(map[string]db.CardProgress, len(req.Cards))
 	for id, c := range req.Cards {
+		if strings.TrimSpace(id) == "" || c.Box < 0 || c.Box > 5 || c.Lapses < 0 || c.Seen < 0 || c.Correct < 0 || c.Correct > c.Seen || c.Lapses > c.Seen {
+			http.Error(w, "invalid card progress", http.StatusBadRequest)
+			return
+		}
 		cards[id] = db.CardProgress{Box: c.Box, Lapses: c.Lapses, Seen: c.Seen, Correct: c.Correct, LastSeenISO: c.LastSeenISO}
+	}
+	var deltas map[string]db.CardProgressDelta
+	if req.Deltas != nil {
+		deltas = make(map[string]db.CardProgressDelta, len(req.Deltas))
+		for id, delta := range req.Deltas {
+			if _, ok := cards[id]; !ok || delta.Lapses < 0 || delta.Seen < 0 || delta.Correct < 0 || delta.Lapses > delta.Seen || delta.Correct > delta.Seen {
+				http.Error(w, "invalid progress delta", http.StatusBadRequest)
+				return
+			}
+			deltas[id] = db.CardProgressDelta{Lapses: delta.Lapses, Seen: delta.Seen, Correct: delta.Correct}
+		}
 	}
 	var attempt *db.LineAttempt
 	if req.LineAttempt != nil {
@@ -90,7 +122,7 @@ func (h *Handler) SaveProgress(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := h.db.SaveProgress(r.Context(), username, repertoireID, cards, attempt); err != nil {
+	if err := h.db.SaveProgress(r.Context(), username, repertoireID, cards, deltas, attempt, req.OperationID); err != nil {
 		http.Error(w, "failed to save progress: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

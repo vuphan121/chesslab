@@ -502,12 +502,11 @@ still starts (same policy as a missing `LICHESS_TOKEN`).
 **Superseded from the original design below.** Progress originally lived only in the browser's
 `localStorage` (the envelope shown further down is what that looked like); it now syncs through the
 backend to Postgres instead, so it follows the user across devices and survives clearing browser
-storage — see root `CLAUDE.md`'s "Auth + server-side trainer sync" and backend `CLAUDE.md`'s "Auth +
-trainer sync (Postgres)" for the full rationale. Everything database-related degrades gracefully with
+storage. Everything database-related degrades gracefully with
 no `DATABASE_URL` configured (progress just doesn't sync that session), same pattern as
 Stockfish/`LICHESS_TOKEN`.
 
-Two tables (`backend/internal/db/schema.sql`), keyed by the authenticated username rather than a
+The primary tables (`backend/internal/db/schema.sql`) are keyed by the authenticated username rather than a
 browser-local key:
 
 ```sql
@@ -541,8 +540,12 @@ CREATE TABLE line_attempts (
 
 - `GET /api/progress/{repertoireId}` returns the whole `card_progress` map for the current user
   (`{"cards": {cardId: {box, lapses, seen, correct, lastSeenISO}}}`), empty if nothing drilled yet.
-  `POST` upserts the merged whole map on every run boundary (not just session end) plus optionally one
-  `line_attempts` row.
+  `POST` sends the resulting card snapshot, the non-negative counter increments earned during that
+  run, an idempotency key, and optionally one `line_attempts` row. Postgres adds increments
+  atomically, so sessions on two devices do not overwrite each other. The grade with the newest
+  `lastSeenISO` controls the box. Repeating the same operation ID is a no-op, which makes retries
+  safe after an ambiguous network failure. Legacy clients without deltas retain snapshot-upsert
+  compatibility during deployment.
 - Session-local fields (`dueStep`, `streak`, `introduced`, `retired`) are still **not** persisted;
   they're rebuilt at session start per `scheduler.md` §8.
 - `card_id` is `CardKey(FEN)` (clock-stripped FEN), so editing the study only invalidates the

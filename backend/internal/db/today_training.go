@@ -76,6 +76,9 @@ func (s *Store) SaveTodayTraining(ctx context.Context, username, queueDate strin
 		return TodayTrainingQueue{}, fmt.Errorf("begin today training: %w", err)
 	}
 	defer tx.Rollback(ctx)
+	if err := lockTodayTraining(ctx, tx, username); err != nil {
+		return TodayTrainingQueue{}, err
+	}
 	raw, err := json.Marshal(settings.RepertoireIDs)
 	if err != nil {
 		return TodayTrainingQueue{}, fmt.Errorf("encode today training settings: %w", err)
@@ -97,12 +100,47 @@ func (s *Store) SaveTodayTraining(ctx context.Context, username, queueDate strin
 	return TodayTrainingQueue{Settings: &settings, Entries: entries}, nil
 }
 
+// RefreshTodayTraining replaces a stale queue only if the settings observed by
+// the caller are still current. If another device changed settings meanwhile,
+// it returns that newer queue instead of restoring stale data.
+func (s *Store) RefreshTodayTraining(ctx context.Context, username, queueDate string, expected TodayTrainingSettings, entries []TodayTrainingEntry) (TodayTrainingQueue, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return TodayTrainingQueue{}, fmt.Errorf("begin today training refresh: %w", err)
+	}
+	defer tx.Rollback(ctx)
+	if err := lockTodayTraining(ctx, tx, username); err != nil {
+		return TodayTrainingQueue{}, err
+	}
+
+	current, err := getTodayTrainingTx(ctx, tx, username, queueDate)
+	if err != nil {
+		return TodayTrainingQueue{}, err
+	}
+	if current.Settings == nil || !sameTodayTrainingSettings(*current.Settings, expected) {
+		if err := tx.Commit(ctx); err != nil {
+			return TodayTrainingQueue{}, fmt.Errorf("commit today training refresh: %w", err)
+		}
+		return current, nil
+	}
+	if err := replaceTodayTrainingQueue(ctx, tx, username, queueDate, entries); err != nil {
+		return TodayTrainingQueue{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return TodayTrainingQueue{}, fmt.Errorf("commit today training refresh: %w", err)
+	}
+	return TodayTrainingQueue{Settings: &expected, Entries: entries}, nil
+}
+
 func (s *Store) AdvanceTodayTraining(ctx context.Context, username, queueDate, repertoireID, cardID string) (TodayTrainingQueue, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return TodayTrainingQueue{}, fmt.Errorf("begin today training advance: %w", err)
 	}
 	defer tx.Rollback(ctx)
+	if err := lockTodayTraining(ctx, tx, username); err != nil {
+		return TodayTrainingQueue{}, err
+	}
 
 	var raw []byte
 	var settings TodayTrainingSettings
@@ -179,6 +217,61 @@ func (s *Store) AdvanceTodayTraining(ctx context.Context, username, queueDate, r
 		out = append(out, entry.TodayTrainingEntry)
 	}
 	return TodayTrainingQueue{Settings: &settings, Entries: out}, nil
+}
+
+// The queue is one logical resource per user. A transaction-scoped advisory
+// lock serializes settings rebuilds and advances even when two devices hit
+// different rows (or the queue is temporarily empty, where row locks cannot
+// protect anything).
+func lockTodayTraining(ctx context.Context, tx pgx.Tx, username string) error {
+	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, username); err != nil {
+		return fmt.Errorf("lock today training: %w", err)
+	}
+	return nil
+}
+
+func getTodayTrainingTx(ctx context.Context, tx pgx.Tx, username, queueDate string) (TodayTrainingQueue, error) {
+	var out TodayTrainingQueue
+	var raw []byte
+	var settings TodayTrainingSettings
+	if err := tx.QueryRow(ctx, `
+		SELECT repertoire_ids, lines_per_day FROM today_training_settings WHERE username = $1`, username).Scan(&raw, &settings.LinesPerDay); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return out, nil
+		}
+		return out, fmt.Errorf("get today training settings: %w", err)
+	}
+	if err := json.Unmarshal(raw, &settings.RepertoireIDs); err != nil {
+		return out, fmt.Errorf("decode today training settings: %w", err)
+	}
+	out.Settings = &settings
+	rows, err := tx.Query(ctx, `
+		SELECT repertoire_id, card_id FROM today_training_queue
+		WHERE username = $1 AND queue_date = $2::date ORDER BY queue_rank`, username, queueDate)
+	if err != nil {
+		return out, fmt.Errorf("get today training queue: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var entry TodayTrainingEntry
+		if err := rows.Scan(&entry.RepertoireID, &entry.CardID); err != nil {
+			return out, fmt.Errorf("scan today training entry: %w", err)
+		}
+		out.Entries = append(out.Entries, entry)
+	}
+	return out, rows.Err()
+}
+
+func sameTodayTrainingSettings(left, right TodayTrainingSettings) bool {
+	if left.LinesPerDay != right.LinesPerDay || len(left.RepertoireIDs) != len(right.RepertoireIDs) {
+		return false
+	}
+	for index := range left.RepertoireIDs {
+		if left.RepertoireIDs[index] != right.RepertoireIDs[index] {
+			return false
+		}
+	}
+	return true
 }
 
 func replaceTodayTrainingQueue(ctx context.Context, tx pgx.Tx, username, queueDate string, entries []TodayTrainingEntry) error {

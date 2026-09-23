@@ -2,8 +2,11 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type CardProgress struct {
@@ -12,6 +15,12 @@ type CardProgress struct {
 	Seen        int     `json:"seen"`
 	Correct     int     `json:"correct"`
 	LastSeenISO *string `json:"lastSeenISO"`
+}
+
+type CardProgressDelta struct {
+	Lapses  int
+	Seen    int
+	Correct int
 }
 
 type LineAttempt struct {
@@ -49,12 +58,24 @@ func (s *Store) GetProgress(ctx context.Context, username, repertoireID string) 
 	return out, rows.Err()
 }
 
-func (s *Store) SaveProgress(ctx context.Context, username, repertoireID string, cards map[string]CardProgress, attempt *LineAttempt) error {
+func (s *Store) SaveProgress(ctx context.Context, username, repertoireID string, cards map[string]CardProgress, deltas map[string]CardProgressDelta, attempt *LineAttempt, operationID string) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin: %w", err)
 	}
 	defer tx.Rollback(ctx)
+	if operationID != "" {
+		var inserted string
+		err := tx.QueryRow(ctx, `
+			INSERT INTO progress_operations (username, operation_id) VALUES ($1, $2)
+			ON CONFLICT DO NOTHING RETURNING operation_id`, username, operationID).Scan(&inserted)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return tx.Commit(ctx)
+		}
+		if err != nil {
+			return fmt.Errorf("record progress operation: %w", err)
+		}
+	}
 
 	for cardID, cp := range cards {
 		var lastSeen *time.Time
@@ -65,7 +86,15 @@ func (s *Store) SaveProgress(ctx context.Context, username, repertoireID string,
 			}
 			lastSeen = &t
 		}
-		_, err := tx.Exec(ctx, `
+		delta, hasDelta := deltas[cardID]
+		if deltas != nil && !hasDelta {
+			continue
+		}
+		var query string
+		var args []any
+		if deltas == nil {
+			// Compatibility path for clients deployed before per-run deltas.
+			query = `
 			INSERT INTO card_progress (username, repertoire_id, card_id, box, lapses, seen, correct, last_seen_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
 			ON CONFLICT (username, repertoire_id, card_id) DO UPDATE SET
@@ -74,8 +103,30 @@ func (s *Store) SaveProgress(ctx context.Context, username, repertoireID string,
 				seen = EXCLUDED.seen,
 				correct = EXCLUDED.correct,
 				last_seen_at = EXCLUDED.last_seen_at,
-				updated_at = now()`,
-			username, repertoireID, cardID, cp.Box, cp.Lapses, cp.Seen, cp.Correct, lastSeen)
+				updated_at = now()`
+			args = []any{username, repertoireID, cardID, cp.Box, cp.Lapses, cp.Seen, cp.Correct, lastSeen}
+		} else {
+			query = `
+			INSERT INTO card_progress (username, repertoire_id, card_id, box, lapses, seen, correct, last_seen_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
+			ON CONFLICT (username, repertoire_id, card_id) DO UPDATE SET
+				box = CASE
+					WHEN card_progress.last_seen_at IS NULL OR EXCLUDED.last_seen_at >= card_progress.last_seen_at
+					THEN EXCLUDED.box ELSE card_progress.box END,
+				lapses = card_progress.lapses + $9,
+				seen = card_progress.seen + $10,
+				correct = card_progress.correct + $11,
+				last_seen_at = CASE
+					WHEN card_progress.last_seen_at IS NULL THEN EXCLUDED.last_seen_at
+					WHEN EXCLUDED.last_seen_at IS NULL THEN card_progress.last_seen_at
+					ELSE GREATEST(card_progress.last_seen_at, EXCLUDED.last_seen_at) END,
+				updated_at = now()`
+			// Insert the operation's increments, not the client's cumulative
+			// snapshot. This also stays correct when two fire-and-forget saves
+			// arrive out of order and the later snapshot happens to insert first.
+			args = []any{username, repertoireID, cardID, cp.Box, delta.Lapses, delta.Seen, delta.Correct, lastSeen, delta.Lapses, delta.Seen, delta.Correct}
+		}
+		_, err := tx.Exec(ctx, query, args...)
 		if err != nil {
 			return fmt.Errorf("upsert card_progress %s: %w", cardID, err)
 		}

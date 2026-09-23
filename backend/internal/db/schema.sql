@@ -38,6 +38,14 @@ CREATE TABLE IF NOT EXISTS line_attempts (
     played_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS progress_operations (
+    username TEXT NOT NULL CONSTRAINT progress_operations_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    operation_id TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (username, operation_id)
+);
+
 CREATE INDEX IF NOT EXISTS line_attempts_username_played_at_idx
     ON line_attempts (username, played_at DESC);
 

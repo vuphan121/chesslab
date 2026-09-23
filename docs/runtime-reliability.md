@@ -38,6 +38,12 @@ An evicted game returns the normal `404 game not found` response.
 
 ## Frontend and dependencies
 
+Trainer progress is merged through atomic per-run increments rather than whole-snapshot overwrites.
+Browser saves are ordered, retries carry a persistent operation ID, and the database records that ID
+in the same transaction as progress and analytics. Today’s Training uses a per-user advisory lock
+for queue changes and rejects stale automatic rebuilds. These guarantees apply across tabs, devices,
+and multiple backend instances sharing Postgres.
+
 Chess piece images load eagerly because the board is the page's primary visual content. Production
 dependency audits should remain at zero npm findings and zero reachable/imported-package Go
 findings (`npm audit` and `govulncheck ./...`). The current security baseline uses Next.js 16.3.5

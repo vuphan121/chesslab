@@ -73,6 +73,7 @@ type foreignKeyMigration struct {
 var relationshipMigrations = []foreignKeyMigration{
 	{"card_progress", "card_progress_user_fk", "FOREIGN KEY (username) REFERENCES users (username) ON DELETE CASCADE NOT VALID"},
 	{"line_attempts", "line_attempts_user_fk", "FOREIGN KEY (username) REFERENCES users (username) ON DELETE CASCADE NOT VALID"},
+	{"progress_operations", "progress_operations_user_fk", "FOREIGN KEY (username) REFERENCES users (username) ON DELETE CASCADE NOT VALID"},
 	{"book_item_progress", "book_item_progress_user_fk", "FOREIGN KEY (username) REFERENCES users (username) ON DELETE CASCADE NOT VALID"},
 	{"book_study_activity", "book_study_activity_user_fk", "FOREIGN KEY (username) REFERENCES users (username) ON DELETE CASCADE NOT VALID"},
 	{"book_saved_lines", "book_saved_lines_user_fk", "FOREIGN KEY (username) REFERENCES users (username) ON DELETE CASCADE NOT VALID"},
