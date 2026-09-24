@@ -46,7 +46,9 @@ Desktop uses three independently positioned areas:
 - The board scales from both viewport width and viewport height so it fills the screen without
   forcing vertical scrolling or overlapping adjacent panels.
 - The Back action is directly below the top bar, aligned with the left page edge.
-- The repertoire and chapter names are shown in the move panel, not in the top bar.
+- The repertoire and chapter names are shown in the move panel, not in the top bar. The chapter is
+  the one the run's line was actually dealt from (or switched to, see design.md §4.2), never inferred
+  from the start position — early positions are shared by many chapters.
 - The trainer has no flip-board button, engine evaluation, opening explorer, or coach; those would
   reveal information during recall.
 

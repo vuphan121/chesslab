@@ -51,6 +51,7 @@ export default function OpeningStudyPage() {
     flipped,
     currentCard,
     runStartCard,
+    runChapterId,
     feedback,
     hintUci,
     runHadMistake,
@@ -234,6 +235,7 @@ export default function OpeningStudyPage() {
               <LinePanel
                 repertoire={repertoire}
                 runStartCard={runStartCard}
+                runChapterId={runChapterId}
                 runMoves={runMoves}
                 leadingMoves={leadingMoves}
                 isTodayTraining={isTodayTraining}
@@ -251,6 +253,7 @@ export default function OpeningStudyPage() {
               <LinePanel
                 repertoire={repertoire}
                 runStartCard={runStartCard}
+                runChapterId={runChapterId}
                 runMoves={runMoves}
                 leadingMoves={leadingMoves}
                 isTodayTraining={isTodayTraining}

@@ -98,3 +98,46 @@ export function nextQueuedLine(q: LineQueue, isActive: (line: DrillLine) => bool
   q.lastId = line.id
   return line
 }
+
+/**
+ * Moves a run onto a different line of the deck when the user plays a move
+ * that's in their repertoire but not on the line they were dealt. Positions
+ * with several repertoire moves are common, e.g. one chapter per candidate
+ * move, and without this the run kept "following" the old line's
+ * replies from a position that line never reaches.
+ *
+ * Picks a line that passes through `positionKey` (the position after the
+ * user's move). It prefers a line not yet dealt this pass, then one from
+ * `preferChapterId`, with `q.rng` breaking ties. The line that was dealt goes
+ * back into the pending pile, since it hasn't actually been drilled, and the
+ * chosen line leaves it. `rest` is the chosen line's SAN from that position
+ * on. Returns null when no line in the deck reaches the position (e.g. the
+ * move only appears in a chapter that wasn't selected).
+ */
+export function switchToLineThrough(
+  q: LineQueue,
+  positionKey: string,
+  fromId: string | null,
+  preferChapterId: string | null,
+): { line: DrillLine; rest: string[] } | null {
+  const candidates = q.lines.flatMap((line) => {
+    const at = line.positionKeys.indexOf(positionKey)
+    return at > 0 && line.id !== fromId ? [{ line, rest: line.path.slice(at) }] : []
+  })
+  if (candidates.length === 0) return null
+
+  const pendingIds = new Set(q.pending.map((l) => l.id))
+  const score = (c: { line: DrillLine }) =>
+    (pendingIds.has(c.line.id) ? 2 : 0) + (c.line.chapterId === preferChapterId ? 1 : 0)
+  const best = Math.max(...candidates.map(score))
+  const top = candidates.filter((c) => score(c) === best)
+  const chosen = top[Math.floor(q.rng() * top.length)]
+
+  q.pending = q.pending.filter((l) => l.id !== chosen.line.id)
+  const from = fromId ? q.lines.find((l) => l.id === fromId) : undefined
+  if (from && !q.pending.some((l) => l.id === from.id)) {
+    q.pending.splice(Math.floor(q.rng() * (q.pending.length + 1)), 0, from)
+  }
+  q.lastId = chosen.line.id
+  return chosen
+}

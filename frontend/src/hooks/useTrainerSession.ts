@@ -21,7 +21,7 @@ import { newRng } from '@/lib/trainer/rng'
 import { cardKey } from '@/lib/trainer/cardKey'
 import { mergeSessionCards, progressDeltas } from '@/lib/trainer/persistence'
 import { chooseOpponentReply } from '@/lib/trainer/replySelection'
-import { buildDrillLines, createLineQueue, nextQueuedLine } from '@/lib/trainer/lineQueue'
+import { buildDrillLines, createLineQueue, nextQueuedLine, switchToLineThrough } from '@/lib/trainer/lineQueue'
 import type { DrillLine, LineQueue } from '@/lib/trainer/lineQueue'
 
 function sleep(ms: number) {
@@ -197,6 +197,11 @@ export function useTrainerSession() {
 
   const [currentCard, setCurrentCard] = useState<RepCard | null>(null)
   const [runStartCard, setRunStartCard] = useState<RepCard | null>(null)
+  // The chapter this run's line was actually taken from. Can't be derived
+  // from runStartCard: early positions are shared by every chapter that
+  // passes through them (e.g. all four Trompowsky chapters start 1.d4 Nf6
+  // 2.Bg5 c5), so the card alone only says "one of these chapters".
+  const [runChapterId, setRunChapterId] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [hintUci, setHintUci] = useState<string | null>(null)
   const [runHadMistake, setRunHadMistake] = useState(false)
@@ -217,6 +222,7 @@ export function useTrainerSession() {
   const sessionCardsRef = useRef<RepCard[]>([])
   const selectedChapterIdsRef = useRef<Set<string>>(new Set())
   const runStartCardIdRef = useRef<string | null>(null)
+  const runChapterIdRef = useRef<string | null>(null)
   const runMovesRef = useRef<RunMove[]>([])
 
 
@@ -241,6 +247,13 @@ export function useTrainerSession() {
   // free-walk past it, so they leave this off.
   const lineQueueRef = useRef<LineQueue | null>(null)
   const lineModeRef = useRef(false)
+  // The deck line the current run is following (see followPlayedAnswer).
+  const runLineIdRef = useRef<string | null>(null)
+  // Set when a line run was taken off its line by a repertoire move that no
+  // selected line continues from. The rest of the run then free-walks like a
+  // today's-training run. "Do it again" keeps it, so a redo retraces the
+  // same moves.
+  const offLineRef = useRef(false)
 
 
 
@@ -334,13 +347,16 @@ export function useTrainerSession() {
 
 
   const resolveRunStartCard = useCallback(
-    (rep: Repertoire, dueCard: RepCard): { card: RepCard; targetPath: string[]; leadingMoves: RunMove[] } => {
+    (
+      rep: Repertoire,
+      dueCard: RepCard,
+    ): { card: RepCard; chapterId: string | null; targetPath: string[]; leadingMoves: RunMove[] } => {
       const chapterId = dueCard.chapterIds.find((id) => selectedChapterIdsRef.current.has(id)) ?? dueCard.chapterIds[0]
       const chapter = rep.chapters.find((c) => c.id === chapterId)
-      if (!chapter) return { card: dueCard, targetPath: dueCard.pathSan, leadingMoves: [] }
+      if (!chapter) return { card: dueCard, chapterId: chapterId ?? null, targetPath: dueCard.pathSan, leadingMoves: [] }
       const fullPath = findPathInChapterTree(chapter.tree, cardKey(dueCard.fen)) ?? dueCard.pathSan
       const start = walkToFirstCard(chapter, fullPath, cardById)
-      return { card: start.card ?? dueCard, targetPath: start.targetPath, leadingMoves: start.leadingMoves }
+      return { card: start.card ?? dueCard, chapterId: chapter.id, targetPath: start.targetPath, leadingMoves: start.leadingMoves }
     },
     [cardById],
   )
@@ -370,8 +386,10 @@ export function useTrainerSession() {
 
 
 
-  const beginRun = useCallback((card: RepCard, gs: GameState, leading: RunMove[] = []) => {
+  const beginRun = useCallback((card: RepCard, chapterId: string | null, gs: GameState, leading: RunMove[] = []) => {
     runStartCardIdRef.current = card.id
+    runChapterIdRef.current = chapterId
+    setRunChapterId(chapterId)
     runMovesRef.current = []
     setRunMoves([])
     setLeadingMoves(leading)
@@ -406,7 +424,8 @@ export function useTrainerSession() {
       // A queued line is a fixed path: once it's used up, the line is over.
       // (Without this, a leaf that transposes into another chapter's
       // position would keep going down whatever it happens to have there.)
-      if (lineModeRef.current && playedSans.length >= (dueTargetPathRef.current?.length ?? 0)) return null
+      const followsLine = lineModeRef.current && !offLineRef.current
+      if (followsLine && playedSans.length >= (dueTargetPathRef.current?.length ?? 0)) return null
       const chosen = chooseOpponentReply(
         replies,
         dueTargetPathRef.current,
@@ -418,7 +437,7 @@ export function useTrainerSession() {
       // Line mode never rewrites the line — even if the user played an
       // alternate answer and a fallback reply had to be picked, a redo still
       // has to retrace the original line.
-      if (!lineModeRef.current) dueTargetPathRef.current = chosen.nextTargetPath
+      if (!followsLine) dueTargetPathRef.current = chosen.nextTargetPath
       return chosen.reply
     },
     [repertoire],
@@ -450,11 +469,10 @@ export function useTrainerSession() {
       let lineAttempt: { chapterId: string; chapterName: string; cardId: string; hadMistake: boolean } | undefined
       if (logAttempt) {
         const startCard = runStartCardIdRef.current ? cardById(runStartCardIdRef.current) : undefined
-        // Prefer the chapter the user actually selected/drilled — a card
-        // shared across chapters via transposition can list a different
-        // chapter first, which used to misattribute this run's line_attempts
-        // analytics row (see resolveRunStartCard, which already gets this right).
-        const chapterId = startCard?.chapterIds.find((id) => selectedChapterIdsRef.current.has(id)) ?? startCard?.chapterIds[0]
+        // The chapter the run's line was actually dealt from — a start card
+        // is often shared by several chapters, so its chapterIds can't say
+        // which one this run was (see runChapterId).
+        const chapterId = runChapterIdRef.current ?? startCard?.chapterIds[0]
         const chapter = chapterId ? repertoire.chapters.find((c) => c.id === chapterId) : undefined
         lineAttempt =
           startCard && chapter
@@ -519,7 +537,8 @@ export function useTrainerSession() {
       pushSnapshot(gs, true)
 
       const nextCard = cardById(cardKey(gs.fen))
-      const lineFinished = lineModeRef.current && runMovesRef.current.length >= (dueTargetPathRef.current?.length ?? 0)
+      const lineFinished =
+        lineModeRef.current && !offLineRef.current && runMovesRef.current.length >= (dueTargetPathRef.current?.length ?? 0)
       if (!nextCard || lineFinished) {
         endRun()
         return
@@ -567,7 +586,9 @@ export function useTrainerSession() {
 
         dueTargetPathRef.current = start.targetPath
         leadingMovesRef.current = start.leadingMoves
-        beginRun(start.card, localGameState(start.card.fen), start.leadingMoves)
+        runLineIdRef.current = line.id
+        offLineRef.current = false
+        beginRun(start.card, chapter.id, localGameState(start.card.fen), start.leadingMoves)
         return true
       }
       return false
@@ -662,13 +683,15 @@ export function useTrainerSession() {
         if (reqId !== startSessionReqId.current) return
         sessionProgressRef.current = saved
         sessionRef.current = createSession(rep.cards, { sessionLength: null, mode: 'mixed' }, saved, newRng())
-        const { card, targetPath, leadingMoves: leading } = resolveRunStartCard(rep, dueCard)
+        const { card, chapterId, targetPath, leadingMoves: leading } = resolveRunStartCard(rep, dueCard)
         lineModeRef.current = false
         lineQueueRef.current = null
+        runLineIdRef.current = null
+        offLineRef.current = false
         dueTargetPathRef.current = targetPath
         leadingMovesRef.current = leading
         todayEntryRef.current = entry
-        beginRun(card, localGameState(card.fen), leading)
+        beginRun(card, chapterId, localGameState(card.fen), leading)
         setPhase('drilling')
       } catch (err) {
         if (reqId === startSessionReqId.current) {
@@ -704,6 +727,36 @@ export function useTrainerSession() {
     [startTodayEntry],
   )
 
+  // The user played a repertoire move that isn't the one this run planned.
+  // It still counts as correct, so the run follows it. In line mode that
+  // means switching to a deck line that continues from the new position
+  // (the chapter label switches with it). If no selected line does, the
+  // rest of the run free-walks the repertoire instead. Without this the run
+  // kept forcing the old line's replies from a position that line never
+  // reaches, so a run labeled with one chapter played out another.
+  const followPlayedAnswer = useCallback((fen: string, answerChapterIds: string[]) => {
+    const playedSans = runMovesRef.current.map((m) => m.san)
+    if (!lineModeRef.current || offLineRef.current) {
+      dueTargetPathRef.current = playedSans
+      return
+    }
+    const queue = lineQueueRef.current
+    const switched = queue ? switchToLineThrough(queue, cardKey(fen), runLineIdRef.current, runChapterIdRef.current) : null
+    if (switched) {
+      dueTargetPathRef.current = [...playedSans, ...switched.rest]
+      runLineIdRef.current = switched.line.id
+      runChapterIdRef.current = switched.line.chapterId
+      setRunChapterId(switched.line.chapterId)
+      return
+    }
+    offLineRef.current = true
+    dueTargetPathRef.current = playedSans
+    const chapterId =
+      answerChapterIds.find((id) => selectedChapterIdsRef.current.has(id)) ?? answerChapterIds[0] ?? runChapterIdRef.current
+    runChapterIdRef.current = chapterId
+    setRunChapterId(chapterId)
+  }, [])
+
   const submitMove = useCallback(
     async (from: Square, to: Square, promotion?: string) => {
       const card = currentCard
@@ -722,6 +775,11 @@ export function useTrainerSession() {
 
         const matchAnswer = card.answers.find((a) => a.san === playedSan)
         const matchExcluded = card.excludedAnswers?.find((a) => a.san === playedSan)
+        // The move this run's line (or due path) plays here, when it's one of
+        // the card's answers. A position can have several repertoire moves,
+        // and this one, not the card's primary, is what the run expects.
+        const plannedSan = dueTargetPathRef.current?.[runMovesRef.current.length]
+        const planned = card.answers.find((a) => a.san === plannedSan)
 
         if (matchAnswer) {
           if (!gradedThisPresentationRef.current) {
@@ -737,11 +795,12 @@ export function useTrainerSession() {
             setSelected(null)
             pushSnapshot(gs)
             setFeedback({
-              kind: matchAnswer.primary ? 'correct' : 'correct-alt',
+              kind: (planned ? planned.san === playedSan : matchAnswer.primary) ? 'correct' : 'correct-alt',
               playedSan,
               comment: matchAnswer.comment,
             })
           })
+          if (planned && planned.san !== playedSan) followPlayedAnswer(gs.fen, matchAnswer.chapterIds)
           await sleep(150)
           if (reqId !== moveReqId.current) return
           await proceedAfterCorrect(gs)
@@ -751,7 +810,7 @@ export function useTrainerSession() {
             grade(sessionRef.current!, card.id, false)
             gradedThisPresentationRef.current = true
           }
-          const primary = card.answers.find((a) => a.primary) ?? card.answers[0]
+          const primary = planned ?? card.answers.find((a) => a.primary) ?? card.answers[0]
           setFeedback({
             kind: matchExcluded ? 'excluded' : 'incorrect',
             playedSan,
@@ -777,7 +836,7 @@ export function useTrainerSession() {
         if (reqId === moveReqId.current) setBusy(false)
       }
     },
-    [currentCard, phase, busy, boardState, isViewingHistory, liveGameState, proceedAfterCorrect],
+    [currentCard, phase, busy, boardState, isViewingHistory, liveGameState, proceedAfterCorrect, followPlayedAnswer],
   )
 
 
@@ -853,7 +912,7 @@ export function useTrainerSession() {
     if (!card) return
     setBusy(true)
     try {
-      beginRun(card, localGameState(card.fen), leadingMovesRef.current)
+      beginRun(card, runChapterIdRef.current, localGameState(card.fen), leadingMovesRef.current)
       setPhase('drilling')
     } finally {
       setBusy(false)
@@ -1003,6 +1062,7 @@ export function useTrainerSession() {
     toggleFlipped,
     currentCard,
     runStartCard,
+    runChapterId,
     feedback,
     hintUci,
     runHadMistake,

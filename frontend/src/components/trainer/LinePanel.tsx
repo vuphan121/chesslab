@@ -13,6 +13,7 @@ interface RunMove {
 interface Props {
   repertoire: Repertoire
   runStartCard: RepCard
+  runChapterId?: string | null
   runMoves: RunMove[]
   leadingMoves?: RunMove[]
   isTodayTraining?: boolean
@@ -51,6 +52,7 @@ function NavBtn({ label, disabled, onClick, title }: { label: ReactNode; disable
 export default function LinePanel({
   repertoire,
   runStartCard,
+  runChapterId,
   runMoves,
   leadingMoves = [],
   isTodayTraining,
@@ -60,7 +62,9 @@ export default function LinePanel({
   onNavBack,
   onNavForward,
 }: Props) {
-  const chapter = repertoire.chapters.find((c) => runStartCard.chapterIds.includes(c.id))
+  const chapter =
+    (runChapterId ? repertoire.chapters.find((c) => c.id === runChapterId) : undefined) ??
+    repertoire.chapters.find((c) => runStartCard.chapterIds.includes(c.id))
   const chapterName = chapter?.name ?? repertoire.name
 
   const liveIndex = runMoves.length

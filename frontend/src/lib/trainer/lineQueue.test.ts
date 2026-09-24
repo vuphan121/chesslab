@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildDrillLines, createLineQueue, enumerateLines, nextQueuedLine } from './lineQueue'
+import { buildDrillLines, createLineQueue, enumerateLines, nextQueuedLine, switchToLineThrough } from './lineQueue'
 import type { DrillLine } from './lineQueue'
 import { mulberry32 } from './rng'
 import type { RepChapter, RepNode } from './types'
@@ -98,5 +98,29 @@ describe('nextQueuedLine', () => {
     const q = createLineQueue([line('only')], mulberry32(1))
     expect(nextQueuedLine(q, always)!.id).toBe('only')
     expect(nextQueuedLine(q, always)!.id).toBe('only')
+  })
+})
+
+describe('switchToLineThrough', () => {
+  const dealt: DrillLine = { id: 'h6', chapterId: 'h6', path: ['h6', 'Be3'], positionKeys: ['root', 'after-h6', 'x'] }
+  const nbd7a: DrillLine = { id: 'n1', chapterId: 'nbd7', path: ['Nbd7', 'Qd2'], positionKeys: ['root', 'after-nbd7', 'y'] }
+  const nbd7b: DrillLine = { id: 'n2', chapterId: 'nbd7', path: ['Nbd7', 'Nf3'], positionKeys: ['root', 'after-nbd7', 'z'] }
+
+  it('moves onto a line through the played position and puts the dealt line back', () => {
+    const q = createLineQueue([dealt, nbd7a, nbd7b], mulberry32(1))
+    q.pending = [nbd7b]
+    const got = switchToLineThrough(q, 'after-nbd7', 'h6', 'h6')
+    // n2 is still pending this pass, so it's preferred over the already-dealt n1.
+    expect(got?.line.id).toBe('n2')
+    expect(got?.rest).toEqual(['Nf3'])
+    expect(q.pending.map((l) => l.id)).toEqual(['h6'])
+    expect(q.lastId).toBe('n2')
+  })
+
+  it('returns null and leaves the deck alone when no line reaches the position', () => {
+    const q = createLineQueue([dealt, nbd7a], mulberry32(1))
+    q.pending = [nbd7a]
+    expect(switchToLineThrough(q, 'nowhere', 'h6', 'h6')).toBeNull()
+    expect(q.pending.map((l) => l.id)).toEqual(['n1'])
   })
 })

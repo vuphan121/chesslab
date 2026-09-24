@@ -93,6 +93,16 @@ reach the same position with different move counts must be one card. The en-pass
 **All of a card's recorded answers count as correct**, primary and alternates alike. Playing an
 alternate is graded correct and the run continues down *that* branch.
 
+In line mode (each run is one line dealt from the session's deck), "correct" is measured against
+the move the *dealt line* plays at that position, which may be an alternate: the Averbakh chapters
+diverge at move 6 (Nbd7 / h6 / Na6 / c5, one chapter each), so an "h6" line expects h6. If the user
+plays a different recorded answer, it's still graded correct, and the run **switches to a deck line
+that continues from the resulting position** (`switchToLineThrough` in
+`frontend/src/lib/trainer/lineQueue.ts`). It prefers a line not yet dealt this pass, the chapter
+label follows the switch, and the originally dealt line goes back into the pending pile. If no
+selected chapter has a line through that position, the rest of the run free-walks the repertoire.
+The wrong-move hint also shows the dealt line's move, not the card's primary.
+
 This is the right default: a study author who records `2. e3 (2. Nc3 …)` with the comment *"Nc3 is
 also an idea"* has two moves in their repertoire and should be credited for either. Marking only the
 mainline correct would fail the user for playing their own repertoire.
@@ -194,8 +204,8 @@ returns already-canonical SAN and the frontend only strips check/mate suffixes.
 
 | The played move | Outcome | Grade |
 |---|---|---|
-| equals the primary answer | **Correct** | correct |
-| equals an alternate answer | **Correct (alternate)** | correct — run continues down that branch |
+| equals the planned answer (the dealt line's move, else the primary) | **Correct** | correct |
+| equals another recorded answer | **Correct (alternate)** | correct — run switches to a line continuing down that branch (§4.2) |
 | equals an excluded move | **Not in repertoire** | incorrect |
 | is legal but unrecorded | **Incorrect** | incorrect |
 | is illegal | not possible — the board won't allow it | — |
