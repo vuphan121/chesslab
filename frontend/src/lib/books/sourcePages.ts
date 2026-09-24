@@ -2,6 +2,7 @@
 
 
 const chapterOnePages: Record<string, number> = {
+  'buyc1-ch1-lesson-1': 1,
   'buyc1-ch1-lesson-2': 1,
   'buyc1-ch1-lesson-3': 2,
   'buyc1-ch1-lesson-4': 2,

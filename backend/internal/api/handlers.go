@@ -707,9 +707,25 @@ func toGameStateLocked(g *chess.Game) GameStateJSON {
 		IsDraw:         isDraw,
 		IsGameOver:     isCheckmate || isDraw,
 		GameOverReason: gameOverReason,
-		MoveTree:       toMoveNode(g.Root, 0),
+		MoveTree:       toMoveNode(g.Root, rootPly(g.Root.Pos)),
 		CurrentNodeID:  g.Current.ID,
 	}
+}
+
+// rootPly is the game-wide ply of a tree's root position, so a node's Ply
+// always has White's moves odd and Black's even, whatever the start. Move lists
+// number and pair moves from ply parity. Counting from 0 at every root put a
+// Black-to-move start's first move (e.g. a book puzzle or an "Analyze this line"
+// from a Black repertoire) in the White column.
+func rootPly(pos *chess.Position) int {
+	ply := (pos.FullMove - 1) * 2
+	if pos.Turn == chess.Black {
+		ply++
+	}
+	if ply < 0 {
+		return 0
+	}
+	return ply
 }
 
 func toMoveNode(n *chess.Node, ply int) MoveNodeJSON {

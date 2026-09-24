@@ -34,7 +34,13 @@ func ParsePGN(text string) ([]*Chapter, error) {
 
 		startFEN := chess.StartFEN
 		if fen, ok := b.tags["FEN"]; ok && b.tags["SetUp"] == "1" {
-			startFEN = fen
+			// A custom chapter start is a set-up position: a king and rook still
+			// on their home squares can castle, whatever the study's FEN says.
+			normalized, err := chess.NormalizeSetupCastling(fen)
+			if err != nil {
+				return nil, fmt.Errorf("%s: bad start FEN: %w", label, err)
+			}
+			startFEN = normalized
 		}
 
 		toks, err := tokenizeMovetext(b.movetext)

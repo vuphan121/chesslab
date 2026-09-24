@@ -68,6 +68,14 @@ func validateBook(b *Book) error {
 			item := &ch.Items[ii]
 			label := fmt.Sprintf("chapter %q item %q", ch.Name, item.ID)
 
+			// Book diagrams are set-up positions: a king and rook still on
+			// their home squares can castle, whatever the extracted FEN says.
+			normalized, err := chess.NormalizeSetupCastling(item.FEN)
+			if err != nil {
+				return fmt.Errorf("%s: bad FEN: %w", label, err)
+			}
+			item.FEN = normalized
+
 			pos, err := chess.ParseFEN(item.FEN)
 			if err != nil {
 				return fmt.Errorf("%s: bad FEN: %w", label, err)

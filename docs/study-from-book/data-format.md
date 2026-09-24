@@ -55,6 +55,11 @@ student makes.
 ```
 
 The backend validates each FEN and confirms that `sideToMove` matches the FEN.
+Before validating, it rewrites each FEN's castling field from piece placement
+(`chess.NormalizeSetupCastling`). A diagram doesn't show castling rights, so a
+king and rook still on their home squares are assumed able to castle, and a
+claimed right whose king or rook isn't home is dropped. Extraction doesn't need
+to get the castling field right.
 `sourcePage` is chapter-local (for the reader), while `bookPage` and
 `masterPDFPage` preserve the original physical location for diagram extraction
 and review.

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import type { MoveNode } from '@/lib/chess/types'
 import type { FenEval } from '@/lib/api/client'
 import { toFigurine } from '@/lib/chess/figurine'
+import { activeLine } from '@/lib/chess/moveTree'
 
 interface Props {
   moveTree: MoveNode
@@ -46,14 +47,9 @@ export default function BookMoveHistory({
     }
   }, [menu])
 
-  const mainline: MoveNode[] = []
-  let node: MoveNode | undefined = moveTree
-  while (node) {
-    const next: MoveNode | undefined = (node.children ?? [])[0]
-    if (!next) break
-    mainline.push(next)
-    node = next
-  }
+  // The line through the current move, so a sideline the user branched into
+  // is what's listed (and what "Save line" saves), not the old main line.
+  const mainline: MoveNode[] = activeLine(moveTree, currentNodeId)
 
   const moveCell = (move: MoveNode | undefined) => {
     if (!move) return <span style={{ flex: 1 }} />
@@ -80,18 +76,23 @@ export default function BookMoveHistory({
     )
   }
 
-  const rows: React.ReactNode[] = []
-  for (let i = 0; i < mainline.length; i += 2) {
-    const white = mainline[i]
-    const black = mainline[i + 1]
-    rows.push(
-      <div key={white.id} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-        <span className="mono" style={{ width: 26, color: '#b4b1a8', fontSize: 11, textAlign: 'right' }}>{Math.ceil(white.ply / 2)}.</span>
-        {moveCell(white)}
-        {moveCell(black)}
-      </div>,
-    )
+  // Pair moves by ply parity (odd = White), not by list position: a
+  // Black-to-move start's first move belongs in the Black column.
+  const pairs: { num: number; white?: MoveNode; black?: MoveNode }[] = []
+  for (const move of mainline) {
+    const num = Math.ceil(move.ply / 2)
+    const last = pairs[pairs.length - 1]
+    if (move.ply % 2 === 1) pairs.push({ num, white: move })
+    else if (last && last.num === num && !last.black) last.black = move
+    else pairs.push({ num, black: move })
   }
+  const rows = pairs.map(({ num, white, black }) => (
+    <div key={(white ?? black)!.id} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+      <span className="mono" style={{ width: 26, color: '#b4b1a8', fontSize: 11, textAlign: 'right' }}>{white ? `${num}.` : `${num}…`}</span>
+      {moveCell(white)}
+      {moveCell(black)}
+    </div>
+  ))
 
   const hasMoves = mainline.length > 0
   const saveEnabled = canSave && !saving && !busy

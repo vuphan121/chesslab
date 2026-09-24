@@ -37,7 +37,7 @@ No auth needed for a public study. The important structural facts:
 |---|---|
 | `[Tag "value"]` pairs | Collected per game into a `map[string]string`. `FEN`, `SetUp`, `Event`, `ChapterName`, `StudyName`, `ChapterURL` are the ones used. |
 | Multiple games in one file | Split on the tag-pair block that follows a completed movetext. |
-| `[FEN]` + `[SetUp "1"]` | Root position. Absent → `chess.StartFEN`. |
+| `[FEN]` + `[SetUp "1"]` | Root position, with its castling field rewritten from piece placement (`chess.NormalizeSetupCastling`: king and rook on home squares means the right is kept). Absent → `chess.StartFEN`. |
 | `{ comment }`, possibly multi-line | Attached to the **preceding** move's node; a comment appearing before the first move attaches to the chapter root (a "line intro"). |
 | `; line comment` | Stripped to end of line. |
 | `( variation )`, nested | A sibling subtree of the **previous** move, rooted at that move's *parent*. |

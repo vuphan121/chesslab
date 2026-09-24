@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createGame, setPosition as apiSetPosition, makeMove, gotoNode, deleteGameNode, getBook, getBookProgress, markItemDone, analyzeGame, evalFen, recordBookStudyActivity, getBookSavedLine, saveBookLine } from '@/lib/api/client'
 import type { Analysis, GameState, FenEval, SavedLine, SavedLineMove } from '@/lib/api/client'
-import type { BoardState, Color, MoveNode, PieceType, Square } from '@/lib/chess/types'
-import { flatten } from '@/lib/chess/moveTree'
+import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
+import { activeLine, flatten } from '@/lib/chess/moveTree'
 import type { Book, BookItem } from '@/lib/books/types'
 
 
@@ -42,18 +42,6 @@ function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState 
 
 export type BookStudyPhase = 'setup' | 'studying' | 'done'
 
-// Walk the tree's main line (children[0] chain), skipping the root.
-function mainlineNodes(root: MoveNode): MoveNode[] {
-  const out: MoveNode[] = []
-  let node: MoveNode | undefined = root
-  while (node) {
-    const next: MoveNode | undefined = (node.children ?? [])[0]
-    if (!next) break
-    out.push(next)
-    node = next
-  }
-  return out
-}
 
 export interface FlatItem {
   item: BookItem
@@ -175,7 +163,7 @@ export function useBookStudySession() {
   // user who never opens analysis gets no extra engine traffic.
   useEffect(() => {
     if (!analysisEnabled || !gameState) return
-    const fens = mainlineNodes(gameState.moveTree).map((n) => n.fen)
+    const fens = activeLine(gameState.moveTree, gameState.currentNodeId).map((n) => n.fen)
     const missing = fens.filter((f) => !(f in moveEvalsRef.current))
     if (missing.length === 0) return
 
@@ -202,7 +190,9 @@ export function useBookStudySession() {
     const entry = flat.get(gameState.currentNodeId)
     const canForward = !!entry?.node.children && entry.node.children.length > 0
     const canBack = entry?.parentId != null
-    return { ply: entry?.node.ply ?? 0, canBack, canForward }
+    // Plies from the item's start position (node ply is game-wide, see the
+    // backend's rootPly).
+    return { ply: (entry?.node.ply ?? 0) - gameState.moveTree.ply, canBack, canForward }
   }, [gameState])
 
 
@@ -460,7 +450,8 @@ export function useBookStudySession() {
     const itemId = current?.item.id
     if (!bookId || !itemId || !gameState || savingLine) return
     const expectedItemRequest = itemReqId.current
-    const nodes = mainlineNodes(gameState.moveTree)
+    // What's on the board, sideline included, not the tree's main line.
+    const nodes = activeLine(gameState.moveTree, gameState.currentNodeId)
     if (nodes.length === 0) {
       setSaveNote('Play some moves first.')
       return
