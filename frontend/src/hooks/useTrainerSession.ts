@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Chess } from 'chess.js'
@@ -12,6 +12,7 @@ import {
   saveProgress as apiSaveProgress,
   getTodayTraining,
   advanceTodayTraining,
+  pingBackend,
 } from '@/lib/api/client'
 import type { GameState, TodayTrainingEntry, TodayTrainingResponse } from '@/lib/api/client'
 import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
@@ -178,7 +179,17 @@ export function useTrainerSession() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-
+  // Drilling itself never talks to the backend (moves are simulated locally
+  // via chess.js — see localGameState above), so a long study session can
+  // leave Render's free-tier instance idle long enough to spin down. The
+  // next real request (switching chapters, saving progress) then eats a
+  // cold-start hit. Ping /healthz periodically while a session is active to
+  // keep the instance warm through the gaps between backend calls.
+  useEffect(() => {
+    if (phase !== 'drilling' && phase !== 'line-complete') return
+    const interval = setInterval(pingBackend, 5 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [phase])
 
 
 
@@ -606,7 +617,13 @@ export function useTrainerSession() {
       setLoading(true)
       setLoadError(null)
       try {
-        const rep = await getRepertoire(repertoireId)
+        // Fire both requests immediately instead of awaiting getRepertoire
+        // first — neither depends on the other's result, and on a cold
+        // backend that halved a two-round-trip wait to one.
+        const repPromise = getRepertoire(repertoireId)
+        const progressPromise = apiGetProgress(repertoireId).catch(() => null)
+
+        const rep = await repPromise
         if (reqId !== startSessionReqId.current) return
         setRepertoireState(rep)
         setFlipped(rep.side === 'b')
@@ -621,19 +638,9 @@ export function useTrainerSession() {
         }
         sessionCardsRef.current = cards
 
-
-
-
-
-
-
-        let saved: Record<string, PersistedCardState> = {}
-        try {
-          saved = (await apiGetProgress(repertoireId)).cards
-        } catch {
-
-        }
+        const progressResult = await progressPromise
         if (reqId !== startSessionReqId.current) return
+        const saved: Record<string, PersistedCardState> = progressResult?.cards ?? {}
         sessionProgressRef.current = saved
         const session = createSession(cards, opts, saved, newRng())
         sessionRef.current = session
@@ -666,7 +673,10 @@ export function useTrainerSession() {
       setLoading(true)
       setLoadError(null)
       try {
-        const rep = await getRepertoire(entry.repertoireId)
+        const repPromise = getRepertoire(entry.repertoireId)
+        const progressPromise = apiGetProgress(entry.repertoireId).catch(() => null)
+
+        const rep = await repPromise
         if (reqId !== startSessionReqId.current) return
         const dueCard = rep.cards.find((card) => card.id === entry.cardId)
         if (!dueCard) throw new Error('This line is no longer available in its repertoire.')
@@ -674,13 +684,10 @@ export function useTrainerSession() {
         setFlipped(rep.side === 'b')
         selectedChapterIdsRef.current = new Set(rep.chapters.map((chapter) => chapter.id))
         sessionCardsRef.current = rep.cards
-        let saved: Record<string, PersistedCardState> = {}
-        try {
-          saved = (await apiGetProgress(rep.id)).cards
-        } catch {
 
-        }
+        const progressResult = await progressPromise
         if (reqId !== startSessionReqId.current) return
+        const saved: Record<string, PersistedCardState> = progressResult?.cards ?? {}
         sessionProgressRef.current = saved
         sessionRef.current = createSession(rep.cards, { sessionLength: null, mode: 'mixed' }, saved, newRng())
         const { card, chapterId, targetPath, leadingMoves: leading } = resolveRunStartCard(rep, dueCard)
