@@ -60,6 +60,15 @@ export interface AnalysisLine {
   fens: string[]
 }
 
+export type TablebaseCategory =
+  | 'win'
+  | 'loss'
+  | 'draw'
+  | 'cursed-win'
+  | 'blessed-loss'
+  | 'maybe-win'
+  | 'maybe-loss'
+
 export interface Analysis {
   bestMove: string
   score: number
@@ -67,6 +76,11 @@ export interface Analysis {
   depth: number
   engineName: string
   lines: AnalysisLine[]
+  // Set instead of a normal engine result when the position was resolved via
+  // an exact Syzygy tablebase lookup (≤7 pieces) — see backend CLAUDE.md.
+  // White-relative, like score/mate.
+  tablebaseCategory?: TablebaseCategory
+  tablebaseDtz?: number
 }
 
 export interface ExplorerMove {
@@ -157,6 +171,8 @@ export interface FenEval {
   score: number
   mate: number
   depth: number
+  tablebaseCategory?: TablebaseCategory
+  tablebaseDtz?: number
 }
 
 

@@ -37,6 +37,30 @@ function formatEval(score: number, mate: number): string {
   return score >= 0 ? `+${v}` : `-${v}`
 }
 
+// A tablebase result with no DTM (7-man positions never carry one — see
+// backend CLAUDE.md) has no real mate/cp number, just an exact category —
+// showing "+100.0" from the score sentinel would look like a real eval, so
+// this takes over whenever mate is unavailable.
+function formatTablebaseEval(score: number, mate: number, category: string): string {
+  if (mate !== 0) return formatEval(score, mate)
+  switch (category) {
+    case 'win':
+      return 'White wins'
+    case 'loss':
+      return 'Black wins'
+    case 'cursed-win':
+      return 'White wins*'
+    case 'blessed-loss':
+      return 'Black wins*'
+    case 'maybe-win':
+      return 'White likely wins'
+    case 'maybe-loss':
+      return 'Black likely wins'
+    default:
+      return 'Draw'
+  }
+}
+
 export default function Home() {
   return (
     <Suspense fallback={null}>
@@ -166,12 +190,24 @@ function HomeInner() {
               }}
             >
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                {!!analysis?.depth && (
+                {(!!analysis?.depth || !!analysis?.tablebaseCategory) && (
                   <span className="mono" style={{ fontSize: 12, color: '#a3a099' }}>
-                    {analysis.engineName} · depth {analysis.depth} ·{' '}
-                    <span style={{ fontWeight: 700, color: '#37352f' }}>
-                      {formatEval(analysis.score, analysis.mate)}
-                    </span>
+                    {analysis.engineName} ·{' '}
+                    {analysis.tablebaseCategory ? (
+                      <>
+                        {analysis.tablebaseDtz !== undefined && `DTZ ${Math.abs(analysis.tablebaseDtz)} · `}
+                        <span style={{ fontWeight: 700, color: '#37352f' }}>
+                          {formatTablebaseEval(analysis.score, analysis.mate, analysis.tablebaseCategory)}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        depth {analysis.depth} ·{' '}
+                        <span style={{ fontWeight: 700, color: '#37352f' }}>
+                          {formatEval(analysis.score, analysis.mate)}
+                        </span>
+                      </>
+                    )}
                   </span>
                 )}
                 <button
@@ -224,7 +260,7 @@ function HomeInner() {
                 mate={analysis?.mate ?? 0}
                 height={boardSize}
                 flipped={flipped}
-                hasEval={!!analysis?.depth}
+                hasEval={!!analysis?.depth || !!analysis?.tablebaseCategory}
               />
             </div>
 

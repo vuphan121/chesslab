@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -130,6 +131,11 @@ type AnalysisJSON struct {
 	Depth      int        `json:"depth"`
 	EngineName string     `json:"engineName"`
 	Lines      []LineJSON `json:"lines"`
+	// TablebaseCategory/TablebaseDTZ are only set when the position was
+	// resolved via a Syzygy tablebase lookup instead of engine search — see
+	// tablebaseAnalysis. White-relative, like Score/Mate.
+	TablebaseCategory string `json:"tablebaseCategory,omitempty"`
+	TablebaseDTZ      *int   `json:"tablebaseDtz,omitempty"`
 }
 
 type ExplorerMoveJSON struct {
@@ -354,13 +360,36 @@ func (h *Handler) analyzePosition(fen string, pos *chess.Position, quick bool) (
 		cloudTimeout = 400 * time.Millisecond
 	}
 
-	if cloud := h.takePrefetchedCloud(fen); cloud != nil {
-		return cloudAnalysis(pos, cloud), nil
+	tablebaseEligible := pos.PieceCount() <= lichess.MaxTablebasePieces
+	if tablebaseEligible {
+		// Bounded to the same budget as the cloud-eval call just below (400ms
+		// quick / 3s full) — an unbounded lookup here would let a slow
+		// tablebase response blow the "quick" pass's whole latency budget,
+		// defeating the reason it's split from "full" in the first place.
+		if tb, err := lichess.FetchTablebaseWithTimeout(fen, cloudTimeout); err == nil && tb != nil {
+			return tablebaseAnalysis(pos, tb), nil
+		} else if err != nil && !quick {
+			log.Printf("lichess tablebase: %v", err)
+		}
 	}
-	if cloud, err := lichess.FetchWithTimeout(fen, 3, cloudTimeout); err == nil && cloud != nil {
-		return cloudAnalysis(pos, cloud), nil
-	} else if err != nil && !quick {
-		log.Printf("lichess cloud eval: %v", err)
+
+	// Skip the cloud-eval attempt below when a tablebase-eligible position's
+	// lookup just missed/timed out: that cache is populated from real played
+	// games' opening/middlegame analysis, so a sparse (≤7-piece) synthetic
+	// endgame FEN is essentially never going to hit it anyway. Trying it here
+	// would stack a second up-to-cloudTimeout wait on top of the tablebase
+	// attempt for no realistic benefit — verified live: a quick-pass
+	// tablebase miss followed by this cloud attempt measured ~880ms, more
+	// than double the ~400ms "quick" budget this pass is supposed to honor.
+	if !tablebaseEligible {
+		if cloud := h.takePrefetchedCloud(fen); cloud != nil {
+			return cloudAnalysis(pos, cloud), nil
+		}
+		if cloud, err := lichess.FetchWithTimeout(fen, 3, cloudTimeout); err == nil && cloud != nil {
+			return cloudAnalysis(pos, cloud), nil
+		} else if err != nil && !quick {
+			log.Printf("lichess cloud eval: %v", err)
+		}
 	}
 
 	if h.engine == nil {
@@ -446,6 +475,141 @@ func cloudAnalysis(pos *chess.Position, cloud *lichess.CloudEval) AnalysisJSON {
 		result.Lines = append(result.Lines, LineJSON{Score: score, Mate: mate, Depth: cloud.Depth, Moves: sans, UCIMoves: moves, FENs: fens})
 	}
 	return result
+}
+
+// tablebaseAnalysis converts a Syzygy lookup (side-to-move relative) into the
+// app's White-relative AnalysisJSON shape, matching how cloudAnalysis/the
+// Stockfish path already normalize score/mate. There's no centipawn score
+// for an exact result, so decisive categories get a saturating sentinel
+// (±10000 — same order of magnitude the eval bar's tanh curve already
+// treats as a full 97/3% fill) instead of a fabricated cp value; Mate is
+// only set when the API returned a real distance-to-mate (DTM), which it
+// only does up to 6-man positions.
+func tablebaseAnalysis(pos *chess.Position, tb *lichess.TablebaseResult) AnalysisJSON {
+	flip := pos.Turn == chess.Black
+
+	result := AnalysisJSON{
+		EngineName:        fmt.Sprintf("Syzygy Tablebase (%d-man)", pos.PieceCount()),
+		TablebaseCategory: flipTablebaseCategory(tb.Category, flip),
+	}
+	if tb.DTZ != nil {
+		dtz := *tb.DTZ
+		if flip {
+			dtz = -dtz
+		}
+		result.TablebaseDTZ = &dtz
+	}
+
+	switch tb.Category {
+	case "win", "cursed-win", "maybe-win":
+		result.Score = 10000
+	case "loss", "blessed-loss", "maybe-loss":
+		result.Score = -10000
+	}
+	if tb.DTM != nil {
+		dtm := *tb.DTM
+		moves := (abs(dtm) + 1) / 2
+		if dtm < 0 {
+			moves = -moves
+		}
+		result.Mate = moves
+	}
+	if flip {
+		result.Score = -result.Score
+		result.Mate = -result.Mate
+	}
+
+	if best := bestTablebaseMove(tb.Moves); best != nil {
+		result.BestMove = best.UCI
+		sans, fens := chess.MovesToSANAndFENs(pos, []string{best.UCI})
+		line := LineJSON{Score: result.Score, Mate: result.Mate, UCIMoves: []string{best.UCI}, Moves: sans, FENs: fens}
+		result.Lines = []LineJSON{line}
+	}
+	return result
+}
+
+// flipTablebaseCategory normalizes a side-to-move-relative category to
+// White-relative by swapping each win/loss pair when Black is to move; draw
+// categories are symmetric and pass through unchanged.
+func flipTablebaseCategory(category string, flip bool) string {
+	if !flip {
+		return category
+	}
+	switch category {
+	case "win":
+		return "loss"
+	case "loss":
+		return "win"
+	case "cursed-win":
+		return "blessed-loss"
+	case "blessed-loss":
+		return "cursed-win"
+	case "maybe-win":
+		return "maybe-loss"
+	case "maybe-loss":
+		return "maybe-win"
+	default:
+		return category
+	}
+}
+
+// bestTablebaseMove picks the move whose resulting position (from the
+// opponent's perspective, per TablebaseMove's doc comment) is worst for the
+// opponent: a reply that loses for them beats one that draws, which beats
+// one that wins for them. Returns nil if Moves is empty (e.g. the position
+// is already checkmate/stalemate).
+func bestTablebaseMove(moves []lichess.TablebaseMove) *lichess.TablebaseMove {
+	rank := func(category string) int {
+		switch category {
+		case "loss", "blessed-loss", "maybe-loss":
+			return 2
+		case "win", "cursed-win", "maybe-win":
+			return 0
+		default:
+			return 1
+		}
+	}
+	// distance prefers DTM (real plies-to-mate) over DTZ (plies to the next
+	// 50-move-resetting move — a coarser proxy) when both are available: two
+	// replies can tie on DTZ while differing on DTM (verified live — see
+	// backend CLAUDE.md's tablebase section).
+	distance := func(m *lichess.TablebaseMove) (int, bool) {
+		if m.DTM != nil {
+			return *m.DTM, true
+		}
+		if m.DTZ != nil {
+			return *m.DTZ, true
+		}
+		return 0, false
+	}
+	var best *lichess.TablebaseMove
+	for i := range moves {
+		m := &moves[i]
+		if best == nil || rank(m.Category) > rank(best.Category) {
+			best = m
+			continue
+		}
+		if rank(m.Category) != rank(best.Category) {
+			continue
+		}
+		mv, mok := distance(m)
+		bv, bok := distance(best)
+		// Both values are the opponent's own (positive = opponent winning,
+		// negative = opponent losing) — algebraically larger is always the
+		// better reply for us regardless of who's winning: either a faster
+		// win (less negative) or a longer survival (more positive).
+		if mok && bok && mv > bv {
+			best = m
+		}
+	}
+	return best
+}
+
+func abs(n int) int {
+	if n < 0 {
+		return -n
+	}
+	return n
 }
 
 // Prefetching is deliberately cloud-only: background Stockfish searches would contend with the
@@ -534,9 +698,11 @@ func (h *Handler) rememberPrefetchedCloud(fen string, cloud *lichess.CloudEval) 
 }
 
 type EvalFENResponse struct {
-	Score int `json:"score"`
-	Mate  int `json:"mate"`
-	Depth int `json:"depth"`
+	Score             int    `json:"score"`
+	Mate              int    `json:"mate"`
+	Depth             int    `json:"depth"`
+	TablebaseCategory string `json:"tablebaseCategory,omitempty"`
+	TablebaseDTZ      *int   `json:"tablebaseDtz,omitempty"`
 }
 
 func (h *Handler) EvalFEN(w http.ResponseWriter, r *http.Request) {
@@ -548,17 +714,53 @@ func (h *Handler) EvalFEN(w http.ResponseWriter, r *http.Request) {
 	}
 	flipScore := pos.Turn == chess.Black
 
-	if cloud, cerr := lichess.Fetch(fen, 1); cerr == nil && cloud != nil && len(cloud.PVs) > 0 {
-		pv := cloud.PVs[0]
-		out := EvalFENResponse{Depth: cloud.Depth}
-		if pv.CP != nil {
-			out.Score = *pv.CP
-		}
-		if pv.Mate != nil {
-			out.Mate = *pv.Mate
-		}
-		respondJSON(w, http.StatusOK, out)
+	// Matches analyzePosition's own game-over guard: a checkmate/stalemate
+	// position has no "next move" to evaluate, and asking the tablebase
+	// about one anyway produces a misleading result — verified live: Lichess
+	// itself reports the terminal position's own dtz as -1 (a sentinel, not
+	// "1 more ply needed"), but tablebaseAnalysis doesn't special-case
+	// Checkmate/Stalemate, so a real checkmate FEN came back as
+	// `"tablebaseDtz":1` — implying more play was still needed in a game
+	// that already ended. Short-circuiting here (same as AnalyzeGame already
+	// does) avoids the external call entirely for a position this engine
+	// already fully understands.
+	if probe, perr := chess.NewGameFromFEN("", fen); perr == nil && probe.IsGameOver() {
+		respondJSON(w, http.StatusOK, EvalFENResponse{})
 		return
+	}
+
+	tablebaseEligible := pos.PieceCount() <= lichess.MaxTablebasePieces
+	if tablebaseEligible {
+		if tb, terr := lichess.FetchTablebase(fen); terr == nil && tb != nil {
+			result := tablebaseAnalysis(pos, tb)
+			respondJSON(w, http.StatusOK, EvalFENResponse{
+				Score:             result.Score,
+				Mate:              result.Mate,
+				TablebaseCategory: result.TablebaseCategory,
+				TablebaseDTZ:      result.TablebaseDTZ,
+			})
+			return
+		}
+	}
+
+	// Same reasoning as analyzePosition: skip the cloud-eval attempt after a
+	// tablebase miss on an eligible (≤7-piece) position — that cache is
+	// populated from real games' opening/middlegame analysis, so a sparse
+	// synthetic endgame FEN is essentially never going to hit it, and trying
+	// anyway would stack a second multi-second timeout on top of the first.
+	if !tablebaseEligible {
+		if cloud, cerr := lichess.Fetch(fen, 1); cerr == nil && cloud != nil && len(cloud.PVs) > 0 {
+			pv := cloud.PVs[0]
+			out := EvalFENResponse{Depth: cloud.Depth}
+			if pv.CP != nil {
+				out.Score = *pv.CP
+			}
+			if pv.Mate != nil {
+				out.Mate = *pv.Mate
+			}
+			respondJSON(w, http.StatusOK, out)
+			return
+		}
 	}
 
 	if h.engine == nil {

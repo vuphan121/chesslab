@@ -10,6 +10,26 @@ import { toFigurine } from '@/lib/chess/figurine'
 
 function formatMoveEval(e: FenEval): string {
   if (e.mate !== 0) return `#${e.mate}`
+  if (e.tablebaseCategory) {
+    // No DTM (7-man positions never carry one — see backend CLAUDE.md), so
+    // there's no number to show, just which side the tablebase says wins.
+    switch (e.tablebaseCategory) {
+      case 'win':
+        return 'TB+'
+      case 'loss':
+        return 'TB−'
+      case 'cursed-win':
+        return 'TB+*'
+      case 'blessed-loss':
+        return 'TB−*'
+      case 'maybe-win':
+        return 'TB+?'
+      case 'maybe-loss':
+        return 'TB−?'
+      default:
+        return 'TB='
+    }
+  }
   const v = (Math.abs(e.score) / 100).toFixed(1)
   return e.score >= 0 ? `+${v}` : `−${v}`
 }

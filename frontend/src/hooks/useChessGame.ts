@@ -96,7 +96,9 @@ export function useChessGame(initialGameId?: string) {
         setAnalysis(quick)
         if (fen) analysisCacheRef.current.set(fen, quick)
       }
-      if (quick.engineName === 'Lichess Cloud') return quick
+      // A tablebase hit is exact, same as a deep cloud hit — no need to
+      // spend a second (redundant) request/tablebase round-trip refining it.
+      if (quick.engineName === 'Lichess Cloud' || quick.tablebaseCategory) return quick
       const deep = await analyzeGame(gameId, 'full', fen)
       if (reqId === analysisReqId.current) {
         setAnalysis(deep)
