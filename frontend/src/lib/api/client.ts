@@ -68,6 +68,9 @@ export type TablebaseCategory =
   | 'blessed-loss'
   | 'maybe-win'
   | 'maybe-loss'
+  | 'syzygy-win'
+  | 'syzygy-loss'
+  | 'unknown'
 
 export interface Analysis {
   bestMove: string

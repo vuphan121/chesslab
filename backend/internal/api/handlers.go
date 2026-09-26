@@ -485,6 +485,21 @@ func cloudAnalysis(pos *chess.Position, cloud *lichess.CloudEval) AnalysisJSON {
 // treats as a full 97/3% fill) instead of a fabricated cp value; Mate is
 // only set when the API returned a real distance-to-mate (DTM), which it
 // only does up to 6-man positions.
+//
+// "cursed-win"/"blessed-loss" are NOT decisive here, even though the raw
+// win/loss exists in unlimited play: the position is a provable DRAW under
+// the 50-move rule (the losing side can always claim it — that's the literal
+// definition of "cursed"/"blessed"), and Lichess's own /standard/mainline
+// endpoint claims exactly that draw as soon as possible. Treating them as a
+// ±10000 win/loss with a fabricated "#N" mate (from the raw DTM, which
+// ignores the 50-move rule entirely) would show a forced result that isn't
+// actually provable under standard rules — verified live: the repro
+// `8/8/8/7p/3K1N2/5N2/2k5/8 b - - 50 1` (a real "blessed-loss") produced a
+// DTM-derived "Mate: 69" before this fix, despite being a legally drawn
+// position. "maybe-win"/"maybe-loss" (result uncertain, some search was
+// capped) are excluded from decisive treatment for the same reason: neither
+// is a provable result. "unknown"/"draw" fall through untouched (Score/Mate
+// stay 0).
 func tablebaseAnalysis(pos *chess.Position, tb *lichess.TablebaseResult) AnalysisJSON {
 	flip := pos.Turn == chess.Black
 
@@ -500,13 +515,20 @@ func tablebaseAnalysis(pos *chess.Position, tb *lichess.TablebaseResult) Analysi
 		result.TablebaseDTZ = &dtz
 	}
 
+	// "syzygy-win"/"syzygy-loss" are a documented Lichess category (see the
+	// lila-tablebase README's full category list) for a decisive result
+	// sourced from a coarser table than the primary win/loss lookup — still
+	// provable under the 50-move rule, unlike cursed-win/blessed-loss/maybe-*.
+	decisive := tb.Category == "win" || tb.Category == "loss" ||
+		tb.Category == "syzygy-win" || tb.Category == "syzygy-loss"
+
 	switch tb.Category {
-	case "win", "cursed-win", "maybe-win":
+	case "win", "syzygy-win":
 		result.Score = 10000
-	case "loss", "blessed-loss", "maybe-loss":
+	case "loss", "syzygy-loss":
 		result.Score = -10000
 	}
-	if tb.DTM != nil {
+	if decisive && tb.DTM != nil {
 		dtm := *tb.DTM
 		moves := (abs(dtm) + 1) / 2
 		if dtm < 0 {
@@ -548,61 +570,33 @@ func flipTablebaseCategory(category string, flip bool) string {
 		return "maybe-loss"
 	case "maybe-loss":
 		return "maybe-win"
-	default:
+	case "syzygy-win":
+		return "syzygy-loss"
+	case "syzygy-loss":
+		return "syzygy-win"
+	default: // "draw", "unknown" are symmetric
 		return category
 	}
 }
 
-// bestTablebaseMove picks the move whose resulting position (from the
-// opponent's perspective, per TablebaseMove's doc comment) is worst for the
-// opponent: a reply that loses for them beats one that draws, which beats
-// one that wins for them. Returns nil if Moves is empty (e.g. the position
-// is already checkmate/stalemate).
+// bestTablebaseMove returns Lichess's own best reply. The API's docs state
+// the "moves" array is "information about legal moves, best first"
+// (lila-tablebase's README), so no client-side re-ranking is needed.
+//
+// An earlier version re-ranked moves itself, collapsing "loss"/"blessed-loss"/
+// "maybe-loss" into one tier and tie-breaking by DTM — but "blessed-loss"
+// means the opponent's loss is only real without the 50-move rule (a
+// provable draw with it), while "loss" is a real, provable loss for them;
+// DTM (raw plies-to-mate) has no relation to the 50-move threshold that
+// separates the two, so that tie-break could prefer a move that merely draws
+// over one that actually wins. Trusting Lichess's documented ordering
+// sidesteps the whole class of bug. Returns nil if Moves is empty (e.g. the
+// position is already checkmate/stalemate).
 func bestTablebaseMove(moves []lichess.TablebaseMove) *lichess.TablebaseMove {
-	rank := func(category string) int {
-		switch category {
-		case "loss", "blessed-loss", "maybe-loss":
-			return 2
-		case "win", "cursed-win", "maybe-win":
-			return 0
-		default:
-			return 1
-		}
+	if len(moves) == 0 {
+		return nil
 	}
-	// distance prefers DTM (real plies-to-mate) over DTZ (plies to the next
-	// 50-move-resetting move — a coarser proxy) when both are available: two
-	// replies can tie on DTZ while differing on DTM (verified live — see
-	// backend CLAUDE.md's tablebase section).
-	distance := func(m *lichess.TablebaseMove) (int, bool) {
-		if m.DTM != nil {
-			return *m.DTM, true
-		}
-		if m.DTZ != nil {
-			return *m.DTZ, true
-		}
-		return 0, false
-	}
-	var best *lichess.TablebaseMove
-	for i := range moves {
-		m := &moves[i]
-		if best == nil || rank(m.Category) > rank(best.Category) {
-			best = m
-			continue
-		}
-		if rank(m.Category) != rank(best.Category) {
-			continue
-		}
-		mv, mok := distance(m)
-		bv, bok := distance(best)
-		// Both values are the opponent's own (positive = opponent winning,
-		// negative = opponent losing) — algebraically larger is always the
-		// better reply for us regardless of who's winning: either a faster
-		// win (less negative) or a longer survival (more positive).
-		if mok && bok && mv > bv {
-			best = m
-		}
-	}
-	return best
+	return &moves[0]
 }
 
 func abs(n int) int {

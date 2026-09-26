@@ -17,7 +17,10 @@ func TestFlipTablebaseCategory(t *testing.T) {
 		"blessed-loss": "cursed-win",
 		"maybe-win":    "maybe-loss",
 		"maybe-loss":   "maybe-win",
+		"syzygy-win":   "syzygy-loss",
+		"syzygy-loss":  "syzygy-win",
 		"draw":         "draw",
+		"unknown":      "unknown",
 	}
 	for in, want := range cases {
 		if got := flipTablebaseCategory(in, true); got != want {
@@ -30,20 +33,28 @@ func TestFlipTablebaseCategory(t *testing.T) {
 }
 
 func TestBestTablebaseMove(t *testing.T) {
-	// The exact live KPvK response (4k3/8/4K3/4P3/8/8/8/8 w - - 0 1): Kd6 and
-	// Kf6 both hand Black (now to move) a "loss" with the SAME DTZ (-2), but
-	// different DTM (-20 vs -22) — a DTZ-only tie-break can't distinguish
-	// the faster mate from the slower one, which is exactly the gap fixed by
-	// preferring DTM. Kd5/Kf5 only draw.
+	// bestTablebaseMove trusts Lichess's documented "best first" ordering —
+	// it must return element 0 regardless of category/DTZ/DTM shape.
 	moves := []lichess.TablebaseMove{
-		{UCI: "e6f6", Category: "loss", DTZ: intPtr(-2), DTM: intPtr(-22)},
 		{UCI: "e6d6", Category: "loss", DTZ: intPtr(-2), DTM: intPtr(-20)},
+		{UCI: "e6f6", Category: "loss", DTZ: intPtr(-2), DTM: intPtr(-22)},
 		{UCI: "e6d5", Category: "draw", DTZ: intPtr(0)},
-		{UCI: "e6f5", Category: "draw", DTZ: intPtr(0)},
 	}
-	best := bestTablebaseMove(moves)
-	if best == nil || best.UCI != "e6d6" {
-		t.Fatalf("bestTablebaseMove = %+v, want e6d6 (fastest forced loss for the opponent, by DTM despite tied DTZ)", best)
+	if best := bestTablebaseMove(moves); best == nil || best.UCI != "e6d6" {
+		t.Fatalf("bestTablebaseMove = %+v, want e6d6 (moves[0])", best)
+	}
+
+	// Regression for the bug this replaced: the old rank+DTM-tie-break logic
+	// collapsed "loss" and "blessed-loss" into one tier and preferred
+	// whichever had the algebraically larger DTM — here that was the
+	// blessed-loss move (a 50-move-rule DRAW), wrongly beating a real loss
+	// for the opponent (a real win for us) listed first by Lichess.
+	winThenDraw := []lichess.TablebaseMove{
+		{UCI: "real_win", Category: "loss", DTZ: intPtr(-6), DTM: intPtr(-80)},
+		{UCI: "actually_a_draw", Category: "blessed-loss", DTZ: intPtr(-60), DTM: intPtr(-10)},
+	}
+	if best := bestTablebaseMove(winThenDraw); best == nil || best.UCI != "real_win" {
+		t.Fatalf("bestTablebaseMove = %+v, want real_win (moves[0], not the higher-DTM blessed-loss)", best)
 	}
 
 	if got := bestTablebaseMove(nil); got != nil {
@@ -131,5 +142,61 @@ func TestTablebaseAnalysis_NoDTM(t *testing.T) {
 	}
 	if result.Score <= 0 {
 		t.Errorf("Score = %d, want positive sentinel", result.Score)
+	}
+}
+
+func TestTablebaseAnalysis_BlessedLossIsNotShownAsDecisive(t *testing.T) {
+	// Live repro: 8/8/8/7p/3K1N2/5N2/2k5/8 b - - 50 1 returns category
+	// "blessed-loss" with dtm: -138 — a provable DRAW under the 50-move rule
+	// (Black can always claim it), not a forced mate. Before this fix, Mate
+	// was derived from the raw DTM regardless of category, producing a
+	// fabricated "#69" (White-relative) for a legally drawn position.
+	pos, err := chess.ParseFEN("8/8/8/7p/3K1N2/5N2/2k5/8 b - - 50 1")
+	if err != nil {
+		t.Fatalf("ParseFEN: %v", err)
+	}
+	tb := &lichess.TablebaseResult{Category: "blessed-loss", DTZ: intPtr(-51), DTM: intPtr(-138)}
+
+	result := tablebaseAnalysis(pos, tb)
+	if result.Mate != 0 {
+		t.Errorf("Mate = %d, want 0 (blessed-loss is a 50-move-rule draw, not a forced mate)", result.Mate)
+	}
+	if result.Score != 0 {
+		t.Errorf("Score = %d, want 0 (not decisive)", result.Score)
+	}
+	if result.TablebaseCategory != "cursed-win" {
+		t.Errorf("TablebaseCategory = %q, want %q (Black's blessed-loss is White's cursed-win)", result.TablebaseCategory, "cursed-win")
+	}
+}
+
+func TestTablebaseAnalysis_SyzygyWinLossAreDecisive(t *testing.T) {
+	pos, err := chess.ParseFEN("4k3/8/4K3/4P3/8/8/8/8 w - - 0 1")
+	if err != nil {
+		t.Fatalf("ParseFEN: %v", err)
+	}
+	tb := &lichess.TablebaseResult{Category: "syzygy-win", DTZ: intPtr(3), DTM: intPtr(21)}
+
+	result := tablebaseAnalysis(pos, tb)
+	if result.Score <= 0 {
+		t.Errorf("Score = %d, want positive (syzygy-win is decisive)", result.Score)
+	}
+	if result.Mate != 11 {
+		t.Errorf("Mate = %d, want 11 (syzygy-win should carry a real DTM like win)", result.Mate)
+	}
+}
+
+func TestTablebaseAnalysis_UnknownStaysNeutral(t *testing.T) {
+	pos, err := chess.ParseFEN("4k3/8/4K3/4P3/8/8/8/8 w - - 0 1")
+	if err != nil {
+		t.Fatalf("ParseFEN: %v", err)
+	}
+	tb := &lichess.TablebaseResult{Category: "unknown"}
+
+	result := tablebaseAnalysis(pos, tb)
+	if result.Score != 0 || result.Mate != 0 {
+		t.Errorf("Score/Mate = %d/%d, want 0/0 for an unresolved position", result.Score, result.Mate)
+	}
+	if result.TablebaseCategory != "unknown" {
+		t.Errorf("TablebaseCategory = %q, want %q", result.TablebaseCategory, "unknown")
 	}
 }

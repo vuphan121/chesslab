@@ -45,8 +45,10 @@ function formatTablebaseEval(score: number, mate: number, category: string): str
   if (mate !== 0) return formatEval(score, mate)
   switch (category) {
     case 'win':
+    case 'syzygy-win':
       return 'White wins'
     case 'loss':
+    case 'syzygy-loss':
       return 'Black wins'
     case 'cursed-win':
       return 'White wins*'
@@ -56,6 +58,8 @@ function formatTablebaseEval(score: number, mate: number, category: string): str
       return 'White likely wins'
     case 'maybe-loss':
       return 'Black likely wins'
+    case 'unknown':
+      return 'Unknown'
     default:
       return 'Draw'
   }

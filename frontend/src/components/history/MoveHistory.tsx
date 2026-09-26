@@ -15,8 +15,10 @@ function formatMoveEval(e: FenEval): string {
     // there's no number to show, just which side the tablebase says wins.
     switch (e.tablebaseCategory) {
       case 'win':
+      case 'syzygy-win':
         return 'TB+'
       case 'loss':
+      case 'syzygy-loss':
         return 'TB−'
       case 'cursed-win':
         return 'TB+*'
@@ -26,6 +28,8 @@ function formatMoveEval(e: FenEval): string {
         return 'TB+?'
       case 'maybe-loss':
         return 'TB−?'
+      case 'unknown':
+        return 'TB?'
       default:
         return 'TB='
     }
