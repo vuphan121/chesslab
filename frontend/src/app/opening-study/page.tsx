@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import Board from '@/components/board/Board'
+import MaterialCorners, { MATERIAL_CORNERS_WIDTH } from '@/components/board/MaterialCorners'
 import TopBar from '@/components/layout/TopBar'
 import RepertoirePicker from '@/components/trainer/RepertoirePicker'
 import LinePanel from '@/components/trainer/LinePanel'
@@ -23,13 +24,16 @@ const STUDY_BACKGROUND = 'linear-gradient(135deg, #f1f0e9 0%, #eef1f0 52%, #e9ed
 
 
 
-// The gaps (LinePanel↔board, board↔button column) and outer side padding
-// don't shrink with the board — only board/sideWidth/buttonColWidth do — so
-// they're subtracted out before scaling and added back after. Otherwise this
-// fixed overhead doesn't scale down at narrower desktop widths and the
-// scaled content can overflow its grid track by a few px, which is exactly
-// the kind of overlap this layout must never produce.
-const FIXED_OVERHEAD = ROW_GAP_DESKTOP * 2 + OUTER_PADDING_DESKTOP * 2
+// The gaps (LinePanel↔board, board↔material corners, corners↔button column)
+// and outer side padding don't shrink with the board — only
+// board/sideWidth/buttonColWidth do — so they're subtracted out before
+// scaling and added back after. Otherwise this fixed overhead doesn't scale
+// down at narrower desktop widths and the scaled content can overflow its
+// grid track by a few px, which is exactly the kind of overlap this layout
+// must never produce. MaterialCorners is likewise fixed-width (shrinking its
+// small icons further would make them illegible), so it's in the fixed
+// overhead too, not the scalable budget.
+const FIXED_OVERHEAD = ROW_GAP_DESKTOP * 3 + OUTER_PADDING_DESKTOP * 2 + MATERIAL_CORNERS_WIDTH
 const SCALABLE_WIDTH = DESKTOP_SQUARE_SIZE * 8 + SIDE_WIDTH + BUTTON_COL_WIDTH
 const FULL_CONTAINER_WIDTH = SCALABLE_WIDTH + FIXED_OVERHEAD
 const MIN_DESKTOP_SCALE = 0.45
@@ -88,7 +92,11 @@ export default function OpeningStudyPage() {
     ? clamp(Math.floor((viewportHeight - RESERVED_VERTICAL) / 8), 30, DESKTOP_SQUARE_SIZE)
     : DESKTOP_SQUARE_SIZE
   const squareSize = isNarrow
-    ? clamp(Math.floor(((viewportWidth ?? NARROW_BREAKPOINT) - outerPadding * 2) / 8), 30, DESKTOP_SQUARE_SIZE)
+    ? clamp(
+        Math.floor(((viewportWidth ?? NARROW_BREAKPOINT) - outerPadding * 2 - 8 - MATERIAL_CORNERS_WIDTH) / 8),
+        30,
+        DESKTOP_SQUARE_SIZE,
+      )
     : Math.min(clamp(Math.floor(DESKTOP_SQUARE_SIZE * desktopScale), 30, DESKTOP_SQUARE_SIZE), heightSquareSize)
   const boardSize = squareSize * 8
   const sideWidth = isNarrow ? SIDE_WIDTH : Math.floor(SIDE_WIDTH * desktopScale)
@@ -188,25 +196,28 @@ export default function OpeningStudyPage() {
         {isNarrow ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center' }}>
-              <div style={{ position: 'relative', width: boardSize }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5, pointerEvents: 'none' }}>
-                  <FeedbackStrip feedback={feedback} />
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <div style={{ position: 'relative', width: boardSize }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5, pointerEvents: 'none' }}>
+                    <FeedbackStrip feedback={feedback} />
+                  </div>
+                  <Board
+                    boardState={boardState}
+                    onSquareClick={selectSquare}
+                    onMove={move}
+                    legalMovesFor={legalMovesFor}
+                    squareSize={squareSize}
+                    flipped={flipped}
+                    animateLastMove={animateLastMove}
+                    bestMove={isViewingHistory ? undefined : (hintUci ?? undefined)}
+                  />
                 </div>
-                <Board
-                  boardState={boardState}
-                  onSquareClick={selectSquare}
-                  onMove={move}
-                  legalMovesFor={legalMovesFor}
-                  squareSize={squareSize}
-                  flipped={flipped}
-                  animateLastMove={animateLastMove}
-                  bestMove={isViewingHistory ? undefined : (hintUci ?? undefined)}
-                />
+                <MaterialCorners pieces={boardState.pieces} flipped={flipped} height={boardSize} />
               </div>
 
               <div
                 style={{
-                  width: boardSize,
+                  width: boardSize + 8 + MATERIAL_CORNERS_WIDTH,
                   display: 'flex',
                   flexWrap: 'wrap',
                   alignItems: 'center',
@@ -276,6 +287,8 @@ export default function OpeningStudyPage() {
                 animateLastMove={animateLastMove}
                 bestMove={isViewingHistory ? undefined : (hintUci ?? undefined)}
               />
+
+              <MaterialCorners pieces={boardState.pieces} flipped={flipped} height={boardSize} />
 
               <div style={{ width: buttonColWidth, height: boardSize, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10 }}>
                 <button onClick={nextLine} disabled={busy} style={endBtn(lineComplete && !runHadMistake)}>

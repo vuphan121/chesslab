@@ -2,6 +2,7 @@
 
 import Board from '@/components/board/Board'
 import EvalBar from '@/components/analysis/EvalBar'
+import MaterialCorners, { MATERIAL_CORNERS_WIDTH } from '@/components/board/MaterialCorners'
 import MoveHistory from '@/components/history/MoveHistory'
 import TopBar from '@/components/layout/TopBar'
 import OpeningTree from '@/components/tree/OpeningTree'
@@ -18,8 +19,11 @@ const OUTER_PADDING_NARROW = 14
 const ROW_GAP_DESKTOP = 20
 
 
+// "11 + 15" is the pre-existing (stale — EvalBar is actually 22px) board-row
+// gap+eval-bar allowance; "+ 11 + MATERIAL_CORNERS_WIDTH" is this row's new
+// third flex child (board → gap → MaterialCorners → gap → EvalBar).
 const FULL_CONTAINER_WIDTH =
-  SIDE_WIDTH * 2 + ROW_GAP_DESKTOP * 2 + (DESKTOP_SQUARE_SIZE * 8 + 11 + 15) + OUTER_PADDING_DESKTOP * 2
+  SIDE_WIDTH * 2 + ROW_GAP_DESKTOP * 2 + (DESKTOP_SQUARE_SIZE * 8 + 11 + 15 + 11 + MATERIAL_CORNERS_WIDTH) + OUTER_PADDING_DESKTOP * 2
 const MIN_DESKTOP_SCALE = 0.45
 
 
@@ -119,12 +123,19 @@ function HomeInner() {
     ? 1
     : clamp((viewportWidth ?? FULL_CONTAINER_WIDTH) / FULL_CONTAINER_WIDTH, MIN_DESKTOP_SCALE, 1)
   const squareSize = isNarrow
-    ? clamp(Math.floor(((viewportWidth ?? NARROW_BREAKPOINT) - outerPadding * 2 - 15 - 11) / 8), 30, DESKTOP_SQUARE_SIZE)
+    ? clamp(
+        Math.floor(
+          ((viewportWidth ?? NARROW_BREAKPOINT) - outerPadding * 2 - 15 - 11 - MATERIAL_CORNERS_WIDTH - 11) / 8,
+        ),
+        30,
+        DESKTOP_SQUARE_SIZE,
+      )
     : clamp(Math.floor(DESKTOP_SQUARE_SIZE * desktopScale), 30, DESKTOP_SQUARE_SIZE)
   const boardSize = squareSize * 8
   const sideWidth = isNarrow ? SIDE_WIDTH : Math.floor(SIDE_WIDTH * desktopScale)
   const rowGap = isNarrow ? 16 : Math.max(12, Math.floor(ROW_GAP_DESKTOP * desktopScale))
-  const containerWidth = sideWidth * 2 + rowGap * 2 + boardSize + 11 + 22 + outerPadding * 2
+  const containerWidth =
+    sideWidth * 2 + rowGap * 2 + boardSize + 11 + MATERIAL_CORNERS_WIDTH + 11 + 22 + outerPadding * 2
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -190,7 +201,7 @@ function HomeInner() {
                 justifyContent: 'space-between',
                 gap: 12,
                 padding: '0 2px 2px',
-                width: boardSize + 11 + 22,
+                width: boardSize + 11 + MATERIAL_CORNERS_WIDTH + 11 + 22,
               }}
             >
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
@@ -259,6 +270,7 @@ function HomeInner() {
                 squareSize={squareSize}
                 flipped={flipped}
               />
+              <MaterialCorners pieces={boardState.pieces} flipped={flipped} height={boardSize} />
               <EvalBar
                 score={analysis?.score ?? 0}
                 mate={analysis?.mate ?? 0}
@@ -268,7 +280,7 @@ function HomeInner() {
               />
             </div>
 
-            <div style={{ width: boardSize + 11 + 22 }}>
+            <div style={{ width: boardSize + 11 + MATERIAL_CORNERS_WIDTH + 11 + 22 }}>
               <OpeningTree
                 moves={explorer?.moves ?? []}
                 totalGames={explorer?.totalGames ?? 0}

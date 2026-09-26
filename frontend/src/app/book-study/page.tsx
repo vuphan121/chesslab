@@ -6,6 +6,7 @@ import TopBar from '@/components/layout/TopBar'
 import BookPicker from '@/components/book/BookPicker'
 import BookMoveHistory from '@/components/book/BookMoveHistory'
 import EvalBar from '@/components/analysis/EvalBar'
+import MaterialCorners, { MATERIAL_CORNERS_WIDTH } from '@/components/board/MaterialCorners'
 import ChapterSections from '@/components/book/ChapterSections'
 import BookPDFViewer from '@/components/book/BookPDFViewer'
 import { useBookStudySession } from '@/hooks/useBookStudySession'
@@ -19,6 +20,7 @@ const NARROW_BREAKPOINT = 1360
 const OUTER_PADDING = 24
 const COLUMN_GAP = 16
 const EVAL_SLOT_WIDTH = 30
+const MATERIAL_GAP = 8
 
 export default function BookStudyPage() {
   const {
@@ -32,12 +34,16 @@ export default function BookStudyPage() {
   const viewportWidth = useViewportWidth()
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
   const squareSize = isNarrow
-    ? clamp(Math.floor(((viewportWidth ?? NARROW_BREAKPOINT) - 28) / 8), 38, DESKTOP_SQUARE_SIZE)
+    ? clamp(
+        Math.floor(((viewportWidth ?? NARROW_BREAKPOINT) - 28 - MATERIAL_GAP - MATERIAL_CORNERS_WIDTH) / 8),
+        38,
+        DESKTOP_SQUARE_SIZE,
+      )
     : DESKTOP_SQUARE_SIZE
   const boardSize = squareSize * 8
 
 
-  const centerWidth = boardSize + EVAL_SLOT_WIDTH
+  const centerWidth = boardSize + MATERIAL_GAP + MATERIAL_CORNERS_WIDTH + EVAL_SLOT_WIDTH
   const shellWidth = SECTIONS_WIDTH + centerWidth + PDF_WIDTH + COLUMN_GAP * 2 + OUTER_PADDING * 2
   const frameHeight = Math.max(720, boardSize + 370)
 
@@ -106,8 +112,9 @@ export default function BookStudyPage() {
                 <button onClick={toggleFlipped} title="Flip board" style={flipButton}>⇅</button>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: EVAL_SLOT_WIDTH - 22, alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: MATERIAL_GAP, alignItems: 'flex-start' }}>
               <Board boardState={boardState} onSquareClick={selectSquare} onMove={move} legalMovesFor={legalMovesFor} squareSize={squareSize} flipped={flipped} analysisMoves={analysisEnabled ? analysisMoves : []} />
+              <MaterialCorners pieces={boardState.pieces} flipped={flipped} height={boardSize} />
               <div style={{ width: 22, opacity: analysisEnabled ? 1 : 0, transition: 'opacity 160ms ease', pointerEvents: 'none' }}>
                 <EvalBar score={analysis?.score ?? 0} mate={analysis?.mate ?? 0} height={boardSize} flipped={flipped} hasEval={analysisEnabled && !!analysis?.depth} />
               </div>
