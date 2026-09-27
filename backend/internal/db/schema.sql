@@ -148,6 +148,16 @@ CREATE TABLE IF NOT EXISTS repertoire_line_importance (
     PRIMARY KEY (repertoire_id, card_id)
 );
 
+CREATE TABLE IF NOT EXISTS position_evals (
+    fen_key TEXT PRIMARY KEY,
+    score INT NOT NULL,
+    mate INT NOT NULL,
+    depth INT NOT NULL,
+    engine_name TEXT NOT NULL,
+    best_moves JSONB NOT NULL,
+    computed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS saved_puzzles (
     id BIGSERIAL PRIMARY KEY,
     username TEXT NOT NULL CONSTRAINT saved_puzzles_user_fk

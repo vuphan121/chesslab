@@ -183,6 +183,31 @@ export interface FenEval {
 export const evalFen = (fen: string): Promise<FenEval> =>
   request(`/api/eval?fen=${encodeURIComponent(fen)}`)
 
+export interface PositionEvalMove {
+  rank: number
+  san: string
+  uci: string
+  score: number
+  mate: number
+}
+
+export interface PositionEval {
+  score: number
+  mate: number
+  depth: number
+  bestMoves?: PositionEvalMove[]
+}
+
+// Batch-looks-up precomputed opening-position evals (see backend
+// internal/evalprecompute) for a whole line at once — the trainer calls
+// this once when a run finishes, not per-ply. A FEN missing from the
+// response just means the precompute cron hasn't caught up to that
+// position yet, not an error.
+export const getPositionEvals = (fens: string[]): Promise<Record<string, PositionEval>> => {
+  if (fens.length === 0) return Promise.resolve({})
+  return request(`/api/position-evals?fens=${encodeURIComponent(fens.join(','))}`)
+}
+
 export const getExplorer = (id: string, fen?: string): Promise<Explorer> =>
   request(`/api/games/${id}/explorer${fen ? `?fen=${encodeURIComponent(fen)}` : ''}`)
 

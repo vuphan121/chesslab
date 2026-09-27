@@ -13,8 +13,9 @@ import {
   getTodayTraining,
   advanceTodayTraining,
   pingBackend,
+  getPositionEvals,
 } from '@/lib/api/client'
-import type { GameState, TodayTrainingEntry, TodayTrainingResponse } from '@/lib/api/client'
+import type { GameState, TodayTrainingEntry, TodayTrainingResponse, PositionEval } from '@/lib/api/client'
 import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
 import type { Repertoire, RepCard, RepChapter, RepNode, SessionOptions, SessionState, PersistedCardState } from '@/lib/trainer/types'
 import { createSession, grade, isComplete, summarise } from '@/lib/trainer/scheduler'
@@ -228,6 +229,34 @@ export function useTrainerSession() {
 
   const [summary, setSummary] = useState<ReturnType<typeof summarise> | null>(null)
   const [isTodayTraining, setIsTodayTraining] = useState(false)
+
+  // Precomputed opening-position evals (backend internal/evalprecompute),
+  // keyed by FEN — fetched once, for every ply of the run, the moment a
+  // line finishes. Fetched unconditionally on line-complete (cheap, one
+  // batch call) regardless of whether the eval-display toggle is currently
+  // on, so the data's already there the instant the user turns it on. A FEN
+  // missing from the map just means the precompute cron hasn't reached that
+  // position yet, not an error — callers should treat it as "no eval yet".
+  const [evalByFen, setEvalByFen] = useState<Record<string, PositionEval>>({})
+
+  useEffect(() => {
+    if (phase !== 'line-complete') {
+      setEvalByFen({})
+      return
+    }
+    let cancelled = false
+    const fens = runSnapshotsRef.current.map((gs) => gs.fen)
+    getPositionEvals(fens)
+      .then((result) => {
+        if (!cancelled) setEvalByFen(result)
+      })
+      .catch(() => {
+        if (!cancelled) setEvalByFen({})
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [phase])
 
   const sessionRef = useRef<SessionState | null>(null)
   const sessionCardsRef = useRef<RepCard[]>([])
@@ -1077,6 +1106,7 @@ export function useTrainerSession() {
     leadingMoves,
     summary,
     isTodayTraining,
+    evalByFen,
     viewIndex,
     isViewingHistory,
     navBack,

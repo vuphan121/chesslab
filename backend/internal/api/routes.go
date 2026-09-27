@@ -26,6 +26,7 @@ func NewRouter(h *Handler) http.Handler {
 	// cron job/scheduler, not a signed-in user. Guarded by its own shared
 	// secret (CRON_SECRET) instead; see cron_handler.go.
 	r.Post("/api/cron/refresh-repertoires", h.RefreshAllRepertoires)
+	r.Post("/api/cron/precompute-evals", h.PrecomputeEvals)
 
 	r.Group(func(r chi.Router) {
 		r.Use(h.authCfg.Middleware)
@@ -46,6 +47,7 @@ func NewRouter(h *Handler) http.Handler {
 		})
 
 		r.Get("/api/eval", h.EvalFEN)
+		r.Get("/api/position-evals", h.GetPositionEvals)
 
 		r.Route("/api/repertoires", func(r chi.Router) {
 			r.Get("/", h.ListRepertoires)

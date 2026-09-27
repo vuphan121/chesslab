@@ -64,6 +64,17 @@ func main() {
 		log.Printf("engine: %s", eng.Name)
 	}
 
+	// A second, dedicated Stockfish instance for the eval-precompute cron
+	// endpoint (see internal/evalprecompute, internal/api/cron_handler.go's
+	// PrecomputeEvals) — kept separate from eng so a running precompute
+	// batch never contends with a live user's /analysis request through the
+	// shared single-Stockfish mutex in engine.Engine.
+	precomputeEngine, err := engine.New(sfPath)
+	if err != nil {
+		log.Printf("stockfish (precompute) unavailable (%v) — eval precompute will fall back to cloud-eval only, failing any position with no cached cloud result", err)
+		precomputeEngine = nil
+	}
+
 	index, overview, llm := newCoachDeps()
 	coachTools := coach.NewTools(eng, index, overview)
 	coachSvc := coach.NewService(coachTools, llm)
@@ -97,7 +108,7 @@ func main() {
 		cancel()
 	}
 
-	handler := api.NewHandler(store, eng, coachSvc, coachAgent, repertoires, books, dbStore, authCfg, bookSource, os.Getenv("B2_CHAPTER_PREFIX"))
+	handler := api.NewHandler(store, eng, precomputeEngine, coachSvc, coachAgent, repertoires, books, dbStore, authCfg, bookSource, os.Getenv("B2_CHAPTER_PREFIX"))
 	router := api.NewRouter(handler)
 
 	port := os.Getenv("PORT")

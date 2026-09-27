@@ -29,6 +29,7 @@ import (
 type Handler struct {
 	store             storage.Store
 	engine            *engine.Engine
+	precomputeEngine  *engine.Engine
 	coach             *coach.Service
 	coachAgent        *coach.Agent
 	repertoires       *repertoire.Store
@@ -60,8 +61,13 @@ type cachedAnalysis struct {
 
 var errEngineUnavailable = errors.New("engine not configured")
 
-func NewHandler(store storage.Store, eng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config, bookSource booksource.Reader, bookChapterPrefix string) *Handler {
-	return &Handler{store: store, engine: eng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix, prefetchedCloud: make(map[string]prefetchedCloudEval), prefetchSem: make(chan struct{}, 1), analysisCache: make(map[string]cachedAnalysis), loginLimiter: newLoginLimiter(5, 5*time.Minute, time.Now), lineImportanceGen: make(map[string]int64)}
+// precomputeEng is a second, dedicated Stockfish instance (may be nil) used
+// only by the eval-precompute cron endpoint (see cron_handler.go's
+// PrecomputeEvals) — kept separate from eng so a running precompute batch
+// never contends with a live user's /analysis request through the shared
+// single-Stockfish mutex in engine.Engine.
+func NewHandler(store storage.Store, eng *engine.Engine, precomputeEng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config, bookSource booksource.Reader, bookChapterPrefix string) *Handler {
+	return &Handler{store: store, engine: eng, precomputeEngine: precomputeEng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix, prefetchedCloud: make(map[string]prefetchedCloudEval), prefetchSem: make(chan struct{}, 1), analysisCache: make(map[string]cachedAnalysis), loginLimiter: newLoginLimiter(5, 5*time.Minute, time.Now), lineImportanceGen: make(map[string]int64)}
 }
 
 type PieceJSON struct {

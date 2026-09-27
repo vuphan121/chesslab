@@ -98,6 +98,7 @@ func MovesToSANAndFENs(pos *Position, uciMoves []string) (sans []string, fens []
 		if !from.Valid() || !to.Valid() {
 			break
 		}
+		to = normalizeChess960Castle(cur, from, to)
 		var matched Move
 		found := false
 		for _, lm := range GenerateLegalMoves(cur) {
@@ -132,4 +133,32 @@ func MovesToSANAndFENs(pos *Position, uciMoves []string) (sans []string, fens []
 func MovesToSAN(pos *Position, uciMoves []string) []string {
 	sans, _ := MovesToSANAndFENs(pos, uciMoves)
 	return sans
+}
+
+// normalizeChess960Castle remaps Lichess cloud-eval's (and some
+// Chess960-aware UCI engines') castling encoding — the king "moving onto"
+// its own rook's home square (e1h1/e1a1/e8h8/e8a8 for O-O/O-O-O) — to the
+// real king destination (g1/c1/g8/c8) our move generator produces, since
+// GenerateLegalMoves never emits a king move further than one square. A
+// king move landing on the a- or h-file from anywhere else on its home rank
+// is otherwise impossible in a single legal move (a king only steps one
+// square), so this can never misfire on a genuine non-castling move — it
+// was a real bug: cloud-eval's own top-ranked move is very often "castle
+// now" early in an opening, and matching it against the a/h-file square
+// literally always failed, silently producing an empty SAN (and, worse, a
+// UI arrow drawn to the wrong square) for exactly the positions where
+// castling is the best move.
+func normalizeChess960Castle(pos *Position, from, to Square) Square {
+	piece := pos.Board[from]
+	if piece == nil || piece.Type != King || from.Rank() != to.Rank() {
+		return to
+	}
+	switch to.File() {
+	case 7:
+		return NewSquare(6, to.Rank()) // g-file: kingside
+	case 0:
+		return NewSquare(2, to.Rank()) // c-file: queenside
+	default:
+		return to
+	}
 }

@@ -161,31 +161,24 @@ export default function LinePanel({
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            justifyContent: 'flex-end',
             marginBottom: 8,
           }}
         >
-          <div className="lbl" style={{ color: '#b4b1a8' }}>
-            Line so far
-          </div>
           <div style={{ display: 'flex', gap: 4 }}>
             <NavBtn label="⟨" disabled={rows.length === 0 || atStart} onClick={onNavBack} title="Back" />
             <NavBtn label="⟩" disabled={rows.length === 0 || atLive} onClick={onNavForward} title="Forward" />
           </div>
         </div>
-        {rows.length === 0 ? (
-          <p style={{ fontSize: 12, color: '#bbb' }}>No moves yet — make your move on the board.</p>
-        ) : (
-          rows.map((r) => (
-            <div key={r.num} style={{ display: 'flex', gap: 8, fontSize: 14, lineHeight: 1.7 }}>
-              <span className="mono" style={{ width: 22, color: '#c0bdb4', textAlign: 'right' }}>
-                {r.num}.
-              </span>
-              {renderCell(r.white)}
-              {renderCell(r.black)}
-            </div>
-          ))
-        )}
+        {rows.map((r) => (
+          <div key={r.num} style={{ display: 'flex', gap: 8, fontSize: 14, lineHeight: 1.7 }}>
+            <span className="mono" style={{ width: 22, color: '#c0bdb4', textAlign: 'right' }}>
+              {r.num}.
+            </span>
+            {renderCell(r.white)}
+            {renderCell(r.black)}
+          </div>
+        ))}
         {!atLive && (
           <p style={{ fontSize: 11, color: '#a3a099', marginTop: 8 }}>
             Reviewing an earlier position — <a
