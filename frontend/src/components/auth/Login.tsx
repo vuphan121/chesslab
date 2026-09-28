@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react'
 import { login } from '@/lib/api/client'
 import { setToken } from '@/lib/auth/token'
+import { claimOfflineStore } from '@/lib/offline/cache'
 
 
 
@@ -21,6 +22,7 @@ export default function Login() {
     setError(null)
     try {
       const { token } = await login(username, password)
+      await claimOfflineStore(username)
       setToken(token)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed.')

@@ -22,6 +22,7 @@ interface Props {
   onGotoPly: (index: number) => void
   onNavBack: () => void
   onNavForward: () => void
+  large?: boolean
 }
 
 function NavBtn({ label, disabled, onClick, title }: { label: ReactNode; disabled?: boolean; onClick: () => void; title: string }) {
@@ -61,6 +62,7 @@ export default function LinePanel({
   onGotoPly,
   onNavBack,
   onNavForward,
+  large = false,
 }: Props) {
   const chapter =
     (runChapterId ? repertoire.chapters.find((c) => c.id === runChapterId) : undefined) ??
@@ -95,7 +97,8 @@ export default function LinePanel({
   if (pending) rows.push(pending)
 
   const renderCell = (cell: Cell | undefined) => {
-    if (!cell) return <span style={{ flex: '0 0 60px' }} />
+    const cellFlex = large ? '1 1 0' : '0 0 60px'
+    if (!cell) return <span style={{ flex: cellFlex }} />
     const clickable = cell.index !== null
     const isActive = clickable && cell.index === activeIndex
     return (
@@ -103,9 +106,9 @@ export default function LinePanel({
         onClick={clickable ? () => onGotoPly(cell.index as number) : undefined}
         className="mono"
         style={{
-          flex: '0 0 60px',
+          flex: cellFlex,
           cursor: clickable ? 'pointer' : 'default',
-          padding: '1px 5px',
+          padding: large ? '5px 8px' : '1px 5px',
           borderRadius: 5,
           background: isActive ? '#4a90d9' : 'transparent',
           color: isActive ? '#fff' : clickable ? '#37352f' : '#a3a099',
@@ -136,7 +139,7 @@ export default function LinePanel({
   return (
     <div
       style={{
-        flex: 1,
+        flex: large ? undefined : 1,
         minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
@@ -157,22 +160,24 @@ export default function LinePanel({
       </div>
 
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: '10px 16px 12px' }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            marginBottom: 8,
-          }}
-        >
-          <div style={{ display: 'flex', gap: 4 }}>
-            <NavBtn label="⟨" disabled={rows.length === 0 || atStart} onClick={onNavBack} title="Back" />
-            <NavBtn label="⟩" disabled={rows.length === 0 || atLive} onClick={onNavForward} title="Forward" />
+        {!large && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              marginBottom: 8,
+            }}
+          >
+            <div style={{ display: 'flex', gap: 4 }}>
+              <NavBtn label="⟨" disabled={rows.length === 0 || atStart} onClick={onNavBack} title="Back" />
+              <NavBtn label="⟩" disabled={rows.length === 0 || atLive} onClick={onNavForward} title="Forward" />
+            </div>
           </div>
-        </div>
+        )}
         {rows.map((r) => (
-          <div key={r.num} style={{ display: 'flex', gap: 8, fontSize: 14, lineHeight: 1.7 }}>
-            <span className="mono" style={{ width: 22, color: '#c0bdb4', textAlign: 'right' }}>
+          <div key={r.num} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: large ? 16 : 14, lineHeight: large ? 1.5 : 1.7 }}>
+            <span className="mono" style={{ width: 22, flexShrink: 0, color: '#c0bdb4', textAlign: 'right' }}>
               {r.num}.
             </span>
             {renderCell(r.white)}

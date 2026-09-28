@@ -14,16 +14,13 @@ interface Props {
 export default function TopBar({ turn, isBookMove, leftExtra, right }: Props) {
   return (
     <div
-      className="flex-wrap"
+      className="topbar"
       style={{
         display: 'flex',
         alignItems: 'center',
         flexWrap: 'wrap',
-        gap: 18,
         width: '100%',
         background: '#fff',
-        padding: '13px 24px',
-        minHeight: 58,
         boxShadow: '0 1px 0 rgba(28,27,24,0.07), 0 4px 16px rgba(28,27,24,0.03)',
         boxSizing: 'border-box',
       }}

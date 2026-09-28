@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Newsreader, JetBrains_Mono } from "next/font/google";
 import AuthGate from "@/components/auth/AuthGate";
+import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -25,6 +26,16 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Chesslab",
   description: "AI-powered chess opening prep",
+  applicationName: "Chesslab",
+  appleWebApp: { capable: true, title: "Chesslab", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
@@ -38,6 +49,7 @@ export default function RootLayout({
       className={`h-full ${spaceGrotesk.variable} ${newsreader.variable} ${jetbrainsMono.variable}`}
     >
       <body className="min-h-full flex flex-col">
+        <ServiceWorkerRegister />
         <AuthGate>{children}</AuthGate>
       </body>
     </html>

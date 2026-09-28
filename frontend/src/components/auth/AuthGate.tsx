@@ -5,6 +5,8 @@ import { getToken, onAuthChange } from '@/lib/auth/token'
 import { getTodayTraining, pingBackend } from '@/lib/api/client'
 import Login from './Login'
 import UserSettingsProvider from '@/components/settings/UserSettingsProvider'
+import OfflineSync from '@/components/pwa/OfflineSync'
+import OfflineBadge from '@/components/pwa/OfflineBadge'
 
 
 
@@ -29,5 +31,11 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 
   if (authed === null) return null
   if (!authed) return <Login />
-  return <UserSettingsProvider>{children}</UserSettingsProvider>
+  return (
+    <UserSettingsProvider>
+      <OfflineSync />
+      <OfflineBadge />
+      {children}
+    </UserSettingsProvider>
+  )
 }

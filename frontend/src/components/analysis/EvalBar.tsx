@@ -4,6 +4,7 @@ interface Props {
   height: number
   flipped?: boolean
   hasEval?: boolean
+  horizontal?: boolean
 }
 
 function label(score: number, mate: number): string {
@@ -12,7 +13,7 @@ function label(score: number, mate: number): string {
   return abs >= 10 ? abs.toFixed(0) : abs.toFixed(1)
 }
 
-export default function EvalBar({ score, mate, height, flipped = false, hasEval = true }: Props) {
+export default function EvalBar({ score, mate, height, flipped = false, hasEval = true, horizontal = false }: Props) {
   let whitePct: number
   if (mate !== 0) {
     whitePct = mate > 0 ? 97 : 3
@@ -22,6 +23,55 @@ export default function EvalBar({ score, mate, height, flipped = false, hasEval 
 
   const whiteBetter = mate !== 0 ? mate > 0 : score >= 0
   const numberAtBottom = whiteBetter !== flipped
+
+  if (horizontal) {
+    return (
+      <div
+        style={{
+          width: height,
+          height: 16,
+          borderRadius: 4,
+          overflow: 'hidden',
+          flexShrink: 0,
+          position: 'relative',
+          backgroundColor: '#37383a',
+          boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.15)',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: `${whitePct}%`,
+            backgroundColor: '#f1f1ee',
+            transition: 'width 0.35s ease',
+          }}
+        />
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, background: 'rgba(0,0,0,0.22)' }} />
+        {hasEval && (
+          <span
+            className="mono"
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              [whiteBetter ? 'left' : 'right']: 5,
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: 10,
+              fontWeight: 700,
+              color: whiteBetter ? '#3d3d3a' : '#e9e9e6',
+              pointerEvents: 'none',
+            }}
+          >
+            {label(score, mate)}
+          </span>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div

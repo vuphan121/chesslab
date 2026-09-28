@@ -41,3 +41,24 @@ body {
   letter-spacing: 1.3px;
   text-transform: uppercase;
 }
+
+html {
+  overscroll-behavior-y: none;
+}
+
+.safe-bottom {
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+
+.topbar {
+  gap: 12px;
+  padding: 10px 16px;
+}
+
+@media (min-width: 640px) {
+  .topbar {
+    gap: 18px;
+    padding: 13px 24px;
+    min-height: 58px;
+  }
+}

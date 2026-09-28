@@ -2,6 +2,8 @@ import type { Color, MoveNode, PieceType } from '@/lib/chess/types'
 import type { Repertoire, RepertoireSummary } from '@/lib/trainer/types'
 import type { Book, BookSummary } from '@/lib/books/types'
 import { getToken, clearToken } from '@/lib/auth/token'
+import { ApiError, isRetryable } from '@/lib/offline/errors'
+import { enqueue, listOutbox, networkFirst, readCache, removeOutboxItem, writeCache } from '@/lib/offline/cache'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
 
@@ -115,7 +117,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   if (!res.ok) {
     const text = await res.text()
-    throw new Error(text || res.statusText)
+    throw new ApiError(text || res.statusText, res.status)
   }
   return res.json() as Promise<T>
 }
@@ -312,10 +314,11 @@ export const coachChat = (
 
 
 
-export const listRepertoires = (): Promise<RepertoireSummary[]> => request('/api/repertoires')
+export const listRepertoires = (): Promise<RepertoireSummary[]> =>
+  networkFirst('repertoires', () => request<RepertoireSummary[]>('/api/repertoires'))
 
 export const getRepertoire = (id: string): Promise<Repertoire> =>
-  request(`/api/repertoires/${id}`)
+  networkFirst(`repertoire:${id}`, () => request<Repertoire>(`/api/repertoires/${id}`))
 
 export interface ImportRepertoireRequest {
   sourceUrl: string
@@ -436,8 +439,17 @@ export interface GetProgressResponse {
   cards: Record<string, ServerCardState>
 }
 
-export const getProgress = (repertoireId: string): Promise<GetProgressResponse> =>
-  request(`/api/progress/${repertoireId}`)
+const progressCacheKey = (repertoireId: string) => `progress:${repertoireId}`
+
+export const getProgress = async (repertoireId: string): Promise<GetProgressResponse> => {
+  await Promise.race([flushProgressOutbox(), new Promise((resolve) => setTimeout(resolve, 3000))])
+  const pending = (await listOutbox<QueuedProgress>()).some((item) => item.payload.repertoireId === repertoireId)
+  if (pending) {
+    const local = await readCache<GetProgressResponse>(progressCacheKey(repertoireId))
+    if (local) return local.value
+  }
+  return networkFirst(progressCacheKey(repertoireId), () => request<GetProgressResponse>(`/api/progress/${repertoireId}`), 6000)
+}
 
 export interface LineAttempt {
   chapterId: string
@@ -452,18 +464,62 @@ export interface CardProgressDelta {
   correct: number
 }
 
-export const saveProgress = (
+interface QueuedProgress {
+  repertoireId: string
+  cards: Record<string, ServerCardState>
+  lineAttempt?: LineAttempt
+  deltas?: Record<string, CardProgressDelta>
+  operationId?: string
+}
+
+const postProgress = (p: QueuedProgress): Promise<{ ok: boolean }> =>
+  request(`/api/progress/${p.repertoireId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cards: p.cards, lineAttempt: p.lineAttempt, deltas: p.deltas, operationId: p.operationId }),
+    signal: AbortSignal.timeout(15000),
+  })
+
+let flushing: Promise<void> | null = null
+
+export function flushProgressOutbox(): Promise<void> {
+  if (flushing) return flushing
+  flushing = (async () => {
+    for (const item of await listOutbox<QueuedProgress>()) {
+      try {
+        await postProgress(item.payload)
+      } catch (err) {
+        if (isRetryable(err) || (err instanceof ApiError && (err.status === 401 || err.status === 408 || err.status === 429))) return
+        console.warn('dropping unsyncable queued progress', err)
+      }
+      await removeOutboxItem(item.id)
+    }
+  })()
+    .catch(() => {})
+    .finally(() => {
+      flushing = null
+    })
+  return flushing
+}
+
+export const saveProgress = async (
   repertoireId: string,
   cards: Record<string, ServerCardState>,
   lineAttempt?: LineAttempt,
   deltas?: Record<string, CardProgressDelta>,
   operationId?: string,
-): Promise<{ ok: boolean }> =>
-  request(`/api/progress/${repertoireId}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ cards, lineAttempt, deltas, operationId }),
-  })
+): Promise<{ ok: boolean; queued?: boolean }> => {
+  const payload: QueuedProgress = { repertoireId, cards, lineAttempt, deltas, operationId }
+  void writeCache<GetProgressResponse>(progressCacheKey(repertoireId), { cards })
+  try {
+    const result = await postProgress(payload)
+    void flushProgressOutbox()
+    return result
+  } catch (err) {
+    if (!isRetryable(err) || !operationId || !(await enqueue(payload))) throw err
+    return { ok: true, queued: true }
+  }
+}
 
 export interface ChapterCount {
   repertoireId: string
@@ -549,7 +605,8 @@ export interface UserSettings {
   pieceTheme: PieceTheme
 }
 
-export const getUserSettings = (): Promise<UserSettings> => request('/api/user-settings')
+export const getUserSettings = (): Promise<UserSettings> =>
+  networkFirst('user-settings', () => request<UserSettings>('/api/user-settings'), 3000)
 
 export const saveUserSettings = (settings: UserSettings): Promise<UserSettings> =>
   request('/api/user-settings', {

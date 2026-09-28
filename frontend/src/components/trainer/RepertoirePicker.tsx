@@ -5,6 +5,7 @@ import { listRepertoires, getRepertoire, getTodayTraining } from '@/lib/api/clie
 import type { TodayTrainingResponse } from '@/lib/api/client'
 import RepertoireManagement from '@/components/trainer/RepertoireManagement'
 import LineList from '@/components/trainer/LineList'
+import { prefetchRepertoires } from '@/lib/offline/prefetch'
 import { enumerateLines } from '@/lib/trainer/lineQueue'
 import type { ChapterLine } from '@/lib/trainer/lineQueue'
 import type { RepertoireSummary, Repertoire } from '@/lib/trainer/types'
@@ -63,6 +64,7 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
       .then((list) => {
         setReps(list)
         if (list.length > 0) selectRepertoire(list[0].id, list[0].chapters.map((c) => c.id))
+        void prefetchRepertoires(list)
       })
       .catch((err) => setListError(err instanceof Error ? err.message : 'Failed to reach the backend.'))
     loadTodayTraining()
@@ -125,7 +127,7 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
   if (listError) {
     return (
       <div style={{ ...panelStyle, width: 'min(560px, calc(100vw - 32px))' }}>
-        <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 2px rgba(28,27,24,0.04), 0 8px 24px rgba(28,27,24,0.05)' }}>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 'clamp(16px, 5vw, 24px)', boxShadow: '0 1px 2px rgba(28,27,24,0.04), 0 8px 24px rgba(28,27,24,0.05)' }}>
           <p style={{ fontSize: 14, color: '#37352f', marginBottom: 10 }}>Can&rsquo;t reach the backend.</p>
           <pre className="mono" style={{ fontSize: 12, background: '#fbfaf7', padding: 10, borderRadius: 6 }}>
             cd backend{'\n'}go run ./cmd/server/
@@ -149,7 +151,7 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
     }
     return (
       <div style={{ ...panelStyle, width: 'min(560px, calc(100vw - 32px))' }}>
-        <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 2px rgba(28,27,24,0.04), 0 8px 24px rgba(28,27,24,0.05)' }}>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 'clamp(16px, 5vw, 24px)', boxShadow: '0 1px 2px rgba(28,27,24,0.04), 0 8px 24px rgba(28,27,24,0.05)' }}>
           <p style={{ fontSize: 14, color: '#37352f', marginBottom: 10 }}>No repertoires loaded.</p>
           <p style={{ fontSize: 12, color: '#a3a099', marginBottom: 14 }}>Add your first Lichess study to build its complete drill tree.</p>
           <button onClick={() => setManaging(true)} style={primaryPillStyle}>Manage repertoires</button>
@@ -190,8 +192,8 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
       </div>
 
       {mode === 'mixed' ? (
-        <div style={{ background: '#fff', borderRadius: 20, padding: 40, boxShadow: '0 1px 2px rgba(28,27,24,0.04), 0 12px 32px rgba(28,27,24,0.06)', textAlign: 'center' }}>
-          <h1 className="serif" style={{ margin: '0 0 8px', fontSize: 32, fontWeight: 500 }}>Mixed training</h1>
+        <div style={{ background: '#fff', borderRadius: 20, padding: 'clamp(20px, 6vw, 40px)', boxShadow: '0 1px 2px rgba(28,27,24,0.04), 0 12px 32px rgba(28,27,24,0.06)', textAlign: 'center' }}>
+          <h1 className="serif" style={{ margin: '0 0 8px', fontSize: 'clamp(24px, 7vw, 32px)', fontWeight: 500 }}>Mixed training</h1>
           <p style={{ fontSize: 14, color: '#6a675f', margin: '0 0 26px' }}>
             A shuffled queue across every repertoire you&rsquo;re due for.
           </p>
@@ -207,7 +209,7 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
         <>
           {selected && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
-              <h1 className="serif" style={{ margin: 0, fontSize: 40, fontWeight: 500, letterSpacing: '-0.5px' }}>
+              <h1 className="serif" style={{ margin: 0, fontSize: 'clamp(28px, 8vw, 40px)', fontWeight: 500, letterSpacing: '-0.5px' }}>
                 {selected.name}
               </h1>
               <span
@@ -222,7 +224,7 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
           <div style={{ marginBottom: 28 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div className="lbl" style={{ color: '#b4b1a8' }}>Repertoire</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 999, background: '#f5f4ef', width: 180 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 999, background: '#f5f4ef', width: 'min(180px, 45vw)' }}>
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <circle cx="5" cy="5" r="3.6" stroke="#b4b1a8" strokeWidth="1.3" />
                   <path d="M7.7 7.7L10.5 10.5" stroke="#b4b1a8" strokeWidth="1.3" strokeLinecap="round" />
