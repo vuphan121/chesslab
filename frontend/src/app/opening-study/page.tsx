@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Board from '@/components/board/Board'
 import { MaterialRow, computeMaterialRows } from '@/components/board/MaterialCorners'
 import EvalBar from '@/components/analysis/EvalBar'
+import { EVAL_DISPLAY_LABEL, EvalIcon, SUGGESTION_ARROW_SCALES, useEvalDisplay } from '@/components/analysis/EvalToggle'
 import TopBar from '@/components/layout/TopBar'
 import RepertoirePicker from '@/components/trainer/RepertoirePicker'
 import LinePanel from '@/components/trainer/LinePanel'
@@ -29,15 +30,7 @@ const EVAL_BAR_WIDTH = 22
 
 const MATERIAL_STRIP_HEIGHT = 22
 
-type EvalDisplay = 'off' | 'eval' | 'eval-moves'
 const EVAL_DISPLAY_STORAGE_KEY = 'chesslab.trainer.evalDisplay'
-const EVAL_DISPLAY_CYCLE: EvalDisplay[] = ['off', 'eval', 'eval-moves']
-const EVAL_DISPLAY_LABEL: Record<EvalDisplay, string> = {
-  off: 'Eval: Off',
-  eval: 'Eval: Bar',
-  'eval-moves': 'Eval: Bar + Moves',
-}
-const SUGGESTION_ARROW_SCALES = [1, 0.82, 0.66, 0.52, 0.4]
 
 
 
@@ -88,24 +81,7 @@ export default function OpeningStudyPage() {
     cardById,
   } = useTrainerSession()
 
-  const [evalDisplay, setEvalDisplay] = useState<EvalDisplay>('off')
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(EVAL_DISPLAY_STORAGE_KEY)
-      if (stored === 'off' || stored === 'eval' || stored === 'eval-moves') setEvalDisplay(stored)
-    } catch {
-    }
-  }, [])
-  const cycleEvalDisplay = () => {
-    setEvalDisplay((current) => {
-      const next = EVAL_DISPLAY_CYCLE[(EVAL_DISPLAY_CYCLE.indexOf(current) + 1) % EVAL_DISPLAY_CYCLE.length]
-      try {
-        localStorage.setItem(EVAL_DISPLAY_STORAGE_KEY, next)
-      } catch {
-      }
-      return next
-    })
-  }
+  const [evalDisplay, cycleEvalDisplay] = useEvalDisplay(EVAL_DISPLAY_STORAGE_KEY, 'off')
 
   const viewportWidth = useViewportWidth()
   const viewportHeight = useViewportHeight()
@@ -601,30 +577,5 @@ function RedoIcon() {
       <path d="M23 4v6h-6" />
       <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
     </svg>
-  )
-}
-
-function EvalIcon({ state }: { state: EvalDisplay }) {
-  const on = state !== 'off'
-  const color = on ? '#4a90d9' : '#b4b1a8'
-  return (
-    <span style={{ position: 'relative', display: 'inline-flex' }}>
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round">
-        <line x1="6" y1="20" x2="6" y2="14" />
-        <line x1="12" y1="20" x2="12" y2="4" />
-        <line x1="18" y1="20" x2="18" y2="10" />
-      </svg>
-      {state === 'eval-moves' && (
-        <svg
-          width="9"
-          height="9"
-          viewBox="0 0 10 10"
-          fill="none"
-          style={{ position: 'absolute', top: -3, right: -5 }}
-        >
-          <path d="M2 8L8 2M8 2H3.5M8 2V6.5" stroke="#4a90d9" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      )}
-    </span>
   )
 }

@@ -2,6 +2,7 @@
 
 import Board from '@/components/board/Board'
 import EvalBar from '@/components/analysis/EvalBar'
+import { EVAL_DISPLAY_LABEL, EvalIcon, SUGGESTION_ARROW_SCALES, useEvalDisplay } from '@/components/analysis/EvalToggle'
 import MaterialCorners, { MATERIAL_CORNERS_WIDTH } from '@/components/board/MaterialCorners'
 import MoveHistory from '@/components/history/MoveHistory'
 import TopBar from '@/components/layout/TopBar'
@@ -16,6 +17,8 @@ const SIDE_WIDTH = 371
 const NARROW_BREAKPOINT = 1040
 const OUTER_PADDING_DESKTOP = 24
 const OUTER_PADDING_NARROW = 14
+const EVAL_DISPLAY_STORAGE_KEY = 'chesslab.analysis.evalDisplay'
+const MAX_SUGGESTION_ARROWS = 3
 const ROW_GAP_DESKTOP = 20
 
 
@@ -89,12 +92,14 @@ function HomeInner() {
     reset,
     loadPgn,
     analysis,
+    analysisFen,
     explorer,
     explorerLoading,
     flipped,
     toggleFlipped,
   } = useChessGame(initialGameId)
 
+  const [evalDisplay, cycleEvalDisplay] = useEvalDisplay(EVAL_DISPLAY_STORAGE_KEY, 'eval-moves')
   const viewportWidth = useViewportWidth()
 
 
@@ -153,6 +158,21 @@ function HomeInner() {
     explorer?.openingName ?? (atStart ? 'Starting Position' : 'Custom Line')
   const isBookMove = (explorer?.totalGames ?? 0) > 0
 
+  const showEval = evalDisplay !== 'off'
+  const analysisIsCurrent = !!analysis && (analysisFen === null || analysisFen === boardState.fen)
+  const engineMoves: string[] = []
+  if (analysis && analysisIsCurrent && !boardState.isGameOver) {
+    for (const line of analysis.lines ?? []) {
+      const uci = line.uciMoves?.[0]
+      if (uci && uci.length >= 4 && !engineMoves.includes(uci)) engineMoves.push(uci)
+    }
+    if (engineMoves.length === 0 && analysis.bestMove.length >= 4) engineMoves.push(analysis.bestMove)
+  }
+  const suggestionArrows =
+    evalDisplay === 'eval-moves'
+      ? engineMoves.slice(0, MAX_SUGGESTION_ARROWS).map((uci, i) => ({ uci, scale: SUGGESTION_ARROW_SCALES[i] }))
+      : []
+
   const playContinuation = (uci: string) => move(uci.slice(0, 2), uci.slice(2, 4))
 
   return (
@@ -198,7 +218,7 @@ function HomeInner() {
               }}
             >
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                {(!!analysis?.depth || !!analysis?.tablebaseCategory) && (
+                {showEval && (!!analysis?.depth || !!analysis?.tablebaseCategory) && (
                   <span className="mono" style={{ fontSize: 12, color: '#a3a099' }}>
                     {analysis.engineName} ·{' '}
                     {analysis.tablebaseCategory ? (
@@ -218,6 +238,24 @@ function HomeInner() {
                     )}
                   </span>
                 )}
+                <button
+                  onClick={cycleEvalDisplay}
+                  title={EVAL_DISPLAY_LABEL[evalDisplay]}
+                  aria-label={EVAL_DISPLAY_LABEL[evalDisplay]}
+                  style={{
+                    width: 30,
+                    height: 30,
+                    border: '1px solid #eae8e2',
+                    background: '#fff',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <EvalIcon state={evalDisplay} size={15} />
+                </button>
                 <button
                   onClick={toggleFlipped}
                   title="Flip board"
@@ -262,15 +300,20 @@ function HomeInner() {
                 legalMovesFor={legalMovesFor}
                 squareSize={squareSize}
                 flipped={flipped}
+                analysisMoves={suggestionArrows}
               />
               <MaterialCorners pieces={boardState.pieces} flipped={flipped} height={boardSize} />
-              <EvalBar
-                score={analysis?.score ?? 0}
-                mate={analysis?.mate ?? 0}
-                height={boardSize}
-                flipped={flipped}
-                hasEval={!!analysis?.depth || !!analysis?.tablebaseCategory}
-              />
+              <div style={{ width: 22, height: boardSize, flexShrink: 0 }}>
+                {showEval && (
+                  <EvalBar
+                    score={analysis?.score ?? 0}
+                    mate={analysis?.mate ?? 0}
+                    height={boardSize}
+                    flipped={flipped}
+                    hasEval={!!analysis?.depth || !!analysis?.tablebaseCategory}
+                  />
+                )}
+              </div>
             </div>
 
             <div style={{ width: boardSize + 11 + MATERIAL_CORNERS_WIDTH + 11 + 22 }}>

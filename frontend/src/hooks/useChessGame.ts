@@ -58,6 +58,7 @@ export function useChessGame(initialGameId?: string) {
   const [selected, setSelected] = useState<Square | null>(null)
   const [busy, setBusy] = useState(false)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
+  const [analysisFen, setAnalysisFen] = useState<string | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [explorer, setExplorer] = useState<Explorer | null>(null)
   const [explorerLoading, setExplorerLoading] = useState(false)
@@ -74,6 +75,7 @@ export function useChessGame(initialGameId?: string) {
       const cached = analysisCacheRef.current.get(fen)
       if (cached) {
         setAnalysis(cached)
+        setAnalysisFen(fen)
         setAnalyzing(false)
         return cached
       }
@@ -83,12 +85,14 @@ export function useChessGame(initialGameId?: string) {
       const quick = await analyzeGame(gameId, 'quick', fen)
       if (reqId === analysisReqId.current) {
         setAnalysis(quick)
+        setAnalysisFen(fen ?? null)
         if (fen) analysisCacheRef.current.set(fen, quick)
       }
       if (quick.engineName === 'Lichess Cloud' || quick.tablebaseCategory) return quick
       const deep = await analyzeGame(gameId, 'full', fen)
       if (reqId === analysisReqId.current) {
         setAnalysis(deep)
+        setAnalysisFen(fen ?? null)
         if (fen) analysisCacheRef.current.set(fen, deep)
       }
       return deep
@@ -342,6 +346,7 @@ export function useChessGame(initialGameId?: string) {
     loadPgn,
     busy,
     analysis,
+    analysisFen,
     analyzing,
     explorer,
     explorerLoading,
