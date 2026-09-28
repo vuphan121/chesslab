@@ -28,14 +28,15 @@ const (
 )
 
 // CronStockfishMoveTime caps how long the recurring cron endpoint spends on
-// one Stockfish-fallback position. The production instance is a small shared
-// CPU where a depth-22 MultiPV-5 search regularly outlasts the engine's 30s
-// hard timeout — every fallback then failed and burned 30s of the run budget
-// for nothing. With a movetime cap the search stops cleanly at this limit and
-// the row records whatever depth it actually reached. The one-off
-// cmd/precomputeevals backfill passes 0 (depth-only, full quality) since it
-// runs on a fast local machine.
-const CronStockfishMoveTime = 12 * time.Second
+// one Stockfish-fallback position. The search still stops as soon as it hits
+// StockfishDepth, so this is only a ceiling for a slow machine: the small
+// shared-CPU production instance needs well over 30s (the engine's default
+// hard timeout, which made every fallback fail) to reach depth 22 with 5
+// lines. Deliberately generous — the cron is meant to be a slow, patient
+// backlog drain, not fast. If a search does hit the cap it stops cleanly and
+// the row records the depth actually reached. The one-off
+// cmd/precomputeevals backfill passes 0 (depth-only).
+const CronStockfishMoveTime = 3 * time.Minute
 
 // EnumeratePositions walks every chapter's full node tree — not just Card
 // (decision-point) positions — so every ply of every line gets an eval: the

@@ -31,7 +31,7 @@ func (s *Store) StartPrecomputeRun(ctx context.Context, budgetMS int64, stockfis
 		UPDATE precompute_runs
 		SET status = 'interrupted', finished_at = now(),
 		    duration_ms = (EXTRACT(EPOCH FROM (now() - started_at)) * 1000)::bigint
-		WHERE status = 'running' AND started_at < now() - interval '15 minutes'`); err != nil {
+		WHERE status = 'running' AND started_at < now() - interval '90 minutes'`); err != nil {
 		return 0, fmt.Errorf("close stale precompute runs: %w", err)
 	}
 	var id int64

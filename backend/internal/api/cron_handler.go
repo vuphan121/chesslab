@@ -118,14 +118,17 @@ func (h *Handler) RefreshAllRepertoires(w http.ResponseWriter, r *http.Request) 
 	respondJSON(w, http.StatusOK, resp)
 }
 
-// precomputeBudget bounds one background precompute run. The HTTP request
-// that starts it returns immediately (202), so this is no longer tied to any
-// request/scheduler timeout — it just caps how long a single run can hold the
+// precomputeBudget bounds one background precompute run: no new position is
+// started after it elapses (an in-flight one may overrun by up to
+// evalprecompute.CronStockfishMoveTime). The HTTP request that starts a run
+// returns immediately (202), so this is no longer tied to any
+// request/scheduler timeout — it only caps how long one run holds the
 // (dedicated) Stockfish instance before the next hourly tick takes over.
-// Render's free tier only spins an instance down after ~15 minutes with no
-// inbound traffic, and the tick that starts a run is itself inbound traffic,
-// so a run this long can't be cut short by an idle spin-down.
-const precomputeBudget = 5 * time.Minute
+// Deliberately long: the fallback searches are slow on the production
+// instance and the backlog is drained patiently. Note Render's free tier
+// spins an instance down after ~15 minutes without inbound traffic, so runs
+// this long rely on the separate keep-alive job.
+const precomputeBudget = 30 * time.Minute
 
 // maxConsecutiveComputeFailures ends a run early when this many positions in
 // a row fail to compute — see the check in runPrecompute.
@@ -196,7 +199,7 @@ func (h *Handler) PrecomputeEvals(w http.ResponseWriter, r *http.Request) {
 		defer h.precomputeRunning.Store(false)
 		// Deliberately not derived from r.Context(), which is cancelled the
 		// moment the 202 below is written.
-		ctx, cancel := context.WithTimeout(context.Background(), precomputeBudget+time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), precomputeBudget+evalprecompute.CronStockfishMoveTime+2*time.Minute)
 		defer cancel()
 		res := h.runPrecompute(ctx)
 		h.precomputeMu.Lock()
