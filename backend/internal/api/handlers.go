@@ -68,6 +68,8 @@ type cachedAnalysis struct {
 
 var errEngineUnavailable = errors.New("engine not configured")
 
+var errNoLookup = errors.New("no cloud or tablebase result")
+
 func NewHandler(store storage.Store, eng *engine.Engine, precomputeEng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config, bookSource booksource.Reader, bookChapterPrefix string) *Handler {
 	return &Handler{store: store, engine: eng, precomputeEngine: precomputeEng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix, prefetchedCloud: make(map[string]prefetchedCloudEval), prefetchSem: make(chan struct{}, 1), analysisCache: make(map[string]cachedAnalysis), loginLimiter: newLoginLimiter(5, 5*time.Minute, time.Now), lineImportanceGen: make(map[string]int64)}
 }
@@ -313,11 +315,19 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	quick := r.URL.Query().Get("speed") == "quick"
+	lookupOnly := r.URL.Query().Get("source") == "lookup"
 	cacheKey := fen + "|deep"
 	if quick {
 		cacheKey = fen + "|quick"
 	}
+	if lookupOnly {
+		cacheKey = fen + "|lookup"
+	}
 	if result, ok := h.cachedAnalysis(cacheKey); ok {
+		if lookupOnly && result.EngineName == "" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 		respondJSON(w, http.StatusOK, result)
 		h.prefetchLikelyReplies(result.Lines)
 		return
@@ -327,7 +337,10 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 		if result, ok := h.cachedAnalysis(cacheKey); ok {
 			return result, nil
 		}
-		result, analyzeErr := h.analyzePosition(fen, pos, quick)
+		result, analyzeErr := h.analyzePosition(fen, pos, quick, lookupOnly)
+		if errors.Is(analyzeErr, errNoLookup) {
+			h.rememberAnalysis(cacheKey, AnalysisJSON{})
+		}
 		if analyzeErr != nil {
 			return AnalysisJSON{}, analyzeErr
 		}
@@ -335,6 +348,10 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 		return result, nil
 	})
 	if err != nil {
+		if errors.Is(err, errNoLookup) {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 		if errors.Is(err, errEngineUnavailable) {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		} else {
@@ -347,9 +364,12 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 	h.prefetchLikelyReplies(result.Lines)
 }
 
-func (h *Handler) analyzePosition(fen string, pos *chess.Position, quick bool) (AnalysisJSON, error) {
+func (h *Handler) analyzePosition(fen string, pos *chess.Position, quick, lookupOnly bool) (AnalysisJSON, error) {
 	probe, _ := chess.NewGameFromFEN("", fen)
 	if probe.IsGameOver() {
+		if lookupOnly {
+			return AnalysisJSON{}, errNoLookup
+		}
 		name := "Stockfish"
 		if h.engine != nil {
 			name = h.engine.Name
@@ -385,6 +405,9 @@ func (h *Handler) analyzePosition(fen string, pos *chess.Position, quick bool) (
 		}
 	}
 
+	if lookupOnly {
+		return AnalysisJSON{}, errNoLookup
+	}
 	if h.engine == nil {
 		return AnalysisJSON{}, errEngineUnavailable
 	}
@@ -687,6 +710,11 @@ func (h *Handler) EvalFEN(w http.ResponseWriter, r *http.Request) {
 			respondJSON(w, http.StatusOK, out)
 			return
 		}
+	}
+
+	if r.URL.Query().Get("source") == "lookup" {
+		w.WriteHeader(http.StatusNoContent)
+		return
 	}
 
 	if h.engine == nil {
