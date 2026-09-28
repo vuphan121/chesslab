@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/chesslab/backend/internal/auth"
@@ -47,6 +48,9 @@ type Handler struct {
 	loginLimiter      *loginLimiter
 	lineImportanceMu  sync.Mutex
 	lineImportanceGen map[string]int64
+	precomputeRunning atomic.Bool
+	precomputeMu      sync.Mutex
+	lastPrecompute    *PrecomputeEvalsResponse
 }
 
 type prefetchedCloudEval struct {

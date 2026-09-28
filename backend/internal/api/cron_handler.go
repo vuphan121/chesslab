@@ -116,12 +116,14 @@ func (h *Handler) RefreshAllRepertoires(w http.ResponseWriter, r *http.Request) 
 	respondJSON(w, http.StatusOK, resp)
 }
 
-// precomputeBudget bounds one PrecomputeEvals call well under both Render's
-// 3-minute HTTP WriteTimeout and a typical external scheduler's own function
-// timeout (e.g. Vercel's) — the endpoint is meant to be hit every 15–60 min
-// and just grind through whatever backlog exists, resuming from wherever it
-// left off on the next tick rather than ever risking a mid-request timeout.
-const precomputeBudget = 90 * time.Second
+// precomputeBudget bounds one background precompute run. The HTTP request
+// that starts it returns immediately (202), so this is no longer tied to any
+// request/scheduler timeout — it just caps how long a single run can hold the
+// (dedicated) Stockfish instance before the next hourly tick takes over.
+// Render's free tier only spins an instance down after ~15 minutes with no
+// inbound traffic, and the tick that starts a run is itself inbound traffic,
+// so a run this long can't be cut short by an idle spin-down.
+const precomputeBudget = 5 * time.Minute
 
 type precomputeFailureJSON struct {
 	FENKey string `json:"fenKey"`
@@ -129,21 +131,37 @@ type precomputeFailureJSON struct {
 }
 
 type PrecomputeEvalsResponse struct {
-	Processed  int                      `json:"processed"`
-	Remaining  int                      `json:"remaining"`
+	Processed  int                     `json:"processed"`
+	Remaining  int                     `json:"remaining"`
 	Failed     []precomputeFailureJSON `json:"failed,omitempty"`
-	DurationMS int64                    `json:"durationMs"`
+	DurationMS int64                   `json:"durationMs"`
 }
 
-// PrecomputeEvals fills in the backlog of the internal/evalprecompute eval
-// cache — positions that appear in some currently-loaded repertoire but
+// precomputeStartedResponse is what the cron endpoint answers with: the work
+// itself happens after the response, so this only says whether a run was
+// started, plus the summary of the most recent *finished* run (nil until one
+// has finished since this process booted) — the only way a scheduler's logs
+// can see backlog progress now that the request no longer waits for it.
+type precomputeStartedResponse struct {
+	Status  string                   `json:"status"` // "started" | "already-running"
+	LastRun *PrecomputeEvalsResponse `json:"lastRun,omitempty"`
+}
+
+// PrecomputeEvals kicks off a background fill of the internal/evalprecompute
+// eval cache — positions that appear in some currently-loaded repertoire but
 // have no position_evals row yet (freshly added by the daily
-// refresh-repertoires run, or never backfilled). Same CRON_SECRET-guarded,
-// outside-the-JWT-group shape as RefreshAllRepertoires above; meant to be
-// hit repeatedly (every 15–60 min) by the same external scheduler rather
-// than once a day, since a single call only has a bounded time budget (see
-// precomputeBudget) to spend on what can be a large backlog right after a
-// repertoire refresh. A call that finds nothing new is a cheap no-op.
+// refresh-repertoires run, or never backfilled) — and returns 202 straight
+// away. Same CRON_SECRET-guarded, outside-the-JWT-group shape as
+// RefreshAllRepertoires above; meant to be hit repeatedly (every 15–60 min)
+// by the same external scheduler.
+//
+// Responding first matters because the scheduler hard-times-out at ~40s
+// (and a cold Render instance can burn part of that just waking up), while a
+// deep MultiPV-5 run takes minutes. Safe to call repeatedly: only one run
+// executes at a time (an overlapping call gets "already-running" and does
+// nothing), every finished position is saved individually, and each run
+// recomputes its backlog from the table, so a run cut short by a deploy or
+// crash just resumes from wherever the last one stopped.
 func (h *Handler) PrecomputeEvals(w http.ResponseWriter, r *http.Request) {
 	secret := os.Getenv("CRON_SECRET")
 	if secret == "" {
@@ -160,15 +178,41 @@ func (h *Handler) PrecomputeEvals(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.precomputeMu.Lock()
+	last := h.lastPrecompute
+	h.precomputeMu.Unlock()
+
+	if !h.precomputeRunning.CompareAndSwap(false, true) {
+		respondJSON(w, http.StatusAccepted, precomputeStartedResponse{Status: "already-running", LastRun: last})
+		return
+	}
+	go func() {
+		defer h.precomputeRunning.Store(false)
+		// Deliberately not derived from r.Context(), which is cancelled the
+		// moment the 202 below is written.
+		ctx, cancel := context.WithTimeout(context.Background(), precomputeBudget+time.Minute)
+		defer cancel()
+		res := h.runPrecompute(ctx)
+		h.precomputeMu.Lock()
+		h.lastPrecompute = &res
+		h.precomputeMu.Unlock()
+	}()
+	respondJSON(w, http.StatusAccepted, precomputeStartedResponse{Status: "started", LastRun: last})
+}
+
+// runPrecompute is one bounded batch: diff every repertoire position against
+// the cache, then compute until the backlog is empty or precomputeBudget runs
+// out. Called only from PrecomputeEvals' single-flight goroutine.
+func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 	started := time.Now()
-	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Minute)
-	defer cancel()
+	resp := PrecomputeEvalsResponse{}
 
 	all := evalprecompute.EnumeratePositions(h.repertoires.List())
 	existing, err := h.db.AllPositionEvalKeys(ctx)
 	if err != nil {
-		http.Error(w, "failed to load existing evals: "+err.Error(), http.StatusInternalServerError)
-		return
+		log.Printf("cron precompute: failed to load existing evals: %v", err)
+		resp.DurationMS = time.Since(started).Milliseconds()
+		return resp
 	}
 
 	var backlog []string
@@ -179,17 +223,16 @@ func (h *Handler) PrecomputeEvals(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("cron precompute: %d total position(s), %d in backlog", len(all), len(backlog))
 
-	resp := PrecomputeEvalsResponse{}
 	deadline := started.Add(precomputeBudget)
 	attempted := 0
 	for _, key := range backlog {
-		if time.Now().After(deadline) {
+		if time.Now().After(deadline) || ctx.Err() != nil {
 			break
 		}
 		attempted++
 		result, err := evalprecompute.Compute(h.precomputeEngine, key)
 		if err != nil {
-			// Not retried within this call — a position that keeps failing
+			// Not retried within this run — a position that keeps failing
 			// (e.g. no cloud hit and Stockfish unavailable) would otherwise
 			// eat the whole budget every tick without making progress. It
 			// stays in the backlog and gets tried again next tick, same
@@ -208,5 +251,5 @@ func (h *Handler) PrecomputeEvals(w http.ResponseWriter, r *http.Request) {
 	resp.Remaining = len(backlog) - attempted
 	resp.DurationMS = time.Since(started).Milliseconds()
 	log.Printf("cron precompute: done in %dms — %d processed, %d remaining, %d failed", resp.DurationMS, resp.Processed, resp.Remaining, len(resp.Failed))
-	respondJSON(w, http.StatusOK, resp)
+	return resp
 }
