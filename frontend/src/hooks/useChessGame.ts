@@ -5,12 +5,11 @@ import {
   createGame,
   getGame,
   makeMove,
-  analyzeGame,
   getExplorer,
   gotoNode as apiGotoNode,
   loadPGN,
 } from '@/lib/api/client'
-import type { GameState, Analysis, Explorer } from '@/lib/api/client'
+import type { GameState, Explorer } from '@/lib/api/client'
 import type { BoardState, Square } from '@/lib/chess/types'
 import { flatten, mainlineEnd, childrenOf } from '@/lib/chess/moveTree'
 
@@ -57,51 +56,12 @@ export function useChessGame(initialGameId?: string) {
   const [gs, setGs] = useState<GameState | null>(null)
   const [selected, setSelected] = useState<Square | null>(null)
   const [busy, setBusy] = useState(false)
-  const [analysis, setAnalysis] = useState<Analysis | null>(null)
-  const [analysisFen, setAnalysisFen] = useState<string | null>(null)
-  const [analyzing, setAnalyzing] = useState(false)
   const [explorer, setExplorer] = useState<Explorer | null>(null)
   const [explorerLoading, setExplorerLoading] = useState(false)
   const [flipped, setFlipped] = useState(false)
   const moveSound = useRef<HTMLAudioElement | null>(null)
-  const analysisCacheRef = useRef<Map<string, Analysis>>(new Map())
-  const analysisReqId = useRef(0)
   const gameActionReqId = useRef(0)
   const explorerReqId = useRef(0)
-
-  const runAnalysis = useCallback(async (gameId: string, fen?: string): Promise<Analysis | null> => {
-    const reqId = ++analysisReqId.current
-    if (fen) {
-      const cached = analysisCacheRef.current.get(fen)
-      if (cached) {
-        setAnalysis(cached)
-        setAnalysisFen(fen)
-        setAnalyzing(false)
-        return cached
-      }
-    }
-    setAnalyzing(true)
-    try {
-      const quick = await analyzeGame(gameId, 'quick', fen)
-      if (reqId === analysisReqId.current) {
-        setAnalysis(quick)
-        setAnalysisFen(fen ?? null)
-        if (fen) analysisCacheRef.current.set(fen, quick)
-      }
-      if (quick.engineName === 'Lichess Cloud' || quick.tablebaseCategory) return quick
-      const deep = await analyzeGame(gameId, 'full', fen)
-      if (reqId === analysisReqId.current) {
-        setAnalysis(deep)
-        setAnalysisFen(fen ?? null)
-        if (fen) analysisCacheRef.current.set(fen, deep)
-      }
-      return deep
-    } catch {
-      return null
-    } finally {
-      if (reqId === analysisReqId.current) setAnalyzing(false)
-    }
-  }, [])
 
   const runExplorer = useCallback(async (gameId: string, fen?: string): Promise<Explorer | null> => {
     const reqId = ++explorerReqId.current
@@ -127,9 +87,9 @@ export function useChessGame(initialGameId?: string) {
 
   const refreshInsights = useCallback(
     async (gameId: string, fen?: string) => {
-      await Promise.all([runAnalysis(gameId, fen), runExplorer(gameId, fen)])
+      await runExplorer(gameId, fen)
     },
-    [runAnalysis, runExplorer],
+    [runExplorer],
   )
 
   useEffect(() => {
@@ -290,10 +250,8 @@ export function useChessGame(initialGameId?: string) {
     try {
       const next = await createGame()
       if (reqId !== gameActionReqId.current) return
-      analysisCacheRef.current.clear()
       setGs(next)
       setSelected(null)
-      setAnalysis(null)
       setExplorer(null)
       refreshInsights(next.id, next.fen)
     } finally {
@@ -312,8 +270,7 @@ export function useChessGame(initialGameId?: string) {
       try {
         const next = await loadPGN(gs.id, pgn)
         if (reqId !== gameActionReqId.current) return
-        analysisCacheRef.current.clear()
-        setGs(next)
+          setGs(next)
         setSelected(null)
         moveSound.current?.play().catch(() => {})
         refreshInsights(next.id, next.fen)
@@ -345,9 +302,7 @@ export function useChessGame(initialGameId?: string) {
     reset,
     loadPgn,
     busy,
-    analysis,
-    analysisFen,
-    analyzing,
+    gameId: gs?.id ?? null,
     explorer,
     explorerLoading,
     flipped,

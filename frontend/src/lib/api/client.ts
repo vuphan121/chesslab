@@ -177,6 +177,17 @@ export const analyzeGame = (
   return request(`/api/games/${id}/analysis${suffix}`)
 }
 
+export async function lookupAnalysis(id: string, fen: string, signal?: AbortSignal): Promise<Analysis | null> {
+  const res = await apiFetch(`${API}/api/games/${id}/analysis?source=lookup&fen=${encodeURIComponent(fen)}`, {
+    headers: authHeader(),
+    signal,
+  })
+  if (res.status === 401) clearToken()
+  if (res.status === 204) return null
+  if (!res.ok) throw new ApiError((await res.text()) || res.statusText, res.status)
+  return res.json() as Promise<Analysis>
+}
+
 export interface FenEval {
   score: number
   mate: number
@@ -189,6 +200,14 @@ export interface FenEval {
 
 export const evalFen = (fen: string): Promise<FenEval> =>
   request(`/api/eval?fen=${encodeURIComponent(fen)}`)
+
+export async function evalFenLookup(fen: string): Promise<FenEval | null> {
+  const res = await apiFetch(`${API}/api/eval?source=lookup&fen=${encodeURIComponent(fen)}`, { headers: authHeader() })
+  if (res.status === 401) clearToken()
+  if (res.status === 204) return null
+  if (!res.ok) throw new ApiError((await res.text()) || res.statusText, res.status)
+  return res.json() as Promise<FenEval>
+}
 
 export interface PositionEvalMove {
   rank: number

@@ -7,7 +7,10 @@ import MaterialCorners, { MATERIAL_CORNERS_WIDTH } from '@/components/board/Mate
 import MoveHistory from '@/components/history/MoveHistory'
 import TopBar from '@/components/layout/TopBar'
 import OpeningTree from '@/components/tree/OpeningTree'
+import EngineSettingsButton from '@/components/analysis/EngineSettingsButton'
 import { useChessGame } from '@/hooks/useChessGame'
+import { useEngineAnalysis } from '@/hooks/useEngineAnalysis'
+import { useEngineSettings } from '@/lib/engine/settings'
 import { Suspense, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useViewportWidth, clamp } from '@/hooks/useViewportWidth'
@@ -91,8 +94,7 @@ function HomeInner() {
     navEnd,
     reset,
     loadPgn,
-    analysis,
-    analysisFen,
+    gameId,
     explorer,
     explorerLoading,
     flipped,
@@ -100,6 +102,14 @@ function HomeInner() {
   } = useChessGame(initialGameId)
 
   const [evalDisplay, cycleEvalDisplay] = useEvalDisplay(EVAL_DISPLAY_STORAGE_KEY, 'eval-moves')
+  const [engineSettings, updateEngineSettings, resetEngineSettings] = useEngineSettings()
+  const { analysis, analysisFen, analyzing, engineError } = useEngineAnalysis({
+    gameId,
+    fen: boardState?.fen ?? null,
+    gameOver: boardState?.isGameOver ?? false,
+    enabled: evalDisplay !== 'off',
+    settings: engineSettings,
+  })
   const viewportWidth = useViewportWidth()
 
 
@@ -230,7 +240,7 @@ function HomeInner() {
                       </>
                     ) : (
                       <>
-                        depth {analysis.depth} ·{' '}
+                        depth {analysis.depth}{analyzing ? '…' : ''} ·{' '}
                         <span style={{ fontWeight: 700, color: '#37352f' }}>
                           {formatEval(analysis.score, analysis.mate)}
                         </span>
@@ -238,6 +248,12 @@ function HomeInner() {
                     )}
                   </span>
                 )}
+                {engineError && (
+                  <span title={engineError} style={{ fontSize: 11, color: '#b3483f' }}>
+                    Browser engine unavailable, using the server
+                  </span>
+                )}
+                <EngineSettingsButton settings={engineSettings} onChange={updateEngineSettings} onReset={resetEngineSettings} />
                 <button
                   onClick={cycleEvalDisplay}
                   title={EVAL_DISPLAY_LABEL[evalDisplay]}
@@ -349,6 +365,7 @@ function HomeInner() {
               onNavEnd={navEnd}
               onReset={reset}
               onLoadPgn={loadPgn}
+              engineEnabled={evalDisplay !== 'off'}
             />
           </div>
 

@@ -3,7 +3,8 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { MoveNode } from '@/lib/chess/types'
 import { childrenOf, flatten } from '@/lib/chess/moveTree'
-import { evalFen, type FenEval } from '@/lib/api/client'
+import { evalFen, evalFenLookup, type FenEval } from '@/lib/api/client'
+import { MoveEvaluator } from '@/lib/engine/moveEval'
 import { toFigurine } from '@/lib/chess/figurine'
 
 
@@ -48,6 +49,7 @@ interface Props {
   onNavEnd: () => void
   onReset: () => void
   onLoadPgn: (pgn: string) => Promise<void>
+  engineEnabled?: boolean
 }
 
 
@@ -101,6 +103,7 @@ export default function MoveHistory({
   onNavEnd,
   onReset,
   onLoadPgn,
+  engineEnabled = true,
 }: Props) {
   const currentRef = useRef<HTMLSpanElement | null>(null)
   const [pgnInput, setPgnInput] = useState('')
@@ -135,8 +138,16 @@ export default function MoveHistory({
     evalsRef.current = evals
   }, [evals])
 
-  useEffect(() => {
+  const evaluatorRef = useRef<MoveEvaluator | null>(null)
 
+  useEffect(() => {
+    return () => {
+      evaluatorRef.current?.dispose()
+      evaluatorRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
     const fens: string[] = []
     let n: MoveNode | undefined = moveTree
     while (n) {
@@ -153,17 +164,25 @@ export default function MoveHistory({
       for (const fen of missing) {
         if (cancelled) return
         try {
-          const e = await evalFen(fen)
-          if (!cancelled) setEvals((prev) => ({ ...prev, [fen]: e }))
+          let e = await evalFenLookup(fen)
+          if (!e && engineEnabled && !cancelled) {
+            const evaluator = (evaluatorRef.current ??= new MoveEvaluator())
+            try {
+              e = await evaluator.evaluate(fen)
+            } catch {
+              e = await evalFen(fen)
+            }
+          }
+          if (!cancelled && e) setEvals((prev) => ({ ...prev, [fen]: e }))
         } catch {
-
         }
       }
     })()
     return () => {
       cancelled = true
+      evaluatorRef.current?.cancel()
     }
-  }, [moveTree])
+  }, [moveTree, engineEnabled])
 
   const flat = flatten(moveTree)
   const currentNode = flat.get(currentNodeId)?.node

@@ -11,13 +11,15 @@ const PRECACHE_ASSETS = [
   '/icons/apple-touch-icon.png',
   '/board-texture.png',
   '/sounds/move.mp3',
+  '/stockfish/stockfish-19-lite-single.js',
+  '/stockfish/stockfish-19-lite-single.wasm',
   ...PIECES.map((p) => `/pieces/${p}.png`),
   ...PIECES.map((p) => `/pieces/glass/${p}.png`),
 ]
 
 const STATIC_PATTERN = /\/_next\/static\/[^"'\\\s)]+?\.(?:js|css|woff2?)/g
 const CSS_URL_PATTERN = /url\(["']?(\/_next\/static\/[^"')]+)/g
-const ASSET_EXT = /\.(?:png|jpe?g|svg|webp|ico|mp3|woff2?)$/
+const ASSET_EXT = /\.(?:png|jpe?g|svg|webp|ico|mp3|woff2?|wasm)$/
 
 function pageKey(url) {
   const u = new URL(url)
@@ -25,7 +27,7 @@ function pageKey(url) {
 }
 
 function isCacheableAsset(pathname) {
-  return pathname.startsWith('/_next/static/') || ASSET_EXT.test(pathname) || pathname === '/manifest.webmanifest'
+  return pathname.startsWith('/_next/static/') || pathname.startsWith('/stockfish/') || ASSET_EXT.test(pathname) || pathname === '/manifest.webmanifest'
 }
 
 async function cacheAssetsFromHtml(html, assets) {
@@ -239,7 +241,7 @@ self.addEventListener('fetch', (event) => {
 
   if (req.mode === 'navigate') {
     event.respondWith(handleNavigation(event))
-  } else if (url.pathname.startsWith('/_next/static/')) {
+  } else if (url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/stockfish/')) {
     event.respondWith(cacheFirst(req))
   } else if (ASSET_EXT.test(url.pathname) || url.pathname === '/manifest.webmanifest') {
     event.respondWith(staleWhileRevalidate(event))
