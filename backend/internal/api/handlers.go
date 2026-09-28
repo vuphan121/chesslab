@@ -51,6 +51,9 @@ type Handler struct {
 	precomputeRunning atomic.Bool
 	precomputeMu      sync.Mutex
 	lastPrecompute    *PrecomputeEvalsResponse
+	evalPruneMu       sync.Mutex
+	evalPruneRunning  bool
+	evalPruneAgain    bool
 }
 
 type prefetchedCloudEval struct {

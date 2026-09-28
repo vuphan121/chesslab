@@ -90,3 +90,20 @@ func (s *Store) UpsertPositionEval(ctx context.Context, e PositionEval) error {
 	}
 	return nil
 }
+
+func (s *Store) DeletePositionEvals(ctx context.Context, fenKeys []string) (int64, error) {
+	const batch = 500
+	var deleted int64
+	for start := 0; start < len(fenKeys); start += batch {
+		end := start + batch
+		if end > len(fenKeys) {
+			end = len(fenKeys)
+		}
+		tag, err := s.pool.Exec(ctx, `DELETE FROM position_evals WHERE fen_key = ANY($1)`, fenKeys[start:end])
+		if err != nil {
+			return deleted, fmt.Errorf("delete position evals: %w", err)
+		}
+		deleted += tag.RowsAffected()
+	}
+	return deleted, nil
+}

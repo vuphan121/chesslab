@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/chesslab/backend/internal/db"
+	"github.com/chesslab/backend/internal/evalprecompute"
 	"github.com/chesslab/backend/internal/repertoire"
 	"github.com/go-chi/chi/v5"
 )
@@ -131,7 +133,86 @@ func (h *Handler) fetchAndSaveRepertoire(r *http.Request, cfg repertoire.Config)
 		defer cancel()
 		h.refreshLineImportance(ctx, rep)
 	}()
+	go h.pruneOrphanEvals()
 	return rep, nil
+}
+
+func (h *Handler) pruneOrphanEvals() {
+	h.evalPruneMu.Lock()
+	if h.evalPruneRunning {
+		h.evalPruneAgain = true
+		h.evalPruneMu.Unlock()
+		return
+	}
+	h.evalPruneRunning = true
+	h.evalPruneMu.Unlock()
+
+	for {
+		h.pruneOrphanEvalsOnce()
+		h.evalPruneMu.Lock()
+		if !h.evalPruneAgain {
+			h.evalPruneRunning = false
+			h.evalPruneMu.Unlock()
+			return
+		}
+		h.evalPruneAgain = false
+		h.evalPruneMu.Unlock()
+	}
+}
+
+func (h *Handler) pruneOrphanEvalsOnce() {
+	if h.db == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	sources, err := h.db.LoadRepertoireSources(ctx)
+	if err != nil {
+		log.Printf("eval prune: skipped, could not load repertoire sources: %v", err)
+		return
+	}
+	byID := map[string]*repertoire.Repertoire{}
+	for _, rep := range h.repertoires.List() {
+		byID[rep.ID] = rep
+	}
+	for _, source := range sources {
+		var cfg repertoire.Config
+		if err := json.Unmarshal(source.Config, &cfg); err != nil {
+			log.Printf("eval prune: skipped, invalid config for %q: %v", source.ID, err)
+			return
+		}
+		rep, err := repertoire.ParseAndBuild(source.PGN, &cfg)
+		if err != nil {
+			log.Printf("eval prune: skipped, could not build %q: %v", source.ID, err)
+			return
+		}
+		byID[rep.ID] = rep
+	}
+	all := make([]*repertoire.Repertoire, 0, len(byID))
+	for _, rep := range byID {
+		all = append(all, rep)
+	}
+	live := evalprecompute.EnumeratePositions(all)
+	if len(live) == 0 {
+		return
+	}
+
+	existing, err := h.db.AllPositionEvalKeys(ctx)
+	if err != nil {
+		log.Printf("eval prune: skipped, could not list cached evals: %v", err)
+		return
+	}
+	orphans := evalprecompute.OrphanKeys(existing, live)
+	if len(orphans) == 0 {
+		return
+	}
+	deleted, err := h.db.DeletePositionEvals(ctx, orphans)
+	if err != nil {
+		log.Printf("eval prune: deleted %d of %d orphaned evals before failing: %v", deleted, len(orphans), err)
+		return
+	}
+	log.Printf("eval prune: deleted %d orphaned position eval(s)", deleted)
 }
 
 func managementConfig(id, name, side, description, source string) (repertoire.Config, error) {
