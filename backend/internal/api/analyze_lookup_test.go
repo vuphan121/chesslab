@@ -51,7 +51,7 @@ func TestLookupOnlyNeverRunsTheEngine(t *testing.T) {
 	if first.Code != http.StatusNoContent {
 		t.Fatalf("lookup on a finished game: status = %d, want 204", first.Code)
 	}
-	if entry, ok := h.analysisCache[matedFEN+"|lookup"]; !ok || entry.value.EngineName != "" || time.Now().After(entry.expiresAt) {
+	if entry, ok := h.analysisCache[matedFEN+"|lookup|3"]; !ok || entry.value.EngineName != "" || time.Now().After(entry.expiresAt) {
 		t.Fatalf("expected a negative cache entry for the lookup, got %+v (present=%v)", entry, ok)
 	}
 	second := analyzeRequest(t, h, id, "source=lookup"+fen)
@@ -75,5 +75,26 @@ func TestEvalOfAFinishedGameShortCircuitsBeforeAnyLookup(t *testing.T) {
 	h.EvalFEN(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200 with an empty evaluation for a finished game", rec.Code)
+	}
+}
+
+func TestLookupLineCountIsClampedAndDefaultsToThree(t *testing.T) {
+	cases := map[string]int{"": 3, "abc": 3, "0": 3, "-2": 3, "1": 1, "3": 3, "5": 5, "9": 5}
+	for raw, want := range cases {
+		if got := lookupLineCount(raw); got != want {
+			t.Errorf("lookupLineCount(%q) = %d, want %d", raw, got, want)
+		}
+	}
+}
+
+func TestLookupCacheIsPerLineCount(t *testing.T) {
+	h, id := newAnalysisTestHandler(t)
+	fen := "&fen=" + url.QueryEscape(matedFEN)
+	analyzeRequest(t, h, id, "source=lookup&lines=2"+fen)
+	if _, ok := h.analysisCache[matedFEN+"|lookup|2"]; !ok {
+		t.Fatalf("expected a cache entry keyed by the requested line count, got %v", h.analysisCache)
+	}
+	if _, ok := h.analysisCache[matedFEN+"|lookup|5"]; ok {
+		t.Fatal("a request for 2 lines must not populate the 5-line entry")
 	}
 }

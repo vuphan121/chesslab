@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"io"
 	"log"
 	"net/http"
@@ -316,12 +317,13 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 
 	quick := r.URL.Query().Get("speed") == "quick"
 	lookupOnly := r.URL.Query().Get("source") == "lookup"
+	lookupLines := lookupLineCount(r.URL.Query().Get("lines"))
 	cacheKey := fen + "|deep"
 	if quick {
 		cacheKey = fen + "|quick"
 	}
 	if lookupOnly {
-		cacheKey = fen + "|lookup"
+		cacheKey = fmt.Sprintf("%s|lookup|%d", fen, lookupLines)
 	}
 	if result, ok := h.cachedAnalysis(cacheKey); ok {
 		if lookupOnly && result.EngineName == "" {
@@ -337,7 +339,7 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 		if result, ok := h.cachedAnalysis(cacheKey); ok {
 			return result, nil
 		}
-		result, analyzeErr := h.analyzePosition(fen, pos, quick, lookupOnly)
+		result, analyzeErr := h.analyzePosition(fen, pos, quick, lookupOnly, lookupLines)
 		if errors.Is(analyzeErr, errNoLookup) {
 			h.rememberAnalysis(cacheKey, AnalysisJSON{})
 		}
@@ -364,7 +366,7 @@ func (h *Handler) AnalyzeGame(w http.ResponseWriter, r *http.Request) {
 	h.prefetchLikelyReplies(result.Lines)
 }
 
-func (h *Handler) analyzePosition(fen string, pos *chess.Position, quick, lookupOnly bool) (AnalysisJSON, error) {
+func (h *Handler) analyzePosition(fen string, pos *chess.Position, quick, lookupOnly bool, cloudLines int) (AnalysisJSON, error) {
 	probe, _ := chess.NewGameFromFEN("", fen)
 	if probe.IsGameOver() {
 		if lookupOnly {
@@ -395,10 +397,10 @@ func (h *Handler) analyzePosition(fen string, pos *chess.Position, quick, lookup
 	}
 
 	if !tablebaseEligible {
-		if cloud := h.takePrefetchedCloud(fen); cloud != nil {
+		if cloud := h.takePrefetchedCloud(fen); cloud != nil && len(cloud.PVs) >= cloudLines {
 			return cloudAnalysis(pos, cloud), nil
 		}
-		if cloud, err := lichess.FetchWithTimeout(fen, 3, cloudTimeout); err == nil && cloud != nil {
+		if cloud, err := lichess.FetchWithTimeout(fen, cloudLines, cloudTimeout); err == nil && cloud != nil {
 			return cloudAnalysis(pos, cloud), nil
 		} else if err != nil && !quick {
 			log.Printf("lichess cloud eval: %v", err)
@@ -438,6 +440,17 @@ func (h *Handler) analyzePosition(fen string, pos *chess.Position, quick, lookup
 		})
 	}
 	return result, nil
+}
+
+func lookupLineCount(raw string) int {
+	n, err := strconv.Atoi(raw)
+	if err != nil || n < 1 {
+		return 3
+	}
+	if n > 5 {
+		return 5
+	}
+	return n
 }
 
 func (h *Handler) cachedAnalysis(key string) (AnalysisJSON, bool) {
