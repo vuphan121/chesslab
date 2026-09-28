@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"crypto/subtle"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -125,6 +126,10 @@ func (h *Handler) RefreshAllRepertoires(w http.ResponseWriter, r *http.Request) 
 // inbound traffic, and the tick that starts a run is itself inbound traffic,
 // so a run this long can't be cut short by an idle spin-down.
 const precomputeBudget = 5 * time.Minute
+
+// maxConsecutiveComputeFailures ends a run early when this many positions in
+// a row fail to compute — see the check in runPrecompute.
+const maxConsecutiveComputeFailures = 5
 
 type precomputeFailureJSON struct {
 	FENKey string `json:"fenKey"`
@@ -273,13 +278,15 @@ func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 	}
 
 	deadline := started.Add(precomputeBudget)
+	consecutiveFailures := 0
+	abortErr := ""
 	for _, key := range backlog {
 		if time.Now().After(deadline) || ctx.Err() != nil {
 			break
 		}
 		stats.Attempted++
 		posStart := time.Now()
-		result, err := evalprecompute.Compute(h.precomputeEngine, key)
+		result, err := evalprecompute.ComputeWithMoveTime(h.precomputeEngine, key, evalprecompute.CronStockfishMoveTime)
 		if err != nil {
 			// Not retried within this run — a position that keeps failing
 			// (e.g. no cloud hit and Stockfish unavailable) would otherwise
@@ -290,6 +297,15 @@ func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 			resp.Failed = append(resp.Failed, precomputeFailureJSON{FENKey: key, Reason: err.Error()})
 			stats.Failed++
 			logPosition(db.PrecomputePositionLog{FENKey: key, Status: "compute_failed", DurationMS: time.Since(posStart).Milliseconds(), Error: err.Error()})
+			// A broken engine (or an unreachable Lichess) fails every
+			// remaining position too; stop instead of grinding the whole
+			// budget away on it. The next tick retries from scratch.
+			consecutiveFailures++
+			if consecutiveFailures >= maxConsecutiveComputeFailures {
+				abortErr = fmt.Sprintf("aborted after %d consecutive compute failures, last: %v", consecutiveFailures, err)
+				log.Printf("cron precompute: %s", abortErr)
+				break
+			}
 			continue
 		}
 		if err := h.db.UpsertPositionEval(ctx, result); err != nil {
@@ -299,6 +315,7 @@ func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 			logPosition(db.PrecomputePositionLog{FENKey: key, Status: "save_failed", EngineName: result.EngineName, DurationMS: time.Since(posStart).Milliseconds(), Error: err.Error()})
 			continue
 		}
+		consecutiveFailures = 0
 		resp.Processed++
 		stats.Processed++
 		logPosition(db.PrecomputePositionLog{FENKey: key, Status: "ok", EngineName: result.EngineName, Depth: result.Depth, DurationMS: time.Since(posStart).Milliseconds()})
@@ -306,10 +323,12 @@ func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 	stats.Remaining = stats.BacklogSize - stats.Attempted
 	resp.Remaining = stats.Remaining
 	status := db.PrecomputeRunCompleted
-	if stats.Remaining > 0 {
+	if abortErr != "" {
+		status = db.PrecomputeRunFailed
+	} else if stats.Remaining > 0 {
 		status = db.PrecomputeRunBudgetExhausted
 	}
-	finish(status, "")
+	finish(status, abortErr)
 	log.Printf("cron precompute: done in %dms — %d processed, %d remaining, %d failed", resp.DurationMS, resp.Processed, resp.Remaining, len(resp.Failed))
 	return resp
 }

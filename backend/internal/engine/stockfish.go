@@ -35,6 +35,9 @@ const (
 	analyzeTimeout   = 30 * time.Second
 	closeTimeout     = 5 * time.Second
 	stopTimeout      = 2 * time.Second
+	// movetimeGrace is slack on top of a "go movetime" search before we treat
+	// the engine as hung (process startup jitter, a loaded CPU).
+	movetimeGrace = 10 * time.Second
 )
 
 var errEngineUnavailable = errors.New("engine unavailable")
@@ -139,10 +142,22 @@ func (e *Engine) handshake() error {
 }
 
 func (e *Engine) Analyze(fen string, multiPV, depth int) (*Analysis, error) {
+	return e.AnalyzeTimed(fen, multiPV, depth, 0)
+}
+
+// AnalyzeTimed is Analyze with an extra wall-clock cap on the search itself
+// (UCI "go depth N movetime T": stops at whichever limit is hit first). With
+// moveTime > 0 the search ends cleanly at moveTime with whatever depth it
+// reached — the returned Lines carry that real depth — instead of running
+// into analyzeTimeout and being thrown away as a failure. That matters on a
+// slow/shared CPU, where reaching a fixed deep depth can take longer than
+// analyzeTimeout for every single position. moveTime <= 0 means depth-only,
+// bounded by analyzeTimeout as before.
+func (e *Engine) AnalyzeTimed(fen string, multiPV, depth int, moveTime time.Duration) (*Analysis, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	for attempt := 0; attempt < 2; attempt++ {
-		analysis, err := e.analyzeLocked(fen, multiPV, depth)
+		analysis, err := e.analyzeLocked(fen, multiPV, depth, moveTime)
 		if err == nil {
 			return analysis, nil
 		}
@@ -156,7 +171,7 @@ func (e *Engine) Analyze(fen string, multiPV, depth int) (*Analysis, error) {
 	return nil, errEngineUnavailable
 }
 
-func (e *Engine) analyzeLocked(fen string, multiPV, depth int) (*Analysis, error) {
+func (e *Engine) analyzeLocked(fen string, multiPV, depth int, moveTime time.Duration) (*Analysis, error) {
 	if err := e.send(fmt.Sprintf("setoption name MultiPV value %d", multiPV)); err != nil {
 		return nil, err
 	}
@@ -169,14 +184,22 @@ func (e *Engine) analyzeLocked(fen string, multiPV, depth int) (*Analysis, error
 	if err := e.send("position fen " + fen); err != nil {
 		return nil, err
 	}
-	if err := e.send(fmt.Sprintf("go depth %d", depth)); err != nil {
+	goCmd := fmt.Sprintf("go depth %d", depth)
+	// The hard deadline below must outlast the search's own movetime, or a
+	// search that stops exactly on time would be misread as a hang.
+	searchTimeout := analyzeTimeout
+	if moveTime > 0 {
+		goCmd += fmt.Sprintf(" movetime %d", moveTime.Milliseconds())
+		searchTimeout = moveTime + movetimeGrace
+	}
+	if err := e.send(goCmd); err != nil {
 		return nil, err
 	}
 
 	best := make(map[int]*parsedInfo)
 	var bestMove string
 
-	deadline := time.Now().Add(analyzeTimeout)
+	deadline := time.Now().Add(searchTimeout)
 	for {
 		remaining := time.Until(deadline)
 		if remaining <= 0 {

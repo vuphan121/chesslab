@@ -27,6 +27,16 @@ const (
 	cloudTimeout   = 3 * time.Second
 )
 
+// CronStockfishMoveTime caps how long the recurring cron endpoint spends on
+// one Stockfish-fallback position. The production instance is a small shared
+// CPU where a depth-22 MultiPV-5 search regularly outlasts the engine's 30s
+// hard timeout — every fallback then failed and burned 30s of the run budget
+// for nothing. With a movetime cap the search stops cleanly at this limit and
+// the row records whatever depth it actually reached. The one-off
+// cmd/precomputeevals backfill passes 0 (depth-only, full quality) since it
+// runs on a fast local machine.
+const CronStockfishMoveTime = 12 * time.Second
+
 // EnumeratePositions walks every chapter's full node tree — not just Card
 // (decision-point) positions — so every ply of every line gets an eval: the
 // trainer's line-complete eval bar/suggestion arrows need to work
@@ -76,6 +86,12 @@ func walk(n *repertoire.Node, seen map[string]bool, out *[]string) {
 // see root CLAUDE.md's "Eval sign convention" for why getting this
 // backwards is a real, easy-to-reintroduce bug.
 func Compute(eng *engine.Engine, fenKey string) (db.PositionEval, error) {
+	return ComputeWithMoveTime(eng, fenKey, 0)
+}
+
+// ComputeWithMoveTime is Compute with a per-position wall-clock cap on the
+// Stockfish fallback (see CronStockfishMoveTime). moveTime <= 0 = uncapped.
+func ComputeWithMoveTime(eng *engine.Engine, fenKey string, moveTime time.Duration) (db.PositionEval, error) {
 	// fenKey is CardKey(fen) — missing the halfmove/fullmove fields.
 	// ParseFEN needs a complete FEN; the padding values never affect
 	// legality or analysis, only move-count bookkeeping this call ignores.
@@ -101,7 +117,7 @@ func Compute(eng *engine.Engine, fenKey string) (db.PositionEval, error) {
 	if eng == nil {
 		return db.PositionEval{}, fmt.Errorf("no cloud eval cached and no local engine available for %q", fen)
 	}
-	raw, err := eng.Analyze(fen, MultiPV, StockfishDepth)
+	raw, err := eng.AnalyzeTimed(fen, MultiPV, StockfishDepth, moveTime)
 	if err != nil {
 		return db.PositionEval{}, fmt.Errorf("stockfish analyze: %w", err)
 	}
