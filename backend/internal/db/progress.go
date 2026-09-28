@@ -28,6 +28,7 @@ type LineAttempt struct {
 	ChapterName string
 	CardID      string
 	HadMistake  bool
+	PlayedAt    *time.Time
 }
 
 func (s *Store) GetProgress(ctx context.Context, username, repertoireID string) (map[string]CardProgress, error) {
@@ -130,9 +131,9 @@ func (s *Store) SaveProgress(ctx context.Context, username, repertoireID string,
 
 	if attempt != nil {
 		_, err := tx.Exec(ctx, `
-			INSERT INTO line_attempts (username, repertoire_id, chapter_id, chapter_name, card_id, had_mistake)
-			VALUES ($1, $2, $3, $4, $5, $6)`,
-			username, repertoireID, attempt.ChapterID, attempt.ChapterName, attempt.CardID, attempt.HadMistake)
+			INSERT INTO line_attempts (username, repertoire_id, chapter_id, chapter_name, card_id, had_mistake, played_at)
+			VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, now()))`,
+			username, repertoireID, attempt.ChapterID, attempt.ChapterName, attempt.CardID, attempt.HadMistake, attempt.PlayedAt)
 		if err != nil {
 			return fmt.Errorf("insert line_attempt: %w", err)
 		}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/db"
@@ -23,6 +24,24 @@ type LineAttemptJSON struct {
 	ChapterName string `json:"chapterName"`
 	CardID      string `json:"cardId"`
 	HadMistake  bool   `json:"hadMistake"`
+	PlayedAt    string `json:"playedAt,omitempty"`
+}
+
+const (
+	playedAtMaxAge  = 45 * 24 * time.Hour
+	playedAtMaxSkew = 5 * time.Minute
+)
+
+func parsePlayedAt(raw string, now time.Time) *time.Time {
+	if raw == "" {
+		return nil
+	}
+	t, err := time.Parse(time.RFC3339, raw)
+	if err != nil || t.After(now.Add(playedAtMaxSkew)) || t.Before(now.Add(-playedAtMaxAge)) {
+		return nil
+	}
+	t = t.UTC()
+	return &t
 }
 
 type SaveProgressRequest struct {
@@ -119,6 +138,7 @@ func (h *Handler) SaveProgress(w http.ResponseWriter, r *http.Request) {
 			ChapterName: req.LineAttempt.ChapterName,
 			CardID:      req.LineAttempt.CardID,
 			HadMistake:  req.LineAttempt.HadMistake,
+			PlayedAt:    parsePlayedAt(req.LineAttempt.PlayedAt, time.Now()),
 		}
 	}
 

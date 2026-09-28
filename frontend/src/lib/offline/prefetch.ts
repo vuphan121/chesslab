@@ -1,4 +1,4 @@
-import { getRepertoire } from '@/lib/api/client'
+import { getProgress, getRepertoire } from '@/lib/api/client'
 import { cacheAgeMs } from './cache'
 import type { RepertoireSummary } from '@/lib/trainer/types'
 
@@ -14,11 +14,13 @@ export async function prefetchRepertoires(list: RepertoireSummary[]): Promise<vo
   if (connection?.saveData) return
   for (const rep of list) {
     const age = await cacheAgeMs(`repertoire:${rep.id}`)
-    if (age !== null && age < FRESH_MS) continue
-    try {
-      await getRepertoire(rep.id)
-    } catch {
-      return
+    if (age === null || age >= FRESH_MS) {
+      try {
+        await getRepertoire(rep.id)
+      } catch {
+        return
+      }
     }
+    await getProgress(rep.id).catch(() => {})
   }
 }

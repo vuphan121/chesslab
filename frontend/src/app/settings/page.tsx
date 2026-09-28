@@ -5,6 +5,7 @@ import { useState } from 'react'
 import TopBar from '@/components/layout/TopBar'
 import { pieceImagePath, useUserSettings } from '@/components/settings/UserSettingsProvider'
 import type { PieceTheme } from '@/lib/api/client'
+import { refreshOfflineData } from '@/lib/offline/refresh'
 
 const THEMES: { id: PieceTheme; name: string; description: string }[] = [
   { id: 'classic', name: 'Classic', description: 'The original Chesslab piece set' },
@@ -17,6 +18,22 @@ export default function SettingsPage() {
   const { settings, savePieceTheme } = useUserSettings()
   const [saving, setSaving] = useState<PieceTheme | null>(null)
   const [message, setMessage] = useState('')
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshMessage, setRefreshMessage] = useState('')
+
+  const refreshOffline = async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    setRefreshMessage('')
+    try {
+      await refreshOfflineData()
+      setRefreshMessage('Up to date. Close and reopen the app to use the newest version.')
+    } catch {
+      setRefreshMessage('Could not reach the server. Your saved data is unchanged.')
+    } finally {
+      setRefreshing(false)
+    }
+  }
 
   const chooseTheme = async (theme: PieceTheme) => {
     if (theme === settings.pieceTheme || saving) return
@@ -127,6 +144,47 @@ export default function SettingsPage() {
 
           <div aria-live="polite" style={{ minHeight: 20, marginTop: 16, fontSize: 12, color: message.startsWith('Could') ? '#b3483f' : '#4d8062' }}>
             {saving ? 'Saving…' : message}
+          </div>
+        </section>
+
+        <section
+          style={{
+            width: 'min(760px, 100%)',
+            margin: '18px auto 0',
+            background: '#fff',
+            borderRadius: 14,
+            padding: 'clamp(22px, 5vw, 42px)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.05)',
+          }}
+        >
+          <p className="lbl" style={{ color: '#2f6db0', marginBottom: 8 }}>Offline</p>
+          <h1 className="serif" style={{ fontSize: 32, fontWeight: 500, color: '#213744' }}>Saved on this device</h1>
+          <p style={{ color: '#77736b', fontSize: 14, marginTop: 7, lineHeight: 1.55 }}>
+            The app and your repertoires are saved on this device so they open instantly and work without a connection.
+            They update by themselves whenever you are online. Use this to update them right now. Drills you played offline
+            are kept and sent to your account, not removed.
+          </p>
+          <button
+            type="button"
+            onClick={refreshOffline}
+            disabled={refreshing}
+            style={{
+              marginTop: 22,
+              fontSize: 14,
+              fontWeight: 700,
+              color: '#fff',
+              background: '#1c1b18',
+              border: 'none',
+              borderRadius: 999,
+              padding: '13px 24px',
+              cursor: refreshing ? 'wait' : 'pointer',
+              opacity: refreshing ? 0.6 : 1,
+            }}
+          >
+            {refreshing ? 'Refreshing…' : 'Refresh offline data'}
+          </button>
+          <div aria-live="polite" style={{ minHeight: 20, marginTop: 14, fontSize: 12, color: refreshMessage.startsWith('Could') ? '#b3483f' : '#4d8062' }}>
+            {refreshMessage}
           </div>
         </section>
       </div>

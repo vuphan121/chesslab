@@ -22,7 +22,14 @@ export default function UserSettingsProvider({ children }: { children: ReactNode
 
   useEffect(() => {
     let active = true
-    getUserSettings()
+    const giveUp = setTimeout(() => {
+      if (active) setReady(true)
+    }, 1500)
+    getUserSettings({
+      onUpdate: (updated) => {
+        if (active) setSettings(updated)
+      },
+    })
       .then((loaded) => {
         if (active) setSettings(loaded)
       })
@@ -32,6 +39,7 @@ export default function UserSettingsProvider({ children }: { children: ReactNode
       })
     return () => {
       active = false
+      clearTimeout(giveUp)
     }
   }, [])
 

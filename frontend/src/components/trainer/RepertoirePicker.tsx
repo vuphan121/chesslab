@@ -34,7 +34,7 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
 
   const fullRepReqId = useRef(0)
 
-  function selectRepertoire(id: string, chapterIds: string[]) {
+  function selectRepertoire(id: string, chapterIds: string[], fresh = false) {
     setSelectedId(id)
     setSelectedChapters(new Set(chapterIds))
     setFullRep(null)
@@ -42,7 +42,12 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
 
     const reqId = ++fullRepReqId.current
     setFullRepLoading(true)
-    getRepertoire(id)
+    getRepertoire(id, {
+      fresh,
+      onUpdate: (rep) => {
+        if (reqId === fullRepReqId.current) setFullRep(rep)
+      },
+    })
       .then((rep) => {
         if (reqId === fullRepReqId.current) setFullRep(rep)
       })
@@ -60,7 +65,7 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
   }, [])
 
   useEffect(() => {
-    listRepertoires()
+    listRepertoires({ onUpdate: (list) => setReps(list) })
       .then((list) => {
         setReps(list)
         if (list.length > 0) selectRepertoire(list[0].id, list[0].chapters.map((c) => c.id))
@@ -82,12 +87,12 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
   }, [fullRep, selectedId])
 
   const refreshCatalog = (changedId?: string) => {
-    listRepertoires()
+    listRepertoires({ fresh: true })
       .then((list) => {
         setReps(list)
         const changed = changedId ? list.find((r) => r.id === changedId) : undefined
         if (changed && changed.id === selectedId) {
-          selectRepertoire(changed.id, changed.chapters.map((chapter) => chapter.id))
+          selectRepertoire(changed.id, changed.chapters.map((chapter) => chapter.id), true)
         } else if (!selectedId && list.length > 0) {
           selectRepertoire(list[0].id, list[0].chapters.map((chapter) => chapter.id))
         }

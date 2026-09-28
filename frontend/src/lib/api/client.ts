@@ -3,7 +3,7 @@ import type { Repertoire, RepertoireSummary } from '@/lib/trainer/types'
 import type { Book, BookSummary } from '@/lib/books/types'
 import { getToken, setToken, clearToken } from '@/lib/auth/token'
 import { ApiError, isRetryable } from '@/lib/offline/errors'
-import { enqueue, listOutbox, networkFirst, readCache, removeOutboxItem, writeCache } from '@/lib/offline/cache'
+import { cacheFirst, dropCachedRepertoiresExcept, enqueue, listOutbox, networkFirst, readCache, refreshCache, removeOutboxItem, writeCache } from '@/lib/offline/cache'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
 
@@ -322,11 +322,34 @@ export const coachChat = (
 
 
 
-export const listRepertoires = (): Promise<RepertoireSummary[]> =>
-  networkFirst('repertoires', () => request<RepertoireSummary[]>('/api/repertoires'))
+export interface CachedReadOptions<T> {
+  fresh?: boolean
+  onUpdate?: (value: T) => void
+}
 
-export const getRepertoire = (id: string): Promise<Repertoire> =>
-  networkFirst(`repertoire:${id}`, () => request<Repertoire>(`/api/repertoires/${id}`))
+export const listRepertoires = (opts: CachedReadOptions<RepertoireSummary[]> = {}): Promise<RepertoireSummary[]> => {
+  const load = () => request<RepertoireSummary[]>('/api/repertoires')
+  return opts.fresh ? networkFirst('repertoires', load) : cacheFirst('repertoires', load, { onUpdate: opts.onUpdate })
+}
+
+export const getRepertoire = (id: string, opts: CachedReadOptions<Repertoire> = {}): Promise<Repertoire> => {
+  const load = () => request<Repertoire>(`/api/repertoires/${id}`)
+  return opts.fresh ? networkFirst(`repertoire:${id}`, load) : cacheFirst(`repertoire:${id}`, load, { onUpdate: opts.onUpdate })
+}
+
+export async function refreshAllCachedData(): Promise<void> {
+  const list = await refreshCache('repertoires', () => request<RepertoireSummary[]>('/api/repertoires'))
+  for (const rep of list) {
+    await refreshCache(`repertoire:${rep.id}`, () => request<Repertoire>(`/api/repertoires/${rep.id}`))
+  }
+  await dropCachedRepertoiresExcept(new Set(list.map((r) => r.id)))
+  await refreshCache('user-settings', () => request<UserSettings>('/api/user-settings')).catch(() => {})
+  const pending = new Set((await listOutbox<QueuedProgress>()).map((item) => item.payload.repertoireId))
+  for (const rep of list) {
+    if (pending.has(rep.id)) continue
+    await refreshCache(progressCacheKey(rep.id), () => request<GetProgressResponse>(`/api/progress/${rep.id}`)).catch(() => {})
+  }
+}
 
 export interface ImportRepertoireRequest {
   sourceUrl: string
@@ -450,13 +473,13 @@ export interface GetProgressResponse {
 const progressCacheKey = (repertoireId: string) => `progress:${repertoireId}`
 
 export const getProgress = async (repertoireId: string): Promise<GetProgressResponse> => {
-  await Promise.race([flushProgressOutbox(), new Promise((resolve) => setTimeout(resolve, 3000))])
+  await Promise.race([flushProgressOutbox(), new Promise((resolve) => setTimeout(resolve, 1000))])
   const pending = (await listOutbox<QueuedProgress>()).some((item) => item.payload.repertoireId === repertoireId)
   if (pending) {
     const local = await readCache<GetProgressResponse>(progressCacheKey(repertoireId))
     if (local) return local.value
   }
-  return networkFirst(progressCacheKey(repertoireId), () => request<GetProgressResponse>(`/api/progress/${repertoireId}`), 6000)
+  return networkFirst(progressCacheKey(repertoireId), () => request<GetProgressResponse>(`/api/progress/${repertoireId}`), 800)
 }
 
 export interface LineAttempt {
@@ -464,6 +487,7 @@ export interface LineAttempt {
   chapterName: string
   cardId: string
   hadMistake: boolean
+  playedAt?: string
 }
 
 export interface CardProgressDelta {
@@ -613,12 +637,15 @@ export interface UserSettings {
   pieceTheme: PieceTheme
 }
 
-export const getUserSettings = (): Promise<UserSettings> =>
-  networkFirst('user-settings', () => request<UserSettings>('/api/user-settings'), 3000)
+export const getUserSettings = (opts: CachedReadOptions<UserSettings> = {}): Promise<UserSettings> =>
+  cacheFirst('user-settings', () => request<UserSettings>('/api/user-settings'), { onUpdate: opts.onUpdate })
 
-export const saveUserSettings = (settings: UserSettings): Promise<UserSettings> =>
-  request('/api/user-settings', {
+export const saveUserSettings = async (settings: UserSettings): Promise<UserSettings> => {
+  const saved = await request<UserSettings>('/api/user-settings', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(settings),
   })
+  await writeCache('user-settings', saved)
+  return saved
+}

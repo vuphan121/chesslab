@@ -45,6 +45,48 @@ export async function networkFirst<T>(key: string, fetcher: () => Promise<T>, ti
   }
 }
 
+const REVALIDATE_MIN_AGE_MS = 30_000
+const inflight = new Map<string, Promise<unknown>>()
+
+export interface CacheFirstOptions<T> {
+  onUpdate?: (value: T) => void
+}
+
+function revalidate<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  const running = inflight.get(key) as Promise<T> | undefined
+  if (running) return running
+  const p = fetcher()
+    .then(async (value) => {
+      await writeCache(key, value)
+      return value
+    })
+    .finally(() => inflight.delete(key))
+  inflight.set(key, p)
+  return p
+}
+
+export async function cacheFirst<T>(key: string, fetcher: () => Promise<T>, opts: CacheFirstOptions<T> = {}): Promise<T> {
+  const cached = await readCache<T>(key)
+  if (!cached) return revalidate(key, fetcher)
+  if (Date.now() - cached.at >= REVALIDATE_MIN_AGE_MS) {
+    revalidate(key, fetcher)
+      .then((value) => {
+        if (opts.onUpdate && JSON.stringify(value) !== JSON.stringify(cached.value)) opts.onUpdate(value)
+      })
+      .catch(() => {})
+  }
+  return cached.value
+}
+
+export const refreshCache = revalidate
+
+export async function dropCachedRepertoiresExcept(keepIds: Set<string>): Promise<void> {
+  const prefix = 'cache:repertoire:'
+  for (const { key } of await idbList<unknown>(prefix)) {
+    if (!keepIds.has(key.slice(prefix.length))) await idbDelete(key)
+  }
+}
+
 export interface OutboxItem<T = unknown> {
   id: string
   queuedAt: number

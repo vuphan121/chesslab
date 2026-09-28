@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { login } from '@/lib/api/client'
 import { setToken } from '@/lib/auth/token'
 import { claimOfflineStore } from '@/lib/offline/cache'
+import { refreshOfflineData } from '@/lib/offline/refresh'
 
 
 
@@ -24,6 +25,7 @@ export default function Login() {
       const { token } = await login(username, password)
       await claimOfflineStore(username)
       setToken(token)
+      void refreshOfflineData().catch(() => {})
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed.')
     } finally {

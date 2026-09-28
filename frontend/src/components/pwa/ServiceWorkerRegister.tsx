@@ -17,6 +17,7 @@ export default function ServiceWorkerRegister() {
     const register = async () => {
       try {
         const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        void reg.update().catch(() => {})
         const ready = await navigator.serviceWorker.ready
         const urls = performance
           .getEntriesByType('resource')

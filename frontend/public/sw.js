@@ -1,7 +1,7 @@
-const VERSION = 'v1'
+const VERSION = 'v2'
 const STATIC_CACHE = `chesslab-static-${VERSION}`
 const PAGE_CACHE = `chesslab-pages-${VERSION}`
-const NAV_TIMEOUT_MS = 4000
+const REVALIDATE_MIN_GAP_MS = 60000
 
 const PRECACHE_PAGES = ['/opening-study']
 const PIECES = ['bb', 'bk', 'bn', 'bp', 'bq', 'br', 'wb', 'wk', 'wn', 'wp', 'wq', 'wr']
@@ -28,34 +28,69 @@ function isCacheableAsset(pathname) {
   return pathname.startsWith('/_next/static/') || ASSET_EXT.test(pathname) || pathname === '/manifest.webmanifest'
 }
 
-async function precachePage(url, pages, assets) {
-  const res = await fetch(url, { cache: 'reload' })
-  if (!res.ok || res.redirected) return
-  const html = await res.clone().text()
-  await pages.put(pageKey(new URL(url, self.location.origin).href), res)
+async function cacheAssetsFromHtml(html, assets) {
   const chunks = [...new Set(html.match(STATIC_PATTERN) ?? [])]
-  await Promise.allSettled(chunks.map((u) => assets.add(u)))
+  const missing = []
+  for (const u of chunks) if (!(await assets.match(u))) missing.push(u)
+  const results = await Promise.allSettled(missing.map((u) => assets.add(u)))
+  if (results.some((r) => r.status === 'rejected')) return false
   for (const cssUrl of chunks.filter((u) => u.endsWith('.css'))) {
     const cached = await assets.match(cssUrl)
     if (!cached) continue
     const css = await cached.text()
     const fonts = [...css.matchAll(CSS_URL_PATTERN)].map((m) => m[1])
-    await Promise.allSettled(fonts.map((u) => assets.add(u)))
+    for (const u of fonts) {
+      if (await assets.match(u)) continue
+      try {
+        await assets.add(u)
+      } catch {
+        return false
+      }
+    }
   }
+  return true
+}
+
+const lastRevalidated = new Map()
+const revalidating = new Map()
+
+function revalidatePage(url, force) {
+  const key = pageKey(new URL(url, self.location.origin).href)
+  if (revalidating.has(key.url)) return revalidating.get(key.url)
+  if (!force && Date.now() - (lastRevalidated.get(key.url) ?? 0) < REVALIDATE_MIN_GAP_MS) return Promise.resolve(false)
+  const run = (async () => {
+    const res = await fetch(key.url, { cache: 'no-cache', headers: { Accept: 'text/html' } })
+    if (!res.ok || res.redirected) return false
+    const html = await res.clone().text()
+    const assets = await caches.open(STATIC_CACHE)
+    if (!(await cacheAssetsFromHtml(html, assets))) return false
+    const pages = await caches.open(PAGE_CACHE)
+    await pages.put(key, res)
+    lastRevalidated.set(key.url, Date.now())
+    return true
+  })()
+    .catch(() => false)
+    .finally(() => revalidating.delete(key.url))
+  revalidating.set(key.url, run)
+  return run
+}
+
+async function revalidateAllPages() {
+  const pages = await caches.open(PAGE_CACHE)
+  const urls = new Set((await pages.keys()).map((r) => r.url))
+  for (const u of PRECACHE_PAGES) urls.add(new URL(u, self.location.origin).href)
+  const assets = await caches.open(STATIC_CACHE)
+  await Promise.allSettled(PRECACHE_ASSETS.map((u) => assets.add(u)))
+  const results = await Promise.all([...urls].map((u) => revalidatePage(u, true)))
+  return results.every(Boolean)
 }
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
       const assets = await caches.open(STATIC_CACHE)
-      const pages = await caches.open(PAGE_CACHE)
       await Promise.allSettled(PRECACHE_ASSETS.map((u) => assets.add(u)))
-      for (const url of PRECACHE_PAGES) {
-        try {
-          await precachePage(url, pages, assets)
-        } catch {
-        }
-      }
+      await Promise.allSettled(PRECACHE_PAGES.map((u) => revalidatePage(u, true)))
       await self.skipWaiting()
     })(),
   )
@@ -74,6 +109,15 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('message', (event) => {
   const data = event.data
+  if (data && data.type === 'REVALIDATE' && typeof data.url === 'string') {
+    event.waitUntil(revalidatePage(data.url, false))
+    return
+  }
+  if (data && data.type === 'REFRESH_SHELL') {
+    const port = event.ports[0]
+    event.waitUntil(revalidateAllPages().then((ok) => port?.postMessage({ ok })))
+    return
+  }
   if (!data || data.type !== 'CACHE_URLS' || !Array.isArray(data.urls)) return
   event.waitUntil(
     (async () => {
@@ -113,15 +157,28 @@ function offlineResponse() {
 async function handleNavigation(event) {
   const req = event.request
   const cache = await caches.open(PAGE_CACHE)
-  const key = pageKey(req.url)
-  const cached = await cache.match(key)
-  const network = fetch(req).then((res) => {
-    if (res.ok && !res.redirected) event.waitUntil(cache.put(key, res.clone()))
+  const cached = await cache.match(pageKey(req.url))
+  if (cached) {
+    event.waitUntil(revalidatePage(req.url, false))
+    return cached
+  }
+  try {
+    const res = await fetch(req)
+    if (res.ok && !res.redirected) {
+      const forHtml = res.clone()
+      const forCache = res.clone()
+      event.waitUntil(
+        (async () => {
+          const html = await forHtml.text()
+          const assets = await caches.open(STATIC_CACHE)
+          if (await cacheAssetsFromHtml(html, assets)) await cache.put(pageKey(req.url), forCache)
+        })().catch(() => {}),
+      )
+    }
     return res
-  })
-  if (!cached) return network.catch(() => offlineResponse())
-  const timeout = new Promise((resolve) => setTimeout(() => resolve(cached), NAV_TIMEOUT_MS))
-  return Promise.race([network, timeout]).catch(() => cached)
+  } catch {
+    return offlineResponse()
+  }
 }
 
 async function cacheFirst(req) {
