@@ -1,25 +1,29 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, Newsreader, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import AuthGate from "@/components/auth/AuthGate";
 import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const spaceGrotesk = localFont({
+  src: "./fonts/space-grotesk-latin.woff2",
+  weight: "300 700",
+  display: "swap",
   variable: "--font-sans",
 });
 
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+const newsreader = localFont({
+  src: [
+    { path: "./fonts/newsreader-latin.woff2", weight: "400 600", style: "normal" },
+    { path: "./fonts/newsreader-italic-latin.woff2", weight: "400 600", style: "italic" },
+  ],
+  display: "swap",
   variable: "--font-serif",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["500", "700"],
+const jetbrainsMono = localFont({
+  src: "./fonts/jetbrains-mono-latin.woff2",
+  weight: "500 700",
+  display: "swap",
   variable: "--font-mono",
 });
 
