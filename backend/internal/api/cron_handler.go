@@ -128,7 +128,7 @@ func (h *Handler) RefreshAllRepertoires(w http.ResponseWriter, r *http.Request) 
 // instance and the backlog is drained patiently. Note Render's free tier
 // spins an instance down after ~15 minutes without inbound traffic, so runs
 // this long rely on the separate keep-alive job.
-const precomputeBudget = 30 * time.Minute
+const precomputeBudget = 45 * time.Minute
 
 // maxConsecutiveComputeFailures ends a run early when this many positions in
 // a row fail to compute — see the check in runPrecompute.

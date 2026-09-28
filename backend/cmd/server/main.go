@@ -68,8 +68,10 @@ func main() {
 	// endpoint (see internal/evalprecompute, internal/api/cron_handler.go's
 	// PrecomputeEvals) — kept separate from eng so a running precompute
 	// batch never contends with a live user's /analysis request through the
-	// shared single-Stockfish mutex in engine.Engine.
-	precomputeEngine, err := engine.New(sfPath)
+	// shared single-Stockfish mutex in engine.Engine. Also runs at the lowest
+	// CPU priority so on the small shared-CPU host a running batch yields to
+	// the web server instead of competing with it.
+	precomputeEngine, err := engine.NewLowPriority(sfPath)
 	if err != nil {
 		log.Printf("stockfish (precompute) unavailable (%v) — eval precompute will fall back to cloud-eval only, failing any position with no cached cloud result", err)
 		precomputeEngine = nil

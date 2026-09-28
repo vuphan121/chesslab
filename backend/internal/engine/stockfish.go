@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -49,18 +51,52 @@ type Engine struct {
 	in    io.WriteCloser
 	lines <-chan string
 	Name  string
+	// lowPriority runs the subprocess at the lowest CPU priority (see
+	// NewLowPriority). Kept on the Engine so a restart after a hung search
+	// (startLocked) comes back up at the same priority.
+	lowPriority bool
 }
 
 func New(path string) (*Engine, error) {
-	e := &Engine{path: path}
+	return newEngine(path, false)
+}
+
+// NewLowPriority is New, but the Stockfish subprocess runs at the lowest CPU
+// priority (nice 19) where the OS supports it (Linux with `nice` on PATH;
+// elsewhere it is a plain New). For background work such as the eval
+// precompute cron: on a small shared-CPU host the scheduler then gives the
+// web server whatever CPU it needs and the engine only what is left, without
+// ever pausing or interrupting a search.
+func NewLowPriority(path string) (*Engine, error) {
+	return newEngine(path, true)
+}
+
+func newEngine(path string, lowPriority bool) (*Engine, error) {
+	e := &Engine{path: path, lowPriority: lowPriority}
 	if err := e.startLocked(); err != nil {
 		return nil, err
 	}
 	return e, nil
 }
 
+// command builds the subprocess command. Low priority goes through `nice`
+// rather than setpriority(2) after Start: on Linux the niceness is per
+// thread and only threads created afterwards inherit it, so adjusting the
+// child's pid would race with Stockfish spinning up its search thread and
+// could leave that thread at normal priority. nice execs the engine in the
+// same process, so every thread starts at the lowered priority.
+func (e *Engine) command() *exec.Cmd {
+	if e.lowPriority && runtime.GOOS == "linux" {
+		if nicePath, err := exec.LookPath("nice"); err == nil {
+			return exec.Command(nicePath, "-n", "19", e.path)
+		}
+		log.Printf("engine: `nice` not found — starting %s at normal priority", e.path)
+	}
+	return exec.Command(e.path)
+}
+
 func (e *Engine) startLocked() error {
-	cmd := exec.Command(e.path)
+	cmd := e.command()
 	in, err := cmd.StdinPipe()
 	if err != nil {
 		return fmt.Errorf("stdin pipe: %w", err)
