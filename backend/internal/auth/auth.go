@@ -15,6 +15,10 @@ var ErrInvalidCredentials = errors.New("invalid credentials")
 
 const tokenTTL = 30 * 24 * time.Hour
 
+const refreshAfter = 24 * time.Hour
+
+const RefreshedTokenHeader = "X-Refreshed-Token"
+
 type Config struct {
 	Username  string
 	Password  string
@@ -37,7 +41,7 @@ func (c Config) IssueToken(username string) (string, error) {
 	return token.SignedString(c.JWTSecret)
 }
 
-func (c Config) VerifyToken(tokenString string) (string, error) {
+func (c Config) parseToken(tokenString string) (*jwt.RegisteredClaims, error) {
 	parsed, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
@@ -45,11 +49,19 @@ func (c Config) VerifyToken(tokenString string) (string, error) {
 		return c.JWTSecret, nil
 	})
 	if err != nil || !parsed.Valid {
-		return "", ErrInvalidCredentials
+		return nil, ErrInvalidCredentials
 	}
 	claims, ok := parsed.Claims.(*jwt.RegisteredClaims)
 	if !ok || claims.Subject == "" {
-		return "", ErrInvalidCredentials
+		return nil, ErrInvalidCredentials
+	}
+	return claims, nil
+}
+
+func (c Config) VerifyToken(tokenString string) (string, error) {
+	claims, err := c.parseToken(tokenString)
+	if err != nil {
+		return "", err
 	}
 	return claims.Subject, nil
 }
@@ -65,10 +77,16 @@ func (c Config) Middleware(next http.Handler) http.Handler {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		username, err := c.VerifyToken(tokenString)
+		claims, err := c.parseToken(tokenString)
 		if err != nil {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
+		}
+		username := claims.Subject
+		if claims.IssuedAt != nil && time.Since(claims.IssuedAt.Time) > refreshAfter {
+			if fresh, err := c.IssueToken(username); err == nil {
+				w.Header().Set(RefreshedTokenHeader, fresh)
+			}
 		}
 		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), usernameKey, username)))
 	})

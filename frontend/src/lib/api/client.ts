@@ -1,7 +1,7 @@
 import type { Color, MoveNode, PieceType } from '@/lib/chess/types'
 import type { Repertoire, RepertoireSummary } from '@/lib/trainer/types'
 import type { Book, BookSummary } from '@/lib/books/types'
-import { getToken, clearToken } from '@/lib/auth/token'
+import { getToken, setToken, clearToken } from '@/lib/auth/token'
 import { ApiError, isRetryable } from '@/lib/offline/errors'
 import { enqueue, listOutbox, networkFirst, readCache, removeOutboxItem, writeCache } from '@/lib/offline/cache'
 
@@ -18,6 +18,14 @@ function authHeader(): Record<string, string> {
 
 
 
+
+async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+  const sentToken = getToken()
+  const res = await fetch(input, init)
+  const refreshed = res.headers.get('X-Refreshed-Token')
+  if (refreshed && sentToken && getToken() === sentToken) setToken(refreshed)
+  return res
+}
 
 export function pingBackend(): void {
   fetch(`${API}/healthz`).catch(() => {})
@@ -105,7 +113,7 @@ export interface Explorer {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API}${path}`, {
+  const res = await apiFetch(`${API}${path}`, {
     ...init,
     headers: { ...(init?.headers ?? {}), ...authHeader() },
   })
@@ -225,7 +233,7 @@ export interface LoadPGNResponse extends GameState {
 
 
 export const loadPGN = async (id: string, pgn: string): Promise<LoadPGNResponse> => {
-  const res = await fetch(`${API}/api/games/${id}/pgn`, {
+  const res = await apiFetch(`${API}/api/games/${id}/pgn`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeader() },
     body: JSON.stringify({ pgn }),
@@ -277,7 +285,7 @@ async function coachRequest<T>(path: string, body: unknown): Promise<T> {
   const timer = setTimeout(() => controller.abort(), COACH_TIMEOUT_MS)
   let res: Response
   try {
-    res = await fetch(`${API}${path}`, {
+    res = await apiFetch(`${API}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(body),
@@ -346,7 +354,7 @@ export const getBook = (id: string): Promise<Book> => request(`/api/books/${id}`
 
 
 export const getBookChapterPDF = async (id: string, chapterId: string): Promise<Blob> => {
-  const res = await fetch(`${API}/api/books/${encodeURIComponent(id)}/chapters/${encodeURIComponent(chapterId)}/source.pdf`, { headers: authHeader() })
+  const res = await apiFetch(`${API}/api/books/${encodeURIComponent(id)}/chapters/${encodeURIComponent(chapterId)}/source.pdf`, { headers: authHeader() })
   if (res.status === 401) clearToken()
   if (!res.ok) throw new Error((await res.text()) || res.statusText)
   return res.blob()
@@ -394,7 +402,7 @@ export const saveBookLine = (
   })
 
 export const deleteBookSavedLine = async (bookId: string, itemId: string): Promise<void> => {
-  const res = await fetch(`${API}/api/book-saved-lines/${encodeURIComponent(bookId)}/${encodeURIComponent(itemId)}`, {
+  const res = await apiFetch(`${API}/api/book-saved-lines/${encodeURIComponent(bookId)}/${encodeURIComponent(itemId)}`, {
     method: 'DELETE',
     headers: authHeader(),
   })
@@ -581,7 +589,7 @@ export const savePuzzle = (url: string): Promise<SavedPuzzle> =>
   })
 
 export const deleteSavedPuzzle = async (id: number): Promise<void> => {
-  const res = await fetch(`${API}/api/saved-puzzles/${id}`, {
+  const res = await apiFetch(`${API}/api/saved-puzzles/${id}`, {
     method: 'DELETE',
     headers: authHeader(),
   })
