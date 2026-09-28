@@ -34,13 +34,6 @@ function promotionFromUci(uci: string): string | undefined {
   return uci.length >= 5 ? uci[4] : undefined
 }
 
-/**
- * Opening Study is intentionally self-contained while drilling.  The
- * repertoire is already present in the browser, so using chess.js here keeps
- * legal-move validation and board updates off the network.  We retain the
- * GameState-shaped snapshots because the board and its history controls share
- * that view model with the analysis board.
- */
 function localGameState(fen: string, lastMove: GameState['lastMove'] = null): GameState {
   const game = new Chess(fen)
   const pieces: GameState['pieces'] = {}
@@ -103,11 +96,6 @@ function findPathInChapterTree(node: RepNode, targetKey: string, path: string[] 
   return null
 }
 
-// Walks a chapter tree along `fullPath` (SAN from the chapter root) until it
-// reaches the first position that is a drillable card. The moves passed on the
-// way are the opponent's — they're played for the user before the first
-// prompt. `targetPath` is what's left of the path once those are stripped,
-// i.e. relative to where the run actually starts.
 function walkToFirstCard(
   chapter: RepChapter,
   fullPath: string[],
@@ -180,12 +168,6 @@ export function useTrainerSession() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // Drilling itself never talks to the backend (moves are simulated locally
-  // via chess.js — see localGameState above), so a long study session can
-  // leave Render's free-tier instance idle long enough to spin down. The
-  // next real request (switching chapters, saving progress) then eats a
-  // cold-start hit. Ping /healthz periodically while a session is active to
-  // keep the instance warm through the gaps between backend calls.
   useEffect(() => {
     if (phase !== 'drilling' && phase !== 'line-complete') return
     const interval = setInterval(pingBackend, 5 * 60 * 1000)
@@ -209,10 +191,6 @@ export function useTrainerSession() {
 
   const [currentCard, setCurrentCard] = useState<RepCard | null>(null)
   const [runStartCard, setRunStartCard] = useState<RepCard | null>(null)
-  // The chapter this run's line was actually taken from. Can't be derived
-  // from runStartCard: early positions are shared by every chapter that
-  // passes through them (e.g. all four Trompowsky chapters start 1.d4 Nf6
-  // 2.Bg5 c5), so the card alone only says "one of these chapters".
   const [runChapterId, setRunChapterId] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [hintUci, setHintUci] = useState<string | null>(null)
@@ -230,13 +208,6 @@ export function useTrainerSession() {
   const [summary, setSummary] = useState<ReturnType<typeof summarise> | null>(null)
   const [isTodayTraining, setIsTodayTraining] = useState(false)
 
-  // Precomputed opening-position evals (backend internal/evalprecompute),
-  // keyed by FEN — fetched once, for every ply of the run, the moment a
-  // line finishes. Fetched unconditionally on line-complete (cheap, one
-  // batch call) regardless of whether the eval-display toggle is currently
-  // on, so the data's already there the instant the user turns it on. A FEN
-  // missing from the map just means the precompute cron hasn't reached that
-  // position yet, not an error — callers should treat it as "no eval yet".
   const [evalByFen, setEvalByFen] = useState<Record<string, PositionEval>>({})
 
   useEffect(() => {
@@ -278,21 +249,9 @@ export function useTrainerSession() {
 
 
   const dueTargetPathRef = useRef<string[] | null>(null)
-  // The deck of lines for the current session (see lib/trainer/lineQueue.ts),
-  // and whether the current run is one of its lines. In line mode
-  // `dueTargetPathRef` holds the ENTIRE line, so every opponent reply is
-  // forced and the run ends where the line does — which is what makes "Do it
-  // again" replay the identical line and "Next line" a genuinely different
-  // one. Today's-training runs are still built around a single due card and
-  // free-walk past it, so they leave this off.
   const lineQueueRef = useRef<LineQueue | null>(null)
   const lineModeRef = useRef(false)
-  // The deck line the current run is following (see followPlayedAnswer).
   const runLineIdRef = useRef<string | null>(null)
-  // Set when a line run was taken off its line by a repertoire move that no
-  // selected line continues from. The rest of the run then free-walks like a
-  // today's-training run. "Do it again" keeps it, so a redo retraces the
-  // same moves.
   const offLineRef = useRef(false)
 
 
@@ -300,9 +259,6 @@ export function useTrainerSession() {
   const leadingMovesRef = useRef<RunMove[]>([])
   const gradedThisPresentationRef = useRef(false)
   const moveReqId = useRef(0)
-  // startSession has two awaits (getRepertoire, then getProgress) before it
-  // commits any state; without this, picking repertoire A then quickly B
-  // could let A's slower response land after B's and silently overwrite it.
   const startSessionReqId = useRef(0)
   const lastArgsRef = useRef<{ repertoireId: string; chapterIds: string[]; opts: SessionOptions } | null>(null)
 
@@ -461,9 +417,6 @@ export function useTrainerSession() {
 
       const session = sessionRef.current
       const playedSans = runMovesRef.current.map((m) => m.san)
-      // A queued line is a fixed path: once it's used up, the line is over.
-      // (Without this, a leaf that transposes into another chapter's
-      // position would keep going down whatever it happens to have there.)
       const followsLine = lineModeRef.current && !offLineRef.current
       if (followsLine && playedSans.length >= (dueTargetPathRef.current?.length ?? 0)) return null
       const chosen = chooseOpponentReply(
@@ -474,9 +427,6 @@ export function useTrainerSession() {
         Math.random,
       )
       if (!chosen) return null
-      // Line mode never rewrites the line — even if the user played an
-      // alternate answer and a fallback reply had to be picked, a redo still
-      // has to retrace the original line.
       if (!followsLine) dueTargetPathRef.current = chosen.nextTargetPath
       return chosen.reply
     },
@@ -492,12 +442,6 @@ export function useTrainerSession() {
 
 
 
-  // logAttempt=false is a mid-line skip (the user hit "Next line" before
-  // finishing): whatever cards were actually graded up to this point still
-  // get persisted, but no line_attempts row is logged and the run doesn't
-  // count as done — see nextLine below, which is the only other caller that
-  // passes false. The line is still "consumed" from the queue either way
-  // (todayAdvanceRef/startNextQueuedLine run the same regardless).
   const endRun = useCallback((opts?: { logAttempt?: boolean }) => {
     const logAttempt = opts?.logAttempt ?? true
     const session = sessionRef.current
@@ -509,9 +453,6 @@ export function useTrainerSession() {
       let lineAttempt: { chapterId: string; chapterName: string; cardId: string; hadMistake: boolean } | undefined
       if (logAttempt) {
         const startCard = runStartCardIdRef.current ? cardById(runStartCardIdRef.current) : undefined
-        // The chapter the run's line was actually dealt from — a start card
-        // is often shared by several chapters, so its chapterIds can't say
-        // which one this run was (see runChapterId).
         const chapterId = runChapterIdRef.current ?? startCard?.chapterIds[0]
         const chapter = chapterId ? repertoire.chapters.find((c) => c.id === chapterId) : undefined
         lineAttempt =
@@ -528,9 +469,6 @@ export function useTrainerSession() {
           try {
             await apiSaveProgress(repertoire.id, merged, lineAttempt, deltas, operationId)
           } catch {
-            // A response can be lost after the transaction commits. Retrying
-            // with the same operation id is safe and avoids silently dropping
-            // a run on an ordinary transient network failure.
             await apiSaveProgress(repertoire.id, merged, lineAttempt, deltas, operationId)
           }
         })
@@ -539,11 +477,6 @@ export function useTrainerSession() {
 
     const todayEntry = todayEntryRef.current
     if (todayEntry) {
-      // A redo before the previous advance call was ever consumed (e.g. two
-      // "Do it again"s in a row) would otherwise orphan that promise —
-      // nothing awaits it once this overwrites the ref, so its rejection
-      // would surface as an unhandled rejection instead of the graceful
-      // "couldn't advance the queue" handling in advanceToNextLine.
       todayAdvanceRef.current?.catch(() => {})
       todayAdvanceRef.current = advanceTodayTraining(todayEntry.repertoireId, todayEntry.cardId)
     }
@@ -598,24 +531,18 @@ export function useTrainerSession() {
 
 
 
-  // Deals the next line off the session's deck and starts a run on it.
-  // Returns false when nothing is left to drill (the deck has no active line).
   const startNextQueuedLine = useCallback(
     (rep: Repertoire): boolean => {
       const session = sessionRef.current
       const queue = lineQueueRef.current
       if (!session || !queue) return false
 
-      // A line is worth dealing while at least one of its positions is a
-      // card the session hasn't retired.
       const isActive = (line: DrillLine) =>
         line.positionKeys.some((key) => {
           const card = session.cards.get(key)
           return !!card && !card.retired
         })
 
-      // An active line always has a card on it, so the first deal should
-      // resolve; the bound only guards against looping on bad data.
       for (let attempt = 0; attempt < queue.lines.length; attempt++) {
         const line = nextQueuedLine(queue, isActive)
         if (!line) return false
@@ -646,9 +573,6 @@ export function useTrainerSession() {
       setLoading(true)
       setLoadError(null)
       try {
-        // Fire both requests immediately instead of awaiting getRepertoire
-        // first — neither depends on the other's result, and on a cold
-        // backend that halved a two-round-trip wait to one.
         const repPromise = getRepertoire(repertoireId)
         const progressPromise = apiGetProgress(repertoireId).catch(() => null)
 
@@ -763,13 +687,6 @@ export function useTrainerSession() {
     [startTodayEntry],
   )
 
-  // The user played a repertoire move that isn't the one this run planned.
-  // It still counts as correct, so the run follows it. In line mode that
-  // means switching to a deck line that continues from the new position
-  // (the chapter label switches with it). If no selected line does, the
-  // rest of the run free-walks the repertoire instead. Without this the run
-  // kept forcing the old line's replies from a position that line never
-  // reaches, so a run labeled with one chapter played out another.
   const followPlayedAnswer = useCallback((fen: string, answerChapterIds: string[]) => {
     const playedSans = runMovesRef.current.map((m) => m.san)
     if (!lineModeRef.current || offLineRef.current) {
@@ -811,9 +728,6 @@ export function useTrainerSession() {
 
         const matchAnswer = card.answers.find((a) => a.san === playedSan)
         const matchExcluded = card.excludedAnswers?.find((a) => a.san === playedSan)
-        // The move this run's line (or due path) plays here, when it's one of
-        // the card's answers. A position can have several repertoire moves,
-        // and this one, not the card's primary, is what the run expects.
         const plannedSan = dueTargetPathRef.current?.[runMovesRef.current.length]
         const planned = card.answers.find((a) => a.san === plannedSan)
 
@@ -822,9 +736,6 @@ export function useTrainerSession() {
             grade(sessionRef.current!, card.id, true)
             gradedThisPresentationRef.current = true
           }
-          // Commit the player's move before waiting for the reply. Without this
-          // boundary React can batch both local updates, leaving no painted
-          // starting position for the opponent's slide animation.
           flushSync(() => {
             runMovesRef.current.push({ san: playedSan, uci: `${from}${to}${promoChar ?? ''}`, mover: 'user' })
             setRunMoves([...runMovesRef.current])
@@ -958,17 +869,8 @@ export function useTrainerSession() {
 
 
 
-  // The "what comes after this line" logic, shared by a normal finish (user
-  // already saw line-complete and clicked Next line) and a mid-line skip
-  // (see nextLine below, which calls endRun({logAttempt:false}) first).
   const advanceToNextLine = useCallback(async () => {
     if (todayEntryRef.current) {
-      // Without a reqId guard here, clicking "Back" (changeRepertoire, which
-      // bumps startSessionReqId and nulls todayEntryRef) while this await is
-      // in flight didn't stop it: the response would still call
-      // startTodayEntry and flip phase back to 'drilling', silently
-      // resurrecting the session the user had already navigated away from —
-      // not just a stale error banner.
       const reqId = ++startSessionReqId.current
       setBusy(true)
       try {
@@ -1007,9 +909,6 @@ export function useTrainerSession() {
     setPhase('drilling')
   }, [repertoire, startNextQueuedLine, startTodayEntry])
 
-  // Exposed to the always-visible "Next line" button. Mid-line (phase still
-  // 'drilling') this is a skip: end the current run without logging it as a
-  // completed attempt, then advance exactly like a normal finish would.
   const nextLine = useCallback(async () => {
     if (phase === 'drilling') {
       endRun({ logAttempt: false })

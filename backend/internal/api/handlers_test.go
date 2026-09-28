@@ -43,7 +43,6 @@ func TestMoveTreePlyParityFollowsSideToMove(t *testing.T) {
 		if tree.Ply != tc.rootPly {
 			t.Errorf("%s: root ply = %d, want %d", tc.name, tree.Ply, tc.rootPly)
 		}
-		// Move lists treat odd plies as White's moves.
 		whiteMoved := g.Pos.Turn == chess.Black
 		if got := tree.Children[0].Ply; (got%2 == 1) != whiteMoved {
 			t.Errorf("%s: first move has ply %d, wrong parity for the side that moved", tc.name, got)

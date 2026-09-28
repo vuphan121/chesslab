@@ -41,7 +41,6 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		ok = h.authCfg.CheckCredentials(req.Username, req.Password)
 	}
 	if !ok {
-		// reserve() above already recorded this attempt against the limit.
 		http.Error(w, "invalid username or password", http.StatusUnauthorized)
 		return
 	}

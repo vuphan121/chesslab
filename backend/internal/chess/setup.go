@@ -5,17 +5,6 @@ import (
 	"strings"
 )
 
-// NormalizeSetupCastling rewrites a set-up position's castling field so it
-// matches piece placement. A side keeps a castling right exactly when its king
-// and that rook are both on their original squares. Diagrams in books and
-// Lichess study chapters starting from a custom FEN often leave the field as
-// "-" even when castling is obviously still available, or claim a right whose
-// rook isn't there. Only use this for a position someone set up, never for one
-// reached by playing moves: there, a king or rook that moved and came back has
-// genuinely lost the right.
-//
-// Every other field is passed through unchanged, so a FEN whose castling
-// field is already right comes back byte-for-byte identical.
 func NormalizeSetupCastling(fen string) (string, error) {
 	pos, err := ParseFEN(fen)
 	if err != nil {

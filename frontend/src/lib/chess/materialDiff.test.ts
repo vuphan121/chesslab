@@ -32,7 +32,6 @@ describe('computeMaterialDiff', () => {
   })
 
   it('shows a bishop-for-a-pawn imbalance: bishop+2 for White, pawn for Black', () => {
-    // White captured Black's f8 bishop; Black captured White's a2 pawn.
     const pieces = without(START_FEN_PIECES, 'f8', 'a2')
     const diff = computeMaterialDiff(pieces)
     expect(diff.white).toEqual([{ type: 'b', count: 1 }])
@@ -49,9 +48,6 @@ describe('computeMaterialDiff', () => {
   })
 
   it('shows per-type icons on both sides even when total value is balanced', () => {
-    // White is down a queen (9) but up two knights and a bishop (3+3+3=9):
-    // total value is balanced (0), but the piece types differ, so BOTH sides
-    // should still show icons per Lichess convention — just no +N number.
     const pieces = without(START_FEN_PIECES, 'd1', 'b8', 'c8', 'g8')
     const diff = computeMaterialDiff(pieces)
     expect(diff.white.sort((a, b) => a.type.localeCompare(b.type))).toEqual([

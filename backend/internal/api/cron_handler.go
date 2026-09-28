@@ -13,12 +13,6 @@ import (
 	"github.com/chesslab/backend/internal/evalprecompute"
 )
 
-// refreshResultJSON is one repertoire's outcome from a batch run. On success
-// (a "refreshed" entry) Chapters carries the same per-chapter breakdown
-// GET /api/repertoires/{id} already exposes (id, name, card count, line
-// count) — useful for a cron log to show which chapters exist post-refresh,
-// e.g. confirming a newly-added chapter actually landed, not just an overall
-// count. Skipped/failed entries have no chapters; Reason explains why instead.
 type refreshResultJSON struct {
 	ID       string                         `json:"id"`
 	Name     string                         `json:"name"`
@@ -34,24 +28,9 @@ type RefreshAllRepertoiresResponse struct {
 	DurationMS int64               `json:"durationMs"`
 }
 
-// pauseBetweenRefreshes is a courtesy delay between successive Lichess study
-// exports, same spirit as line_importance.go's explorer-call throttle — this
-// endpoint can walk every managed repertoire in one run, and Lichess is a
-// shared public API, not infrastructure this app owns.
 const pauseBetweenRefreshes = 500 * time.Millisecond
 
-// RefreshAllRepertoires re-downloads and rebuilds every repertoire that has a
-// saved Lichess study source (DB-managed or file-based-with-config), in one
-// pass — the batch counterpart to the single-repertoire RefreshRepertoire,
-// meant to be hit once a day by an external cron job/scheduler rather than a
-// signed-in user, so it does not sit behind the user JWT middleware. Guarded
-// instead by a shared secret (CRON_SECRET) compared in constant time; if that
-// secret isn't configured the endpoint refuses outright rather than running
-// open, same "refuse to run insecurely" stance as AUTH_USERNAME/PASSWORD.
 func (h *Handler) RefreshAllRepertoires(w http.ResponseWriter, r *http.Request) {
-	// Checked before anything else, including whether a database is
-	// configured — an unauthenticated caller shouldn't be able to learn
-	// this backend's configuration state from the response.
 	secret := os.Getenv("CRON_SECRET")
 	if secret == "" {
 		http.Error(w, "cron refresh is not configured (CRON_SECRET unset)", http.StatusServiceUnavailable)
@@ -67,9 +46,6 @@ func (h *Handler) RefreshAllRepertoires(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Generous ceiling for a batch that may walk a dozen-plus studies, each
-	// its own network fetch + parse; still bounded so a hung Lichess request
-	// can't wedge the endpoint forever.
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Minute)
 	defer cancel()
 	r = r.WithContext(ctx)
@@ -118,20 +94,8 @@ func (h *Handler) RefreshAllRepertoires(w http.ResponseWriter, r *http.Request) 
 	respondJSON(w, http.StatusOK, resp)
 }
 
-// precomputeBudget bounds one background precompute run: no new position is
-// started after it elapses (an in-flight one may overrun by up to
-// evalprecompute.CronStockfishMoveTime). The HTTP request that starts a run
-// returns immediately (202), so this is no longer tied to any
-// request/scheduler timeout — it only caps how long one run holds the
-// (dedicated) Stockfish instance before the next hourly tick takes over.
-// Deliberately long: the fallback searches are slow on the production
-// instance and the backlog is drained patiently. Note Render's free tier
-// spins an instance down after ~15 minutes without inbound traffic, so runs
-// this long rely on the separate keep-alive job.
 const precomputeBudget = 45 * time.Minute
 
-// maxConsecutiveComputeFailures ends a run early when this many positions in
-// a row fail to compute — see the check in runPrecompute.
 const maxConsecutiveComputeFailures = 5
 
 type precomputeFailureJSON struct {
@@ -146,31 +110,11 @@ type PrecomputeEvalsResponse struct {
 	DurationMS int64                   `json:"durationMs"`
 }
 
-// precomputeStartedResponse is what the cron endpoint answers with: the work
-// itself happens after the response, so this only says whether a run was
-// started, plus the summary of the most recent *finished* run (nil until one
-// has finished since this process booted) — the only way a scheduler's logs
-// can see backlog progress now that the request no longer waits for it.
 type precomputeStartedResponse struct {
-	Status  string                   `json:"status"` // "started" | "already-running"
+	Status  string                   `json:"status"`
 	LastRun *PrecomputeEvalsResponse `json:"lastRun,omitempty"`
 }
 
-// PrecomputeEvals kicks off a background fill of the internal/evalprecompute
-// eval cache — positions that appear in some currently-loaded repertoire but
-// have no position_evals row yet (freshly added by the daily
-// refresh-repertoires run, or never backfilled) — and returns 202 straight
-// away. Same CRON_SECRET-guarded, outside-the-JWT-group shape as
-// RefreshAllRepertoires above; meant to be hit repeatedly (every 15–60 min)
-// by the same external scheduler.
-//
-// Responding first matters because the scheduler hard-times-out at ~40s
-// (and a cold Render instance can burn part of that just waking up), while a
-// deep MultiPV-5 run takes minutes. Safe to call repeatedly: only one run
-// executes at a time (an overlapping call gets "already-running" and does
-// nothing), every finished position is saved individually, and each run
-// recomputes its backlog from the table, so a run cut short by a deploy or
-// crash just resumes from wherever the last one stopped.
 func (h *Handler) PrecomputeEvals(w http.ResponseWriter, r *http.Request) {
 	secret := os.Getenv("CRON_SECRET")
 	if secret == "" {
@@ -197,8 +141,6 @@ func (h *Handler) PrecomputeEvals(w http.ResponseWriter, r *http.Request) {
 	}
 	go func() {
 		defer h.precomputeRunning.Store(false)
-		// Deliberately not derived from r.Context(), which is cancelled the
-		// moment the 202 below is written.
 		ctx, cancel := context.WithTimeout(context.Background(), precomputeBudget+evalprecompute.CronStockfishMoveTime+2*time.Minute)
 		defer cancel()
 		res := h.runPrecompute(ctx)
@@ -209,14 +151,6 @@ func (h *Handler) PrecomputeEvals(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusAccepted, precomputeStartedResponse{Status: "started", LastRun: last})
 }
 
-// runPrecompute is one bounded batch: diff every repertoire position against
-// the cache, then compute until the backlog is empty or precomputeBudget runs
-// out. Called only from PrecomputeEvals' single-flight goroutine.
-//
-// Every run is also recorded in precompute_runs (one row) and
-// precompute_run_positions (one row per position attempted) for observability.
-// That bookkeeping is best-effort — a failed write is logged and never stops
-// or fails the actual precompute work.
 func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 	started := time.Now()
 	resp := PrecomputeEvalsResponse{}
@@ -232,7 +166,6 @@ func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 		if runID == 0 {
 			return
 		}
-		// Fresh context: ctx may be the very thing that expired.
 		fctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := h.db.FinishPrecomputeRun(fctx, runID, status, stats, runErr); err != nil {
@@ -268,7 +201,6 @@ func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 			return
 		}
 		l.RunID = runID
-		// Not tied to ctx's remaining time, so the last position still gets logged.
 		pctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := h.db.InsertPrecomputePositionLog(pctx, l); err != nil {
@@ -291,18 +223,10 @@ func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 		posStart := time.Now()
 		result, err := evalprecompute.ComputeWithMoveTime(h.precomputeEngine, key, evalprecompute.CronStockfishMoveTime)
 		if err != nil {
-			// Not retried within this run — a position that keeps failing
-			// (e.g. no cloud hit and Stockfish unavailable) would otherwise
-			// eat the whole budget every tick without making progress. It
-			// stays in the backlog and gets tried again next tick, same
-			// "log and move on" stance as RefreshAllRepertoires above.
 			log.Printf("cron precompute: %s — %v", key, err)
 			resp.Failed = append(resp.Failed, precomputeFailureJSON{FENKey: key, Reason: err.Error()})
 			stats.Failed++
 			logPosition(db.PrecomputePositionLog{FENKey: key, Status: "compute_failed", DurationMS: time.Since(posStart).Milliseconds(), Error: err.Error()})
-			// A broken engine (or an unreachable Lichess) fails every
-			// remaining position too; stop instead of grinding the whole
-			// budget away on it. The next tick retries from scratch.
 			consecutiveFailures++
 			if consecutiveFailures >= maxConsecutiveComputeFailures {
 				abortErr = fmt.Sprintf("aborted after %d consecutive compute failures, last: %v", consecutiveFailures, err)

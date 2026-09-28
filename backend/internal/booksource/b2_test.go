@@ -59,8 +59,6 @@ func TestB2OpenRejectsUnsafeObjectKey(t *testing.T) {
 	}
 }
 
-// The authorization token is cached and reused across calls instead of
-// re-authorizing with B2 on every single chapter download.
 func TestB2OpenReusesCachedAuthorization(t *testing.T) {
 	var authorizeCalls int
 	var server *httptest.Server
@@ -94,8 +92,6 @@ func TestB2OpenReusesCachedAuthorization(t *testing.T) {
 	}
 }
 
-// If B2 rejects a cached token as unauthorized (revoked/expired early),
-// Open re-authorizes once and retries rather than failing the download.
 func TestB2OpenRetriesOnceAfterUnauthorized(t *testing.T) {
 	var authorizeCalls, downloadCalls int
 	var server *httptest.Server

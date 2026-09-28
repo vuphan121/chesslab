@@ -5,14 +5,12 @@ import (
 	"fmt"
 )
 
-// Run statuses stored in precompute_runs.status.
 const (
-	PrecomputeRunCompleted       = "completed"        // backlog fully drained
-	PrecomputeRunBudgetExhausted = "budget_exhausted" // time budget hit with backlog left
-	PrecomputeRunFailed          = "failed"           // could not even enumerate/diff the backlog
+	PrecomputeRunCompleted       = "completed"
+	PrecomputeRunBudgetExhausted = "budget_exhausted"
+	PrecomputeRunFailed          = "failed"
 )
 
-// PrecomputeRunStats are the counters recorded on a precompute_runs row.
 type PrecomputeRunStats struct {
 	TotalPositions int
 	BacklogSize    int
@@ -22,10 +20,6 @@ type PrecomputeRunStats struct {
 	Remaining      int
 }
 
-// StartPrecomputeRun inserts a 'running' row and returns its id. Any row
-// still 'running' from a process that died mid-run (deploy, crash) is first
-// marked 'interrupted' — the cutoff is comfortably past the longest possible
-// run, so a genuinely live run on another instance is never touched.
 func (s *Store) StartPrecomputeRun(ctx context.Context, budgetMS int64, stockfishAvailable bool) (int64, error) {
 	if _, err := s.pool.Exec(ctx, `
 		UPDATE precompute_runs
@@ -44,8 +38,6 @@ func (s *Store) StartPrecomputeRun(ctx context.Context, budgetMS int64, stockfis
 	return id, nil
 }
 
-// UpdatePrecomputeRunProgress overwrites the counters of a still-running row
-// so an in-flight run is observable.
 func (s *Store) UpdatePrecomputeRunProgress(ctx context.Context, id int64, st PrecomputeRunStats) error {
 	_, err := s.pool.Exec(ctx, `
 		UPDATE precompute_runs
@@ -59,7 +51,6 @@ func (s *Store) UpdatePrecomputeRunProgress(ctx context.Context, id int64, st Pr
 	return nil
 }
 
-// FinishPrecomputeRun stamps the final counters, status, and duration.
 func (s *Store) FinishPrecomputeRun(ctx context.Context, id int64, status string, st PrecomputeRunStats, runErr string) error {
 	var errArg any
 	if runErr != "" {
@@ -79,18 +70,16 @@ func (s *Store) FinishPrecomputeRun(ctx context.Context, id int64, status string
 	return nil
 }
 
-// PrecomputePositionLog is one attempted position within a run.
 type PrecomputePositionLog struct {
 	RunID      int64
 	FENKey     string
-	Status     string // ok | compute_failed | save_failed
-	EngineName string // "" when the compute failed
+	Status     string
+	EngineName string
 	Depth      int
 	DurationMS int64
 	Error      string
 }
 
-// InsertPrecomputePositionLog records one position's outcome.
 func (s *Store) InsertPrecomputePositionLog(ctx context.Context, l PrecomputePositionLog) error {
 	var engineArg, errArg any
 	if l.EngineName != "" {

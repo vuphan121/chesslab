@@ -68,8 +68,6 @@ func (h *Handler) SaveTodayTraining(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
-	// LinesPerDay is retained only in the database schema for backwards
-	// compatibility. Today's queue now always contains every eligible entry.
 	settings := db.TodayTrainingSettings{RepertoireIDs: uniqueIDs(req.RepertoireIDs), LinesPerDay: 1}
 	queue, err := h.buildTodayTraining(r, username, currentRequestClock(r).date, settings)
 	if err != nil {

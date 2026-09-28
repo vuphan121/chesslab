@@ -1,27 +1,3 @@
-// Command precomputeevals does the one-off, potentially long-running bulk
-// backfill of internal/evalprecompute's opening-position eval cache: every
-// position in every currently-configured repertoire (file-based demos +
-// DB-managed ones, loaded the same way cmd/server's loadManagedRepertoires
-// does) gets a deep MultiPV analysis stored in the `position_evals` table.
-//
-// This exists because the recurring POST /api/cron/precompute-evals
-// endpoint is deliberately time-boxed per call (see cron_handler.go's
-// precomputeBudget) to survive an HTTP request/function timeout — fine for
-// keeping up with the trickle of positions a daily repertoire refresh adds,
-// but far too slow for an initial backfill across every existing
-// repertoire, which is exactly the "might take long for a lot of lines"
-// case this CLI sidesteps entirely by running as a local process with no
-// timeout at all.
-//
-// Usage:
-//
-//	DATABASE_URL=... [STOCKFISH_PATH=...] go run ./cmd/precomputeevals [--force]
-//
-// --force recomputes every position, even ones already in the table
-// (e.g. after raising StockfishDepth). Without it, only positions missing a
-// row are computed — safe to re-run any time, including after a
-// cmd/seedrepertoires update. .env in the working directory is loaded for
-// any vars not already set, matching cmd/seedbooks/cmd/seedrepertoires.
 package main
 
 import (
@@ -149,12 +125,6 @@ func main() {
 	log.Printf("precompute: finished — %d computed, %d failed", done, failed)
 }
 
-// loadManagedRepertoires mirrors cmd/server/main.go's function of the same
-// name — DB-managed repertoires (repertoire_sources) layered over the
-// file-based demos, so this CLI enumerates the exact same position set the
-// live server would. Duplicated rather than imported since cmd/server's
-// copy is unexported and this is the same small amount of wiring
-// cmd/seedrepertoires/cmd/migratedb already each keep their own copy of.
 func loadManagedRepertoires(store *db.Store, repos *repertoire.Store) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()

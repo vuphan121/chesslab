@@ -30,8 +30,6 @@ func FetchStudyPGN(ctx context.Context, sourceURL, token string) (string, string
 	canonical := "https://lichess.org/study/" + studyID
 
 	data, err := fetchStudyPGN(ctx, studyID, token)
-	// A 403 with a token means the token lacks the study:read scope; public
-	// studies export fine anonymously, so retry once without the header.
 	if err != nil && token != "" && errors.Is(err, errStudyForbidden) {
 		data, err = fetchStudyPGN(ctx, studyID, "")
 	}

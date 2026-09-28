@@ -33,8 +33,6 @@ func TestLoginLimiterBlocksAndResets(t *testing.T) {
 	}
 }
 
-// Regression test for the check-then-act race: reserve must check and
-// increment each client's count atomically.
 func TestLoginLimiterReserveIsAtomicUnderConcurrency(t *testing.T) {
 	limiter := newLoginLimiter(5, time.Minute, time.Now)
 	const attempts = 50
@@ -55,14 +53,6 @@ func TestLoginLimiterReserveIsAtomicUnderConcurrency(t *testing.T) {
 	}
 }
 
-// Fallback path (no CF-Connecting-IP/True-Client-IP present): assumes a
-// single trusted proxy hop that appends the connecting address it actually
-// saw to whatever X-Forwarded-For the caller sent, rather than discarding
-// it — so the right-most entry is the one that hop itself appended
-// (trustworthy); a caller can prepend anything it likes before that.
-// RemoteAddr is deliberately set to something OTHER than the expected
-// answer, so this can't pass by silently falling through to the
-// RemoteAddr fallback instead of actually parsing the header.
 func TestLoginClientKeyUsesRightmostForwardedIP(t *testing.T) {
 	r := httptest.NewRequest("POST", "/api/login", nil)
 	r.RemoteAddr = "203.0.113.8:4321"
@@ -72,11 +62,6 @@ func TestLoginClientKeyUsesRightmostForwardedIP(t *testing.T) {
 	}
 }
 
-// Regression test: a caller must not be able to get a fresh rate-limit
-// bucket on every request just by sending a different fake left-most
-// X-Forwarded-For entry — that made the login limiter a no-op. RemoteAddr
-// is deliberately NOT the shared right-most entry, so this can't pass via
-// the RemoteAddr fallback either.
 func TestLoginClientKeyIgnoresSpoofedLeftmostEntry(t *testing.T) {
 	r1 := httptest.NewRequest("POST", "/api/login", nil)
 	r1.RemoteAddr = "203.0.113.1:4321"
@@ -103,9 +88,6 @@ func TestLoginClientKeyFallsBackToRemoteAddr(t *testing.T) {
 	}
 }
 
-// CF-Connecting-IP, when present, is preferred over X-Forwarded-For
-// entirely — it's set authoritatively by a fronting Cloudflare edge, which
-// discards any client-supplied value of the same header name.
 func TestLoginClientKeyPrefersCFConnectingIP(t *testing.T) {
 	r := httptest.NewRequest("POST", "/api/login", nil)
 	r.RemoteAddr = "10.0.0.2:4321"
@@ -116,8 +98,6 @@ func TestLoginClientKeyPrefersCFConnectingIP(t *testing.T) {
 	}
 }
 
-// True-Client-IP is the second preference, used when CF-Connecting-IP is
-// absent but a CDN still set this alternative header.
 func TestLoginClientKeyFallsBackToTrueClientIP(t *testing.T) {
 	r := httptest.NewRequest("POST", "/api/login", nil)
 	r.RemoteAddr = "10.0.0.2:4321"

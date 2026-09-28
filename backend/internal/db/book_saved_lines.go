@@ -10,9 +10,6 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// SavedLineMove is one ply of the line the user saved from the Study-from-Book
-// board. score/mate are White-relative centipawns (same convention as the eval
-// bar); hasEval is false when no engine value was available at save time.
 type SavedLineMove struct {
 	San     string `json:"san"`
 	Uci     string `json:"uci"`
@@ -29,8 +26,6 @@ type SavedLine struct {
 	CreatedAt time.Time       `json:"createdAt"`
 }
 
-// GetBookSavedLine returns the single saved line for (user, book, item), or nil
-// if none has been saved.
 func (s *Store) GetBookSavedLine(ctx context.Context, username, bookID, itemID string) (*SavedLine, error) {
 	var sl SavedLine
 	var movesRaw []byte
@@ -51,7 +46,6 @@ func (s *Store) GetBookSavedLine(ctx context.Context, username, bookID, itemID s
 	return &sl, nil
 }
 
-// SaveBookLine upserts the one saved line for (user, book, item).
 func (s *Store) SaveBookLine(ctx context.Context, username, bookID, itemID, startFen string, moves []SavedLineMove) (SavedLine, error) {
 	raw, err := json.Marshal(moves)
 	if err != nil {

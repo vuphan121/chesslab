@@ -57,10 +57,6 @@ export default function Board({
     hasStarted: boolean
   } | null>(null)
   const previousPosition = useRef({ fen: boardState.fen, pieces: boardState.pieces })
-  // Set when this board initiates a move (drag/click/promotion). The next
-  // position change then skips the slide animation — the user already made the
-  // move, replaying it as an animation looks like it happens twice. Navigation
-  // (arrows / clicking a move) still animates.
   const justPlayedRef = useRef(false)
 
   const rightDownSquare = useRef<string | null>(null)
@@ -197,10 +193,6 @@ export default function Board({
 
     if (e.button === 2) {
       e.preventDefault()
-      // A right-click chorded in mid-left-drag would otherwise leave that
-      // drag's state (and floating piece) stuck, since the right-click flow
-      // short-circuits handlePointerMove/Up before they reach the left-drag
-      // cleanup below.
       if (dragFrom) {
         setDragFrom(null)
         setDragOver(null)
@@ -291,11 +283,6 @@ export default function Board({
     }
   }
 
-  // Fires when the browser/OS interrupts an in-progress pointer session
-  // (alt-tab, a touch-gesture cancellation, a dialog stealing the pointer)
-  // instead of a normal pointerup — without this, dragFrom/rightDownSquare
-  // and the floating dragged-piece portal are left stuck since only
-  // handlePointerUp otherwise clears them.
   const handlePointerCancel = () => {
     rightDownSquare.current = null
     setRightDragFrom(null)

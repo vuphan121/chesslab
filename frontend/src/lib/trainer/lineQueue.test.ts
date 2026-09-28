@@ -28,7 +28,6 @@ describe('enumerateLines / buildDrillLines', () => {
   it('returns every root-to-leaf path with the position key of each step', () => {
     const lines = enumerateLines(tree)
     expect(lines.map((l) => l.sans)).toEqual([['a', 'a1'], ['a', 'a2'], ['b'], ['bad', 'bad1']])
-    // root + one key per move
     expect(lines[0].positionKeys).toHaveLength(3)
     expect(lines[2].positionKeys).toHaveLength(2)
   })
@@ -79,11 +78,9 @@ describe('nextQueuedLine', () => {
     const retired = new Set<string>()
     const isActive = (l: DrillLine) => !retired.has(l.id)
     const first = nextQueuedLine(q, isActive)!
-    // Retire everything else that's still waiting in this pass except one.
     const keep = q.pending[0].id
     for (const l of lines) if (l.id !== keep && l.id !== first.id) retired.add(l.id)
     expect(nextQueuedLine(q, isActive)!.id).toBe(keep)
-    // Next pass: only the still-active lines (keep + first) remain.
     const next = [nextQueuedLine(q, isActive)!.id, nextQueuedLine(q, isActive)!.id]
     expect(next.sort()).toEqual([first.id, keep].sort())
   })
@@ -110,7 +107,6 @@ describe('switchToLineThrough', () => {
     const q = createLineQueue([dealt, nbd7a, nbd7b], mulberry32(1))
     q.pending = [nbd7b]
     const got = switchToLineThrough(q, 'after-nbd7', 'h6', 'h6')
-    // n2 is still pending this pass, so it's preferred over the already-dealt n1.
     expect(got?.line.id).toBe('n2')
     expect(got?.rest).toEqual(['Nf3'])
     expect(q.pending.map((l) => l.id)).toEqual(['h6'])

@@ -101,32 +101,6 @@ function activeCards(s: SessionState): CardState[] {
 
 
 
-// NOTE: the trainer no longer uses this to decide what to drill next — that's
-// lineQueue.ts (a shuffled deck of whole lines). It stays as the card-level
-// picker, and `grade`/`createSession` are still what drive per-card progress.
-//
-// Pure random selection: every active (non-retired) card in the current
-// selection — whether that's a whole repertoire or a hand-picked subset of
-// its chapters — has an equal chance of coming up next, with no preference
-// for less-practiced or more-lapsed material.
-//
-// Earlier versions here tried to be smarter than that: first a time/step-
-// based "due" cycle, then a strict round-robin by presentation count (always
-// show whichever active card has been seen fewest times), with lapses and
-// then chapter identity nudging same-round ties. Each version fixed one
-// reported skew (a missed card dominating its chapter, then one chapter's
-// pile of untouched cards dominating its siblings) by adding another rule —
-// but any rule that looks at seen-count/lapses/chapter size to decide what's
-// "due" next inherently produces a non-random, front-loaded order: whatever
-// a session hasn't gotten to yet keeps winning until it's caught up, which
-// is exactly what read as "stuck on one chapter" even when it was working
-// as designed. Removing the preference entirely removes that whole class of
-// bug at the root, at the cost of the round-robin's old guarantee that
-// nothing goes neglected for long — accepted tradeoff, not an oversight.
-//
-// Only exact back-to-back repeats of the same card are avoided (when a
-// different active card exists), matching how a shuffled playlist skips
-// immediately replaying the last track rather than true independent draws.
 export function pickNext(s: SessionState): CardState | null {
   const active = activeCards(s)
   if (active.length === 0) return null

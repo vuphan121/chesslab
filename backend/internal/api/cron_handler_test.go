@@ -43,10 +43,6 @@ func TestRefreshAllRepertoiresRequiresCronSecret(t *testing.T) {
 	})
 
 	t.Run("correct secret passes auth and only then hits the db-required check", func(t *testing.T) {
-		// h.db is nil in this test Handler — proves the secret check runs
-		// (and passes) before the 503 that a nil db store would otherwise
-		// also produce, by checking the response is the DB message, not
-		// the "not configured"/"unauthorized" ones from the two cases above.
 		t.Setenv("CRON_SECRET", "the-real-secret")
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "/api/cron/refresh-repertoires", nil)

@@ -4,9 +4,6 @@ import type { Color, Piece as PieceShape, Square } from '@/lib/chess/types'
 import Piece from './Piece'
 import { computeMaterialDiff, type MaterialSurplus } from '@/lib/chess/materialDiff'
 
-// Exported so pages that lay out a fixed-width row containing the board (and
-// hardcode that row's total pixel width for alignment elsewhere, e.g. a
-// caption row above it) can add this column's footprint to that sum.
 export const MATERIAL_CORNERS_WIDTH = 40
 export const MATERIAL_CORNERS_GAP = 8
 
@@ -16,9 +13,6 @@ function other(color: Color): Color {
   return color === 'w' ? 'b' : 'w'
 }
 
-// Exported so callers that want a top/bottom (rather than side-corner)
-// material display — e.g. the Opening Trainer page — can render this same
-// row style themselves, above/below the board instead of beside it.
 export function MaterialRow({
   cornerColor,
   surplus,
@@ -48,9 +42,6 @@ export function MaterialRow({
   )
 }
 
-// The data half of MaterialRow — which color's surplus/point-lead renders
-// as the "top" row vs the "bottom" row, following `flipped` rather than a
-// hardcoded side. Exported for the same reason as MaterialRow above.
 export function computeMaterialRows(pieces: Record<Square, PieceShape>, flipped = false) {
   const diff = computeMaterialDiff(pieces)
   const bottomColor: Color = flipped ? 'b' : 'w'
@@ -69,12 +60,6 @@ interface Props {
   height: number
 }
 
-// Lichess-style material imbalance display: per piece type, the side with
-// more of that type on the board has the opponent's missing pieces of that
-// type rendered as small icons, plus the total point lead (only shown next
-// to whichever side is actually ahead). Positioned as the top-right/
-// bottom-right corners of the board — which color renders in which corner
-// follows `flipped`, not a hardcoded side.
 export default function MaterialCorners({ pieces, flipped = false, height }: Props) {
   const rows = computeMaterialRows(pieces, flipped)
 

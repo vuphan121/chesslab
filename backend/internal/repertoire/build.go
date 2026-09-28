@@ -151,9 +151,6 @@ func walkCards(ch *Chapter, n *Node, side chess.Color, byID map[string]*Card, or
 
 func mergeAnswer(card *Card, chapterID string, child *Node) {
 	if child.Excluded {
-		// A transposition can make the same move accepted in one chapter and
-		// excluded in another. Accepted repertoire theory wins: never expose a
-		// move as both correct and excluded on the merged card.
 		for i := range card.Answers {
 			if sameAnswer(card.Answers[i].SAN, card.Answers[i].UCI, child.SAN, child.UCI) {
 				return

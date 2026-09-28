@@ -66,10 +66,6 @@ type foreignKeyMigration struct {
 	definition string
 }
 
-// relationshipMigrations also apply the foreign keys to databases whose tables
-// predate the inline constraints in schema.sql. NOT VALID avoids a table scan
-// (and a deployment failure due to historical orphan rows) while PostgreSQL
-// still enforces the relationship for every new or updated row.
 var relationshipMigrations = []foreignKeyMigration{
 	{"card_progress", "card_progress_user_fk", "FOREIGN KEY (username) REFERENCES users (username) ON DELETE CASCADE NOT VALID"},
 	{"line_attempts", "line_attempts_user_fk", "FOREIGN KEY (username) REFERENCES users (username) ON DELETE CASCADE NOT VALID"},
@@ -89,8 +85,6 @@ func (s *Store) migrateRelationships(ctx context.Context) error {
 	}
 	defer tx.Rollback(ctx)
 
-	// Serializes this idempotent check-and-add sequence when multiple app
-	// instances start against the same production database simultaneously.
 	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext('chesslab_relationships_v1'))`); err != nil {
 		return fmt.Errorf("lock relationship migration: %w", err)
 	}

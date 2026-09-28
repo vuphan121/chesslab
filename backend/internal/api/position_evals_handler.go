@@ -16,21 +16,12 @@ type PositionEvalMoveJSON struct {
 }
 
 type PositionEvalJSON struct {
-	Score     int                     `json:"score"`
-	Mate      int                     `json:"mate"`
-	Depth     int                     `json:"depth"`
+	Score     int                    `json:"score"`
+	Mate      int                    `json:"mate"`
+	Depth     int                    `json:"depth"`
 	BestMoves []PositionEvalMoveJSON `json:"bestMoves,omitempty"`
 }
 
-// GetPositionEvals batch-looks-up precomputed opening-position evals (see
-// internal/evalprecompute) for a set of FENs — the trainer fetches every
-// ply of a just-finished line in one call the moment it goes into
-// line-complete, rather than one round trip per position. Keyed in the
-// response by the caller's own FEN string (not the stripped CardKey used
-// internally), since the frontend already caches per-move data by full FEN
-// (see MoveHistory's per-move eval cache) — a missing key just means "not
-// computed yet", not an error, since the precompute cron may not have
-// caught up to a brand-new line yet.
 func (h *Handler) GetPositionEvals(w http.ResponseWriter, r *http.Request) {
 	if h.db == nil {
 		http.Error(w, "position evals require database sync", http.StatusServiceUnavailable)

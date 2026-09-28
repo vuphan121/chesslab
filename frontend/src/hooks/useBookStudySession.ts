@@ -94,12 +94,8 @@ export function useBookStudySession() {
   const analysisReqId = useRef(0)
   const itemReqId = useRef(0)
   const moveEvalsRef = useRef<Record<string, FenEval>>({})
-  // Per-FEN analysis cache so revisiting a position (stepping back/forward, or
-  // loading a saved line) is instant instead of another engine round-trip.
   const analysisCacheRef = useRef<Map<string, Analysis>>(new Map())
 
-  // Mirror moveEvals into a ref so the fetch effects/callbacks below can read the
-  // latest map without taking it as a dependency (which would re-run them per fetch).
   useEffect(() => {
     moveEvalsRef.current = moveEvals
   }, [moveEvals])
@@ -119,9 +115,6 @@ export function useBookStudySession() {
   const boardState: BoardState | null = gameState ? toBoardState(gameState, selected) : null
   const currentFen = gameState?.fen ?? null
 
-  // Engine analysis for the current position. Deliberately quick-only (depth-10 /
-  // cloud with a short timeout) — the deeper refinement pass this used to chain
-  // was the "couple seconds" lag on the board. Cache hits are instant.
   useEffect(() => {
     const gid = gameIdRef.current
     if (!analysisEnabled || !gid || !currentFen) return
@@ -157,10 +150,6 @@ export function useBookStudySession() {
     })()
   }, [analysisEnabled, currentFen])
 
-  // With Analysis on, fill in a light per-move eval for every move on the board's
-  // main line, so the move list can show "analysis of the moves" and a saved line
-  // can carry it. Gated on analysisEnabled — same opt-in as the eval bar — so a
-  // user who never opens analysis gets no extra engine traffic.
   useEffect(() => {
     if (!analysisEnabled || !gameState) return
     const fens = activeLine(gameState.moveTree, gameState.currentNodeId).map((n) => n.fen)
@@ -175,7 +164,6 @@ export function useBookStudySession() {
           const e = await evalFen(fen)
           if (!cancelled) setMoveEvals((prev) => ({ ...prev, [fen]: e }))
         } catch {
-          /* leave this move without an eval */
         }
       }
     })()
@@ -190,16 +178,11 @@ export function useBookStudySession() {
     const entry = flat.get(gameState.currentNodeId)
     const canForward = !!entry?.node.children && entry.node.children.length > 0
     const canBack = entry?.parentId != null
-    // Plies from the item's start position (node ply is game-wide, see the
-    // backend's rootPly).
     return { ply: (entry?.node.ply ?? 0) - gameState.moveTree.ply, canBack, canForward }
   }, [gameState])
 
 
 
-  // Returns whether this call's result was actually applied — false means a
-  // newer enterItem call started before this one's apiSetPosition resolved,
-  // so callers (goToIndex) know not to trust this call's target as current.
   const enterItem = useCallback(async (gid: string, item: BookItem): Promise<boolean> => {
     const reqId = ++itemReqId.current
     moveReqId.current++
@@ -217,9 +200,6 @@ export function useBookStudySession() {
     return true
   }, [])
 
-  // Rebuild a saved line into the game's move tree, then sit the cursor back at
-  // the start position — the full line shows in the Moves panel, but the board
-  // stays on move 0 until the user steps forward (arrows) or clicks a move.
   const replayLine = useCallback(async (line: SavedLine, expectedItemRequest = itemReqId.current): Promise<GameState | null> => {
     const gid = gameIdRef.current
     if (!gid || expectedItemRequest !== itemReqId.current) return null
@@ -234,8 +214,6 @@ export function useBookStudySession() {
     return expectedItemRequest === itemReqId.current ? reset : null
   }, [])
 
-  // One saved line per item. On entering an item, pull it and drop it straight
-  // onto the board — no click, no list — so the Moves panel just shows it.
   useEffect(() => {
     const bookId = book?.id
     const itemId = current?.item.id
@@ -255,13 +233,11 @@ export function useBookStudySession() {
             setSelected(null)
           }
         } catch {
-          /* a saved move no longer applies — leave the plain position */
         } finally {
           if (!cancelled && expectedItemRequest === itemReqId.current) setBusy(false)
         }
       })
       .catch(() => {
-        // not logged in / no database / offline — just treat it as no saved line
         if (!cancelled) setSavedLine(null)
       })
     return () => {
@@ -280,7 +256,6 @@ export function useBookStudySession() {
         setSelected(null)
       }
     } catch {
-      /* ignore — saved line no longer replays cleanly */
     } finally {
       setBusy(false)
     }
@@ -450,7 +425,6 @@ export function useBookStudySession() {
     const itemId = current?.item.id
     if (!bookId || !itemId || !gameState || savingLine) return
     const expectedItemRequest = itemReqId.current
-    // What's on the board, sideline included, not the tree's main line.
     const nodes = activeLine(gameState.moveTree, gameState.currentNodeId)
     if (nodes.length === 0) {
       setSaveNote('Play some moves first.')
@@ -470,8 +444,6 @@ export function useBookStudySession() {
     setSavingLine(true)
     setSaveNote(null)
     try {
-      // One row per (user, book, item): the backend upserts, so this replaces
-      // whatever was saved for this lesson before.
       const { line } = await saveBookLine(bookId, itemId, current.item.fen, moves)
       if (expectedItemRequest !== itemReqId.current) return
       setSavedLine(line)
@@ -579,10 +551,6 @@ export function useBookStudySession() {
 
   const toggleCurrentBookmark = useCallback(() => {
     if (!book || !current) return
-    // localStorage.setItem used to run inside the setBookmarkedItemIds
-    // updater; React only guarantees updaters are pure and may invoke them
-    // more than once (e.g. Strict Mode's dev double-invoke), which doesn't
-    // guarantee the write happens exactly once per toggle.
     const next = new Set(bookmarkedItemIds)
     if (next.has(current.item.id)) next.delete(current.item.id)
     else next.add(current.item.id)
@@ -591,15 +559,6 @@ export function useBookStudySession() {
   }, [book, current, bookmarkedItemIds])
 
   const restart = useCallback(() => {
-    // Invalidate any in-flight move/analysis request from the session being
-    // left — without this, its `reqId === *.current` guard still passes
-    // once it resolves (nothing bumped the counter), resurrecting stale
-    // board/analysis state moments after landing back on the setup screen.
-    // Bumping itemReqId also makes the saved-line-replay effect's own
-    // finally skip its setBusy(false) (its reqId no longer matches), so
-    // restart() must clear busy itself — otherwise a restart mid-replay
-    // leaves busy stuck true for the rest of the hook's lifetime, silently
-    // blocking every move (including in the *next* book session).
     moveReqId.current++
     analysisReqId.current++
     itemReqId.current++

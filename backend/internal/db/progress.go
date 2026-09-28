@@ -78,12 +78,6 @@ func (s *Store) SaveProgress(ctx context.Context, username, repertoireID string,
 	}
 
 	for cardID, cp := range cards {
-		// Check hasDelta BEFORE parsing LastSeenISO: with the delta protocol,
-		// `cards` carries the client's full historical snapshot but only
-		// touched cards get written (see the skip below) — a malformed
-		// timestamp on some untouched card elsewhere in that snapshot must
-		// not abort the whole save over a field that was never going to be
-		// read.
 		delta, hasDelta := deltas[cardID]
 		if deltas != nil && !hasDelta {
 			continue
@@ -99,7 +93,6 @@ func (s *Store) SaveProgress(ctx context.Context, username, repertoireID string,
 		var query string
 		var args []any
 		if deltas == nil {
-			// Compatibility path for clients deployed before per-run deltas.
 			query = `
 			INSERT INTO card_progress (username, repertoire_id, card_id, box, lapses, seen, correct, last_seen_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
@@ -127,9 +120,6 @@ func (s *Store) SaveProgress(ctx context.Context, username, repertoireID string,
 					WHEN EXCLUDED.last_seen_at IS NULL THEN card_progress.last_seen_at
 					ELSE GREATEST(card_progress.last_seen_at, EXCLUDED.last_seen_at) END,
 				updated_at = now()`
-			// Insert the operation's increments, not the client's cumulative
-			// snapshot. This also stays correct when two fire-and-forget saves
-			// arrive out of order and the later snapshot happens to insert first.
 			args = []any{username, repertoireID, cardID, cp.Box, delta.Lapses, delta.Seen, delta.Correct, lastSeen, delta.Lapses, delta.Seen, delta.Correct}
 		}
 		_, err := tx.Exec(ctx, query, args...)

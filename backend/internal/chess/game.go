@@ -7,14 +7,6 @@ import (
 	"sync"
 )
 
-// hasAdjacentEnemyPawn reports whether a pawn of enemyColor sits beside sq
-// (same rank, adjacent file) able to capture it en passant next move. The EP
-// target square is only meaningful (and only included in the FEN by other
-// tools like chess.js/python-chess) when such a capture actually exists —
-// setting it unconditionally on every double push produced FENs that
-// disagreed with the frontend's chess.js-computed FEN for the same position
-// whenever no such pawn was present, breaking FEN-keyed lookups (e.g. the
-// opening trainer's CardKey) even though the position was otherwise identical.
 func hasAdjacentEnemyPawn(pos *Position, sq Square, enemyColor Color) bool {
 	rank := sq.Rank()
 	for _, file := range [2]int{sq.File() - 1, sq.File() + 1} {
@@ -139,10 +131,6 @@ type Game struct {
 	counter  int
 }
 
-// Lock exposes the per-game lock to API handlers that need to make a compound
-// operation (for example, apply a move and serialize the resulting tree)
-// atomic. Chess methods themselves intentionally remain lock-free so callers
-// can compose several operations while holding one lock.
 func (g *Game) Lock()    { g.mu.Lock() }
 func (g *Game) Unlock()  { g.mu.Unlock() }
 func (g *Game) RLock()   { g.mu.RLock() }
@@ -205,9 +193,6 @@ func (g *Game) GotoNode(id string) error {
 	return fmt.Errorf("node not found: %s", id)
 }
 
-// DeleteNode removes the subtree rooted at the node with the given id. The root
-// ("0") cannot be deleted. If Current sits inside the removed subtree, Current
-// falls back to the deleted node's parent.
 func (g *Game) DeleteNode(id string) error {
 	if id == g.Root.ID {
 		return fmt.Errorf("cannot delete root node")
@@ -302,12 +287,6 @@ func (g *Game) IsCheckmate() bool   { return g.IsCheck() && !g.HasLegalMoves() }
 func (g *Game) IsStalemate() bool   { return !g.IsCheck() && !g.HasLegalMoves() }
 func (g *Game) Is50MoveRule() bool  { return g.Pos.HalfClock >= 100 }
 
-// IsInsufficientMaterial reports the standard automatic-draw set: bare king
-// vs king, king+minor vs king, and positions containing only bishops where
-// every bishop is confined to the same square color (they can never mate).
-// King+knight+knight vs king is deliberately NOT included — checkmate is
-// possible there against a cooperating defender, just not forceable, which
-// matches how Lichess/python-chess/FIDE draw detection treats it.
 func (g *Game) IsInsufficientMaterial() bool {
 	knights := 0
 	var bishopSquares []Square
@@ -343,9 +322,6 @@ func (g *Game) IsInsufficientMaterial() bool {
 	}
 }
 
-// IsThreefoldRepetition counts equal positions along the active path only.
-// Sibling variations in the move tree are different game histories and must
-// not contribute. The first four FEN fields are the complete repetition key.
 func (g *Game) IsThreefoldRepetition() bool {
 	want := repetitionKey(g.Pos)
 	count := 0
@@ -365,10 +341,6 @@ func repetitionKey(pos *Position) string {
 	if len(fields) < 4 {
 		return FEN(pos)
 	}
-	// An en-passant target distinguishes positions only when the side to move
-	// can legally capture there. A merely adjacent but pinned pawn does not
-	// change the set of legal moves, so FIDE repetition treats the position as
-	// identical to the same board with no EP target.
 	if pos.EP.Valid() {
 		legalEP := false
 		for _, move := range GenerateLegalMoves(pos) {

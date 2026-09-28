@@ -63,16 +63,8 @@ export function useChessGame(initialGameId?: string) {
   const [explorerLoading, setExplorerLoading] = useState(false)
   const [flipped, setFlipped] = useState(false)
   const moveSound = useRef<HTMLAudioElement | null>(null)
-  // Per-FEN analysis cache + request guard: revisiting a position (stepping
-  // back/forward) is instant, and a slow deep pass can't overwrite the readout
-  // for a position the user has already navigated away from.
   const analysisCacheRef = useRef<Map<string, Analysis>>(new Map())
   const analysisReqId = useRef(0)
-  // Shared across selectSquare/move/gotoNodeId — they all mutate the same
-  // `gs`, so only the most recently started one's result should ever land.
-  // `busy` alone isn't enough: it's a state update, not synchronous, so two
-  // calls issued in the same tick (before a re-render disables the button
-  // that triggered them) can both see busy=false and both proceed.
   const gameActionReqId = useRef(0)
   const explorerReqId = useRef(0)
 
@@ -88,16 +80,11 @@ export function useChessGame(initialGameId?: string) {
     }
     setAnalyzing(true)
     try {
-      // Quick pass first (depth-10 / short cloud timeout) so the bar updates
-      // almost immediately, then refine with a full-depth pass unless the quick
-      // result was already a deep cloud hit.
       const quick = await analyzeGame(gameId, 'quick', fen)
       if (reqId === analysisReqId.current) {
         setAnalysis(quick)
         if (fen) analysisCacheRef.current.set(fen, quick)
       }
-      // A tablebase hit is exact, same as a deep cloud hit — no need to
-      // spend a second (redundant) request/tablebase round-trip refining it.
       if (quick.engineName === 'Lichess Cloud' || quick.tablebaseCategory) return quick
       const deep = await analyzeGame(gameId, 'full', fen)
       if (reqId === analysisReqId.current) {

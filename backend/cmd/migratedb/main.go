@@ -1,5 +1,3 @@
-// Command migratedb applies Chesslab's idempotent database schema migrations
-// without starting the HTTP server or seeding application data.
 package main
 
 import (

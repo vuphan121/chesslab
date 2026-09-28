@@ -79,9 +79,6 @@ export interface Analysis {
   depth: number
   engineName: string
   lines: AnalysisLine[]
-  // Set instead of a normal engine result when the position was resolved via
-  // an exact Syzygy tablebase lookup (≤7 pieces) — see backend CLAUDE.md.
-  // White-relative, like score/mate.
   tablebaseCategory?: TablebaseCategory
   tablebaseDtz?: number
 }
@@ -198,11 +195,6 @@ export interface PositionEval {
   bestMoves?: PositionEvalMove[]
 }
 
-// Batch-looks-up precomputed opening-position evals (see backend
-// internal/evalprecompute) for a whole line at once — the trainer calls
-// this once when a run finishes, not per-ply. A FEN missing from the
-// response just means the precompute cron hasn't caught up to that
-// position yet, not an error.
 export const getPositionEvals = (fens: string[]): Promise<Record<string, PositionEval>> => {
   if (fens.length === 0) return Promise.resolve({})
   return request(`/api/position-evals?fens=${encodeURIComponent(fens.join(','))}`)

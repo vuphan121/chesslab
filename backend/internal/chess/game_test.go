@@ -85,9 +85,6 @@ func TestGameDetectsThreefoldRepetitionOnCurrentPath(t *testing.T) {
 }
 
 func TestThreefoldIgnoresEnPassantWhenCaptureIsIllegal(t *testing.T) {
-	// e5xd6 en passant would expose the white king on e1 to the rook on e8,
-	// so the initial EP target does not distinguish this position for
-	// repetition purposes.
 	g, err := NewGameFromFEN("pinned-ep", "k3r3/8/8/3pP3/8/8/8/4K3 w - d6 0 1")
 	if err != nil {
 		t.Fatal(err)

@@ -6,11 +6,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// VerifyUser runs a bcrypt compare against dummyHash when the username
-// isn't found, so a missing user takes roughly as long to reject as a real
-// one with a wrong password (otherwise response timing alone reveals which
-// usernames exist). This just confirms the decoy hash is valid and usable —
-// the actual DB-backed path isn't exercised here.
 func TestDummyHashIsValidForTimingGuard(t *testing.T) {
 	if len(dummyHash) == 0 {
 		t.Fatal("mustDummyHash produced an empty hash")

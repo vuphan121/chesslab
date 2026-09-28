@@ -32,11 +32,6 @@ type rankedTodayTrainingEntry struct {
 	rank int64
 }
 
-// pgxQuerier is the read-only subset of *pgxpool.Pool and pgx.Tx that the
-// settings/entries fetch helpers below need, so the same query logic runs
-// unchanged whether it's called outside a transaction (GetTodayTraining) or
-// inside one that already holds the per-user advisory lock (RefreshTodayTraining,
-// AdvanceTodayTraining) — this used to be copy-pasted once per caller.
 type pgxQuerier interface {
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
@@ -78,11 +73,6 @@ func fetchTodayTrainingEntries(ctx context.Context, q pgxQuerier, username, queu
 	return entries, rows.Err()
 }
 
-// fetchTodayTraining is GetTodayTraining's actual implementation, generalized
-// over pgxQuerier so RefreshTodayTraining can call it against its own tx
-// (previously duplicated as getTodayTrainingTx). No settings row is not an
-// error — a user who's never configured mixed training just gets an empty
-// queue.
 func fetchTodayTraining(ctx context.Context, q pgxQuerier, username, queueDate string) (TodayTrainingQueue, error) {
 	var out TodayTrainingQueue
 	settings, err := fetchTodayTrainingSettings(ctx, q, username)
@@ -135,9 +125,6 @@ func (s *Store) SaveTodayTraining(ctx context.Context, username, queueDate strin
 	return TodayTrainingQueue{Settings: &settings, Entries: entries}, nil
 }
 
-// RefreshTodayTraining replaces a stale queue only if the settings observed by
-// the caller are still current. If another device changed settings meanwhile,
-// it returns that newer queue instead of restoring stale data.
 func (s *Store) RefreshTodayTraining(ctx context.Context, username, queueDate string, expected TodayTrainingSettings, entries []TodayTrainingEntry) (TodayTrainingQueue, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -246,10 +233,6 @@ func (s *Store) AdvanceTodayTraining(ctx context.Context, username, queueDate, r
 	return TodayTrainingQueue{Settings: &settings, Entries: out}, nil
 }
 
-// The queue is one logical resource per user. A transaction-scoped advisory
-// lock serializes settings rebuilds and advances even when two devices hit
-// different rows (or the queue is temporarily empty, where row locks cannot
-// protect anything).
 func lockTodayTraining(ctx context.Context, tx pgx.Tx, username string) error {
 	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, username); err != nil {
 		return fmt.Errorf("lock today training: %w", err)

@@ -2,9 +2,7 @@ interface Props {
   score: number
   mate: number
   height: number
-  /** Board orientation. When true, White's fill grows from the top (Black at bottom), Lichess-style. */
   flipped?: boolean
-  /** Show the numeric readout on the bar. Off when there's no real analysis yet. */
   hasEval?: boolean
 }
 
@@ -23,7 +21,6 @@ export default function EvalBar({ score, mate, height, flipped = false, hasEval 
   }
 
   const whiteBetter = mate !== 0 ? mate > 0 : score >= 0
-  // The number sits at the end of the bar the winning side occupies.
   const numberAtBottom = whiteBetter !== flipped
 
   return (

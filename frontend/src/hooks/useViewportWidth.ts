@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from 'react'
 
-// `dimension` is a stable primitive (not a closure) so the effect below can
-// keep an empty dependency array — a function prop recreated every render
-// would otherwise tear down and re-add the resize listener on every render.
 function useWindowDimension(dimension: 'width' | 'height'): number | null {
   const [value, setValue] = useState<number | null>(null)
 

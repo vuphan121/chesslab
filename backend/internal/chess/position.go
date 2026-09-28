@@ -21,8 +21,6 @@ func (pos *Position) PieceAt(sq Square) *Piece {
 	return pos.Board[sq]
 }
 
-// PieceCount returns the total number of pieces on the board (both colors,
-// including kings) — the figure Syzygy tablebase coverage is measured by.
 func (pos *Position) PieceCount() int {
 	n := 0
 	for _, p := range pos.Board {

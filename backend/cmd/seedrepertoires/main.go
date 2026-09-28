@@ -1,21 +1,3 @@
-// Command seedrepertoires upserts DB-managed opening-trainer repertoires into the
-// `repertoire_sources` Postgres table, the same store the in-app "Manage
-// repertoires" import/refresh flow writes to (internal/db/repertoire_sources.go,
-// internal/api/repertoire_management_handler.go).
-//
-// Each input is a <name>.config.json sidecar (repertoire.Config: id, name, side,
-// source study URL, description, excluded rules). For every sidecar this fetches
-// the Lichess study PGN fresh, parses + builds it (hard-failing if it has no
-// drillable lines), and upserts {id, source_url, pgn, config} keyed by id. On the
-// server's next boot, loadManagedRepertoires replays these rows over any
-// file-based repertoire of the same id loaded from data/repertoires/.
-//
-// Usage:
-//
-//	DATABASE_URL=... [LICHESS_TOKEN=...] go run ./cmd/seedrepertoires [dir]
-//
-// dir defaults to data/managed-repertoires. .env in the working directory is
-// loaded for any vars not already set, matching cmd/seedbooks.
 package main
 
 import (

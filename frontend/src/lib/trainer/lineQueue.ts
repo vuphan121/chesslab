@@ -4,18 +4,11 @@ import { shuffle } from './rng'
 
 export interface ChapterLine {
   sans: string[]
-  // uci of every ply along the line (same length as sans) — lets a hover
-  // preview show the move that was just played, not just the resting FEN.
   ucis: string[]
-  // cardKey of every position along the line, chapter root included — how a
-  // line is matched against the session's per-card state.
   positionKeys: string[]
   hasExcluded: boolean
 }
 
-// Every root-to-leaf path of a chapter tree. Also what the setup screen uses
-// for its per-chapter "N lines" count, so the count and the drill queue can
-// never disagree about what a "line" is.
 export function enumerateLines(
   node: RepNode,
   sans: string[] = [],
@@ -49,8 +42,6 @@ export interface DrillLine {
   positionKeys: string[]
 }
 
-// Lines flagged as inferior in the source study are left out entirely, same
-// as the setup screen's line count.
 export function buildDrillLines(chapters: RepChapter[]): DrillLine[] {
   return chapters.flatMap((ch) =>
     enumerateLines(ch.tree)
@@ -70,20 +61,6 @@ export function createLineQueue(lines: DrillLine[], rng: () => number): LineQueu
   return { lines, pending: [], lastId: null, rng }
 }
 
-/**
- * Deals lines like a shuffled deck: every eligible line comes up exactly once
- * before any line comes up a second time, then the deck is reshuffled.
- *
- * This replaced a uniform random draw with replacement, which is what made a
- * line reappear after only one or two others (nothing stopped it) and left
- * some lines unseen for a long stretch. The one seam a deck has — the last
- * line of one pass being dealt again first in the next — is smoothed over by
- * rotating the new deck when that would happen.
- *
- * `isActive` says whether a line still has something left to drill (e.g. not
- * every card on it is retired); inactive lines are skipped and dropped from
- * the current pass.
- */
 export function nextQueuedLine(q: LineQueue, isActive: (line: DrillLine) => boolean): DrillLine | null {
   q.pending = q.pending.filter(isActive)
   if (q.pending.length === 0) {
@@ -99,21 +76,6 @@ export function nextQueuedLine(q: LineQueue, isActive: (line: DrillLine) => bool
   return line
 }
 
-/**
- * Moves a run onto a different line of the deck when the user plays a move
- * that's in their repertoire but not on the line they were dealt. Positions
- * with several repertoire moves are common, e.g. one chapter per candidate
- * move, and without this the run kept "following" the old line's
- * replies from a position that line never reaches.
- *
- * Picks a line that passes through `positionKey` (the position after the
- * user's move). It prefers a line not yet dealt this pass, then one from
- * `preferChapterId`, with `q.rng` breaking ties. The line that was dealt goes
- * back into the pending pile, since it hasn't actually been drilled, and the
- * chosen line leaves it. `rest` is the chosen line's SAN from that position
- * on. Returns null when no line in the deck reaches the position (e.g. the
- * move only appears in a chapter that wasn't selected).
- */
 export function switchToLineThrough(
   q: LineQueue,
   positionKey: string,

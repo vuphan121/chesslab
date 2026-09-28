@@ -65,11 +65,6 @@ type cachedAnalysis struct {
 
 var errEngineUnavailable = errors.New("engine not configured")
 
-// precomputeEng is a second, dedicated Stockfish instance (may be nil) used
-// only by the eval-precompute cron endpoint (see cron_handler.go's
-// PrecomputeEvals) — kept separate from eng so a running precompute batch
-// never contends with a live user's /analysis request through the shared
-// single-Stockfish mutex in engine.Engine.
 func NewHandler(store storage.Store, eng *engine.Engine, precomputeEng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config, bookSource booksource.Reader, bookChapterPrefix string) *Handler {
 	return &Handler{store: store, engine: eng, precomputeEngine: precomputeEng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix, prefetchedCloud: make(map[string]prefetchedCloudEval), prefetchSem: make(chan struct{}, 1), analysisCache: make(map[string]cachedAnalysis), loginLimiter: newLoginLimiter(5, 5*time.Minute, time.Now), lineImportanceGen: make(map[string]int64)}
 }
@@ -135,17 +130,14 @@ type LineJSON struct {
 }
 
 type AnalysisJSON struct {
-	BestMove   string     `json:"bestMove"`
-	Score      int        `json:"score"`
-	Mate       int        `json:"mate"`
-	Depth      int        `json:"depth"`
-	EngineName string     `json:"engineName"`
-	Lines      []LineJSON `json:"lines"`
-	// TablebaseCategory/TablebaseDTZ are only set when the position was
-	// resolved via a Syzygy tablebase lookup instead of engine search — see
-	// tablebaseAnalysis. White-relative, like Score/Mate.
-	TablebaseCategory string `json:"tablebaseCategory,omitempty"`
-	TablebaseDTZ      *int   `json:"tablebaseDtz,omitempty"`
+	BestMove          string     `json:"bestMove"`
+	Score             int        `json:"score"`
+	Mate              int        `json:"mate"`
+	Depth             int        `json:"depth"`
+	EngineName        string     `json:"engineName"`
+	Lines             []LineJSON `json:"lines"`
+	TablebaseCategory string     `json:"tablebaseCategory,omitempty"`
+	TablebaseDTZ      *int       `json:"tablebaseDtz,omitempty"`
 }
 
 type ExplorerMoveJSON struct {
@@ -372,10 +364,6 @@ func (h *Handler) analyzePosition(fen string, pos *chess.Position, quick bool) (
 
 	tablebaseEligible := pos.PieceCount() <= lichess.MaxTablebasePieces
 	if tablebaseEligible {
-		// Bounded to the same budget as the cloud-eval call just below (400ms
-		// quick / 3s full) — an unbounded lookup here would let a slow
-		// tablebase response blow the "quick" pass's whole latency budget,
-		// defeating the reason it's split from "full" in the first place.
 		if tb, err := lichess.FetchTablebaseWithTimeout(fen, cloudTimeout); err == nil && tb != nil {
 			return tablebaseAnalysis(pos, tb), nil
 		} else if err != nil && !quick {
@@ -383,14 +371,6 @@ func (h *Handler) analyzePosition(fen string, pos *chess.Position, quick bool) (
 		}
 	}
 
-	// Skip the cloud-eval attempt below when a tablebase-eligible position's
-	// lookup just missed/timed out: that cache is populated from real played
-	// games' opening/middlegame analysis, so a sparse (≤7-piece) synthetic
-	// endgame FEN is essentially never going to hit it anyway. Trying it here
-	// would stack a second up-to-cloudTimeout wait on top of the tablebase
-	// attempt for no realistic benefit — verified live: a quick-pass
-	// tablebase miss followed by this cloud attempt measured ~880ms, more
-	// than double the ~400ms "quick" budget this pass is supposed to honor.
 	if !tablebaseEligible {
 		if cloud := h.takePrefetchedCloud(fen); cloud != nil {
 			return cloudAnalysis(pos, cloud), nil
@@ -487,29 +467,6 @@ func cloudAnalysis(pos *chess.Position, cloud *lichess.CloudEval) AnalysisJSON {
 	return result
 }
 
-// tablebaseAnalysis converts a Syzygy lookup (side-to-move relative) into the
-// app's White-relative AnalysisJSON shape, matching how cloudAnalysis/the
-// Stockfish path already normalize score/mate. There's no centipawn score
-// for an exact result, so decisive categories get a saturating sentinel
-// (±10000 — same order of magnitude the eval bar's tanh curve already
-// treats as a full 97/3% fill) instead of a fabricated cp value; Mate is
-// only set when the API returned a real distance-to-mate (DTM), which it
-// only does up to 6-man positions.
-//
-// "cursed-win"/"blessed-loss" are NOT decisive here, even though the raw
-// win/loss exists in unlimited play: the position is a provable DRAW under
-// the 50-move rule (the losing side can always claim it — that's the literal
-// definition of "cursed"/"blessed"), and Lichess's own /standard/mainline
-// endpoint claims exactly that draw as soon as possible. Treating them as a
-// ±10000 win/loss with a fabricated "#N" mate (from the raw DTM, which
-// ignores the 50-move rule entirely) would show a forced result that isn't
-// actually provable under standard rules — verified live: the repro
-// `8/8/8/7p/3K1N2/5N2/2k5/8 b - - 50 1` (a real "blessed-loss") produced a
-// DTM-derived "Mate: 69" before this fix, despite being a legally drawn
-// position. "maybe-win"/"maybe-loss" (result uncertain, some search was
-// capped) are excluded from decisive treatment for the same reason: neither
-// is a provable result. "unknown"/"draw" fall through untouched (Score/Mate
-// stay 0).
 func tablebaseAnalysis(pos *chess.Position, tb *lichess.TablebaseResult) AnalysisJSON {
 	flip := pos.Turn == chess.Black
 
@@ -525,10 +482,6 @@ func tablebaseAnalysis(pos *chess.Position, tb *lichess.TablebaseResult) Analysi
 		result.TablebaseDTZ = &dtz
 	}
 
-	// "syzygy-win"/"syzygy-loss" are a documented Lichess category (see the
-	// lila-tablebase README's full category list) for a decisive result
-	// sourced from a coarser table than the primary win/loss lookup — still
-	// provable under the 50-move rule, unlike cursed-win/blessed-loss/maybe-*.
 	decisive := tb.Category == "win" || tb.Category == "loss" ||
 		tb.Category == "syzygy-win" || tb.Category == "syzygy-loss"
 
@@ -560,9 +513,6 @@ func tablebaseAnalysis(pos *chess.Position, tb *lichess.TablebaseResult) Analysi
 	return result
 }
 
-// flipTablebaseCategory normalizes a side-to-move-relative category to
-// White-relative by swapping each win/loss pair when Black is to move; draw
-// categories are symmetric and pass through unchanged.
 func flipTablebaseCategory(category string, flip bool) string {
 	if !flip {
 		return category
@@ -584,24 +534,11 @@ func flipTablebaseCategory(category string, flip bool) string {
 		return "syzygy-loss"
 	case "syzygy-loss":
 		return "syzygy-win"
-	default: // "draw", "unknown" are symmetric
+	default:
 		return category
 	}
 }
 
-// bestTablebaseMove returns Lichess's own best reply. The API's docs state
-// the "moves" array is "information about legal moves, best first"
-// (lila-tablebase's README), so no client-side re-ranking is needed.
-//
-// An earlier version re-ranked moves itself, collapsing "loss"/"blessed-loss"/
-// "maybe-loss" into one tier and tie-breaking by DTM — but "blessed-loss"
-// means the opponent's loss is only real without the 50-move rule (a
-// provable draw with it), while "loss" is a real, provable loss for them;
-// DTM (raw plies-to-mate) has no relation to the 50-move threshold that
-// separates the two, so that tie-break could prefer a move that merely draws
-// over one that actually wins. Trusting Lichess's documented ordering
-// sidesteps the whole class of bug. Returns nil if Moves is empty (e.g. the
-// position is already checkmate/stalemate).
 func bestTablebaseMove(moves []lichess.TablebaseMove) *lichess.TablebaseMove {
 	if len(moves) == 0 {
 		return nil
@@ -616,9 +553,6 @@ func abs(n int) int {
 	return n
 }
 
-// Prefetching is deliberately cloud-only: background Stockfish searches would contend with the
-// foreground engine and make a user's next move slower. This is a short-lived buffer for likely
-// child positions, not a general-purpose evaluation cache.
 func (h *Handler) prefetchLikelyReplies(lines []LineJSON) {
 	fens := make([]string, 0, 2)
 	for _, line := range lines {
@@ -718,16 +652,6 @@ func (h *Handler) EvalFEN(w http.ResponseWriter, r *http.Request) {
 	}
 	flipScore := pos.Turn == chess.Black
 
-	// Matches analyzePosition's own game-over guard: a checkmate/stalemate
-	// position has no "next move" to evaluate, and asking the tablebase
-	// about one anyway produces a misleading result — verified live: Lichess
-	// itself reports the terminal position's own dtz as -1 (a sentinel, not
-	// "1 more ply needed"), but tablebaseAnalysis doesn't special-case
-	// Checkmate/Stalemate, so a real checkmate FEN came back as
-	// `"tablebaseDtz":1` — implying more play was still needed in a game
-	// that already ended. Short-circuiting here (same as AnalyzeGame already
-	// does) avoids the external call entirely for a position this engine
-	// already fully understands.
 	if probe, perr := chess.NewGameFromFEN("", fen); perr == nil && probe.IsGameOver() {
 		respondJSON(w, http.StatusOK, EvalFENResponse{})
 		return
@@ -747,11 +671,6 @@ func (h *Handler) EvalFEN(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Same reasoning as analyzePosition: skip the cloud-eval attempt after a
-	// tablebase miss on an eligible (≤7-piece) position — that cache is
-	// populated from real games' opening/middlegame analysis, so a sparse
-	// synthetic endgame FEN is essentially never going to hit it, and trying
-	// anyway would stack a second multi-second timeout on top of the first.
 	if !tablebaseEligible {
 		if cloud, cerr := lichess.Fetch(fen, 1); cerr == nil && cloud != nil && len(cloud.PVs) > 0 {
 			pv := cloud.PVs[0]
@@ -918,11 +837,6 @@ func toGameStateLocked(g *chess.Game) GameStateJSON {
 	}
 }
 
-// rootPly is the game-wide ply of a tree's root position, so a node's Ply
-// always has White's moves odd and Black's even, whatever the start. Move lists
-// number and pair moves from ply parity. Counting from 0 at every root put a
-// Black-to-move start's first move (e.g. a book puzzle or an "Analyze this line"
-// from a Black repertoire) in the White column.
 func rootPly(pos *chess.Position) int {
 	ply := (pos.FullMove - 1) * 2
 	if pos.Turn == chess.Black {

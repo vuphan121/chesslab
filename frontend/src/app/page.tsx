@@ -19,9 +19,6 @@ const OUTER_PADDING_NARROW = 14
 const ROW_GAP_DESKTOP = 20
 
 
-// "11 + 15" is the pre-existing (stale — EvalBar is actually 22px) board-row
-// gap+eval-bar allowance; "+ 11 + MATERIAL_CORNERS_WIDTH" is this row's new
-// third flex child (board → gap → MaterialCorners → gap → EvalBar).
 const FULL_CONTAINER_WIDTH =
   SIDE_WIDTH * 2 + ROW_GAP_DESKTOP * 2 + (DESKTOP_SQUARE_SIZE * 8 + 11 + 15 + 11 + MATERIAL_CORNERS_WIDTH) + OUTER_PADDING_DESKTOP * 2
 const MIN_DESKTOP_SCALE = 0.45
@@ -41,10 +38,6 @@ function formatEval(score: number, mate: number): string {
   return score >= 0 ? `+${v}` : `-${v}`
 }
 
-// A tablebase result with no DTM (7-man positions never carry one — see
-// backend CLAUDE.md) has no real mate/cp number, just an exact category —
-// showing "+100.0" from the score sentinel would look like a real eval, so
-// this takes over whenever mate is unavailable.
 function formatTablebaseEval(score: number, mate: number, category: string): string {
   if (mate !== 0) return formatEval(score, mate)
   switch (category) {

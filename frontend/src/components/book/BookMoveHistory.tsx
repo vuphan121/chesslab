@@ -47,8 +47,6 @@ export default function BookMoveHistory({
     }
   }, [menu])
 
-  // The line through the current move, so a sideline the user branched into
-  // is what's listed (and what "Save line" saves), not the old main line.
   const mainline: MoveNode[] = activeLine(moveTree, currentNodeId)
 
   const moveCell = (move: MoveNode | undefined) => {
@@ -76,8 +74,6 @@ export default function BookMoveHistory({
     )
   }
 
-  // Pair moves by ply parity (odd = White), not by list position: a
-  // Black-to-move start's first move belongs in the Black column.
   const pairs: { num: number; white?: MoveNode; black?: MoveNode }[] = []
   for (const move of mainline) {
     const num = Math.ceil(move.ply / 2)

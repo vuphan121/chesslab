@@ -28,10 +28,6 @@ func TestLocalRequestClockFallsBackToUTC(t *testing.T) {
 	}
 }
 
-// "Local" is a Go-only special case (time.LoadLocation("Local") resolves to
-// the process's own OS zone without erroring), not a real IANA zone name —
-// it must fall back to UTC like any other invalid zone, not silently adopt
-// whatever zone the server happens to be running in.
 func TestLocalRequestClockRejectsGoLocalSentinel(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	r.Header.Set(timeZoneHeader, "Local")

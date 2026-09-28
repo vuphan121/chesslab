@@ -26,34 +26,23 @@ type Analysis struct {
 	Lines    []Line
 }
 
-// These bound how long we'll wait on the Stockfish subprocess before giving
-// up. Without them, a wedged/hung process blocked every read forever while
-// Analyze held Engine.mu — one stuck call meant every subsequent analysis
-// request, for any game, hung too, with no recovery short of a process
-// restart. A timeout turns that into a bounded per-request failure instead
-// of a permanent server-wide outage.
 const (
 	handshakeTimeout = 10 * time.Second
 	analyzeTimeout   = 30 * time.Second
 	closeTimeout     = 5 * time.Second
 	stopTimeout      = 2 * time.Second
-	// movetimeGrace is slack on top of a "go movetime" search before we treat
-	// the engine as hung (process startup jitter, a loaded CPU).
-	movetimeGrace = 10 * time.Second
+	movetimeGrace    = 10 * time.Second
 )
 
 var errEngineUnavailable = errors.New("engine unavailable")
 
 type Engine struct {
-	mu    sync.Mutex
-	path  string
-	cmd   *exec.Cmd
-	in    io.WriteCloser
-	lines <-chan string
-	Name  string
-	// lowPriority runs the subprocess at the lowest CPU priority (see
-	// NewLowPriority). Kept on the Engine so a restart after a hung search
-	// (startLocked) comes back up at the same priority.
+	mu          sync.Mutex
+	path        string
+	cmd         *exec.Cmd
+	in          io.WriteCloser
+	lines       <-chan string
+	Name        string
 	lowPriority bool
 }
 
@@ -61,12 +50,6 @@ func New(path string) (*Engine, error) {
 	return newEngine(path, false)
 }
 
-// NewLowPriority is New, but the Stockfish subprocess runs at the lowest CPU
-// priority (nice 19) where the OS supports it (Linux with `nice` on PATH;
-// elsewhere it is a plain New). For background work such as the eval
-// precompute cron: on a small shared-CPU host the scheduler then gives the
-// web server whatever CPU it needs and the engine only what is left, without
-// ever pausing or interrupting a search.
 func NewLowPriority(path string) (*Engine, error) {
 	return newEngine(path, true)
 }
@@ -79,12 +62,6 @@ func newEngine(path string, lowPriority bool) (*Engine, error) {
 	return e, nil
 }
 
-// command builds the subprocess command. Low priority goes through `nice`
-// rather than setpriority(2) after Start: on Linux the niceness is per
-// thread and only threads created afterwards inherit it, so adjusting the
-// child's pid would race with Stockfish spinning up its search thread and
-// could leave that thread at normal priority. nice execs the engine in the
-// same process, so every thread starts at the lowered priority.
 func (e *Engine) command() *exec.Cmd {
 	if e.lowPriority && runtime.GOOS == "linux" {
 		if nicePath, err := exec.LookPath("nice"); err == nil {
@@ -109,10 +86,6 @@ func (e *Engine) startLocked() error {
 		return fmt.Errorf("start engine: %w", err)
 	}
 
-	// A dedicated reader goroutine decouples "wait for the next line" from
-	// "the actual blocking read" — Scan() itself has no timeout support, so
-	// the only portable way to bound a wait on it is to let it block in its
-	// own goroutine and have callers select on a channel with a deadline.
 	lines := make(chan string, 64)
 	go func() {
 		scanner := bufio.NewScanner(outPipe)
@@ -141,8 +114,6 @@ func (e *Engine) send(s string) error {
 	return nil
 }
 
-// readLine waits for the next engine output line. ok is false if the
-// process's stdout closed (it exited) or the timeout elapsed first.
 func (e *Engine) readLine(timeout time.Duration) (line string, ok bool) {
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
@@ -181,14 +152,6 @@ func (e *Engine) Analyze(fen string, multiPV, depth int) (*Analysis, error) {
 	return e.AnalyzeTimed(fen, multiPV, depth, 0)
 }
 
-// AnalyzeTimed is Analyze with an extra wall-clock cap on the search itself
-// (UCI "go depth N movetime T": stops at whichever limit is hit first). With
-// moveTime > 0 the search ends cleanly at moveTime with whatever depth it
-// reached — the returned Lines carry that real depth — instead of running
-// into analyzeTimeout and being thrown away as a failure. That matters on a
-// slow/shared CPU, where reaching a fixed deep depth can take longer than
-// analyzeTimeout for every single position. moveTime <= 0 means depth-only,
-// bounded by analyzeTimeout as before.
 func (e *Engine) AnalyzeTimed(fen string, multiPV, depth int, moveTime time.Duration) (*Analysis, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -221,8 +184,6 @@ func (e *Engine) analyzeLocked(fen string, multiPV, depth int, moveTime time.Dur
 		return nil, err
 	}
 	goCmd := fmt.Sprintf("go depth %d", depth)
-	// The hard deadline below must outlast the search's own movetime, or a
-	// search that stops exactly on time would be misread as a hang.
 	searchTimeout := analyzeTimeout
 	if moveTime > 0 {
 		goCmd += fmt.Sprintf(" movetime %d", moveTime.Milliseconds())
@@ -275,9 +236,6 @@ func (e *Engine) analyzeLocked(fen string, multiPV, depth int, moveTime time.Dur
 	return a, nil
 }
 
-// stopAndDrainLocked restores the UCI command boundary after a timed-out
-// search. If Stockfish will not acknowledge stop with bestmove, replace the
-// process so stale output can never leak into the next request.
 func (e *Engine) stopAndDrainLocked() {
 	if e.send("stop") == nil && e.waitFor("bestmove", stopTimeout) {
 		return
@@ -318,9 +276,6 @@ func (e *Engine) waitFor(prefix string, timeout time.Duration) bool {
 	}
 }
 
-// Close asks the engine to quit and waits for the process to exit, killing
-// it if it doesn't within closeTimeout — "quit" going unanswered by a wedged
-// process used to hang shutdown forever via an unbounded cmd.Wait().
 func (e *Engine) Close() {
 	e.mu.Lock()
 	defer e.mu.Unlock()

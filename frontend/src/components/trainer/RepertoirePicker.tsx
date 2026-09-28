@@ -46,7 +46,6 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
         if (reqId === fullRepReqId.current) setFullRep(rep)
       })
       .catch(() => {
-        // degrade gracefully — chapter line previews just stay unavailable
       })
       .finally(() => {
         if (reqId === fullRepReqId.current) setFullRepLoading(false)
@@ -71,10 +70,6 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
 
   const selected = reps?.find((r) => r.id === selectedId) ?? null
 
-  // Walking every chapter's full move tree is real recursive work; without
-  // memoizing it, it reran for every chapter on every render of this
-  // component — including one caused by toggling a different chapter's
-  // checkbox or expanding a different chapter's "Lines" panel.
   const chapterLinesById = useMemo(() => {
     const map: Record<string, ChapterLine[]> = {}
     if (fullRep?.id !== selectedId) return map
@@ -88,14 +83,6 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
     listRepertoires()
       .then((list) => {
         setReps(list)
-        // A refresh is a full rebuild (see backend CLAUDE.md's "Repertoire
-        // management"), so when the CHANGED repertoire is the one currently
-        // selected, its chapter ids can no longer match what's already in
-        // `selectedChapters`/`fullRep` — re-select it against the fresh list
-        // rather than leaving the panel showing stale chapter ids and a line
-        // preview built from the pre-refresh tree. An unrelated repertoire
-        // changing (import, or refreshing a different row) must NOT reset
-        // this one's selection.
         const changed = changedId ? list.find((r) => r.id === changedId) : undefined
         if (changed && changed.id === selectedId) {
           selectRepertoire(changed.id, changed.chapters.map((chapter) => chapter.id))

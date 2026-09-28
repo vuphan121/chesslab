@@ -11,8 +11,6 @@ import { toFigurine } from '@/lib/chess/figurine'
 function formatMoveEval(e: FenEval): string {
   if (e.mate !== 0) return `#${e.mate}`
   if (e.tablebaseCategory) {
-    // No DTM (7-man positions never carry one — see backend CLAUDE.md), so
-    // there's no number to show, just which side the tablebase says wins.
     switch (e.tablebaseCategory) {
       case 'win':
       case 'syzygy-win':

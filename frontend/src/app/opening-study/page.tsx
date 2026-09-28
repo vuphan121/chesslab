@@ -21,18 +21,8 @@ const OUTER_PADDING_NARROW = 14
 const ROW_GAP_DESKTOP = 20
 const STUDY_BACKGROUND = 'linear-gradient(135deg, #f1f0e9 0%, #eef1f0 52%, #e9edef 100%)'
 
-// Space reserved next to the board for the precomputed-eval bar (see
-// backend internal/evalprecompute) — reserved unconditionally (not just
-// while the bar is actually showing) so the button column never shifts
-// depending on the toggle state below, only once relative to the pre-eval-bar
-// layout.
 const EVAL_BAR_WIDTH = 22
 
-// Captured-material display sits above/below the board (Lichess-style),
-// not beside it — reserved at a fixed height regardless of whether either
-// side is actually ahead in material, same "reserve the slot, not just the
-// content" reasoning as EVAL_BAR_WIDTH above, so the board never shifts as
-// captures happen mid-line.
 const MATERIAL_STRIP_HEIGHT = 22
 
 type EvalDisplay = 'off' | 'eval' | 'eval-moves'
@@ -43,35 +33,16 @@ const EVAL_DISPLAY_LABEL: Record<EvalDisplay, string> = {
   eval: 'Eval: Bar',
   'eval-moves': 'Eval: Bar + Moves',
 }
-// Rank-based arrow weighting for the top 5 precomputed candidate moves,
-// biggest/clearest for the engine's best move down to faintest for the
-// 5th — same pattern book-study/page.tsx already uses for its 3-line live
-// analysis arrows, just extended to 5 ranks for the deeper MultiPV data
-// this table stores.
 const SUGGESTION_ARROW_SCALES = [1, 0.82, 0.66, 0.52, 0.4]
 
 
 
 
 
-// The gaps (LinePanel↔board, board↔eval bar, eval bar↔button column) and
-// outer side padding don't shrink with the board — only
-// board/sideWidth/buttonColWidth do — so they're subtracted out before
-// scaling and added back after. Otherwise this fixed overhead doesn't
-// scale down at narrower desktop widths and the scaled content can overflow
-// its grid track by a few px, which is exactly the kind of overlap this
-// layout must never produce. The eval bar's reserved slot is likewise
-// fixed-width (shrinking it further would make it illegible), so it's in
-// the fixed overhead too, not the scalable budget. The material strips
-// above/below the board are fixed-*height*, not width, so they affect
-// vertical sizing (see heightSquareSize) instead of this horizontal sum.
 const FIXED_OVERHEAD = ROW_GAP_DESKTOP * 3 + OUTER_PADDING_DESKTOP * 2 + EVAL_BAR_WIDTH
 const SCALABLE_WIDTH = DESKTOP_SQUARE_SIZE * 8 + SIDE_WIDTH + BUTTON_COL_WIDTH
 const FULL_CONTAINER_WIDTH = SCALABLE_WIDTH + FIXED_OVERHEAD
 const MIN_DESKTOP_SCALE = 0.45
-// TopBar + Back row + vertical padding above the board, plus the page's own
-// bottom padding below it — kept in sync with the JSX below so the board
-// height calc can reserve exactly this much and never force a page scroll.
 const RESERVED_VERTICAL = 150
 
 export default function OpeningStudyPage() {
@@ -119,9 +90,6 @@ export default function OpeningStudyPage() {
       const stored = localStorage.getItem(EVAL_DISPLAY_STORAGE_KEY)
       if (stored === 'off' || stored === 'eval' || stored === 'eval-moves') setEvalDisplay(stored)
     } catch {
-      // localStorage unavailable (private window, blocked site data) — just
-      // keep the default, same "degrade, don't block" stance as everywhere
-      // else in this app.
     }
   }, [])
   const cycleEvalDisplay = () => {
@@ -130,7 +98,6 @@ export default function OpeningStudyPage() {
       try {
         localStorage.setItem(EVAL_DISPLAY_STORAGE_KEY, next)
       } catch {
-        // ignore — see above
       }
       return next
     })
@@ -158,12 +125,6 @@ export default function OpeningStudyPage() {
   const sideWidth = isNarrow ? SIDE_WIDTH : Math.floor(SIDE_WIDTH * desktopScale)
   const buttonColWidth = isNarrow ? SIDE_WIDTH : Math.floor(BUTTON_COL_WIDTH * desktopScale)
   const rowGap = 20
-  // The move panel is pinned to the left edge; the board itself (not the
-  // board+buttons group — the button column's own width would skew it) is
-  // centered in the true available width whenever there's room for that
-  // without touching the panel, and otherwise clamped to sit just to its
-  // right — so the board is as close to dead-center as possible without
-  // ever overlapping the panel. The button column just trails the board.
   const contentWidth = (viewportWidth ?? FULL_CONTAINER_WIDTH) - outerPadding * 2
   const idealBoardLeft = (contentWidth - boardSize) / 2
   const minBoardLeft = sideWidth + rowGap
@@ -444,10 +405,6 @@ function endBtn(primary: boolean): React.CSSProperties {
   }
 }
 
-// Square icon-only variant of endBtn, same color logic — used where a
-// glyph replaces the button's old text label (Next line / Do it again /
-// the eval-display toggle), so the run-completion controls read as a
-// compact icon row instead of a stack of text pills.
 function iconBtn(primary: boolean): React.CSSProperties {
   return {
     width: 40,
@@ -464,8 +421,6 @@ function iconBtn(primary: boolean): React.CSSProperties {
   }
 }
 
-// Simple right-pointing arrow — Next line moves on to a new line, same
-// stroke style as RedoIcon below.
 function NextLineIcon() {
   return (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -475,7 +430,6 @@ function NextLineIcon() {
   )
 }
 
-// Single clockwise-rotation arrow — the universal "retry/redo" glyph.
 function RedoIcon() {
   return (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -485,9 +439,6 @@ function RedoIcon() {
   )
 }
 
-// Eval-display toggle glyph: a bar-chart icon (grey when off, blue once
-// showing) with a small arrow badge added only in the "+ moves" state,
-// since arrows are literally what that state adds to the board.
 function EvalIcon({ state }: { state: EvalDisplay }) {
   const on = state !== 'off'
   const color = on ? '#4a90d9' : '#b4b1a8'

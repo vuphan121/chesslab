@@ -33,8 +33,6 @@ func TestFlipTablebaseCategory(t *testing.T) {
 }
 
 func TestBestTablebaseMove(t *testing.T) {
-	// bestTablebaseMove trusts Lichess's documented "best first" ordering —
-	// it must return element 0 regardless of category/DTZ/DTM shape.
 	moves := []lichess.TablebaseMove{
 		{UCI: "e6d6", Category: "loss", DTZ: intPtr(-2), DTM: intPtr(-20)},
 		{UCI: "e6f6", Category: "loss", DTZ: intPtr(-2), DTM: intPtr(-22)},
@@ -44,11 +42,6 @@ func TestBestTablebaseMove(t *testing.T) {
 		t.Fatalf("bestTablebaseMove = %+v, want e6d6 (moves[0])", best)
 	}
 
-	// Regression for the bug this replaced: the old rank+DTM-tie-break logic
-	// collapsed "loss" and "blessed-loss" into one tier and preferred
-	// whichever had the algebraically larger DTM — here that was the
-	// blessed-loss move (a 50-move-rule DRAW), wrongly beating a real loss
-	// for the opponent (a real win for us) listed first by Lichess.
 	winThenDraw := []lichess.TablebaseMove{
 		{UCI: "real_win", Category: "loss", DTZ: intPtr(-6), DTM: intPtr(-80)},
 		{UCI: "actually_a_draw", Category: "blessed-loss", DTZ: intPtr(-60), DTM: intPtr(-10)},
@@ -88,7 +81,6 @@ func TestTablebaseAnalysis_WhiteToMoveWin(t *testing.T) {
 	if result.Score <= 0 {
 		t.Errorf("Score = %d, want positive (White winning)", result.Score)
 	}
-	// 21 plies -> ceil(21/2) = 11 moves, positive since White (the mover) is winning.
 	if result.Mate != 11 {
 		t.Errorf("Mate = %d, want 11", result.Mate)
 	}
@@ -98,8 +90,6 @@ func TestTablebaseAnalysis_WhiteToMoveWin(t *testing.T) {
 }
 
 func TestTablebaseAnalysis_BlackToMoveWin(t *testing.T) {
-	// Same shape but with Black to move and winning — verifies the
-	// White-relative flip: category flips win->loss, DTZ/Mate negate.
 	pos, err := chess.ParseFEN("4k3/8/4K3/4P3/8/8/8/8 b - - 0 1")
 	if err != nil {
 		t.Fatalf("ParseFEN: %v", err)
@@ -121,15 +111,12 @@ func TestTablebaseAnalysis_BlackToMoveWin(t *testing.T) {
 	if result.Score >= 0 {
 		t.Errorf("Score = %d, want negative (Black winning)", result.Score)
 	}
-	if result.Mate != -5 { // ceil(9/2) = 5, negated for White-relative
+	if result.Mate != -5 {
 		t.Errorf("Mate = %d, want -5", result.Mate)
 	}
 }
 
 func TestTablebaseAnalysis_NoDTM(t *testing.T) {
-	// 7-man positions never carry a DTM on Lichess's server (verified live) —
-	// Score should still reflect the decisive result, Mate should stay 0
-	// rather than fabricate a distance.
 	pos, err := chess.ParseFEN("4k3/8/4K3/4P3/8/8/8/8 w - - 0 1")
 	if err != nil {
 		t.Fatalf("ParseFEN: %v", err)
@@ -146,11 +133,6 @@ func TestTablebaseAnalysis_NoDTM(t *testing.T) {
 }
 
 func TestTablebaseAnalysis_BlessedLossIsNotShownAsDecisive(t *testing.T) {
-	// Live repro: 8/8/8/7p/3K1N2/5N2/2k5/8 b - - 50 1 returns category
-	// "blessed-loss" with dtm: -138 — a provable DRAW under the 50-move rule
-	// (Black can always claim it), not a forced mate. Before this fix, Mate
-	// was derived from the raw DTM regardless of category, producing a
-	// fabricated "#69" (White-relative) for a legally drawn position.
 	pos, err := chess.ParseFEN("8/8/8/7p/3K1N2/5N2/2k5/8 b - - 50 1")
 	if err != nil {
 		t.Fatalf("ParseFEN: %v", err)

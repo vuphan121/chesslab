@@ -23,11 +23,6 @@ func SAN(pos *Position, m Move) string {
 
 	if piece.Type != Pawn {
 		lms := GenerateLegalMoves(pos)
-		// Standard SAN disambiguation precedence: file alone if no competitor
-		// shares it, else rank alone if no competitor shares that, else both.
-		// Deciding needFile/needRank independently per competitor (the old
-		// approach) over-qualifies as soon as 3+ same-type pieces converge on
-		// one square with a mixed file/rank overlap — see notation_test.go.
 		var sameFile, sameRank, hasCompetitor bool
 		for _, lm := range lms {
 			if lm.From == m.From || lm.To != m.To {
@@ -47,7 +42,6 @@ func SAN(pos *Position, m Move) string {
 		}
 		switch {
 		case !hasCompetitor:
-			// no disambiguation needed
 		case !sameFile:
 			sb.WriteByte('a' + byte(m.From.File()))
 		case !sameRank:
@@ -135,19 +129,6 @@ func MovesToSAN(pos *Position, uciMoves []string) []string {
 	return sans
 }
 
-// normalizeChess960Castle remaps Lichess cloud-eval's (and some
-// Chess960-aware UCI engines') castling encoding — the king "moving onto"
-// its own rook's home square (e1h1/e1a1/e8h8/e8a8 for O-O/O-O-O) — to the
-// real king destination (g1/c1/g8/c8) our move generator produces, since
-// GenerateLegalMoves never emits a king move further than one square. A
-// king move landing on the a- or h-file from anywhere else on its home rank
-// is otherwise impossible in a single legal move (a king only steps one
-// square), so this can never misfire on a genuine non-castling move — it
-// was a real bug: cloud-eval's own top-ranked move is very often "castle
-// now" early in an opening, and matching it against the a/h-file square
-// literally always failed, silently producing an empty SAN (and, worse, a
-// UI arrow drawn to the wrong square) for exactly the positions where
-// castling is the best move.
 func normalizeChess960Castle(pos *Position, from, to Square) Square {
 	piece := pos.Board[from]
 	if piece == nil || piece.Type != King || from.Rank() != to.Rank() {
@@ -155,9 +136,9 @@ func normalizeChess960Castle(pos *Position, from, to Square) Square {
 	}
 	switch to.File() {
 	case 7:
-		return NewSquare(6, to.Rank()) // g-file: kingside
+		return NewSquare(6, to.Rank())
 	case 0:
-		return NewSquare(2, to.Rank()) // c-file: queenside
+		return NewSquare(2, to.Rank())
 	default:
 		return to
 	}

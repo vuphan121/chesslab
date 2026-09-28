@@ -6,10 +6,6 @@ import (
 	"fmt"
 )
 
-// PositionEvalMove is one precomputed candidate move at a position — rank 1
-// is the engine's best line, higher ranks progressively weaker. Score/Mate
-// are White-relative, same convention as PositionEval.Score/Mate below and
-// every other eval surface in this app (see root CLAUDE.md's "Eval sign").
 type PositionEvalMove struct {
 	Rank  int    `json:"rank"`
 	SAN   string `json:"san"`
@@ -18,10 +14,6 @@ type PositionEvalMove struct {
 	Mate  int    `json:"mate"`
 }
 
-// PositionEval is one row of the offline opening-position eval cache (see
-// internal/evalprecompute) — depth-22 MultiPV analysis precomputed for every
-// position that appears in any opening-trainer repertoire, so the trainer's
-// line-complete eval bar/suggestion arrows never need a live engine call.
 type PositionEval struct {
 	FENKey     string
 	Score      int
@@ -31,12 +23,6 @@ type PositionEval struct {
 	BestMoves  []PositionEvalMove
 }
 
-// AllPositionEvalKeys returns every fen_key already computed, as a set. The
-// precompute job diffs this against every position enumerated from the
-// currently-loaded repertoires to find its backlog; fetched as one query
-// rather than checking each candidate individually, since the whole table
-// stays small (bounded by the total distinct positions across every
-// repertoire — currently in the low thousands).
 func (s *Store) AllPositionEvalKeys(ctx context.Context) (map[string]bool, error) {
 	rows, err := s.pool.Query(ctx, `SELECT fen_key FROM position_evals`)
 	if err != nil {
@@ -54,9 +40,6 @@ func (s *Store) AllPositionEvalKeys(ctx context.Context) (map[string]bool, error
 	return out, rows.Err()
 }
 
-// GetPositionEvals batch-fetches evals for a set of fen_keys — the trainer
-// fetches every ply of a just-finished line in one call rather than one
-// round trip per position.
 func (s *Store) GetPositionEvals(ctx context.Context, fenKeys []string) (map[string]PositionEval, error) {
 	if len(fenKeys) == 0 {
 		return map[string]PositionEval{}, nil
@@ -86,7 +69,6 @@ func (s *Store) GetPositionEvals(ctx context.Context, fenKeys []string) (map[str
 	return out, rows.Err()
 }
 
-// UpsertPositionEval stores (or replaces) one position's precomputed eval.
 func (s *Store) UpsertPositionEval(ctx context.Context, e PositionEval) error {
 	raw, err := json.Marshal(e.BestMoves)
 	if err != nil {

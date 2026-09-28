@@ -18,8 +18,6 @@ import (
 
 const authorizeURL = "https://api.backblazeb2.com/b2api/v4/b2_authorize_account"
 
-// B2 authorization tokens are valid for up to 24 hours; cache well under that
-// so a clock-skew edge case never hands out a token B2 has already expired.
 const authTokenTTL = 12 * time.Hour
 
 var ErrNotFound = errors.New("book chapter not found")
@@ -86,9 +84,6 @@ func (b *B2) Open(ctx context.Context, objectKey string) (io.ReadCloser, error) 
 	if err != nil {
 		return nil, err
 	}
-	// A cached token that B2 has since revoked/expired (outside our own TTL
-	// estimate) surfaces as 401 here, not from authorize() itself — force a
-	// fresh token and retry exactly once rather than failing the request.
 	if resp.StatusCode == http.StatusUnauthorized {
 		resp.Body.Close()
 		auth, err = b.authorize(ctx, true)
@@ -134,9 +129,6 @@ type authorizeResponse struct {
 	} `json:"apiInfo"`
 }
 
-// authorize returns a cached token when one is still within authTokenTTL,
-// fetching a fresh one otherwise. force bypasses the cache (used by Open's
-// retry-once-on-401 path when B2 has revoked/expired a cached token early).
 func (b *B2) authorize(ctx context.Context, force bool) (authorizeResponse, error) {
 	b.mu.Lock()
 	if !force && b.cached != nil && time.Since(b.cachedAt) < authTokenTTL {

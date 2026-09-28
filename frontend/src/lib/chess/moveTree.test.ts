@@ -7,7 +7,6 @@ function n(id: string, children: MoveNode[] = []): MoveNode {
 }
 
 describe('activeLine', () => {
-  // root → a → b → c (main line), with a sideline a → x → y
   const tree = n('root', [n('a', [n('b', [n('c')]), n('x', [n('y')])])])
 
   it('is the main line when the cursor is on it', () => {

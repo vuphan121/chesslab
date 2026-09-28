@@ -24,10 +24,6 @@ func (s *Store) SeedUser(ctx context.Context, username, password string) error {
 	return nil
 }
 
-// dummyHash lets VerifyUser run a bcrypt compare of comparable cost even
-// when the username doesn't exist, so a missing user isn't measurably
-// faster to reject than a real one with a wrong password — without this,
-// response timing alone reveals whether a given username is valid.
 var dummyHash = mustDummyHash()
 
 func mustDummyHash() []byte {
