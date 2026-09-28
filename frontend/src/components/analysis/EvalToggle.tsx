@@ -12,8 +12,6 @@ export const EVAL_DISPLAY_LABEL: Record<EvalDisplay, string> = {
   'eval-moves': 'Eval: Bar + Moves',
 }
 
-export const SUGGESTION_ARROW_SCALES = [1, 0.82, 0.66, 0.52, 0.4]
-
 const listeners = new Set<() => void>()
 const memory: Record<string, EvalDisplay> = {}
 

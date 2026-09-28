@@ -11,6 +11,7 @@ import type { EngineSettings } from '@/lib/engine/settings'
 const START_DELAY_MS = 40
 const LOOKUP_TIMEOUT_MS = 4000
 const CACHE_LIMIT = 200
+const LOOKUP_LINES = 5
 
 interface Options {
   gameId: string | null
@@ -108,7 +109,7 @@ export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings }: 
 
       if (useCloud && limit !== 'infinite') {
         lookupTimer = setTimeout(() => lookup.abort(), LOOKUP_TIMEOUT_MS)
-        lookupAnalysis(gameId, fen, lookup.signal)
+        lookupAnalysis(gameId, fen, lookup.signal, LOOKUP_LINES)
           .then((found) => {
             if (!found || cancelled || settledByLookup) return
             if (!found.tablebaseCategory && found.depth < localDepth) return

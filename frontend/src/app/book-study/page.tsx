@@ -1,5 +1,6 @@
 'use client'
 
+import { arrowShapes } from '@/lib/engine/arrows'
 import { useEffect } from 'react'
 import Board from '@/components/board/Board'
 import TopBar from '@/components/layout/TopBar'
@@ -49,10 +50,11 @@ export default function BookStudyPage() {
 
   const chapterItems = current ? flatItems.filter((f) => f.chapterId === current.chapterId) : []
   const chapterStartIndex = current ? flatItems.findIndex((f) => f.chapterId === current.chapterId) : 0
-  const analysisMoves = (analysis?.lines ?? []).slice(0, 3).flatMap((line, index) => {
-    const uci = line.uciMoves?.[0]
-    return uci ? [{ uci, scale: [1, 0.72, 0.48][index] }] : []
-  })
+  const analysisMoves = arrowShapes(
+    (analysis?.lines ?? []).map((line) => ({ uci: line.uciMoves?.[0], score: line.score, mate: line.mate })),
+    boardState?.turn ?? 'w',
+    3,
+  )
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

@@ -202,9 +202,9 @@ export default function EngineSettingsButton({ settings, onChange, onReset }: Pr
             )}
           </Section>
 
-          <Section title="Lines" hint="How many candidate moves to show. Each one gets an arrow (the top three at most).">
+          <Section title="Arrows" hint="How many suggested moves to draw (and lines to search). The best move is blue. Others are grey, thinner the worse they are, and left out if they are much worse.">
             <Segmented
-              label="Lines"
+              label="Arrows"
               options={Array.from({ length: limits.lines.max - limits.lines.min + 1 }, (_, i) => {
                 const n = limits.lines.min + i
                 return { id: n, label: String(n) }

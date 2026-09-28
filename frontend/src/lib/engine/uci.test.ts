@@ -74,8 +74,8 @@ describe('buildAnalysis', () => {
 })
 
 describe('engine settings', () => {
-  it('defaults follow Lichess (8 s per position, 1 line) and are lighter on a phone', () => {
-    expect(engineDefaults(false)).toMatchObject({ limit: 'time', timeSec: 8, lines: 1, useCloud: true })
+  it('defaults follow Lichess (8 s per position) with 3 arrows on a laptop, and are lighter on a phone', () => {
+    expect(engineDefaults(false)).toMatchObject({ limit: 'time', timeSec: 8, lines: 3, useCloud: true })
     expect(engineDefaults(true)).toMatchObject({ limit: 'time', timeSec: 4, lines: 1, useCloud: true })
     expect(engineDefaults(true).hashMb).toBeLessThan(engineDefaults(false).hashMb)
     expect(engineDefaults(true).timeSec).toBeLessThan(engineDefaults(false).timeSec)

@@ -177,8 +177,8 @@ export const analyzeGame = (
   return request(`/api/games/${id}/analysis${suffix}`)
 }
 
-export async function lookupAnalysis(id: string, fen: string, signal?: AbortSignal): Promise<Analysis | null> {
-  const res = await apiFetch(`${API}/api/games/${id}/analysis?source=lookup&fen=${encodeURIComponent(fen)}`, {
+export async function lookupAnalysis(id: string, fen: string, signal?: AbortSignal, lines = 3): Promise<Analysis | null> {
+  const res = await apiFetch(`${API}/api/games/${id}/analysis?source=lookup&lines=${lines}&fen=${encodeURIComponent(fen)}`, {
     headers: authHeader(),
     signal,
   })

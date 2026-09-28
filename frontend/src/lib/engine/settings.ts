@@ -43,7 +43,7 @@ export function engineLimits(mobile: boolean): EngineLimits {
 export function engineDefaults(mobile: boolean): EngineSettings {
   return mobile
     ? { limit: 'time', depth: 18, timeSec: 4, lines: 1, hashMb: 16, useCloud: true }
-    : { limit: 'time', depth: 20, timeSec: 8, lines: 1, hashMb: 64, useCloud: true }
+    : { limit: 'time', depth: 20, timeSec: 8, lines: 3, hashMb: 64, useCloud: true }
 }
 
 export const DEFAULT_ENGINE_SETTINGS = engineDefaults(false)

@@ -2,7 +2,7 @@
 
 import Board from '@/components/board/Board'
 import EvalBar from '@/components/analysis/EvalBar'
-import { EVAL_DISPLAY_LABEL, EvalIcon, SUGGESTION_ARROW_SCALES, useEvalDisplay } from '@/components/analysis/EvalToggle'
+import { EVAL_DISPLAY_LABEL, EvalIcon, useEvalDisplay } from '@/components/analysis/EvalToggle'
 import MaterialCorners, { MATERIAL_CORNERS_WIDTH } from '@/components/board/MaterialCorners'
 import MoveHistory from '@/components/history/MoveHistory'
 import TopBar from '@/components/layout/TopBar'
@@ -10,6 +10,8 @@ import OpeningTree from '@/components/tree/OpeningTree'
 import EngineSettingsButton from '@/components/analysis/EngineSettingsButton'
 import { useChessGame } from '@/hooks/useChessGame'
 import { useEngineAnalysis } from '@/hooks/useEngineAnalysis'
+import { arrowShapes } from '@/lib/engine/arrows'
+import type { CandidateLine } from '@/lib/engine/arrows'
 import { useEngineSettings } from '@/lib/engine/settings'
 import { Suspense, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -21,7 +23,6 @@ const NARROW_BREAKPOINT = 1040
 const OUTER_PADDING_DESKTOP = 24
 const OUTER_PADDING_NARROW = 14
 const EVAL_DISPLAY_STORAGE_KEY = 'chesslab.analysis.evalDisplay'
-const MAX_SUGGESTION_ARROWS = 3
 const ROW_GAP_DESKTOP = 20
 
 
@@ -170,18 +171,13 @@ function HomeInner() {
 
   const showEval = evalDisplay !== 'off'
   const analysisIsCurrent = !!analysis && (analysisFen === null || analysisFen === boardState.fen)
-  const engineMoves: string[] = []
+  const candidates: CandidateLine[] = []
   if (analysis && analysisIsCurrent && !boardState.isGameOver) {
-    for (const line of analysis.lines ?? []) {
-      const uci = line.uciMoves?.[0]
-      if (uci && uci.length >= 4 && !engineMoves.includes(uci)) engineMoves.push(uci)
-    }
-    if (engineMoves.length === 0 && analysis.bestMove.length >= 4) engineMoves.push(analysis.bestMove)
+    for (const line of analysis.lines ?? []) candidates.push({ uci: line.uciMoves?.[0], score: line.score, mate: line.mate })
+    if (candidates.length === 0) candidates.push({ uci: analysis.bestMove, score: analysis.score, mate: analysis.mate })
   }
   const suggestionArrows =
-    evalDisplay === 'eval-moves'
-      ? engineMoves.slice(0, MAX_SUGGESTION_ARROWS).map((uci, i) => ({ uci, scale: SUGGESTION_ARROW_SCALES[i] }))
-      : []
+    evalDisplay === 'eval-moves' ? arrowShapes(candidates, boardState.turn, engineSettings.lines) : []
 
   const playContinuation = (uci: string) => move(uci.slice(0, 2), uci.slice(2, 4))
 

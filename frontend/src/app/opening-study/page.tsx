@@ -4,7 +4,8 @@ import { useEffect } from 'react'
 import Board from '@/components/board/Board'
 import { MaterialRow, computeMaterialRows } from '@/components/board/MaterialCorners'
 import EvalBar from '@/components/analysis/EvalBar'
-import { EVAL_DISPLAY_LABEL, EvalIcon, SUGGESTION_ARROW_SCALES, useEvalDisplay } from '@/components/analysis/EvalToggle'
+import { EVAL_DISPLAY_LABEL, EvalIcon, useEvalDisplay } from '@/components/analysis/EvalToggle'
+import { arrowShapes } from '@/lib/engine/arrows'
 import TopBar from '@/components/layout/TopBar'
 import RepertoirePicker from '@/components/trainer/RepertoirePicker'
 import LinePanel from '@/components/trainer/LinePanel'
@@ -174,7 +175,7 @@ export default function OpeningStudyPage() {
   const showEvalBar = lineComplete && evalDisplay !== 'off'
   const suggestionArrows =
     lineComplete && evalDisplay === 'eval-moves' && viewEval?.bestMoves
-      ? viewEval.bestMoves.slice(0, 5).map((m, i) => ({ uci: m.uci, scale: SUGGESTION_ARROW_SCALES[i] ?? 0.35 }))
+      ? arrowShapes(viewEval.bestMoves.map((m) => ({ uci: m.uci, score: m.score, mate: m.mate })), boardState.turn, 5)
       : []
   const materialRows = computeMaterialRows(boardState.pieces, flipped)
 
