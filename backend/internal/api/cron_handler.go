@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/chesslab/backend/internal/db"
 	"github.com/chesslab/backend/internal/evalprecompute"
 )
 
@@ -203,15 +204,40 @@ func (h *Handler) PrecomputeEvals(w http.ResponseWriter, r *http.Request) {
 // runPrecompute is one bounded batch: diff every repertoire position against
 // the cache, then compute until the backlog is empty or precomputeBudget runs
 // out. Called only from PrecomputeEvals' single-flight goroutine.
+//
+// Every run is also recorded in precompute_runs (one row) and
+// precompute_run_positions (one row per position attempted) for observability.
+// That bookkeeping is best-effort — a failed write is logged and never stops
+// or fails the actual precompute work.
 func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 	started := time.Now()
 	resp := PrecomputeEvalsResponse{}
+
+	runID, err := h.db.StartPrecomputeRun(ctx, precomputeBudget.Milliseconds(), h.precomputeEngine != nil)
+	if err != nil {
+		log.Printf("cron precompute: could not record run start (continuing unrecorded): %v", err)
+		runID = 0
+	}
+	var stats db.PrecomputeRunStats
+	finish := func(status, runErr string) {
+		resp.DurationMS = time.Since(started).Milliseconds()
+		if runID == 0 {
+			return
+		}
+		// Fresh context: ctx may be the very thing that expired.
+		fctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := h.db.FinishPrecomputeRun(fctx, runID, status, stats, runErr); err != nil {
+			log.Printf("cron precompute: could not record run finish: %v", err)
+		}
+	}
 
 	all := evalprecompute.EnumeratePositions(h.repertoires.List())
 	existing, err := h.db.AllPositionEvalKeys(ctx)
 	if err != nil {
 		log.Printf("cron precompute: failed to load existing evals: %v", err)
-		resp.DurationMS = time.Since(started).Milliseconds()
+		stats.TotalPositions = len(all)
+		finish(db.PrecomputeRunFailed, "failed to load existing evals: "+err.Error())
 		return resp
 	}
 
@@ -222,14 +248,37 @@ func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 		}
 	}
 	log.Printf("cron precompute: %d total position(s), %d in backlog", len(all), len(backlog))
+	stats.TotalPositions, stats.BacklogSize, stats.Remaining = len(all), len(backlog), len(backlog)
+	if runID != 0 {
+		if err := h.db.UpdatePrecomputeRunProgress(ctx, runID, stats); err != nil {
+			log.Printf("cron precompute: %v", err)
+		}
+	}
+
+	logPosition := func(l db.PrecomputePositionLog) {
+		if runID == 0 {
+			return
+		}
+		l.RunID = runID
+		// Not tied to ctx's remaining time, so the last position still gets logged.
+		pctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := h.db.InsertPrecomputePositionLog(pctx, l); err != nil {
+			log.Printf("cron precompute: %v", err)
+		}
+		stats.Remaining = stats.BacklogSize - stats.Attempted
+		if err := h.db.UpdatePrecomputeRunProgress(pctx, runID, stats); err != nil {
+			log.Printf("cron precompute: %v", err)
+		}
+	}
 
 	deadline := started.Add(precomputeBudget)
-	attempted := 0
 	for _, key := range backlog {
 		if time.Now().After(deadline) || ctx.Err() != nil {
 			break
 		}
-		attempted++
+		stats.Attempted++
+		posStart := time.Now()
 		result, err := evalprecompute.Compute(h.precomputeEngine, key)
 		if err != nil {
 			// Not retried within this run — a position that keeps failing
@@ -239,17 +288,28 @@ func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 			// "log and move on" stance as RefreshAllRepertoires above.
 			log.Printf("cron precompute: %s — %v", key, err)
 			resp.Failed = append(resp.Failed, precomputeFailureJSON{FENKey: key, Reason: err.Error()})
+			stats.Failed++
+			logPosition(db.PrecomputePositionLog{FENKey: key, Status: "compute_failed", DurationMS: time.Since(posStart).Milliseconds(), Error: err.Error()})
 			continue
 		}
 		if err := h.db.UpsertPositionEval(ctx, result); err != nil {
 			log.Printf("cron precompute: %s — save failed: %v", key, err)
 			resp.Failed = append(resp.Failed, precomputeFailureJSON{FENKey: key, Reason: err.Error()})
+			stats.Failed++
+			logPosition(db.PrecomputePositionLog{FENKey: key, Status: "save_failed", EngineName: result.EngineName, DurationMS: time.Since(posStart).Milliseconds(), Error: err.Error()})
 			continue
 		}
 		resp.Processed++
+		stats.Processed++
+		logPosition(db.PrecomputePositionLog{FENKey: key, Status: "ok", EngineName: result.EngineName, Depth: result.Depth, DurationMS: time.Since(posStart).Milliseconds()})
 	}
-	resp.Remaining = len(backlog) - attempted
-	resp.DurationMS = time.Since(started).Milliseconds()
+	stats.Remaining = stats.BacklogSize - stats.Attempted
+	resp.Remaining = stats.Remaining
+	status := db.PrecomputeRunCompleted
+	if stats.Remaining > 0 {
+		status = db.PrecomputeRunBudgetExhausted
+	}
+	finish(status, "")
 	log.Printf("cron precompute: done in %dms — %d processed, %d remaining, %d failed", resp.DurationMS, resp.Processed, resp.Remaining, len(resp.Failed))
 	return resp
 }

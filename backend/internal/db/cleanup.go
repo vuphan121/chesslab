@@ -25,6 +25,15 @@ func (s *Store) StartCleanupLoop(retention, interval time.Duration) {
 		if n := ct.RowsAffected(); n > 0 {
 			log.Printf("db: pruned %d progress operation(s) older than %s", n, retention)
 		}
+		// precompute_run_positions rows go with their run (ON DELETE CASCADE).
+		ct, err = s.pool.Exec(context.Background(), "DELETE FROM precompute_runs WHERE started_at < $1", cutoff)
+		if err != nil {
+			log.Printf("db: precompute_runs cleanup failed: %v", err)
+			return
+		}
+		if n := ct.RowsAffected(); n > 0 {
+			log.Printf("db: pruned %d precompute run(s) older than %s", n, retention)
+		}
 	}
 
 	sweep()

@@ -169,3 +169,45 @@ CREATE TABLE IF NOT EXISTS saved_puzzles (
 
 CREATE INDEX IF NOT EXISTS saved_puzzles_username_created_at_idx
     ON saved_puzzles (username, created_at DESC);
+
+-- Observability for the eval-precompute cron endpoint (POST /api/cron/precompute-evals).
+-- One row per background run.
+CREATE TABLE IF NOT EXISTS precompute_runs (
+    id BIGSERIAL PRIMARY KEY,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    finished_at TIMESTAMPTZ,
+    duration_ms BIGINT,
+    status TEXT NOT NULL DEFAULT 'running'
+        CHECK (status IN ('running', 'completed', 'budget_exhausted', 'failed', 'interrupted')),
+    budget_ms BIGINT NOT NULL,
+    stockfish_available BOOLEAN NOT NULL,
+    total_positions INT NOT NULL DEFAULT 0,
+    backlog_size INT NOT NULL DEFAULT 0,
+    attempted INT NOT NULL DEFAULT 0,
+    processed INT NOT NULL DEFAULT 0,
+    failed INT NOT NULL DEFAULT 0,
+    remaining INT NOT NULL DEFAULT 0,
+    error TEXT
+);
+
+CREATE INDEX IF NOT EXISTS precompute_runs_started_at_idx
+    ON precompute_runs (started_at DESC);
+
+-- One row per position attempted in a run (the per-line detail).
+CREATE TABLE IF NOT EXISTS precompute_run_positions (
+    id BIGSERIAL PRIMARY KEY,
+    run_id BIGINT NOT NULL REFERENCES precompute_runs (id) ON DELETE CASCADE,
+    fen_key TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('ok', 'compute_failed', 'save_failed')),
+    engine_name TEXT,
+    depth INT,
+    duration_ms BIGINT NOT NULL,
+    error TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS precompute_run_positions_run_idx
+    ON precompute_run_positions (run_id);
+
+CREATE INDEX IF NOT EXISTS precompute_run_positions_fen_idx
+    ON precompute_run_positions (fen_key, created_at DESC);
