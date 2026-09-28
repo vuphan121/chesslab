@@ -109,6 +109,10 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
     })
   }
 
+  const toggleAllChapters = (ids: string[]) => {
+    setSelectedChapters((prev) => (prev.size > 0 ? new Set() : new Set(ids)))
+  }
+
   const toggleChapter = (id: string) => {
     setSelectedChapters((prev) => {
       const next = new Set(prev)
@@ -278,10 +282,16 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
 
           {selected && (
             <div style={{ marginBottom: 28 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                 <div className="lbl" style={{ color: '#b4b1a8' }}>Chapters</div>
-                <span style={{ fontSize: 12, color: '#a3a099' }}>{selectedChapterCount} of {selected.chapters.length} selected</span>
+                <button
+                  onClick={() => toggleAllChapters(selected.chapters.map((c) => c.id))}
+                  style={{ ...ghostPillStyle, fontSize: 12, padding: '7px 12px' }}
+                >
+                  {selectedChapterCount > 0 ? 'Deselect all' : 'Select all'}
+                </button>
               </div>
+              <div style={{ fontSize: 12, color: '#a3a099', marginBottom: 10 }}>{selectedChapterCount} of {selected.chapters.length} selected</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {selected.chapters.map((ch) => {
                   const isOn = selectedChapters.has(ch.id)
