@@ -169,3 +169,80 @@ describe('BrowserEngine', () => {
     expect(worker.terminated).toBe(true)
   })
 })
+
+describe('BrowserEngine robustness', () => {
+  it('does not show shallow, unreliable results but always reports the final one', async () => {
+    const { worker, engine } = setup()
+    const depths: number[] = []
+    const job = engine.start(request({ onUpdate: (a) => depths.push(a.depth) }))
+    await vi.waitFor(() => expect(goCount(worker)).toBe(1))
+    for (const d of [1, 2, 3, 5, 7]) worker.info(d, 'e2e4 e7e5')
+    await new Promise((r) => setTimeout(r, 200))
+    expect(depths).toEqual([])
+    worker.info(8, 'e2e4 e7e5')
+    await vi.waitFor(() => expect(depths).toEqual([8]))
+    worker.info(9, 'e2e4 e7e5')
+    worker.say('bestmove e2e4')
+    expect((await job.done).analysis?.depth).toBe(9)
+    expect(depths.at(-1)).toBe(9)
+  })
+
+  it('recovers from a worker crash in the middle of a session with a fresh worker', async () => {
+    const workers: FakeWorker[] = []
+    const engine = new BrowserEngine(() => {
+      const w = new FakeWorker()
+      workers.push(w)
+      return w
+    })
+    const first = engine.start(request())
+    await vi.waitFor(() => expect(goCount(workers[0])).toBe(1))
+    workers[0].onerror?.({ message: 'wasm trap' })
+    expect((await first.done).error).toBe('wasm trap')
+    expect(workers[0].terminated).toBe(true)
+
+    const second = engine.start(request({ fen: AFTER_E4 }))
+    await vi.waitFor(() => expect(workers).toHaveLength(2))
+    await vi.waitFor(() => expect(goCount(workers[1])).toBe(1))
+    expect(workers[1].sent).toContain('setoption name Hash value 32')
+    workers[1].info(12, 'e7e5')
+    workers[1].say('bestmove e7e5')
+    const result = await second.done
+    expect(result.error).toBeUndefined()
+    expect(result.analysis?.bestMove).toBe('e7e5')
+  })
+
+  it('gives up for good after repeated crashes or a load failure', async () => {
+    const workers: FakeWorker[] = []
+    const engine = new BrowserEngine(() => {
+      const w = new FakeWorker()
+      workers.push(w)
+      return w
+    })
+    for (let i = 0; i < 4; i++) {
+      const job = engine.start(request())
+      await vi.waitFor(() => expect(workers).toHaveLength(i + 1))
+      await vi.waitFor(() => expect(goCount(workers[i])).toBe(1))
+      workers[i].onerror?.({ message: 'crash ' + i })
+      await job.done
+    }
+    const after = await engine.start(request()).done
+    expect(after.error).toBe('crash 3')
+    expect(workers).toHaveLength(4)
+  })
+
+  it('a position that cannot be turned into a result does not stall the queue', async () => {
+    const { worker, engine } = setup()
+    const bad = engine.start(request({ fen: 'not a fen' }))
+    await vi.waitFor(() => expect(goCount(worker)).toBe(1))
+    worker.info(10, 'e2e4')
+    worker.say('bestmove e2e4')
+    const badResult = await bad.done
+    expect(badResult.analysis).toBeNull()
+
+    const good = engine.start(request())
+    await vi.waitFor(() => expect(goCount(worker)).toBe(2))
+    worker.info(12, 'e2e4 e7e5')
+    worker.say('bestmove e2e4')
+    expect((await good.done).analysis?.bestMove).toBe('e2e4')
+  })
+})

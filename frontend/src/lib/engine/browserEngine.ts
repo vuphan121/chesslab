@@ -6,7 +6,11 @@ import type { UciInfo } from './uci'
 
 export const ENGINE_SCRIPT = '/stockfish/stockfish-19-lite-single.js'
 
-const EMIT_INTERVAL_MS = 80
+const FIRST_EMIT_DELAY_MS = 30
+const EMIT_INTERVAL_MS = 150
+const MIN_EMIT_DEPTH = 8
+const CRASH_WINDOW_MS = 60000
+const MAX_CRASHES_IN_WINDOW = 3
 
 export interface EngineRequest {
   fen: string
@@ -43,6 +47,7 @@ interface Job {
   finished: boolean
   stopSent: boolean
   emitTimer: ReturnType<typeof setTimeout> | null
+  emitCount: number
   lastAnalysis: Analysis | null
   resolve: (result: EngineResult) => void
 }
@@ -58,6 +63,7 @@ export class BrowserEngine {
   private pumping = false
   private appliedHash = 0
   private appliedLines = 0
+  private crashTimes: number[] = []
 
   constructor(private createWorker: () => WorkerLike = () => new Worker(ENGINE_SCRIPT) as unknown as WorkerLike) {}
 
@@ -73,6 +79,7 @@ export class BrowserEngine {
       finished: false,
       stopSent: false,
       emitTimer: null,
+      emitCount: 0,
       lastAnalysis: null,
       resolve,
     }
@@ -135,8 +142,9 @@ export class BrowserEngine {
         worker.onmessage = (event) => this.onLine(String(event.data))
         worker.onerror = (event) => {
           const message = event.message || 'The browser engine failed to load.'
-          this.crash(message)
-          reject(new Error(message))
+          const duringBoot = this.bootStep !== null
+          this.crash(message, duringBoot)
+          if (duringBoot) reject(new Error(message))
         }
         worker.postMessage('uci')
       } catch (err) {
@@ -152,7 +160,7 @@ export class BrowserEngine {
     try {
       await this.boot()
     } catch (err) {
-      this.crash(err instanceof Error ? err.message : String(err))
+      this.crash(err instanceof Error ? err.message : String(err), true)
       return
     } finally {
       this.pumping = false
@@ -199,10 +207,15 @@ export class BrowserEngine {
       if (!job.finished) {
         if (job.emitTimer) clearTimeout(job.emitTimer)
         job.emitTimer = null
-        const analysis = buildAnalysis(job.req.fen, [...job.infos.values()])
+        const analysis = this.safeBuild(job)
         job.lastAnalysis = analysis
-        if (analysis) job.req.onUpdate(analysis)
         job.finished = true
+        if (analysis) {
+          try {
+            job.req.onUpdate(analysis)
+          } catch {
+          }
+        }
         job.resolve({ analysis, completed: !job.cancelled })
       }
       void this.pump()
@@ -211,27 +224,50 @@ export class BrowserEngine {
     const info = parseInfo(line)
     if (!info || info.bound || job.finished) return
     job.infos.set(info.multipv, info)
-    if (!job.emitTimer) {
-      job.emitTimer = setTimeout(() => {
-        job.emitTimer = null
-        if (job.finished) return
-        const analysis = buildAnalysis(job.req.fen, [...job.infos.values()])
-        if (analysis) {
-          job.lastAnalysis = analysis
-          job.req.onUpdate(analysis)
-        }
-      }, EMIT_INTERVAL_MS)
+    if (info.depth >= MIN_EMIT_DEPTH && !job.emitTimer) {
+      job.emitTimer = setTimeout(
+        () => {
+          job.emitTimer = null
+          if (job.finished) return
+          job.emitCount++
+          const analysis = this.safeBuild(job)
+          if (analysis) {
+            job.lastAnalysis = analysis
+            try {
+              job.req.onUpdate(analysis)
+            } catch {
+            }
+          }
+        },
+        job.emitCount === 0 ? FIRST_EMIT_DELAY_MS : EMIT_INTERVAL_MS,
+      )
     }
   }
 
-  private crash(message: string): void {
-    this.failed = message
+  private safeBuild(job: Job): Analysis | null {
+    try {
+      return buildAnalysis(job.req.fen, [...job.infos.values()])
+    } catch {
+      return null
+    }
+  }
+
+  private crash(message: string, duringBoot: boolean): void {
+    const now = Date.now()
+    this.crashTimes = this.crashTimes.filter((t) => now - t < CRASH_WINDOW_MS)
+    this.crashTimes.push(now)
+    if (duringBoot || this.crashTimes.length > MAX_CRASHES_IN_WINDOW) this.failed = message
     if (this.queued) this.failJob(this.queued, message)
     if (this.running) this.failJob(this.running, message)
     this.queued = null
     this.running = null
     this.worker?.terminate()
     this.worker = null
+    this.booting = null
+    this.bootStep = null
+    this.bootResolve = null
+    this.appliedHash = 0
+    this.appliedLines = 0
   }
 
   private failJob(job: Job, message: string): void {

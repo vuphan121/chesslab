@@ -50,6 +50,7 @@ interface Props {
   onReset: () => void
   onLoadPgn: (pgn: string) => Promise<void>
   engineEnabled?: boolean
+  engineBusy?: boolean
 }
 
 
@@ -104,6 +105,7 @@ export default function MoveHistory({
   onReset,
   onLoadPgn,
   engineEnabled = true,
+  engineBusy = false,
 }: Props) {
   const currentRef = useRef<HTMLSpanElement | null>(null)
   const [pgnInput, setPgnInput] = useState('')
@@ -139,6 +141,12 @@ export default function MoveHistory({
   }, [evals])
 
   const evaluatorRef = useRef<MoveEvaluator | null>(null)
+  const attemptedRef = useRef(new Set<string>())
+  const busyRef = useRef(engineBusy)
+
+  useEffect(() => {
+    busyRef.current = engineBusy
+  }, [engineBusy])
 
   useEffect(() => {
     return () => {
@@ -156,23 +164,28 @@ export default function MoveHistory({
       n = kids[0]
       if (n) fens.push(n.fen)
     }
-    const missing = fens.filter((f) => !(f in evalsRef.current))
+    const missing = fens.filter((f) => !(f in evalsRef.current) && !attemptedRef.current.has(f))
     if (missing.length === 0) return
 
     let cancelled = false
+    const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
     ;(async () => {
       for (const fen of missing) {
         if (cancelled) return
         try {
           let e = await evalFenLookup(fen)
-          if (!e && engineEnabled && !cancelled) {
+          if (!e && engineEnabled) {
+            while (busyRef.current && !cancelled) await pause(400)
+            if (cancelled) return
             const evaluator = (evaluatorRef.current ??= new MoveEvaluator())
             try {
               e = await evaluator.evaluate(fen)
             } catch {
               e = await evalFen(fen)
             }
+            if (cancelled) return
           }
+          if (e || engineEnabled) attemptedRef.current.add(fen)
           if (!cancelled && e) setEvals((prev) => ({ ...prev, [fen]: e }))
         } catch {
         }

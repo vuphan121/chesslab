@@ -8,7 +8,7 @@ import type { BrowserEngine } from '@/lib/engine/browserEngine'
 import { settingsSignature } from '@/lib/engine/settings'
 import type { EngineSettings } from '@/lib/engine/settings'
 
-const START_DELAY_MS = 120
+const START_DELAY_MS = 40
 const LOOKUP_TIMEOUT_MS = 4000
 const CACHE_LIMIT = 200
 

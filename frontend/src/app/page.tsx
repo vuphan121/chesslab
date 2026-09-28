@@ -229,7 +229,10 @@ function HomeInner() {
             >
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                 {showEval && (!!analysis?.depth || !!analysis?.tablebaseCategory) && (
-                  <span className="mono" style={{ fontSize: 12, color: '#a3a099' }}>
+                  <span
+                    className="mono"
+                    style={{ fontSize: 12, color: '#a3a099', opacity: analysisIsCurrent ? 1 : 0.45, transition: 'opacity 120ms' }}
+                  >
                     {analysis.engineName} ·{' '}
                     {analysis.tablebaseCategory ? (
                       <>
@@ -319,7 +322,7 @@ function HomeInner() {
                 analysisMoves={suggestionArrows}
               />
               <MaterialCorners pieces={boardState.pieces} flipped={flipped} height={boardSize} />
-              <div style={{ width: 22, height: boardSize, flexShrink: 0 }}>
+              <div style={{ width: 22, height: boardSize, flexShrink: 0, opacity: analysisIsCurrent ? 1 : 0.45, transition: 'opacity 120ms' }}>
                 {showEval && (
                   <EvalBar
                     score={analysis?.score ?? 0}
@@ -366,6 +369,7 @@ function HomeInner() {
               onReset={reset}
               onLoadPgn={loadPgn}
               engineEnabled={evalDisplay !== 'off'}
+              engineBusy={analyzing}
             />
           </div>
 
