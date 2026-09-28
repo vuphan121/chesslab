@@ -25,3 +25,7 @@ backend/data/books/
 # checkpoints must never be committed; the reusable admin tool is tracked.
 tools/book-board-parser/work/
 tmp/book-board-parser/
+
+# Agent docs live in vuphan121/agent-files (chesslab/docs/), not in this repo.
+docs/changes-2026-09-28.md
+docs/eval-precompute.md
