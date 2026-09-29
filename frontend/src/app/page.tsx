@@ -13,7 +13,7 @@ import { useEngineAnalysis } from '@/hooks/useEngineAnalysis'
 import { arrowShapes } from '@/lib/engine/arrows'
 import type { CandidateLine } from '@/lib/engine/arrows'
 import { useEngineSettings } from '@/lib/engine/settings'
-import { Suspense, useEffect } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useViewportWidth, clamp } from '@/hooks/useViewportWidth'
 
@@ -89,11 +89,8 @@ function HomeInner() {
     move,
     legalMovesFor,
     gotoNode,
-    navStart,
     navPrev,
     navNext,
-    navEnd,
-    reset,
     loadPgn,
     gameId,
     explorer,
@@ -101,6 +98,24 @@ function HomeInner() {
     flipped,
     toggleFlipped,
   } = useChessGame(initialGameId)
+
+  const [animateMove, setAnimateMove] = useState(false)
+  const stepPrev = useCallback(() => {
+    setAnimateMove(true)
+    navPrev()
+  }, [navPrev])
+  const stepNext = useCallback(() => {
+    setAnimateMove(true)
+    navNext()
+  }, [navNext])
+  const jump = useCallback(
+    <A extends unknown[], R>(fn: (...args: A) => R) =>
+      (...args: A) => {
+        setAnimateMove(false)
+        return fn(...args)
+      },
+    [],
+  )
 
   const [evalDisplay, cycleEvalDisplay] = useEvalDisplay(EVAL_DISPLAY_STORAGE_KEY, 'eval-moves')
   const [engineSettings, updateEngineSettings, resetEngineSettings] = useEngineSettings()
@@ -152,22 +167,21 @@ function HomeInner() {
       if (tag === 'INPUT' || tag === 'TEXTAREA') return
       if (e.key === 'ArrowLeft') {
         e.preventDefault()
-        navPrev()
+        stepPrev()
       } else if (e.key === 'ArrowRight') {
         e.preventDefault()
-        navNext()
+        stepNext()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [navPrev, navNext])
+  }, [stepPrev, stepNext])
 
   if (!boardState) return null
 
   const atStart = boardState.currentNodeId === boardState.moveTree.id
   const openingName =
     explorer?.openingName ?? (atStart ? 'Starting Position' : 'Custom Line')
-  const isBookMove = (explorer?.totalGames ?? 0) > 0
 
   const showEval = evalDisplay !== 'off'
   const analysisIsCurrent = !!analysis && (analysisFen === null || analysisFen === boardState.fen)
@@ -183,7 +197,7 @@ function HomeInner() {
 
   return (
     <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10">
-      <TopBar turn={boardState.turn} isBookMove={isBookMove} />
+      <TopBar />
       <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 84px)', paddingTop: isNarrow ? 20 : 28 }}>
       <div
         style={{
@@ -310,8 +324,9 @@ function HomeInner() {
             <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start' }}>
               <Board
                 boardState={boardState}
-                onSquareClick={selectSquare}
-                onMove={move}
+                animateLastMove={animateMove}
+                onSquareClick={jump(selectSquare)}
+                onMove={jump(move)}
                 legalMovesFor={legalMovesFor}
                 squareSize={squareSize}
                 flipped={flipped}
@@ -336,7 +351,7 @@ function HomeInner() {
                 moves={explorer?.moves ?? []}
                 totalGames={explorer?.totalGames ?? 0}
                 loading={explorerLoading}
-                onPlay={playContinuation}
+                onPlay={jump(playContinuation)}
               />
             </div>
           </div>
@@ -357,13 +372,8 @@ function HomeInner() {
               openingEco={explorer?.openingEco}
               moveTree={boardState.moveTree}
               currentNodeId={boardState.currentNodeId}
-              onGotoNode={gotoNode}
-              onNavStart={navStart}
-              onNavPrev={navPrev}
-              onNavNext={navNext}
-              onNavEnd={navEnd}
-              onReset={reset}
-              onLoadPgn={loadPgn}
+              onGotoNode={jump(gotoNode)}
+              onLoadPgn={jump(loadPgn)}
               engineEnabled={evalDisplay !== 'off'}
               engineBusy={analyzing}
             />

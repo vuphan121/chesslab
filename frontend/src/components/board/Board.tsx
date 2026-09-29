@@ -56,7 +56,11 @@ export default function Board({
     piece: NonNullable<BoardState['pieces'][string]>
     hasStarted: boolean
   } | null>(null)
-  const previousPosition = useRef({ fen: boardState.fen, pieces: boardState.pieces })
+  const previousPosition = useRef<{
+    fen: string
+    pieces: BoardState['pieces']
+    lastMove?: BoardState['lastMove']
+  }>({ fen: boardState.fen, pieces: boardState.pieces, lastMove: boardState.lastMove })
   const justPlayedRef = useRef(false)
 
   const rightDownSquare = useRef<string | null>(null)
@@ -112,23 +116,33 @@ export default function Board({
   useLayoutEffect(() => {
     const previous = previousPosition.current
     const lastMove = positionState.lastMove
-    previousPosition.current = { fen: positionState.fen, pieces: positionState.pieces }
+    previousPosition.current = { fen: positionState.fen, pieces: positionState.pieces, lastMove }
     if (justPlayedRef.current) {
       justPlayedRef.current = false
       setMoveAnimation(null)
       return
     }
-    if (!animateLastMove || previous.fen === positionState.fen || !lastMove) {
+    if (!animateLastMove || previous.fen === positionState.fen) {
       setMoveAnimation(null)
       return
     }
-    const piece = previous.pieces[lastMove.from]
-    if (!piece || !positionState.pieces[lastMove.to]) return
+    const same = (a?: { type: string; color: string } | null, b?: { type: string; color: string } | null) =>
+      !!a && !!b && a.type === b.type && a.color === b.color
+    let step: { from: string; to: string; piece: NonNullable<BoardState['pieces'][string]> } | null = null
+    if (lastMove && same(previous.pieces[lastMove.from], positionState.pieces[lastMove.to])) {
+      step = { from: lastMove.from, to: lastMove.to, piece: previous.pieces[lastMove.from]! }
+    } else if (previous.lastMove && same(previous.pieces[previous.lastMove.to], positionState.pieces[previous.lastMove.from])) {
+      step = { from: previous.lastMove.to, to: previous.lastMove.from, piece: previous.pieces[previous.lastMove.to]! }
+    }
+    if (!step) {
+      setMoveAnimation(null)
+      return
+    }
 
     let firstFrame = 0
     let secondFrame = 0
     const timer = window.setTimeout(() => setMoveAnimation(null), MOVE_ANIMATION_MS + 24)
-    setMoveAnimation({ from: lastMove.from, to: lastMove.to, piece, hasStarted: false })
+    setMoveAnimation({ ...step, hasStarted: false })
 
 
 

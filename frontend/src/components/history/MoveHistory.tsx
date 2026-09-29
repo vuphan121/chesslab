@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { MoveNode } from '@/lib/chess/types'
-import { childrenOf, flatten } from '@/lib/chess/moveTree'
+import { childrenOf } from '@/lib/chess/moveTree'
 import { evalFen, evalFenLookup, type FenEval } from '@/lib/api/client'
 import { MoveEvaluator } from '@/lib/engine/moveEval'
 import { toFigurine } from '@/lib/chess/figurine'
@@ -43,51 +43,9 @@ interface Props {
   moveTree: MoveNode
   currentNodeId: string
   onGotoNode: (id: string) => void
-  onNavStart: () => void
-  onNavPrev: () => void
-  onNavNext: () => void
-  onNavEnd: () => void
-  onReset: () => void
   onLoadPgn: (pgn: string) => Promise<void>
   engineEnabled?: boolean
   engineBusy?: boolean
-}
-
-
-
-function NavBtn({
-  label,
-  disabled,
-  onClick,
-  title,
-}: {
-  label: ReactNode
-  disabled?: boolean
-  onClick: () => void
-  title: string
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      style={{
-        width: 30,
-        height: 26,
-        border: '1px solid #eae8e2',
-        background: '#fff',
-        borderRadius: 6,
-        cursor: disabled ? 'default' : 'pointer',
-        color: disabled ? '#d6d3ca' : '#9a978f',
-        fontSize: 11,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {label}
-    </button>
-  )
 }
 
 
@@ -98,11 +56,6 @@ export default function MoveHistory({
   moveTree,
   currentNodeId,
   onGotoNode,
-  onNavStart,
-  onNavPrev,
-  onNavNext,
-  onNavEnd,
-  onReset,
   onLoadPgn,
   engineEnabled = true,
   engineBusy = false,
@@ -197,10 +150,6 @@ export default function MoveHistory({
     }
   }, [moveTree, engineEnabled])
 
-  const flat = flatten(moveTree)
-  const currentNode = flat.get(currentNodeId)?.node
-  const atRoot = currentNodeId === moveTree.id
-  const atLeaf = currentNode ? childrenOf(currentNode).length === 0 : true
 
 
   const renderMove = (node: MoveNode, showNumber: boolean, variation: boolean): ReactNode => {
@@ -480,28 +429,6 @@ export default function MoveHistory({
         <span className="lbl" style={{ color: '#b4b1a8' }}>
           Move order
         </span>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <NavBtn
-            label={
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M2 7a5 5 0 1 1 1.5 3.5M2 7V4M2 7h3"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            }
-            onClick={onReset}
-            title="Reset — clear all moves"
-          />
-          <span style={{ width: 4 }} />
-          <NavBtn label="⟨⟨" disabled={atRoot} onClick={onNavStart} title="Start" />
-          <NavBtn label="⟨" disabled={atRoot} onClick={onNavPrev} title="Previous" />
-          <NavBtn label="⟩" disabled={atLeaf} onClick={onNavNext} title="Next" />
-          <NavBtn label="⟩⟩" disabled={atLeaf} onClick={onNavEnd} title="End" />
-        </div>
       </div>
 
       {}

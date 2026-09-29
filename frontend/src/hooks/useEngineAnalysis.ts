@@ -113,6 +113,7 @@ export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings }: 
           .then((found) => {
             if (!found || cancelled || settledByLookup) return
             if (!found.tablebaseCategory && found.depth < localDepth) return
+            if (!found.tablebaseCategory && (found.lines?.length ?? 1) < lines) return
             settledByLookup = true
             job.cancel()
             remember(found)

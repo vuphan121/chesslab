@@ -1,17 +1,13 @@
 import type { ReactNode } from 'react'
-import type { Color } from '@/lib/chess/types'
 import PageSwitcher from './PageSwitcher'
 import { clearToken } from '@/lib/auth/token'
 
 interface Props {
-  turn?: Color
-  isBookMove?: boolean
-
   leftExtra?: ReactNode
   right?: ReactNode
 }
 
-export default function TopBar({ turn, isBookMove, leftExtra, right }: Props) {
+export default function TopBar({ leftExtra, right }: Props) {
   return (
     <div
       className="topbar"
@@ -36,60 +32,7 @@ export default function TopBar({ turn, isBookMove, leftExtra, right }: Props) {
       <PageSwitcher />
 
       <div className="gap-2 sm:gap-[9px]" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-        {right !== undefined ? (
-          right
-        ) : isBookMove ? (
-          <span
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 7,
-              fontSize: 12,
-              fontWeight: 600,
-              color: 'oklch(0.48 0.11 155)',
-              background: 'oklch(0.955 0.038 155)',
-              padding: '6px 13px',
-              borderRadius: 8,
-            }}
-          >
-            <span
-              style={{
-                width: 7,
-                height: 7,
-                borderRadius: '50%',
-                background: 'oklch(0.58 0.13 155)',
-              }}
-            />
-            Book move
-          </span>
-        ) : (
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: '#6a675f',
-              background: '#f0efe9',
-              padding: '6px 13px',
-              borderRadius: 8,
-            }}
-          >
-            Deviation
-          </span>
-        )}
-        {right === undefined && turn && (
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: '#6a675f',
-              background: '#f0efe9',
-              padding: '6px 13px',
-              borderRadius: 8,
-            }}
-          >
-            {turn === 'w' ? 'White to move' : 'Black to move'}
-          </span>
-        )}
+        {right}
         <button
           onClick={() => clearToken()}
           title="Sign out"
