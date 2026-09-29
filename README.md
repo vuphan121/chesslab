@@ -16,7 +16,6 @@ engine analysis, or work directly from your chess books on an interactive board.
 
 - [What it does](#what-it-does)
 - [Analysis Board](#analysis-board)
-- [Archived AI Coach](#archived-ai-coach)
 - [Opening Study (spaced-repetition trainer)](#opening-study-spaced-repetition-trainer)
 - [Study from Book](#study-from-book)
 - [Architecture](#architecture)
@@ -69,38 +68,6 @@ chess.com-styled board.
   (discards the board and replays from scratch — a partial/illegal paste loads whatever prefix
   parsed cleanly), and keyboard move navigation.
 
-## Archived AI Coach
-
-> The Coach panel has been removed from the frontend. Its backend experiments are retained only as
-> historical/reference code and are intentionally excluded from current product work and bug scans.
-> See [the archived design note](docs/ai-coach-design.md). The description below records the former
-> design; it is not an active user-facing feature.
-
-Grounded chess coaching, not free-associated chatbot chess. A local LLM (Ollama + `llama3.1:8b` by
-default — **no Anthropic API key, no cloud LLM cost**) writes the prose, but it never invents a
-chess fact: every claim it makes is backed by Stockfish, Lichess, or a curated, engine-validated
-opening-theory corpus.
-
-**Two ways to ask:**
-
-- **"Ask Coach"** — a one-click, grounded explanation of the move just played. It retrieves book
-  commentary for the *exact* position from a hand-chunked, engine-validated theory corpus, runs a
-  rule-based move-quality classifier, and folds in the live engine eval and Opening Explorer data —
-  then hands all of it to the LLM to turn into readable prose. Re-frames itself if you flip the
-  board, addressing whichever side you're studying as "you," never claiming a move was played that
-  wasn't.
-- **Freeform chat** — an agentic tool-calling loop with six tools: analyze any position, pull live
-  Opening Explorer stats, retrieve position-specific theory or opening-level context ("what's the
-  idea behind this opening?"), classify a move's quality, or evaluate a hypothetical ("from here,
-  can I play Nf3?").
-
-**The move classifier is book-aware, not just eval-based** — a real gambit (King's, Evans,
-Smith-Morra, Latvian...) deliberately gives up material for initiative, so grading it on raw engine
-eval alone would mislabel established theory as a blunder. The classifier checks the Opening
-Explorer for how often a move has actually been played by strong players and overrides the verdict
-accordingly: an established sacrifice reads as "Book," not "Mistake," while a genuine novelty is
-flagged as uncharted rather than automatically bad.
-
 ## Opening Study (spaced-repetition trainer)
 
 Point it at a Lichess study export and it becomes a drilling deck, Chessbook/Lotus-style.
@@ -119,7 +86,7 @@ Point it at a Lichess study export and it becomes a drilling deck, Chessbook/Lot
 - **Play it, don't just review it.** Each drill replays the position on a real board; a wrong answer
   shows the expected move and any study commentary, then undoes and re-prompts until you find it.
   A correct answer plays the opponent's most-often-missed reply and keeps going deeper into the
-  line — or lets you jump straight into the full Analysis Board (engine, coach, explorer, everything
+  line — or lets you jump straight into the full Analysis Board (engine, explorer, everything
   the trainer itself hides so it doesn't give away the answer) to study the line you just played.
 - **Progress follows you.** A single login gates the whole app, and drilling progress (per-card box,
   lapse count, accuracy) syncs to Postgres instead of living only in one browser — pick up a session
@@ -147,22 +114,18 @@ flowchart LR
     subgraph Server["Go backend"]
         API["chi REST API"]
         ENGINE["Hand-written chess engine<br/>(movegen, SAN, move tree)"]
-        COACH["AI coach<br/>(grounded prompt + tool-calling agent)"]
         REP["Repertoire parser<br/>(study PGN -> drill cards)"]
     end
 
     SF["Stockfish 18<br/>(subprocess, UCI)"]
     LICHESS["Lichess public APIs<br/>(cloud eval + opening explorer)"]
-    OLLAMA["Ollama<br/>(local LLM, llama3.1:8b)"]
     PG[("Postgres<br/>(auth + trainer progress)")]
 
     FE <--> API
     API --> ENGINE
-    API --> COACH
     API --> REP
     ENGINE --> SF
     API --> LICHESS
-    COACH --> OLLAMA
     API --> PG
 ```
 
@@ -179,7 +142,6 @@ universal position identifier passed between them.
 | Chess engine | Hand-written in Go — movegen, FEN, SAN, move tree, PGN parsing |
 | Position analysis | Stockfish 18 (subprocess/UCI) + Lichess cloud-eval API |
 | Opening data | Lichess Opening Explorer API |
-| AI coach LLM | Ollama, OpenAI-compatible `/v1/chat/completions`, default `llama3.1:8b` |
 | Auth | Single-login JWT (`golang-jwt`), bcrypt-hashed credential in Postgres |
 | Persistence | Postgres (trainer progress + drilling analytics) — optional, degrades gracefully |
 | Deployment | Render Blueprint (`render.yaml`) — Go+Stockfish in Docker, Next.js as a Node service |
@@ -192,8 +154,6 @@ universal position identifier passed between them.
 - **Stockfish** — a binary on your `PATH`, or point `STOCKFISH_PATH` at one directly
 - Optional: a free [Lichess API token](https://lichess.org/account/oauth/token) (powers the Opening
   Explorer panel — without it, everything else still works)
-- Optional: [Ollama](https://ollama.com/) with `llama3.1:8b` pulled (powers the AI coach — without
-  it, everything else still works)
 - Optional: a Postgres database (Neon works well) for cross-device trainer progress sync — without
   it, the trainer still works, it just won't remember progress between sessions
 
@@ -247,7 +207,6 @@ you're in.
 | `LICHESS_TOKEN` | No | Enables the Opening Explorer panel |
 | `DATABASE_URL` | No | Enables cross-device trainer progress sync + analytics (Postgres) |
 | `JWT_SECRET` | No (random at boot) | Set explicitly in production so tokens survive a redeploy |
-| `OLLAMA_BASE_URL`, `COACH_MODEL` | No | Point the AI coach at a non-default Ollama instance/model |
 | `ALLOWED_ORIGIN` | No (default `*`) | Restrict CORS to your deployed frontend in production |
 
 **Frontend** (`frontend/.env.local`, see `frontend/.env.example`):
@@ -259,7 +218,7 @@ you're in.
 ## Testing
 
 ```bash
-# Backend — chess engine, repertoire parser, AI coach classifier, all unit-tested
+# Backend — chess engine, repertoire parser, all unit-tested
 cd backend && go test ./...
 
 # Frontend — the spaced-repetition scheduler (pure logic, no chess knowledge)
@@ -273,19 +232,16 @@ cd frontend && npx tsc --noEmit
 
 ```
 chesslab/
-  backend/    # Go REST API — chess engine, Stockfish/Lichess integration, AI coach, repertoire parser
+  backend/    # Go REST API — chess engine, Stockfish/Lichess integration, repertoire parser
   frontend/   # Next.js app — Analysis Board + Opening Study pages
-  docs/       # Design docs: AI coach architecture, opening-trainer data formats/scheduler/API
+  docs/       # Design docs: opening-trainer data formats/scheduler/API
   render.yaml # Render Blueprint for deployment
 ```
 
 ## Deployment
 
 `render.yaml` deploys two services on [Render](https://render.com): the Go backend (with Stockfish,
-via Docker) and the Next.js frontend (as a Node web service). The AI coach is intentionally not part
-of the deployed stack — there's no hosted Ollama instance — so `/coach/*` endpoints return 503 in
-production while the rest of the app (board, engine analysis, opening explorer, opening trainer) is
-fully functional. See `backend/.env.example` and `frontend/.env.example` for what each service
+via Docker) and the Next.js frontend (as a Node web service). See `backend/.env.example` and `frontend/.env.example` for what each service
 needs.
 
 ## Recent changes

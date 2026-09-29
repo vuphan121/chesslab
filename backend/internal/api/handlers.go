@@ -17,7 +17,6 @@ import (
 	"github.com/chesslab/backend/internal/book"
 	"github.com/chesslab/backend/internal/booksource"
 	"github.com/chesslab/backend/internal/chess"
-	"github.com/chesslab/backend/internal/coach"
 	"github.com/chesslab/backend/internal/db"
 	"github.com/chesslab/backend/internal/engine"
 	"github.com/chesslab/backend/internal/lichess"
@@ -32,8 +31,6 @@ type Handler struct {
 	store             storage.Store
 	engine            *engine.Engine
 	precomputeEngine  *engine.Engine
-	coach             *coach.Service
-	coachAgent        *coach.Agent
 	repertoires       *repertoire.Store
 	books             *book.Store
 	bookSource        booksource.Reader
@@ -71,8 +68,8 @@ var errEngineUnavailable = errors.New("engine not configured")
 
 var errNoLookup = errors.New("no cloud or tablebase result")
 
-func NewHandler(store storage.Store, eng *engine.Engine, precomputeEng *engine.Engine, coachSvc *coach.Service, coachAgent *coach.Agent, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config, bookSource booksource.Reader, bookChapterPrefix string) *Handler {
-	return &Handler{store: store, engine: eng, precomputeEngine: precomputeEng, coach: coachSvc, coachAgent: coachAgent, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix, prefetchedCloud: make(map[string]prefetchedCloudEval), prefetchSem: make(chan struct{}, 1), analysisCache: make(map[string]cachedAnalysis), loginLimiter: newLoginLimiter(5, 5*time.Minute, time.Now), lineImportanceGen: make(map[string]int64)}
+func NewHandler(store storage.Store, eng *engine.Engine, precomputeEng *engine.Engine, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config, bookSource booksource.Reader, bookChapterPrefix string) *Handler {
+	return &Handler{store: store, engine: eng, precomputeEngine: precomputeEng, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix, prefetchedCloud: make(map[string]prefetchedCloudEval), prefetchSem: make(chan struct{}, 1), analysisCache: make(map[string]cachedAnalysis), loginLimiter: newLoginLimiter(5, 5*time.Minute, time.Now), lineImportanceGen: make(map[string]int64)}
 }
 
 type PieceJSON struct {

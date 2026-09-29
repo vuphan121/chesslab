@@ -111,19 +111,3 @@ func normalizeSANToken(s string) string {
 	return s
 }
 
-func ReplayLine(tokens []string) []string {
-	pos, err := ParseFEN(StartFEN)
-	if err != nil {
-		return nil
-	}
-	fens := make([]string, 0, len(tokens))
-	for _, tok := range tokens {
-		m, ok := FindLegalMoveBySAN(pos, tok)
-		if !ok {
-			break
-		}
-		pos = applyMove(pos, m)
-		fens = append(fens, FEN(pos))
-	}
-	return fens
-}

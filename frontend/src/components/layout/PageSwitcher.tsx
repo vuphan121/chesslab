@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const PAGES = [
-  { href: '/', label: 'Analysis Board', sub: 'Board, engine, explorer, AI coach' },
+  { href: '/', label: 'Analysis Board', sub: 'Board, engine, explorer' },
   { href: '/opening-study', label: 'Opening Study', sub: 'Drill your repertoire' },
   { href: '/book-study', label: 'Study from Book', sub: 'Work through book chapters' },
   { href: '/saved-puzzles', label: 'Saved Puzzles', sub: 'Your ChessTempo puzzle links' },

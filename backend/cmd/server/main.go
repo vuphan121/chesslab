@@ -17,7 +17,6 @@ import (
 	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/book"
 	"github.com/chesslab/backend/internal/booksource"
-	"github.com/chesslab/backend/internal/coach"
 	"github.com/chesslab/backend/internal/db"
 	"github.com/chesslab/backend/internal/engine"
 	"github.com/chesslab/backend/internal/repertoire"
@@ -70,10 +69,6 @@ func main() {
 		precomputeEngine = nil
 	}
 
-	index, overview, llm := newCoachDeps()
-	coachTools := coach.NewTools(eng, index, overview)
-	coachSvc := coach.NewService(coachTools, llm)
-	coachAgent := coach.NewAgent(coachTools, llm)
 
 	repDir := os.Getenv("REPERTOIRES_PATH")
 	if repDir == "" {
@@ -103,7 +98,7 @@ func main() {
 		cancel()
 	}
 
-	handler := api.NewHandler(store, eng, precomputeEngine, coachSvc, coachAgent, repertoires, books, dbStore, authCfg, bookSource, os.Getenv("B2_CHAPTER_PREFIX"))
+	handler := api.NewHandler(store, eng, precomputeEngine, repertoires, books, dbStore, authCfg, bookSource, os.Getenv("B2_CHAPTER_PREFIX"))
 	router := api.NewRouter(handler)
 
 	port := os.Getenv("PORT")
@@ -124,38 +119,6 @@ func main() {
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func newCoachDeps() (*coach.Index, *coach.OverviewIndex, *coach.OllamaClient) {
-	chunksPath := os.Getenv("COACH_CHUNKS_PATH")
-	if chunksPath == "" {
-		chunksPath = "data/opening-sources/accelerated-dragon/chunks.validated.json"
-	}
-
-	index, err := coach.LoadIndex(chunksPath)
-	if err != nil {
-		log.Printf("coach: theory index unavailable (%v) — explanations will skip book grounding", err)
-		index = nil
-	} else {
-		log.Printf("coach: loaded theory index (%d exact positions, %d with nearby transposition hints)", index.Len(), index.PrefixLen())
-	}
-
-	overviewPath := os.Getenv("COACH_OVERVIEW_PATH")
-	if overviewPath == "" {
-		overviewPath = "data/opening-sources/accelerated-dragon/overview.json"
-	}
-	overview, err := coach.LoadOverviewIndex(overviewPath)
-	if err != nil {
-		log.Printf("coach: opening-overview corpus unavailable (%v) — general opening questions will lack book context", err)
-		overview = nil
-	} else {
-		log.Printf("coach: loaded opening-overview corpus (%d passages)", overview.Len())
-	}
-
-	llm := coach.NewOllamaClient(os.Getenv("OLLAMA_BASE_URL"), os.Getenv("COACH_MODEL"))
-	log.Printf("coach: LLM client -> %s (model %s)", llm.BaseURL, llm.Model)
-
-	return index, overview, llm
 }
 
 func loadBooks(dbStore *db.Store) []*book.Book {

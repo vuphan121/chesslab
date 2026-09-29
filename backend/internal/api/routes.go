@@ -40,8 +40,6 @@ func NewRouter(h *Handler) http.Handler {
 			r.Delete("/{id}/nodes/{nodeId}", h.DeleteNode)
 			r.Post("/{id}/pgn", h.LoadPGN)
 			r.Post("/{id}/position", h.SetPosition)
-			r.Post("/{id}/coach/explain", h.ExplainMove)
-			r.Post("/{id}/coach/chat", h.CoachChat)
 		})
 
 		r.Get("/api/eval", h.EvalFEN)

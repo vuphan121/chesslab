@@ -11,26 +11,6 @@ type LineImportance struct {
 	Importance float64
 }
 
-func (s *Store) GetLineImportance(ctx context.Context, repertoireID string) (map[string]LineImportance, error) {
-	rows, err := s.pool.Query(ctx, `
-		SELECT card_id, play_count, importance
-		FROM repertoire_line_importance
-		WHERE repertoire_id = $1`, repertoireID)
-	if err != nil {
-		return nil, fmt.Errorf("get line importance: %w", err)
-	}
-	defer rows.Close()
-	out := map[string]LineImportance{}
-	for rows.Next() {
-		var entry LineImportance
-		if err := rows.Scan(&entry.CardID, &entry.PlayCount, &entry.Importance); err != nil {
-			return nil, fmt.Errorf("scan line importance: %w", err)
-		}
-		out[entry.CardID] = entry
-	}
-	return out, rows.Err()
-}
-
 func (s *Store) ReplaceLineImportance(ctx context.Context, repertoireID string, entries []LineImportance) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {

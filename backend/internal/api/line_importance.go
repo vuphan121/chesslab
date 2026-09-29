@@ -10,14 +10,6 @@ import (
 	"github.com/chesslab/backend/internal/repertoire"
 )
 
-func (h *Handler) ensureLineImportance(ctx context.Context, rep *repertoire.Repertoire) map[string]float64 {
-	cached, err := h.db.GetLineImportance(ctx, rep.ID)
-	if err == nil && len(cached) == len(rep.Cards) {
-		return importanceValues(cached)
-	}
-	return h.refreshLineImportance(ctx, rep)
-}
-
 func (h *Handler) startLineImportanceRefresh(repID string) int64 {
 	h.lineImportanceMu.Lock()
 	defer h.lineImportanceMu.Unlock()
@@ -91,14 +83,6 @@ func (h *Handler) refreshLineImportance(ctx context.Context, rep *repertoire.Rep
 	values := map[string]float64{}
 	for _, entry := range entries {
 		values[entry.CardID] = entry.Importance
-	}
-	return values
-}
-
-func importanceValues(entries map[string]db.LineImportance) map[string]float64 {
-	values := map[string]float64{}
-	for cardID, entry := range entries {
-		values[cardID] = entry.Importance
 	}
 	return values
 }

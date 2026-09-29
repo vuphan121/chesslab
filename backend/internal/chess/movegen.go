@@ -12,16 +12,6 @@ func GenerateLegalMoves(pos *Position) []Move {
 	return legal
 }
 
-func LegalMovesFrom(pos *Position, from Square) []Move {
-	var out []Move
-	for _, m := range GenerateLegalMoves(pos) {
-		if m.From == from {
-			out = append(out, m)
-		}
-	}
-	return out
-}
-
 func generatePseudo(pos *Position) []Move {
 	var moves []Move
 	for sq := Square(0); sq <= 63; sq++ {
