@@ -44,6 +44,20 @@ describe('LocalGame', () => {
     expect(tree.children.map((c) => c.san)).toEqual(['e4', 'd4'])
   })
 
+  it('keeps earlier move-tree snapshots immutable', () => {
+    const g = new LocalGame()
+    const before = g.snapshot().moveTree
+    g.applyMove('e2', 'e4')
+    const afterMove = g.snapshot().moveTree
+    expect(before.children).toHaveLength(0)
+    expect(afterMove.children).toHaveLength(1)
+
+    g.gotoNode('0')
+    g.applyMove('d2', 'd4')
+    expect(afterMove.children.map((node) => node.san)).toEqual(['e4'])
+    expect(g.snapshot().moveTree.children.map((node) => node.san)).toEqual(['e4', 'd4'])
+  })
+
   it('navigates and deletes a node together with its subtree', () => {
     const g = new LocalGame()
     g.applyMove('e2', 'e4')
@@ -96,6 +110,44 @@ describe('LocalGame', () => {
   it('flags the 50-move rule and insufficient material', () => {
     expect(new LocalGame('8/8/8/8/8/5k2/8/4K2R w - - 100 80').snapshot().gameOverReason).toBe('50-move rule')
     expect(new LocalGame('8/8/8/8/8/5k2/8/4K3 w - - 0 80').snapshot().gameOverReason).toBe('insufficient material')
+  })
+
+  it('flags threefold repetition along the active line', () => {
+    const g = new LocalGame()
+    for (const [from, to] of [
+      ['g1', 'f3'], ['g8', 'f6'], ['f3', 'g1'], ['f6', 'g8'],
+      ['g1', 'f3'], ['g8', 'f6'], ['f3', 'g1'], ['f6', 'g8'],
+    ]) {
+      expect(g.applyMove(from, to)).toBe(true)
+    }
+    expect(g.snapshot()).toMatchObject({
+      isDraw: true,
+      isGameOver: true,
+      gameOverReason: 'threefold repetition',
+    })
+    expect(g.snapshot().legalMoves).toHaveLength(0)
+    expect(g.applyMove('g1', 'f3')).toBe(false)
+  })
+
+  it('ignores an en-passant square when the capture is illegal', () => {
+    const g = new LocalGame('k3r3/8/8/3pP3/8/8/8/4K3 w - d6 0 1')
+    for (const [from, to] of [
+      ['e1', 'f1'], ['a8', 'b8'], ['f1', 'e1'], ['b8', 'a8'],
+      ['e1', 'f1'], ['a8', 'b8'], ['f1', 'e1'], ['b8', 'a8'],
+    ]) {
+      expect(g.applyMove(from, to)).toBe(true)
+    }
+    expect(g.snapshot().gameOverReason).toBe('threefold repetition')
+  })
+
+  it('rejects moves after other terminal draws', () => {
+    const fifty = new LocalGame('8/8/8/8/8/5k2/8/4K2R w - - 100 80')
+    expect(fifty.snapshot().legalMoves).toHaveLength(0)
+    expect(fifty.applyMove('h1', 'h2')).toBe(false)
+
+    const insufficient = new LocalGame('8/8/8/8/8/5k2/8/4K3 w - - 0 80')
+    expect(insufficient.snapshot().legalMoves).toHaveLength(0)
+    expect(insufficient.applyMove('e1', 'd1')).toBe(false)
   })
 })
 

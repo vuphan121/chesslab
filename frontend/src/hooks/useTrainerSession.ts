@@ -207,10 +207,7 @@ export function useTrainerSession() {
   const [evalByFen, setEvalByFen] = useState<Record<string, PositionEval>>({})
 
   useEffect(() => {
-    if (phase !== 'line-complete') {
-      setEvalByFen({})
-      return
-    }
+    if (phase !== 'line-complete') return
     let cancelled = false
     const fens = runSnapshotsRef.current.map((gs) => gs.fen)
     getPositionEvals(fens)
@@ -480,7 +477,10 @@ export function useTrainerSession() {
 
 
     setHintUci(null)
-    if (logAttempt) setPhase('line-complete')
+    if (logAttempt) {
+      setEvalByFen({})
+      setPhase('line-complete')
+    }
   }, [repertoire, cardById, runHadMistake])
 
 

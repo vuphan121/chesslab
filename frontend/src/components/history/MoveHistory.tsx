@@ -123,6 +123,7 @@ export default function MoveHistory({
     const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
     ;(async () => {
       const unresolved: string[] = []
+      const cloudResults: Record<string, FenEval> = {}
       const queue = [...missing]
       const worker = async () => {
         for (let fen = queue.shift(); fen !== undefined; fen = queue.shift()) {
@@ -135,15 +136,25 @@ export default function MoveHistory({
           if (cancelled) return
           if (e) {
             attemptedRef.current.add(fen)
-            const found = e
-            setEvals((prev) => ({ ...prev, [fen as string]: found }))
+            cloudResults[fen] = e
           } else {
             unresolved.push(fen)
           }
         }
       }
       await Promise.all([worker(), worker(), worker(), worker()])
+      if (cancelled) return
+      if (Object.keys(cloudResults).length > 0) {
+        setEvals((prev) => ({ ...prev, ...cloudResults }))
+      }
       if (!engineEnabled) return
+      let localResults: Record<string, FenEval> = {}
+      const flushLocalResults = () => {
+        if (cancelled || Object.keys(localResults).length === 0) return
+        const batch = localResults
+        localResults = {}
+        setEvals((prev) => ({ ...prev, ...batch }))
+      }
       for (const fen of unresolved) {
         if (cancelled) return
         while (busyRef.current && !cancelled) await pause(400)
@@ -153,10 +164,14 @@ export default function MoveHistory({
           const e = await evaluator.evaluate(fen)
           if (cancelled) return
           attemptedRef.current.add(fen)
-          if (e) setEvals((prev) => ({ ...prev, [fen]: e }))
+          if (e) {
+            localResults[fen] = e
+            if (Object.keys(localResults).length >= 2) flushLocalResults()
+          }
         } catch {
         }
       }
+      flushLocalResults()
     })()
     return () => {
       cancelled = true

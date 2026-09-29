@@ -44,33 +44,6 @@ function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState 
   }
 }
 
-const bookGame = new LocalGame()
-
-const createGame = async (fen: string): Promise<GameState> => {
-  bookGame.resetTo(fen)
-  return bookGame.snapshot()
-}
-
-const apiSetPosition = async (_gid: string, fen: string): Promise<GameState> => {
-  bookGame.resetTo(fen)
-  return bookGame.snapshot()
-}
-
-const makeMove = async (_gid: string, from: string, to: string, promotion?: string): Promise<GameState> => {
-  if (!bookGame.applyMove(from, to, promotion)) throw new Error(`illegal move: ${from}→${to}`)
-  return bookGame.snapshot()
-}
-
-const gotoNode = async (_gid: string, nodeId: string): Promise<GameState> => {
-  if (!bookGame.gotoNode(nodeId)) throw new Error(`node not found: ${nodeId}`)
-  return bookGame.snapshot()
-}
-
-const deleteGameNode = async (_gid: string, nodeId: string): Promise<GameState> => {
-  if (!bookGame.deleteNode(nodeId)) throw new Error('could not delete that move')
-  return bookGame.snapshot()
-}
-
 export type BookStudyPhase = 'setup' | 'studying' | 'done'
 
 
@@ -94,6 +67,7 @@ export interface FlatItem {
 
 
 export function useBookStudySession() {
+  const [bookGame] = useState(() => new LocalGame())
   const [phase, setPhase] = useState<BookStudyPhase>('setup')
   const [book, setBook] = useState<Book | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -109,6 +83,7 @@ export function useBookStudySession() {
   const [flipped, setFlipped] = useState(false)
   const [analysisEnabled, setAnalysisEnabled] = useState(false)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
+  const [analysisFen, setAnalysisFen] = useState<string | null>(null)
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
   const [moveEvals, setMoveEvals] = useState<Record<string, FenEval>>({})
@@ -124,8 +99,35 @@ export function useBookStudySession() {
   const moveReqId = useRef(0)
   const analysisReqId = useRef(0)
   const itemReqId = useRef(0)
+  const boardRevisionRef = useRef(0)
   const moveEvalsRef = useRef<Record<string, FenEval>>({})
   const analysisCacheRef = useRef<Map<string, Analysis>>(new Map())
+  const analysisLoadingRef = useRef(false)
+
+  const createGame = useCallback(async (fen: string): Promise<GameState> => {
+    bookGame.resetTo(fen)
+    return bookGame.snapshot()
+  }, [bookGame])
+
+  const apiSetPosition = useCallback(async (_gid: string, fen: string): Promise<GameState> => {
+    bookGame.resetTo(fen)
+    return bookGame.snapshot()
+  }, [bookGame])
+
+  const makeMove = useCallback(async (_gid: string, from: string, to: string, promotion?: string): Promise<GameState> => {
+    if (!bookGame.applyMove(from, to, promotion)) throw new Error(`illegal move: ${from}→${to}`)
+    return bookGame.snapshot()
+  }, [bookGame])
+
+  const gotoNode = useCallback(async (_gid: string, nodeId: string): Promise<GameState> => {
+    if (!bookGame.gotoNode(nodeId)) throw new Error(`node not found: ${nodeId}`)
+    return bookGame.snapshot()
+  }, [bookGame])
+
+  const deleteGameNode = useCallback(async (_gid: string, nodeId: string): Promise<GameState> => {
+    if (!bookGame.deleteNode(nodeId)) throw new Error('could not delete that move')
+    return bookGame.snapshot()
+  }, [bookGame])
 
   useEffect(() => {
     moveEvalsRef.current = moveEvals
@@ -152,6 +154,8 @@ export function useBookStudySession() {
     const cached = analysisCacheRef.current.get(currentFen)
     if (cached) {
       setAnalysis(cached)
+      setAnalysisFen(currentFen)
+      analysisLoadingRef.current = false
       setAnalysisLoading(false)
       setAnalysisError(null)
       return
@@ -159,11 +163,15 @@ export function useBookStudySession() {
 
     const fen = currentFen
     const requestID = ++analysisReqId.current
-    const isCurrent = () => requestID === analysisReqId.current
+    let cancelled = false
+    const isCurrent = () => !cancelled && requestID === analysisReqId.current
+    analysisLoadingRef.current = true
     setAnalysisLoading(true)
     setAnalysisError(null)
     const engine = acquireEngine()
     let job: { cancel: () => void } | null = null
+    const lookup = new AbortController()
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null
     const record = (result: Analysis) => {
       analysisCacheRef.current.set(fen, result)
       if (result.lines.length > 0 && !(fen in moveEvalsRef.current)) {
@@ -174,14 +182,19 @@ export function useBookStudySession() {
     ;(async () => {
       try {
         const found = await Promise.race([
-          lookupAnalysis(fen, 3).catch(() => null),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 500)),
+          lookupAnalysis(fen, 3, lookup.signal).catch(() => null),
+          new Promise<null>((resolve) => {
+            fallbackTimer = setTimeout(() => resolve(null), 500)
+          }),
         ])
+        if (fallbackTimer) clearTimeout(fallbackTimer)
         if (!isCurrent()) return
         if (found) {
           record(found)
           setAnalysis(found)
+          setAnalysisFen(fen)
           setAnalysisLoading(false)
+          analysisLoadingRef.current = false
           return
         }
         const started = engine.start({
@@ -192,7 +205,10 @@ export function useBookStudySession() {
           depth: 14,
           timeSec: 0,
           onUpdate: (partial) => {
-            if (isCurrent()) setAnalysis(partial)
+            if (isCurrent()) {
+              setAnalysis(partial)
+              setAnalysisFen(fen)
+            }
           },
         })
         job = started
@@ -202,17 +218,26 @@ export function useBookStudySession() {
         if (result.analysis && result.completed) {
           record(result.analysis)
           setAnalysis(result.analysis)
+          setAnalysisFen(fen)
         }
       } catch (err: unknown) {
         if (isCurrent()) {
           setAnalysis(null)
+          setAnalysisFen(null)
           setAnalysisError(err instanceof Error ? err.message : 'Analysis is unavailable.')
         }
       } finally {
-        if (isCurrent()) setAnalysisLoading(false)
+        if (isCurrent()) {
+          analysisLoadingRef.current = false
+          setAnalysisLoading(false)
+        }
       }
     })()
     return () => {
+      cancelled = true
+      analysisLoadingRef.current = false
+      lookup.abort()
+      if (fallbackTimer) clearTimeout(fallbackTimer)
       job?.cancel()
       releaseEngine()
     }
@@ -239,6 +264,10 @@ export function useBookStudySession() {
         try {
           let e = await lookupEval(fen)
           if (!e && !cancelled) {
+            while (analysisLoadingRef.current && !cancelled) {
+              await new Promise((resolve) => setTimeout(resolve, 200))
+            }
+            if (cancelled) return
             const evaluator = (evaluatorRef.current ??= new MoveEvaluator())
             e = await evaluator.evaluate(fen)
           }
@@ -273,16 +302,19 @@ export function useBookStudySession() {
     setSelected(null)
     setMoveError(null)
     setFlipped(item.sideToMove === 'b')
+    boardRevisionRef.current++
     analysisCacheRef.current = new Map()
     setMoveEvals({})
     setAnalysis(null)
+    setAnalysisFen(null)
     setAnalysisError(null)
+    setSavedLine(null)
     setSaveNote(null)
     const gs = await apiSetPosition(gid, item.fen)
     if (reqId !== itemReqId.current) return false
     setGameState(gs)
     return true
-  }, [])
+  }, [apiSetPosition])
 
   const replayLine = useCallback(async (line: SavedLine, expectedItemRequest = itemReqId.current): Promise<GameState | null> => {
     const gid = gameIdRef.current
@@ -296,19 +328,21 @@ export function useBookStudySession() {
     }
     const reset = await gotoNode(gid, gs.moveTree.id)
     return expectedItemRequest === itemReqId.current ? reset : null
-  }, [])
+  }, [apiSetPosition, gotoNode, makeMove])
 
   useEffect(() => {
     const bookId = book?.id
     const itemId = current?.item.id
-    if (!bookId || !itemId) return
+    if (!bookId || !itemId || !gameIdRef.current) return
     const expectedItemRequest = itemReqId.current
+    const expectedBoardRevision = boardRevisionRef.current
     let cancelled = false
     getBookSavedLine(bookId, itemId)
       .then(async ({ line }) => {
         if (cancelled || expectedItemRequest !== itemReqId.current) return
         setSavedLine(line)
         if (!line) return
+        if (expectedBoardRevision !== boardRevisionRef.current) return
         setBusy(true)
         try {
           const gs = await replayLine(line, expectedItemRequest)
@@ -331,6 +365,7 @@ export function useBookStudySession() {
 
   const restoreSavedLine = useCallback(async () => {
     if (!savedLine || busy) return
+    boardRevisionRef.current++
     setBusy(true)
     setSaveNote(null)
     try {
@@ -384,7 +419,7 @@ export function useBookStudySession() {
         setLoading(false)
       }
     },
-    [enterItem],
+    [createGame, enterItem],
   )
 
   const goToIndex = useCallback(
@@ -424,6 +459,7 @@ export function useBookStudySession() {
     const parentId = flatten(gameState.moveTree).get(gameState.currentNodeId)?.parentId
     if (parentId == null) return
     const expectedItemRequest = itemReqId.current
+    boardRevisionRef.current++
     setBusy(true)
     try {
       const gs = await gotoNode(gid, parentId)
@@ -438,7 +474,7 @@ export function useBookStudySession() {
     } finally {
       if (expectedItemRequest === itemReqId.current) setBusy(false)
     }
-  }, [gameState, busy])
+  }, [gameState, busy, gotoNode])
 
   const stepForward = useCallback(async () => {
     const gid = gameIdRef.current
@@ -447,6 +483,7 @@ export function useBookStudySession() {
     const child = entry?.node.children?.[0]
     if (!child) return
     const expectedItemRequest = itemReqId.current
+    boardRevisionRef.current++
     setBusy(true)
     try {
       const gs = await gotoNode(gid, child.id)
@@ -461,12 +498,13 @@ export function useBookStudySession() {
     } finally {
       if (expectedItemRequest === itemReqId.current) setBusy(false)
     }
-  }, [gameState, busy])
+  }, [gameState, busy, gotoNode])
 
   const goToMove = useCallback(async (nodeId: string) => {
     const gid = gameIdRef.current
     if (!gid || !gameState || busy) return
     const expectedItemRequest = itemReqId.current
+    boardRevisionRef.current++
     setBusy(true)
     try {
       const gs = await gotoNode(gid, nodeId)
@@ -481,12 +519,13 @@ export function useBookStudySession() {
     } finally {
       if (expectedItemRequest === itemReqId.current) setBusy(false)
     }
-  }, [gameState, busy])
+  }, [gameState, busy, gotoNode])
 
   const deleteMove = useCallback(async (nodeId: string) => {
     const gid = gameIdRef.current
     if (!gid || !gameState || busy || nodeId === gameState.moveTree.id) return
     const expectedItemRequest = itemReqId.current
+    boardRevisionRef.current++
     setBusy(true)
     try {
       const gs = await deleteGameNode(gid, nodeId)
@@ -502,7 +541,7 @@ export function useBookStudySession() {
     } finally {
       if (expectedItemRequest === itemReqId.current) setBusy(false)
     }
-  }, [gameState, busy])
+  }, [gameState, busy, deleteGameNode])
 
   const saveCurrentLine = useCallback(async () => {
     const bookId = book?.id
@@ -555,6 +594,7 @@ export function useBookStudySession() {
       setBusy(true)
       setMoveError(null)
       const reqId = ++moveReqId.current
+      boardRevisionRef.current++
       try {
         const piece = boardState?.pieces[from]
         const isPromo =
@@ -576,7 +616,7 @@ export function useBookStudySession() {
         if (reqId === moveReqId.current) setBusy(false)
       }
     },
-    [phase, busy, boardState, book, current],
+    [phase, busy, boardState, book, current, makeMove],
   )
 
   const selectSquare = useCallback(
@@ -656,6 +696,7 @@ export function useBookStudySession() {
     setFlatIndex(0)
     setAnalysisEnabled(false)
     setAnalysis(null)
+    setAnalysisFen(null)
     setAnalysisError(null)
     setMoveEvals({})
     setSavedLine(null)
@@ -680,7 +721,7 @@ export function useBookStudySession() {
     flipped,
     toggleFlipped,
     analysisEnabled,
-    analysis,
+    analysis: analysisFen === currentFen ? analysis : null,
     analysisLoading,
     analysisError,
     toggleAnalysis,

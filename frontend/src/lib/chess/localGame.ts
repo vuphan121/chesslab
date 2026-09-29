@@ -8,12 +8,14 @@ interface TreeNode {
   id: string
   san: string
   fen: string
+  repetitionKey: string
   ply: number
   from?: string
   to?: string
   promotion?: string
   parent: TreeNode | null
   children: TreeNode[]
+  view: MoveNode
 }
 
 export interface LoadPgnResult {
@@ -26,6 +28,16 @@ function rootPly(fen: string): number {
   const fields = fen.split(' ')
   const full = Number(fields[5]) || 1
   return Math.max(0, (full - 1) * 2 + (fields[1] === 'b' ? 1 : 0))
+}
+
+function repetitionKey(fen: string): string {
+  const fields = fen.split(' ')
+  if (fields.length < 4) return fen
+  if (fields[3] !== '-') {
+    const chess = new Chess(fen)
+    if (!chess.moves({ verbose: true }).some((move) => move.isEnPassant())) fields[3] = '-'
+  }
+  return fields.slice(0, 4).join(' ')
 }
 
 export function tokenizePgnMoves(pgn: string): string[] {
@@ -71,13 +83,15 @@ function normalizeSan(tok: string): string {
 export class LocalGame {
   private root: TreeNode
   private current: TreeNode
+  private nodes = new Map<string, TreeNode>()
   private counter = 0
   readonly id = 'local'
 
   constructor(fen: string = START_FEN) {
     new Chess(fen)
-    this.root = { id: '0', san: '', fen, ply: rootPly(fen), parent: null, children: [] }
+    this.root = this.createNode({ id: '0', san: '', fen, ply: rootPly(fen), parent: null })
     this.current = this.root
+    this.nodes.set(this.root.id, this.root)
   }
 
   private nextId(): string {
@@ -85,19 +99,52 @@ export class LocalGame {
     return String(this.counter)
   }
 
-  private find(id: string, node: TreeNode = this.root): TreeNode | null {
-    if (node.id === id) return node
-    for (const child of node.children) {
-      const found = this.find(id, child)
-      if (found) return found
+  private createNode(input: {
+    id: string
+    san: string
+    fen: string
+    ply: number
+    parent: TreeNode | null
+    from?: string
+    to?: string
+    promotion?: string
+  }): TreeNode {
+    const view: MoveNode = {
+      id: input.id,
+      san: input.san,
+      fen: input.fen,
+      ply: input.ply,
+      ...(input.from ? { from: input.from, to: input.to } : {}),
+      ...(input.promotion ? { promotion: input.promotion } : {}),
+      children: [],
     }
-    return null
+    return { ...input, repetitionKey: repetitionKey(input.fen), children: [], view }
+  }
+
+  private rebuildViewPath(node: TreeNode | null): void {
+    for (let current = node; current; current = current.parent) {
+      current.view = { ...current.view, children: current.children.map((child) => child.view) }
+    }
+  }
+
+  private removeFromIndex(node: TreeNode): void {
+    this.nodes.delete(node.id)
+    for (const child of node.children) this.removeFromIndex(child)
+  }
+
+  private isThreefoldRepetition(): boolean {
+    let repetitions = 0
+    for (let node: TreeNode | null = this.current; node; node = node.parent) {
+      if (node.repetitionKey === this.current.repetitionKey) repetitions++
+    }
+    return repetitions >= 3
   }
 
   resetTo(fen: string = START_FEN): void {
     new Chess(fen)
-    this.root = { id: '0', san: '', fen, ply: rootPly(fen), parent: null, children: [] }
+    this.root = this.createNode({ id: '0', san: '', fen, ply: rootPly(fen), parent: null })
     this.current = this.root
+    this.nodes = new Map([[this.root.id, this.root]])
     this.counter = 0
   }
 
@@ -106,7 +153,7 @@ export class LocalGame {
   }
 
   gotoNode(id: string): boolean {
-    const node = this.find(id)
+    const node = this.nodes.get(id)
     if (!node) return false
     this.current = node
     return true
@@ -114,10 +161,12 @@ export class LocalGame {
 
   deleteNode(id: string): boolean {
     if (id === this.root.id) return false
-    const target = this.find(id)
+    const target = this.nodes.get(id)
     if (!target || !target.parent) return false
     const parent = target.parent
     parent.children = parent.children.filter((c) => c !== target)
+    this.removeFromIndex(target)
+    this.rebuildViewPath(parent)
     for (let n: TreeNode | null = this.current; n; n = n.parent) {
       if (n === target) {
         this.current = parent
@@ -129,6 +178,7 @@ export class LocalGame {
 
   applyMove(from: string, to: string, promotion?: string): boolean {
     const chess = new Chess(this.current.fen)
+    if (chess.isGameOver() || this.isThreefoldRepetition()) return false
     const legal = chess.moves({ verbose: true }).find((m) => {
       if (m.from !== from || m.to !== to) return false
       if (m.promotion) return m.promotion === (promotion && 'qrbn'.includes(promotion) ? promotion : 'q')
@@ -143,18 +193,20 @@ export class LocalGame {
       return true
     }
     chess.move({ from: legal.from, to: legal.to, promotion: legal.promotion })
-    const node: TreeNode = {
+    const nextFen = chess.fen()
+    const node = this.createNode({
       id: this.nextId(),
       san: legal.san,
-      fen: chess.fen(),
+      fen: nextFen,
       ply: this.current.ply + 1,
       from: legal.from,
       to: legal.to,
       ...(legal.promotion ? { promotion: legal.promotion } : {}),
       parent: this.current,
-      children: [],
-    }
+    })
     this.current.children.push(node)
+    this.nodes.set(node.id, node)
+    this.rebuildViewPath(this.current)
     this.current = node
     return true
   }
@@ -193,27 +245,33 @@ export class LocalGame {
       }
     }
     const verbose = chess.moves({ verbose: true })
-    const legalMoves: MoveJSON[] = verbose.map((m) => ({
-      from: m.from,
-      to: m.to,
-      ...(m.promotion ? { promotion: m.promotion } : {}),
-    }))
     const isCheck = chess.inCheck()
     const hasMoves = verbose.length > 0
     const isCheckmate = isCheck && !hasMoves
     const isStalemate = !isCheck && !hasMoves
     const is50 = Number(fields[4]) >= 100
     const insufficient = chess.isInsufficientMaterial()
-    const isDraw = isStalemate || is50 || insufficient
+    const isThreefold = this.isThreefoldRepetition()
+    const isDraw = isStalemate || is50 || isThreefold || insufficient
+    const isGameOver = isCheckmate || isDraw
+    const legalMoves: MoveJSON[] = isGameOver
+      ? []
+      : verbose.map((m) => ({
+          from: m.from,
+          to: m.to,
+          ...(m.promotion ? { promotion: m.promotion } : {}),
+        }))
     const gameOverReason = isCheckmate
       ? 'checkmate'
       : isStalemate
         ? 'stalemate'
         : is50
           ? '50-move rule'
-          : insufficient
-            ? 'insufficient material'
-            : ''
+          : isThreefold
+            ? 'threefold repetition'
+            : insufficient
+              ? 'insufficient material'
+              : ''
     const cur = this.current
     return {
       id: this.id,
@@ -227,22 +285,10 @@ export class LocalGame {
       isCheckmate,
       isStalemate,
       isDraw,
-      isGameOver: isCheckmate || isDraw,
+      isGameOver,
       gameOverReason,
-      moveTree: toMoveNode(this.root),
+      moveTree: this.root.view,
       currentNodeId: cur.id,
     }
-  }
-}
-
-function toMoveNode(node: TreeNode): MoveNode {
-  return {
-    id: node.id,
-    san: node.san,
-    fen: node.fen,
-    ply: node.ply,
-    ...(node.from ? { from: node.from, to: node.to } : {}),
-    ...(node.promotion ? { promotion: node.promotion } : {}),
-    children: node.children.map(toMoveNode),
   }
 }

@@ -44,14 +44,17 @@ export function useChessGame() {
   const [gs, setGs] = useState<GameState>(() => game.snapshot())
   const [selected, setSelected] = useState<Square | null>(null)
   const [explorer, setExplorer] = useState<Explorer | null>(null)
-  const [explorerLoading, setExplorerLoading] = useState(false)
+  const [explorerLoading, setExplorerLoading] = useState(true)
   const [openingByFen, setOpeningByFen] = useState<Record<string, { name: string; eco?: string }>>({})
   const [flipped, setFlipped] = useState(false)
   const moveSound = useRef<HTMLAudioElement | null>(null)
   const explorerReqId = useRef(0)
+  const explorerAbort = useRef<AbortController | null>(null)
 
   const runExplorer = useCallback(async (fen: string): Promise<void> => {
     const reqId = ++explorerReqId.current
+    explorerAbort.current?.abort()
+    explorerAbort.current = null
     const apply = (e: Explorer) => {
       setExplorer(e)
       if (e.openingName) {
@@ -65,12 +68,16 @@ export function useChessGame() {
       setExplorerLoading(false)
       return
     }
+    setExplorer(null)
     setExplorerLoading(true)
+    const controller = new AbortController()
+    explorerAbort.current = controller
     try {
-      const e = await fetchExplorer(fen)
+      const e = await fetchExplorer(fen, controller.signal)
       if (reqId === explorerReqId.current) apply(e)
     } catch {
     } finally {
+      if (explorerAbort.current === controller) explorerAbort.current = null
       if (reqId === explorerReqId.current) setExplorerLoading(false)
     }
   }, [])
@@ -78,6 +85,7 @@ export function useChessGame() {
   useEffect(() => {
     moveSound.current = new Audio('/sounds/move.mp3')
     void Promise.resolve().then(() => runExplorer(game.currentFen))
+    return () => explorerAbort.current?.abort()
   }, [game, runExplorer])
 
   const commit = useCallback(

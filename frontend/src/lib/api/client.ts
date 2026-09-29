@@ -160,7 +160,11 @@ export interface PositionEval {
 
 export const getPositionEvals = (fens: string[]): Promise<Record<string, PositionEval>> => {
   if (fens.length === 0) return Promise.resolve({})
-  return request(`/api/position-evals?fens=${encodeURIComponent(fens.join(','))}`)
+  return request('/api/position-evals', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fens }),
+  })
 }
 
 let lichessTokenPromise: Promise<string | null> | null = null

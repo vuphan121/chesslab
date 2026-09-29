@@ -30,7 +30,7 @@ func NewRouter(h *Handler) http.Handler {
 		r.Use(h.authCfg.Middleware)
 
 		r.Get("/api/lichess-token", h.GetLichessToken)
-		r.Get("/api/position-evals", h.GetPositionEvals)
+		r.Post("/api/position-evals", h.GetPositionEvals)
 
 		r.Route("/api/repertoires", func(r chi.Router) {
 			r.Get("/", h.ListRepertoires)

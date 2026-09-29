@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -28,24 +29,30 @@ func (h *Handler) GetPositionEvals(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	raw := r.URL.Query().Get("fens")
-	if raw == "" {
+	var request struct {
+		FENs []string `json:"fens"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "invalid position eval request", http.StatusBadRequest)
+		return
+	}
+	if len(request.FENs) == 0 {
 		respondJSON(w, http.StatusOK, map[string]PositionEvalJSON{})
 		return
 	}
 
-	keyToFen := make(map[string]string)
+	keyToFENs := make(map[string][]string)
 	keys := make([]string, 0, 16)
-	for _, fen := range strings.Split(raw, ",") {
+	for _, fen := range request.FENs {
 		fen = strings.TrimSpace(fen)
 		if fen == "" {
 			continue
 		}
 		key := repertoire.CardKey(fen)
-		if _, exists := keyToFen[key]; !exists {
+		if _, exists := keyToFENs[key]; !exists {
 			keys = append(keys, key)
 		}
-		keyToFen[key] = fen
+		keyToFENs[key] = append(keyToFENs[key], fen)
 	}
 
 	evals, err := h.db.GetPositionEvals(r.Context(), keys)
@@ -56,7 +63,7 @@ func (h *Handler) GetPositionEvals(w http.ResponseWriter, r *http.Request) {
 
 	out := make(map[string]PositionEvalJSON, len(evals))
 	for key, e := range evals {
-		fen, ok := keyToFen[key]
+		fens, ok := keyToFENs[key]
 		if !ok {
 			continue
 		}
@@ -64,7 +71,10 @@ func (h *Handler) GetPositionEvals(w http.ResponseWriter, r *http.Request) {
 		for _, m := range e.BestMoves {
 			moves = append(moves, PositionEvalMoveJSON{Rank: m.Rank, San: m.SAN, UCI: m.UCI, Score: m.Score, Mate: m.Mate})
 		}
-		out[fen] = PositionEvalJSON{Score: e.Score, Mate: e.Mate, Depth: e.Depth, BestMoves: moves}
+		value := PositionEvalJSON{Score: e.Score, Mate: e.Mate, Depth: e.Depth, BestMoves: moves}
+		for _, fen := range fens {
+			out[fen] = value
+		}
 	}
 	respondJSON(w, http.StatusOK, out)
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useMemo, useEffect, useLayoutEffect } from 'react'
+import { useState, useRef, useMemo, useEffect, useLayoutEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Square from './Square'
 import Piece from './Piece'
@@ -64,7 +64,10 @@ export default function Board({
     lastMove?: BoardState['lastMove']
   }>({ fen: boardState.fen, pieces: boardState.pieces, lastMove: boardState.lastMove })
   const justPlayedRef = useRef(false)
+  const pendingSequence = useRef(0)
+  const pendingTimers = useRef<Set<number>>(new Set())
   const [pending, setPending] = useState<{
+    id: number
     from: string
     to: string
     piece: NonNullable<BoardState['pieces'][string]>
@@ -103,6 +106,12 @@ export default function Board({
     dragMovedRef.current = false
   }, [boardState.fen])
 
+  useEffect(() => () => {
+    pendingSequence.current++
+    for (const timer of pendingTimers.current) window.clearTimeout(timer)
+    pendingTimers.current.clear()
+  }, [])
+
   useEffect(() => {
     if (!promo) return
     const onKey = (e: KeyboardEvent) => {
@@ -112,7 +121,7 @@ export default function Board({
     return () => window.removeEventListener('keydown', onKey)
   }, [promo])
 
-  const commitMove = (
+  const commitMove = useCallback((
     from: string,
     to: string,
     slide: boolean,
@@ -124,7 +133,9 @@ export default function Board({
       run()
       return
     }
+    const id = ++pendingSequence.current
     const next: NonNullable<typeof pending> = {
+      id,
       from,
       to,
       piece: promotion ? { ...piece, type: promotion } : piece,
@@ -142,20 +153,30 @@ export default function Board({
     setPending(next)
     if (slide) {
       window.requestAnimationFrame(() =>
-        window.requestAnimationFrame(() => setPending((cur) => (cur ? { ...cur, started: true } : cur))),
+        window.requestAnimationFrame(() =>
+          setPending((cur) => (cur?.id === id ? { ...cur, started: true } : cur)),
+        ),
       )
     }
-    const clear = () => {
-      const wait = slide ? Math.max(30, USER_MOVE_SLIDE_MS + 30 - (performance.now() - startedAt)) : 30
-      window.setTimeout(() => setPending(null), wait)
+    const scheduleClear = (wait: number) => {
+      const timer = window.setTimeout(() => {
+        pendingTimers.current.delete(timer)
+        setPending((cur) => (cur?.id === id ? null : cur))
+      }, wait)
+      pendingTimers.current.add(timer)
     }
-    window.setTimeout(() => setPending(null), PENDING_MAX_MS)
+    const clear = () => {
+      if (pendingSequence.current !== id) return
+      const wait = slide ? Math.max(30, USER_MOVE_SLIDE_MS + 30 - (performance.now() - startedAt)) : 30
+      scheduleClear(wait)
+    }
+    scheduleClear(PENDING_MAX_MS)
     try {
       Promise.resolve(run()).then(clear, clear)
     } catch {
       clear()
     }
-  }
+  }, [boardState.pieces])
 
   const displayPieces = useMemo(() => {
     if (!pending) return boardState.pieces
@@ -387,6 +408,18 @@ export default function Board({
   const animationToFile = moveAnimation ? files.indexOf(moveAnimation.to[0]) : -1
   const animationToRank = moveAnimation ? ranks.indexOf(moveAnimation.to[1]) : -1
 
+  const handlePromotionPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!promo) return
+    const piece = e.currentTarget.dataset.promotion as PromoPiece | undefined
+    if (!piece) return
+    const { from, to } = promo
+    setPromo(null)
+    justPlayedRef.current = true
+    commitMove(from, to, false, piece, () => onMove(from, to, piece))
+  }
+
   return (
     <>
       <div style={{ position: 'relative', display: 'inline-block', lineHeight: 0 }}>
@@ -608,14 +641,8 @@ export default function Board({
                 {order.map((pc) => (
                   <button
                     key={pc}
-                    onPointerDown={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      const { from, to } = promo
-                      setPromo(null)
-                      justPlayedRef.current = true
-                      commitMove(from, to, false, pc, () => onMove(from, to, pc))
-                    }}
+                    data-promotion={pc}
+                    onPointerDown={handlePromotionPointerDown}
                     style={{
                       display: 'block', width: squareSize, height: squareSize, padding: 0,
                       border: 'none', background: '#f3f3f0', cursor: 'pointer',

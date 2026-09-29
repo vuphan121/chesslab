@@ -134,7 +134,15 @@ interface Entry {
 }
 
 const cache = new Map<string, Entry>()
-const inflight = new Map<string, Promise<Analysis | null>>()
+
+interface InflightLookup {
+  promise: Promise<Analysis | null>
+  controller: AbortController
+  subscribers: number
+  settled: boolean
+}
+
+const inflight = new Map<string, InflightLookup>()
 
 function remember(fen: string, lines: number, value: Analysis | null): void {
   cache.delete(fen)
@@ -157,27 +165,64 @@ async function fetchLookup(fen: string, lines: number, signal?: AbortSignal): Pr
   return cloud && cloud.pvs?.length ? cloudAnalysis(fen, cloud) : null
 }
 
+function abortError(): DOMException {
+  return new DOMException('Aborted', 'AbortError')
+}
+
+function subscribe(entry: InflightLookup, signal?: AbortSignal): Promise<Analysis | null> {
+  if (signal?.aborted) return Promise.reject(abortError())
+  entry.subscribers++
+  return new Promise((resolve, reject) => {
+    let finished = false
+    const release = () => {
+      if (finished) return false
+      finished = true
+      signal?.removeEventListener('abort', onAbort)
+      entry.subscribers--
+      if (!entry.settled && entry.subscribers === 0) entry.controller.abort()
+      return true
+    }
+    const onAbort = () => {
+      if (release()) reject(abortError())
+    }
+    signal?.addEventListener('abort', onAbort, { once: true })
+    entry.promise.then(
+      (value) => {
+        if (release()) resolve(value)
+      },
+      (error) => {
+        if (release()) reject(error)
+      },
+    )
+  })
+}
+
 export async function lookupAnalysis(fen: string, lines = 3, signal?: AbortSignal): Promise<Analysis | null> {
   const hit = cache.get(fen)
   if (hit && (hit.value === null || hit.lines >= lines || hit.value.tablebaseCategory)) return hit.value
+  if (signal?.aborted) throw abortError()
   const key = `${fen}|${lines}`
-  let pending = inflight.get(key)
-  if (!pending) {
-    pending = fetchLookup(fen, lines)
+  let entry = inflight.get(key)
+  if (!entry) {
+    const controller = new AbortController()
+    entry = { promise: Promise.resolve(null), controller, subscribers: 0, settled: false }
+    const current = entry
+    current.promise = fetchLookup(fen, lines, controller.signal)
       .then((value) => {
         remember(fen, lines, value)
         return value
       })
-      .catch(() => null)
-      .finally(() => inflight.delete(key))
-    inflight.set(key, pending)
+      .catch((error) => {
+        if (controller.signal.aborted) throw error
+        return null
+      })
+      .finally(() => {
+        current.settled = true
+        if (inflight.get(key) === current) inflight.delete(key)
+      })
+    inflight.set(key, current)
   }
-  if (!signal) return pending
-  return new Promise((resolve, reject) => {
-    if (signal.aborted) return reject(new DOMException('Aborted', 'AbortError'))
-    signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true })
-    pending.then(resolve, reject)
-  })
+  return subscribe(entry, signal)
 }
 
 export function prefetchReplies(analysis: Analysis): void {
@@ -207,5 +252,6 @@ export async function lookupEval(fen: string, signal?: AbortSignal): Promise<Fen
 
 export function clearLookupCache(): void {
   cache.clear()
+  for (const entry of inflight.values()) entry.controller.abort()
   inflight.clear()
 }

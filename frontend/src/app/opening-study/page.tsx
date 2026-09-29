@@ -557,19 +557,6 @@ export default function OpeningStudyPage() {
   )
 }
 
-function endBtn(primary: boolean): React.CSSProperties {
-  return {
-    fontSize: 13,
-    fontWeight: 600,
-    padding: '8px 16px',
-    borderRadius: 8,
-    border: primary ? 'none' : '1px solid #eae8e2',
-    background: primary ? '#4a90d9' : '#fff',
-    color: primary ? '#fff' : '#37352f',
-    cursor: 'pointer',
-  }
-}
-
 function iconBtn(primary: boolean, size = 40): React.CSSProperties {
   return {
     width: size,

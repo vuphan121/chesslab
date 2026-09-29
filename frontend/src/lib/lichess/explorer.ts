@@ -50,46 +50,108 @@ export function toExplorer(raw: RawExplorer): Explorer {
 }
 
 const cache = new Map<string, Explorer>()
-const inflight = new Map<string, Promise<Explorer>>()
 
-export function cachedExplorer(fen: string): Explorer | undefined {
-  return cache.get(fen)
+interface InflightExplorer {
+  promise: Promise<Explorer>
+  controller: AbortController
+  subscribers: number
+  settled: boolean
 }
 
-async function load(fen: string): Promise<Explorer> {
+const inflight = new Map<string, InflightExplorer>()
+
+export function explorerPositionKey(fen: string): string {
+  return fen.split(/\s+/).slice(0, 4).join(' ')
+}
+
+export function cachedExplorer(fen: string): Explorer | undefined {
+  return cache.get(explorerPositionKey(fen))
+}
+
+async function load(fen: string, signal: AbortSignal): Promise<Explorer> {
   const token = await getLichessToken()
   if (!token) throw new Error('Lichess token is not configured')
+  if (signal.aborted) throw abortError()
   const url =
     `https://explorer.lichess.ovh/lichess?fen=${encodeURIComponent(fen)}` +
     '&moves=12&topGames=0&recentGames=0&ratings=2000,2200,2500,2900&speeds=blitz,rapid,classical'
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  const onAbort = () => controller.abort()
+  signal.addEventListener('abort', onAbort)
   try {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
     if (!res.ok) throw new Error(`explorer unavailable: status ${res.status}`)
     return toExplorer((await res.json()) as RawExplorer)
   } finally {
     clearTimeout(timer)
+    signal.removeEventListener('abort', onAbort)
   }
 }
 
-export function fetchExplorer(fen: string): Promise<Explorer> {
-  const hit = cache.get(fen)
+function abortError(): DOMException {
+  return new DOMException('Aborted', 'AbortError')
+}
+
+function subscribe(entry: InflightExplorer, signal?: AbortSignal): Promise<Explorer> {
+  if (signal?.aborted) return Promise.reject(abortError())
+  entry.subscribers++
+  return new Promise((resolve, reject) => {
+    let finished = false
+    const release = () => {
+      if (finished) return false
+      finished = true
+      signal?.removeEventListener('abort', onAbort)
+      entry.subscribers--
+      if (!entry.settled && entry.subscribers === 0) entry.controller.abort()
+      return true
+    }
+    const onAbort = () => {
+      if (release()) reject(abortError())
+    }
+    signal?.addEventListener('abort', onAbort, { once: true })
+    entry.promise.then(
+      (value) => {
+        if (release()) resolve(value)
+      },
+      (error) => {
+        if (release()) reject(error)
+      },
+    )
+  })
+}
+
+export function fetchExplorer(fen: string, signal?: AbortSignal): Promise<Explorer> {
+  const key = explorerPositionKey(fen)
+  const hit = cache.get(key)
   if (hit) {
-    cache.delete(fen)
-    cache.set(fen, hit)
+    cache.delete(key)
+    cache.set(key, hit)
     return Promise.resolve(hit)
   }
-  let pending = inflight.get(fen)
-  if (!pending) {
-    pending = load(fen)
+  if (signal?.aborted) return Promise.reject(abortError())
+  let entry = inflight.get(key)
+  if (!entry) {
+    const controller = new AbortController()
+    entry = { promise: Promise.resolve({ totalGames: 0, moves: [] }), controller, subscribers: 0, settled: false }
+    const current = entry
+    current.promise = load(fen, controller.signal)
       .then((value) => {
-        cache.set(fen, value)
+        cache.set(key, value)
         if (cache.size > CACHE_LIMIT) cache.delete(cache.keys().next().value as string)
         return value
       })
-      .finally(() => inflight.delete(fen))
-    inflight.set(fen, pending)
+      .finally(() => {
+        current.settled = true
+        if (inflight.get(key) === current) inflight.delete(key)
+      })
+    inflight.set(key, current)
   }
-  return pending
+  return subscribe(entry, signal)
+}
+
+export function clearExplorerCache(): void {
+  cache.clear()
+  for (const entry of inflight.values()) entry.controller.abort()
+  inflight.clear()
 }

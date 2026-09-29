@@ -258,6 +258,7 @@ export default function Home() {
   const playContinuation = (uci: string) => move(uci.slice(0, 2), uci.slice(2, 4))
 
   const hasBook = (explorer?.moves?.length ?? 0) > 0
+  const showTreePanel = showTree && (hasBook || explorerLoading)
 
   const ctlSize = isPhone ? 40 : 30
   const materialRows = computeMaterialRows(boardState.pieces, flipped)
@@ -516,7 +517,7 @@ export default function Home() {
               </div>
             )}
 
-            {isNarrow && showTree && hasBook && (
+            {isNarrow && showTreePanel && (
               <div style={{ width: isPhone ? boardSize : boardSize + 11 + MATERIAL_CORNERS_WIDTH + 11 + 22 }}>{treePanel}</div>
             )}
           </div>
@@ -546,7 +547,7 @@ export default function Home() {
           {!isNarrow && (
             <div style={{ width: sideWidth, flexShrink: 0, order: 3, display: 'flex', flexDirection: 'column', gap: COLUMN_GAP }}>
               {controlsRow}
-              {showTree && hasBook && treePanel}
+              {showTreePanel && treePanel}
             </div>
           )}
         </div>

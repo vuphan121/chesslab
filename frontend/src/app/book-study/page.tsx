@@ -118,7 +118,7 @@ export default function BookStudyPage() {
               <Board boardState={boardState} onSquareClick={selectSquare} onMove={move} legalMovesFor={legalMovesFor} squareSize={squareSize} flipped={flipped} analysisMoves={analysisEnabled ? analysisMoves : []} />
               <MaterialCorners pieces={boardState.pieces} flipped={flipped} height={boardSize} />
               <div style={{ width: 22, opacity: analysisEnabled ? 1 : 0, transition: 'opacity 160ms ease', pointerEvents: 'none' }}>
-                <EvalBar score={analysis?.score ?? 0} mate={analysis?.mate ?? 0} height={boardSize} flipped={flipped} hasEval={analysisEnabled && !!analysis?.depth} />
+                <EvalBar score={analysis?.score ?? 0} mate={analysis?.mate ?? 0} height={boardSize} flipped={flipped} hasEval={analysisEnabled && (!!analysis?.depth || !!analysis?.tablebaseCategory)} />
               </div>
             </div>
             <div style={{ width: boardSize, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

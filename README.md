@@ -39,9 +39,10 @@ Chesslab brings several study tools together behind one Go chess engine and one 
 | **Study from Book** (`/book-study`) | Read one private book chapter at a time beside an interactive board, freely explore each supplied lesson or puzzle position, and keep completion progress per user. |
 
 Everything below the UI is real: legal-move generation, check/mate/stalemate detection, SAN
-notation with disambiguation, and move trees with non-destructive sideline navigation are all
-hand-written in Go — no chess.js, no python-chess. Stockfish and Lichess's public APIs do the
-engine work.
+notation with disambiguation, and non-destructive move trees. Interactive boards use a local
+`chess.js` game model so moves and navigation do not wait for the server; the Go chess package
+remains the source of truth for repertoire/book validation and offline processing. Stockfish and
+Lichess's public APIs do the engine work.
 
 ## Analysis Board
 
@@ -109,19 +110,23 @@ selected chapter PDF, not the complete book.
 flowchart LR
     subgraph Browser
         FE["Next.js frontend<br/>(React, TypeScript)"]
+        GAME["Local game + move tree<br/>(chess.js)"]
+        WASM["Stockfish 19 Lite<br/>(Web Worker)"]
     end
 
     subgraph Server["Go backend"]
         API["chi REST API"]
-        ENGINE["Hand-written chess engine<br/>(movegen, SAN, move tree)"]
+        ENGINE["Go chess engine<br/>(validation + preprocessing)"]
         REP["Repertoire parser<br/>(study PGN -> drill cards)"]
     end
 
-    SF["Stockfish 18<br/>(subprocess, UCI)"]
+    SF["Stockfish 18<br/>(precompute subprocess)"]
     LICHESS["Lichess public APIs<br/>(cloud eval + opening explorer)"]
     PG[("Postgres<br/>(auth + trainer progress)")]
 
     FE <--> API
+    FE --> GAME
+    GAME --> WASM
     API --> ENGINE
     API --> REP
     ENGINE --> SF
@@ -129,9 +134,9 @@ flowchart LR
     API --> PG
 ```
 
-Both features share the same Go chess engine and the same login — there's no duplicated chess logic
-between the Analysis Board and the trainer, and no chess logic at all on the frontend. FEN is the
-universal position identifier passed between them.
+The interactive pages share the same local game-tree model and login. The backend independently
+validates imported repertoire and book data with its Go chess engine. FEN is the universal position
+identifier passed between browser analysis, Lichess lookups, persisted evaluations, and backend data.
 
 ## Tech stack
 
@@ -139,8 +144,8 @@ universal position identifier passed between them.
 |---|---|
 | Backend | Go, [chi](https://github.com/go-chi/chi) router, no other framework |
 | Frontend | Next.js (App Router), React, TypeScript, Tailwind CSS |
-| Chess engine | Hand-written in Go — movegen, FEN, SAN, move tree, PGN parsing |
-| Position analysis | Stockfish 18 (subprocess/UCI) + Lichess cloud-eval API |
+| Chess engine | Browser: chess.js local game tree; backend: hand-written Go validation/parser |
+| Position analysis | Stockfish 19 Lite (browser Web Worker), Stockfish 18 precompute, and Lichess cloud/tablebase APIs |
 | Opening data | Lichess Opening Explorer API |
 | Auth | Single-login JWT (`golang-jwt`), bcrypt-hashed credential in Postgres |
 | Persistence | Postgres (trainer progress + drilling analytics) — optional, degrades gracefully |
@@ -218,10 +223,10 @@ you're in.
 ## Testing
 
 ```bash
-# Backend — chess engine, repertoire parser, all unit-tested
+# Backend — chess validation, repertoire parser, persistence and API tests
 cd backend && go test ./...
 
-# Frontend — the spaced-repetition scheduler (pure logic, no chess knowledge)
+# Frontend — local game tree, lookup/cancellation, engine and scheduler tests
 cd frontend && npm run test
 
 # Type check
@@ -246,9 +251,8 @@ needs.
 
 ## Recent changes
 
-See [Changes — 2026-09-23](docs/changes-2026-09-23.md) for the Opening Study redesign, engine and
-authentication hardening, chess-rule fixes, regression coverage, and verification performed in the
-latest work session.
+See [Changes — 2026-09-29](docs/changes-2026-09-29.md) for the latest browser-runtime correctness,
+request cancellation, cache, move-tree performance, and Book Study isolation improvements.
 
 ## License
 

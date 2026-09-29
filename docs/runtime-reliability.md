@@ -12,6 +12,22 @@ de-duplication (`lib/lichess/`). The explorer needs the Lichess token, which the
 session through `GET /api/lichess-token`. The server-side Stockfish process now exists only for the eval
 precompute (`internal/evalprecompute`).
 
+The local game keeps an ID-to-node index for constant-time navigation. Public move-tree snapshots use
+immutable structural sharing: adding or deleting a variation rebuilds only that node's ancestor path,
+so previously captured snapshots remain stable without cloning the complete tree after every action.
+The browser game enforces terminal positions, including legal threefold repetition keys and the
+halfmove-clock-sensitive 50-move rule.
+
+Lichess lookups use subscriber-counted in-flight requests. Leaving a position releases that caller;
+the underlying fetch is aborted only when no remaining consumer needs it, so deduplication and real
+network cancellation coexist. Opening Explorer cache keys use the first four FEN fields because move
+clocks do not affect its result. Move-history cloud results are committed to React in batches, and
+local Stockfish fallback evaluations are serialized behind the foreground engine.
+
+Bulk persisted evaluations use `POST /api/position-evals` with `{ "fens": [...] }`, avoiding URL-size
+limits. Positions are queried once by their clock-stripped database key, while the response maps the
+result back to every full FEN requested by the browser.
+
 ## HTTP and authentication limits
 
 - Request bodies are capped at 4 MiB.

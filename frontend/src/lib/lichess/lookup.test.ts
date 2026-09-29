@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cloudAnalysis, clearLookupCache, lookupAnalysis, lookupEval, pieceCount, tablebaseAnalysis } from './lookup'
-import { toExplorer } from './explorer'
+import { explorerPositionKey, toExplorer } from './explorer'
 
 const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
@@ -78,6 +78,38 @@ describe('lookup fetching', () => {
     expect((await lookupAnalysis(START, 3))?.depth).toBe(10)
   })
 
+  it('aborts the underlying request when its final subscriber leaves', async () => {
+    let requestSignal: AbortSignal | undefined
+    fetchMock.mockImplementation((_url, init?: RequestInit) => new Promise((_resolve, reject) => {
+      requestSignal = init?.signal ?? undefined
+      requestSignal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+    }))
+    const controller = new AbortController()
+    const pending = lookupAnalysis(START, 3, controller.signal)
+    controller.abort()
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' })
+    expect(requestSignal?.aborted).toBe(true)
+  })
+
+  it('keeps a shared request alive while another subscriber still needs it', async () => {
+    let resolveFetch: ((response: Response) => void) | undefined
+    let requestSignal: AbortSignal | undefined
+    fetchMock.mockImplementation((_url, init?: RequestInit) => new Promise<Response>((resolve) => {
+      resolveFetch = resolve
+      requestSignal = init?.signal ?? undefined
+    }))
+    const firstController = new AbortController()
+    const secondController = new AbortController()
+    const first = lookupAnalysis(START, 3, firstController.signal)
+    const second = lookupAnalysis(START, 3, secondController.signal)
+    firstController.abort()
+    await expect(first).rejects.toMatchObject({ name: 'AbortError' })
+    expect(requestSignal?.aborted).toBe(false)
+    resolveFetch?.(new Response(JSON.stringify({ depth: 25, pvs: [{ moves: 'e2e4', cp: 12 }] }), { status: 200 }))
+    expect((await second)?.depth).toBe(25)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
   it('uses the tablebase for seven pieces or fewer and skips finished games', async () => {
     fetchMock.mockImplementation(() => json({ category: 'draw', moves: [] }))
     const a = await lookupAnalysis('8/8/8/8/8/4k3/8/4K2R w - - 0 1', 3)
@@ -111,5 +143,10 @@ describe('helpers', () => {
     })
     expect(e).toMatchObject({ totalGames: 100, openingName: "King's Pawn", openingEco: 'B00' })
     expect(e.moves[0]).toMatchObject({ san: 'e5', games: 50, sharePct: 50, whitePct: 60, drawPct: 20, blackPct: 20, openingName: 'Open Game' })
+  })
+
+  it('keys explorer positions without move clocks', () => {
+    expect(explorerPositionKey(START)).toBe('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -')
+    expect(explorerPositionKey(START.replace('0 1', '37 84'))).toBe(explorerPositionKey(START))
   })
 })
