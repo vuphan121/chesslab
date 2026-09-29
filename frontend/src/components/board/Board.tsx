@@ -12,13 +12,15 @@ const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1']
 
 const ANNOTATION_COLOR = 'rgba(255, 152, 0, 0.8)'
 const MOVE_ANIMATION_MS = 280
+const USER_MOVE_SLIDE_MS = 140
+const PENDING_MAX_MS = 3000
 
 type PromoPiece = 'q' | 'r' | 'b' | 'n'
 
 interface Props {
   boardState: BoardState
-  onSquareClick: (square: string) => void
-  onMove: (from: string, to: string, promotion?: PromoPiece) => void
+  onSquareClick: (square: string) => void | Promise<unknown>
+  onMove: (from: string, to: string, promotion?: PromoPiece) => void | Promise<unknown>
   legalMovesFor: (square: string) => string[]
   bestMove?: string
   analysisMoves?: { uci: string; scale: number; color?: string }[]
@@ -62,6 +64,15 @@ export default function Board({
     lastMove?: BoardState['lastMove']
   }>({ fen: boardState.fen, pieces: boardState.pieces, lastMove: boardState.lastMove })
   const justPlayedRef = useRef(false)
+  const [pending, setPending] = useState<{
+    from: string
+    to: string
+    piece: NonNullable<BoardState['pieces'][string]>
+    slide: boolean
+    started: boolean
+    rook?: { from: string; to: string; piece: NonNullable<BoardState['pieces'][string]> }
+    ep?: string
+  } | null>(null)
 
   const rightDownSquare = useRef<string | null>(null)
   const [rightDragFrom, setRightDragFrom] = useState<string | null>(null)
@@ -100,6 +111,64 @@ export default function Board({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [promo])
+
+  const commitMove = (
+    from: string,
+    to: string,
+    slide: boolean,
+    promotion: PromoPiece | undefined,
+    run: () => void | Promise<unknown>,
+  ) => {
+    const piece = boardState.pieces[from]
+    if (!piece) {
+      run()
+      return
+    }
+    const next: NonNullable<typeof pending> = {
+      from,
+      to,
+      piece: promotion ? { ...piece, type: promotion } : piece,
+      slide,
+      started: false,
+    }
+    const fileDelta = FILES.indexOf(to[0]) - FILES.indexOf(from[0])
+    if (piece.type === 'k' && Math.abs(fileDelta) === 2) {
+      const rookFrom = `${fileDelta > 0 ? 'h' : 'a'}${from[1]}`
+      const rook = boardState.pieces[rookFrom]
+      if (rook) next.rook = { from: rookFrom, to: `${fileDelta > 0 ? 'f' : 'd'}${from[1]}`, piece: rook }
+    }
+    if (piece.type === 'p' && from[0] !== to[0] && !boardState.pieces[to]) next.ep = `${to[0]}${from[1]}`
+    const startedAt = performance.now()
+    setPending(next)
+    if (slide) {
+      window.requestAnimationFrame(() =>
+        window.requestAnimationFrame(() => setPending((cur) => (cur ? { ...cur, started: true } : cur))),
+      )
+    }
+    const clear = () => {
+      const wait = slide ? Math.max(30, USER_MOVE_SLIDE_MS + 30 - (performance.now() - startedAt)) : 30
+      window.setTimeout(() => setPending(null), wait)
+    }
+    window.setTimeout(() => setPending(null), PENDING_MAX_MS)
+    try {
+      Promise.resolve(run()).then(clear, clear)
+    } catch {
+      clear()
+    }
+  }
+
+  const displayPieces = useMemo(() => {
+    if (!pending) return boardState.pieces
+    const out = { ...boardState.pieces }
+    delete out[pending.from]
+    out[pending.to] = pending.piece
+    if (pending.rook) {
+      delete out[pending.rook.from]
+      out[pending.rook.to] = pending.rook.piece
+    }
+    if (pending.ep) delete out[pending.ep]
+    return out
+  }, [pending, boardState.pieces])
 
   const isPromotionMove = (from: string, to: string): 'w' | 'b' | null => {
     const piece = boardState.pieces[from]
@@ -244,8 +313,12 @@ export default function Board({
       if (promoColor) {
         setPromo({ from: sel!, to: sq, color: promoColor })
       } else {
-        if (isMoveTarget) justPlayedRef.current = true
-        onSquareClick(sq)
+        if (isMoveTarget) {
+          justPlayedRef.current = true
+          commitMove(sel!, sq, true, undefined, () => onSquareClick(sq))
+        } else {
+          onSquareClick(sq)
+        }
       }
     }
   }
@@ -292,7 +365,7 @@ export default function Board({
         setPromo({ from, to: target, color: promoColor })
       } else {
         justPlayedRef.current = true
-        onMove(from, target)
+        commitMove(from, target, false, undefined, () => onMove(from, target))
       }
     }
   }
@@ -338,7 +411,7 @@ export default function Board({
             <div key={rank} className="flex">
               {files.map((file) => {
                 const square = `${file}${rank}`
-                const piece = boardState.pieces[square] ?? null
+                const piece = displayPieces[square] ?? null
                 const spriteCol = FILES.indexOf(file)
                 const spriteRow = RANKS.indexOf(rank)
                 const isDragSource = isDragging && dragFrom === square
@@ -351,22 +424,24 @@ export default function Board({
                     squareSize={squareSize}
                     spriteCol={spriteCol}
                     spriteRow={spriteRow}
-                    isSelected={boardState.selectedSquare === square || isDragSource}
+                    isSelected={(!pending && boardState.selectedSquare === square) || isDragSource}
                     isLegalMove={
-                      boardState.legalMoves.includes(square) ||
+                      (!pending && boardState.legalMoves.includes(square)) ||
                       (isDragging && dragTargets.has(square))
                     }
                     isLastMove={
-                      boardState.lastMove?.from === square ||
-                      boardState.lastMove?.to === square
+                      pending
+                        ? pending.from === square || pending.to === square
+                        : boardState.lastMove?.from === square || boardState.lastMove?.to === square
                     }
                     isCheck={
+                      !pending &&
                       boardState.isCheck &&
                       piece?.type === 'k' &&
                       piece.color === boardState.turn
                     }
                     isDragHighlight={isDragging && dragOver === square && dragTargets.has(square)}
-                    hidePiece={isDragSource || moveAnimation?.to === square}
+                    hidePiece={isDragSource || moveAnimation?.to === square || (pending?.slide && pending.to === square)}
                     rankLabel={file === firstFile ? rank : undefined}
                     fileLabel={rank === lastRank ? file : undefined}
                   />
@@ -477,6 +552,34 @@ export default function Board({
           </div>
         )}
 
+        {pending?.slide && (() => {
+          const fromFile = files.indexOf(pending.from[0])
+          const fromRank = ranks.indexOf(pending.from[1])
+          const toFile = files.indexOf(pending.to[0])
+          const toRank = ranks.indexOf(pending.to[1])
+          if (fromFile < 0 || fromRank < 0 || toFile < 0 || toRank < 0) return null
+          return (
+            <div
+              style={{
+                position: 'absolute',
+                left: fromFile * squareSize + squareSize * 0.05,
+                top: fromRank * squareSize + squareSize * 0.05,
+                width: squareSize * 0.9,
+                height: squareSize * 0.9,
+                zIndex: 25,
+                pointerEvents: 'none',
+                transform: pending.started
+                  ? `translate3d(${(toFile - fromFile) * squareSize}px, ${(toRank - fromRank) * squareSize}px, 0)`
+                  : 'translate3d(0, 0, 0)',
+                transition: pending.started ? `transform ${USER_MOVE_SLIDE_MS}ms cubic-bezier(0.22, 0.8, 0.28, 1)` : 'none',
+                willChange: 'transform',
+              }}
+            >
+              <Piece piece={pending.piece} size={squareSize * 0.9} />
+            </div>
+          )
+        })()}
+
         {promo && (() => {
           const fi = files.indexOf(promo.to[0])
           const ri = ranks.indexOf(promo.to[1])
@@ -511,7 +614,7 @@ export default function Board({
                       const { from, to } = promo
                       setPromo(null)
                       justPlayedRef.current = true
-                      onMove(from, to, pc)
+                      commitMove(from, to, false, pc, () => onMove(from, to, pc))
                     }}
                     style={{
                       display: 'block', width: squareSize, height: squareSize, padding: 0,

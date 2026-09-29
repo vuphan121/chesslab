@@ -12,6 +12,7 @@ import {
 import type { GameState, Explorer } from '@/lib/api/client'
 import type { BoardState, Square } from '@/lib/chess/types'
 import { flatten, mainlineEnd, childrenOf } from '@/lib/chess/moveTree'
+import { fenAfterMove } from '@/lib/chess/optimisticFen'
 
 
 
@@ -60,6 +61,7 @@ export function useChessGame(initialGameId?: string) {
   const [explorerLoading, setExplorerLoading] = useState(false)
   const [openingByFen, setOpeningByFen] = useState<Record<string, { name: string; eco?: string }>>({})
   const [flipped, setFlipped] = useState(false)
+  const [optimisticFen, setOptimisticFen] = useState<string | null>(null)
   const moveSound = useRef<HTMLAudioElement | null>(null)
   const gameActionReqId = useRef(0)
   const explorerReqId = useRef(0)
@@ -156,16 +158,25 @@ export function useChessGame(initialGameId?: string) {
               piece?.type === 'p' &&
               ((piece.color === 'w' && square[1] === '8') ||
                 (piece.color === 'b' && square[1] === '1'))
-            const next = await makeMove(gs.id, selected, square, isPromo ? 'q' : undefined)
+            const promo = isPromo ? 'q' : undefined
+            const predicted = fenAfterMove(gs.fen, selected, square, promo)
+            if (predicted) {
+              setOptimisticFen(predicted)
+              moveSound.current?.play().catch(() => {})
+            }
+            const next = await makeMove(gs.id, selected, square, promo)
             if (reqId !== gameActionReqId.current) return
             setGs(next)
             setSelected(null)
-            moveSound.current?.play().catch(() => {})
+            if (!predicted) moveSound.current?.play().catch(() => {})
             refreshInsights(next.id, next.fen)
           } catch {
             if (reqId === gameActionReqId.current) setSelected(null)
           } finally {
-            if (reqId === gameActionReqId.current) setBusy(false)
+            if (reqId === gameActionReqId.current) {
+              setBusy(false)
+              setOptimisticFen(null)
+            }
           }
           return
         }
@@ -191,16 +202,25 @@ export function useChessGame(initialGameId?: string) {
         const isPromo =
           piece?.type === 'p' &&
           ((piece.color === 'w' && to[1] === '8') || (piece.color === 'b' && to[1] === '1'))
-        const next = await makeMove(gs.id, from, to, promotion ?? (isPromo ? 'q' : undefined))
+        const promo = promotion ?? (isPromo ? 'q' : undefined)
+        const predicted = fenAfterMove(gs.fen, from, to, promo)
+        if (predicted) {
+          setOptimisticFen(predicted)
+          moveSound.current?.play().catch(() => {})
+        }
+        const next = await makeMove(gs.id, from, to, promo)
         if (reqId !== gameActionReqId.current) return
         setGs(next)
         setSelected(null)
-        moveSound.current?.play().catch(() => {})
+        if (!predicted) moveSound.current?.play().catch(() => {})
         refreshInsights(next.id, next.fen)
       } catch {
         if (reqId === gameActionReqId.current) setSelected(null)
       } finally {
-        if (reqId === gameActionReqId.current) setBusy(false)
+        if (reqId === gameActionReqId.current) {
+          setBusy(false)
+          setOptimisticFen(null)
+        }
       }
     },
     [gs, busy, refreshInsights],
@@ -319,6 +339,7 @@ export function useChessGame(initialGameId?: string) {
     reset,
     loadPgn,
     busy,
+    optimisticFen,
     gameId: gs?.id ?? null,
     explorer,
     explorerLoading,

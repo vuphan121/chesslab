@@ -17,6 +17,7 @@ import { Suspense, useCallback, useEffect, useState, useSyncExternalStore } from
 import { useSearchParams } from 'next/navigation'
 import { useViewportWidth, useViewportHeight, clamp } from '@/hooks/useViewportWidth'
 import { flatten } from '@/lib/chess/moveTree'
+import { positionKey } from '@/lib/chess/optimisticFen'
 import MoveStrip from '@/components/history/MoveStrip'
 import { MaterialRow, computeMaterialRows } from '@/components/board/MaterialCorners'
 
@@ -124,6 +125,7 @@ function HomeInner() {
     navNext,
     navEnd,
     loadPgn,
+    optimisticFen,
     gameId,
     explorer,
     explorerLoading,
@@ -154,7 +156,8 @@ function HomeInner() {
   const [engineSettings, updateEngineSettings, resetEngineSettings] = useEngineSettings()
   const { analysis, analysisFen, analyzing, engineError } = useEngineAnalysis({
     gameId,
-    fen: boardState?.fen ?? null,
+    fen: optimisticFen ?? boardState?.fen ?? null,
+    immediate: optimisticFen !== null,
     gameOver: boardState?.isGameOver ?? false,
     enabled: evalDisplay !== 'off',
     settings: engineSettings,
@@ -260,14 +263,14 @@ function HomeInner() {
     : (explorer?.openingName ?? lastOpening?.name ?? '')
 
   const showEval = evalDisplay !== 'off'
-  const analysisIsCurrent = !!analysis && (analysisFen === null || analysisFen === boardState.fen)
+  const analysisIsCurrent = !!analysis && (analysisFen === null || positionKey(analysisFen) === positionKey(optimisticFen ?? boardState.fen))
   const candidates: CandidateLine[] = []
   if (analysis && analysisIsCurrent && !boardState.isGameOver) {
     for (const line of analysis.lines ?? []) candidates.push({ uci: line.uciMoves?.[0], score: line.score, mate: line.mate })
     if (candidates.length === 0) candidates.push({ uci: analysis.bestMove, score: analysis.score, mate: analysis.mate })
   }
   const suggestionArrows =
-    evalDisplay === 'eval-moves' ? arrowShapes(candidates, boardState.turn, engineSettings.lines) : []
+    evalDisplay === 'eval-moves' ? arrowShapes(candidates, ((optimisticFen ?? boardState.fen).split(' ')[1] === 'b' ? 'b' : 'w'), engineSettings.lines) : []
 
   const playContinuation = (uci: string) => move(uci.slice(0, 2), uci.slice(2, 4))
 
@@ -304,7 +307,7 @@ function HomeInner() {
               </>
             ) : (
               <>
-                depth {analysis.depth}{analyzing ? '…' : ''}
+                depth {analysis.depth}
               </>
             )}
           </span>
@@ -443,8 +446,8 @@ function HomeInner() {
 
             {isPhone ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ width: boardSize, height: PHONE_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                  <MaterialRow cornerColor={materialRows.top.color} surplus={materialRows.top.surplus} pointsAhead={materialRows.top.pointsAhead} />
+                <div style={{ width: boardSize, height: PHONE_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                  <MaterialRow justify="flex-start" cornerColor={materialRows.top.color} surplus={materialRows.top.surplus} pointsAhead={materialRows.top.pointsAhead} />
                 </div>
                 <Board
                   boardState={boardState}
@@ -456,8 +459,8 @@ function HomeInner() {
                   flipped={flipped}
                   analysisMoves={suggestionArrows}
                 />
-                <div style={{ width: boardSize, height: PHONE_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                  <MaterialRow cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
+                <div style={{ width: boardSize, height: PHONE_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                  <MaterialRow justify="flex-start" cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
                 </div>
                 <div style={{ width: boardSize, height: 20, display: 'flex', alignItems: 'center', opacity: analysisIsCurrent ? 1 : 0.45, transition: 'opacity 120ms' }}>
                   {showEval && (
