@@ -6,6 +6,7 @@ import { engineLimits, isMobileDevice } from '@/lib/engine/settings'
 import type { EngineSettings, SearchLimit } from '@/lib/engine/settings'
 
 interface Props {
+  size?: number
   settings: EngineSettings
   onChange: (patch: Partial<EngineSettings>) => void
   onReset: () => void
@@ -66,7 +67,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-export default function EngineSettingsButton({ settings, onChange, onReset }: Props) {
+export default function EngineSettingsButton({ settings, onChange, onReset, size = 30 }: Props) {
   const limits = engineLimits(isMobileDevice())
   const limitOptions: { id: SearchLimit; label: string }[] = [
     { id: 'depth', label: 'Depth' },
@@ -117,8 +118,8 @@ export default function EngineSettingsButton({ settings, onChange, onReset }: Pr
         aria-label="Engine settings"
         aria-expanded={open}
         style={{
-          width: 30,
-          height: 30,
+          width: size,
+          height: size,
           border: '1px solid #eae8e2',
           background: open ? '#eef6fd' : '#fff',
           borderRadius: 6,

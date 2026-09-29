@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useIsPhoneLike } from '@/hooks/useViewportWidth'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { outboxCount, subscribeOutbox } from '@/lib/offline/cache'
 
 export default function OfflineBadge() {
   const online = useOnlineStatus()
+  const phone = useIsPhoneLike().compact
   const [pending, setPending] = useState(0)
 
   useEffect(() => {
@@ -32,7 +34,9 @@ export default function OfflineBadge() {
       style={{
         position: 'fixed',
         left: '50%',
-        bottom: 'max(12px, env(safe-area-inset-bottom))',
+        ...(phone
+          ? { top: 'calc(env(safe-area-inset-top) + 58px)' }
+          : { bottom: 'max(12px, env(safe-area-inset-bottom))' }),
         transform: 'translateX(-50%)',
         zIndex: 40,
         pointerEvents: 'none',

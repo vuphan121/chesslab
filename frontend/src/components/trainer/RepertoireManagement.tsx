@@ -100,7 +100,7 @@ export default function RepertoireManagement({ repertoires, onClose, onChanged }
     <div style={{ width: 'min(720px, calc(100vw - 32px))', margin: '24px auto', background: '#fff', borderRadius: 11, boxShadow: '0 1px 3px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.05)', padding: 'clamp(16px, 4vw, 28px)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'baseline', marginBottom: 8 }}>
         <h1 className="serif" style={{ fontSize: 22, fontWeight: 500 }}>Repertoire management</h1>
-        <button onClick={onClose} style={quietButton}>Back to study</button>
+        <button onClick={onClose} className="tap" style={quietButton}>Back to study</button>
       </div>
       <p style={{ fontSize: 13, color: '#6a675f', marginBottom: 22 }}>Add a Lichess study or refresh one after you add chapters. Every refresh downloads the complete study and rebuilds all lines from the start.</p>
 
@@ -132,7 +132,7 @@ export default function RepertoireManagement({ repertoires, onClose, onChanged }
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
-          <button onClick={updateTodayTraining} disabled={todayLoading || todaySaving || todayRepertoireIds.size === 0} style={quietButton}>
+          <button onClick={updateTodayTraining} disabled={todayLoading || todaySaving || todayRepertoireIds.size === 0} className="tap" style={quietButton}>
             {todayLoading ? 'Loading…' : todaySaving ? 'Updating…' : 'Update queue'}
           </button>
         </div>
@@ -148,7 +148,7 @@ export default function RepertoireManagement({ repertoires, onClose, onChanged }
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{rep.name}</div>
                 <div style={{ fontSize: 11, color: '#a3a099', marginTop: 2 }}>{rep.chapters.length} chapters · {rep.lineCount} line{rep.lineCount === 1 ? '' : 's'}</div>
               </div>
-              {refreshable ? <button onClick={() => refresh(rep)} disabled={busyId !== null} style={quietButton}>{busyId === rep.id ? 'Updating…' : 'Update'}</button> : <span style={{ fontSize: 11, color: '#a3a099' }}>No study source</span>}
+              {refreshable ? <button onClick={() => refresh(rep)} disabled={busyId !== null} className="tap" style={quietButton}>{busyId === rep.id ? 'Updating…' : 'Update'}</button> : <span style={{ fontSize: 11, color: '#a3a099' }}>No study source</span>}
             </div>
           )
         })}

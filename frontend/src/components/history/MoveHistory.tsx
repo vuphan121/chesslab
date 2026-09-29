@@ -78,7 +78,14 @@ export default function MoveHistory({
   }
 
   useEffect(() => {
-    currentRef.current?.scrollIntoView({ block: 'nearest' })
+    const el = currentRef.current
+    let box: HTMLElement | null = el?.parentElement ?? null
+    while (box && !/(auto|scroll)/.test(getComputedStyle(box).overflowY)) box = box.parentElement
+    if (!el || !box) return
+    const elRect = el.getBoundingClientRect()
+    const boxRect = box.getBoundingClientRect()
+    if (elRect.top < boxRect.top) box.scrollTop -= boxRect.top - elRect.top
+    else if (elRect.bottom > boxRect.bottom) box.scrollTop += elRect.bottom - boxRect.bottom
   }, [currentNodeId])
 
 

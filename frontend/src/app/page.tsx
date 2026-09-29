@@ -16,10 +16,15 @@ import { useEngineSettings } from '@/lib/engine/settings'
 import { Suspense, useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useViewportWidth, useViewportHeight, clamp } from '@/hooks/useViewportWidth'
+import { flatten } from '@/lib/chess/moveTree'
+import MoveStrip from '@/components/history/MoveStrip'
+import { MaterialRow, computeMaterialRows } from '@/components/board/MaterialCorners'
 
 const DESKTOP_SQUARE_SIZE = 72
 const SIDE_WIDTH = 371
 const NARROW_BREAKPOINT = 1040
+const PHONE_BREAKPOINT = 640
+const PHONE_STRIP_HEIGHT = 22
 const OUTER_PADDING_DESKTOP = 24
 const OUTER_PADDING_NARROW = 14
 const EVAL_DISPLAY_STORAGE_KEY = 'chesslab.analysis.evalDisplay'
@@ -114,8 +119,10 @@ function HomeInner() {
     move,
     legalMovesFor,
     gotoNode,
+    navStart,
     navPrev,
     navNext,
+    navEnd,
     loadPgn,
     gameId,
     explorer,
@@ -167,6 +174,7 @@ function HomeInner() {
 
 
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
+  const isPhone = viewportWidth != null && viewportWidth < PHONE_BREAKPOINT
   const outerPadding = isNarrow ? OUTER_PADDING_NARROW : OUTER_PADDING_DESKTOP
 
 
@@ -182,7 +190,9 @@ function HomeInner() {
   const desktopScale = isNarrow
     ? 1
     : clamp((viewportWidth ?? FULL_CONTAINER_WIDTH) / FULL_CONTAINER_WIDTH, MIN_DESKTOP_SCALE, 1)
-  const squareSize = isNarrow
+  const squareSize = isPhone
+    ? clamp(Math.floor(((viewportWidth ?? PHONE_BREAKPOINT) - outerPadding * 2) / 8), 30, DESKTOP_SQUARE_SIZE)
+    : isNarrow
     ? clamp(
         Math.floor(
           ((viewportWidth ?? NARROW_BREAKPOINT) - outerPadding * 2 - 15 - 11 - MATERIAL_CORNERS_WIDTH - 11) / 8,
@@ -241,6 +251,7 @@ function HomeInner() {
   if (!boardState) return null
 
   const atStart = boardState.currentNodeId === boardState.moveTree.id
+  const atEnd = !(boardState.moveTree && flatten(boardState.moveTree).get(boardState.currentNodeId)?.node.children?.length)
   // Past the Lichess explorer's book, explorer.openingName comes back empty —
   // keep showing the last named opening reached on this line instead of a
   // generic placeholder (see useChessGame's lastOpening).
@@ -262,6 +273,9 @@ function HomeInner() {
 
   const hasBook = (explorer?.moves?.length ?? 0) > 0
 
+  const ctlSize = isPhone ? 40 : 30
+  const materialRows = computeMaterialRows(boardState.pieces, flipped)
+
   const controlsRow = (
   <div
     style={{
@@ -271,7 +285,7 @@ function HomeInner() {
       gap: 12,
       padding: '0 2px 2px',
       height: CAPTION_ROW_HEIGHT,
-      width: isNarrow ? boardSize + 11 + MATERIAL_CORNERS_WIDTH + 11 + 22 : sideWidth,
+      width: isPhone ? boardSize : isNarrow ? boardSize + 11 + MATERIAL_CORNERS_WIDTH + 11 + 22 : sideWidth,
     }}
   >
     <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
@@ -302,14 +316,14 @@ function HomeInner() {
         )}
     </div>
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-      <EngineSettingsButton settings={engineSettings} onChange={updateEngineSettings} onReset={resetEngineSettings} />
+      <EngineSettingsButton size={ctlSize} settings={engineSettings} onChange={updateEngineSettings} onReset={resetEngineSettings} />
       <button
         onClick={cycleEvalDisplay}
         title={EVAL_DISPLAY_LABEL[evalDisplay]}
         aria-label={EVAL_DISPLAY_LABEL[evalDisplay]}
         style={{
-          width: 30,
-          height: 30,
+          width: ctlSize,
+          height: ctlSize,
           border: '1px solid #eae8e2',
           background: '#fff',
           borderRadius: 6,
@@ -327,8 +341,8 @@ function HomeInner() {
         aria-label={showTree ? 'Hide opening tree' : 'Show opening tree'}
         aria-pressed={showTree}
         style={{
-          width: 30,
-          height: 30,
+          width: ctlSize,
+          height: ctlSize,
           border: '1px solid #eae8e2',
           background: '#fff',
           borderRadius: 6,
@@ -350,8 +364,8 @@ function HomeInner() {
         onClick={toggleFlipped}
         title="Flip board"
         style={{
-          width: 30,
-          height: 30,
+          width: ctlSize,
+          height: ctlSize,
           border: '1px solid #eae8e2',
           background: '#fff',
           borderRadius: 6,
@@ -427,33 +441,97 @@ function HomeInner() {
           >
             {isNarrow && controlsRow}
 
-            <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start' }}>
-              <Board
-                boardState={boardState}
-                animateLastMove={animateMove}
-                onSquareClick={jump(selectSquare)}
-                onMove={jump(move)}
-                legalMovesFor={legalMovesFor}
-                squareSize={squareSize}
-                flipped={flipped}
-                analysisMoves={suggestionArrows}
-              />
-              <MaterialCorners pieces={boardState.pieces} flipped={flipped} height={boardSize} />
-              <div style={{ width: 22, height: boardSize, flexShrink: 0, opacity: analysisIsCurrent ? 1 : 0.45, transition: 'opacity 120ms' }}>
-                {showEval && (
-                  <EvalBar
-                    score={analysis?.score ?? 0}
-                    mate={analysis?.mate ?? 0}
-                    height={boardSize}
-                    flipped={flipped}
-                    hasEval={!!analysis?.depth || !!analysis?.tablebaseCategory}
-                  />
-                )}
+            {isPhone ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ width: boardSize, height: PHONE_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                  <MaterialRow cornerColor={materialRows.top.color} surplus={materialRows.top.surplus} pointsAhead={materialRows.top.pointsAhead} />
+                </div>
+                <Board
+                  boardState={boardState}
+                  animateLastMove={animateMove}
+                  onSquareClick={jump(selectSquare)}
+                  onMove={jump(move)}
+                  legalMovesFor={legalMovesFor}
+                  squareSize={squareSize}
+                  flipped={flipped}
+                  analysisMoves={suggestionArrows}
+                />
+                <div style={{ width: boardSize, height: PHONE_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                  <MaterialRow cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
+                </div>
+                <div style={{ width: boardSize, height: 20, display: 'flex', alignItems: 'center', opacity: analysisIsCurrent ? 1 : 0.45, transition: 'opacity 120ms' }}>
+                  {showEval && (
+                    <EvalBar
+                      horizontal
+                      score={analysis?.score ?? 0}
+                      mate={analysis?.mate ?? 0}
+                      height={boardSize}
+                      flipped={flipped}
+                      hasEval={!!analysis?.depth || !!analysis?.tablebaseCategory}
+                    />
+                  )}
+                </div>
+                <div style={{ width: boardSize, display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 6 }}>
+                  {([
+                    ['Start', '⟨⟨', jump(navStart), atStart],
+                    ['Previous move', '⟨', stepPrev, atStart],
+                    ['Next move', '⟩', stepNext, atEnd],
+                    ['End', '⟩⟩', jump(navEnd), atEnd],
+                  ] as const).map(([label, glyph, onClick, disabled]) => (
+                    <button
+                      key={label}
+                      onClick={onClick}
+                      disabled={disabled}
+                      aria-label={label}
+                      title={label}
+                      style={{
+                        flex: 1,
+                        height: 44,
+                        border: '1px solid #eae8e2',
+                        background: '#fff',
+                        borderRadius: 10,
+                        fontSize: 18,
+                        color: disabled ? '#c9c6bc' : '#37352f',
+                        cursor: disabled ? 'default' : 'pointer',
+                      }}
+                    >
+                      {glyph}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ marginTop: 8 }}>
+                  <MoveStrip moveTree={boardState.moveTree} currentNodeId={boardState.currentNodeId} onGotoNode={jump(gotoNode)} width={boardSize} />
+                </div>
               </div>
-            </div>
+            ) : (
+            <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start' }}>
+                <Board
+                  boardState={boardState}
+                  animateLastMove={animateMove}
+                  onSquareClick={jump(selectSquare)}
+                  onMove={jump(move)}
+                  legalMovesFor={legalMovesFor}
+                  squareSize={squareSize}
+                  flipped={flipped}
+                  analysisMoves={suggestionArrows}
+                />
+                <MaterialCorners pieces={boardState.pieces} flipped={flipped} height={boardSize} />
+                <div style={{ width: 22, height: boardSize, flexShrink: 0, opacity: analysisIsCurrent ? 1 : 0.45, transition: 'opacity 120ms' }}>
+                  {showEval && (
+                    <EvalBar
+                      score={analysis?.score ?? 0}
+                      mate={analysis?.mate ?? 0}
+                      height={boardSize}
+                      flipped={flipped}
+                      hasEval={!!analysis?.depth || !!analysis?.tablebaseCategory}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
 
             {isNarrow && showTree && hasBook && (
-              <div style={{ width: boardSize + 11 + MATERIAL_CORNERS_WIDTH + 11 + 22 }}>{treePanel}</div>
+              <div style={{ width: isPhone ? boardSize : boardSize + 11 + MATERIAL_CORNERS_WIDTH + 11 + 22 }}>{treePanel}</div>
             )}
           </div>
 

@@ -62,3 +62,32 @@ html {
     min-height: 58px;
   }
 }
+
+@media (max-width: 359px) {
+  .topbar {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+}
+
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+  input[type='checkbox'] {
+    width: 20px;
+    height: 20px;
+  }
+  label:has(input[type='checkbox']) {
+    padding: 6px 0;
+  }
+  .tap,
+  .topbar button {
+    min-height: 40px;
+  }
+  .mv {
+    padding: 6px 5px !important;
+  }
+}
