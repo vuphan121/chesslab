@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import Board from '@/components/board/Board'
 import { MaterialRow, computeMaterialRows } from '@/components/board/MaterialCorners'
 import EvalBar from '@/components/analysis/EvalBar'
+import { buildLinePgn, downloadPgn, pgnFileName } from '@/lib/trainer/exportPgn'
 import { EVAL_DISPLAY_LABEL, EvalIcon, useEvalDisplay } from '@/components/analysis/EvalToggle'
 import { arrowShapes } from '@/lib/engine/arrows'
 import TopBar from '@/components/layout/TopBar'
@@ -41,7 +42,7 @@ const FIXED_OVERHEAD = ROW_GAP_DESKTOP * 3 + OUTER_PADDING_DESKTOP * 2 + EVAL_BA
 const SCALABLE_WIDTH = DESKTOP_SQUARE_SIZE * 8 + SIDE_WIDTH + BUTTON_COL_WIDTH
 const FULL_CONTAINER_WIDTH = SCALABLE_WIDTH + FIXED_OVERHEAD
 const MIN_DESKTOP_SCALE = 0.45
-const RESERVED_VERTICAL = 150
+const RESERVED_VERTICAL = 112
 
 export default function OpeningStudyPage() {
   const {
@@ -178,6 +179,21 @@ export default function OpeningStudyPage() {
       ? arrowShapes(viewEval.bestMoves.map((m) => ({ uci: m.uci, score: m.score, mate: m.mate })), boardState.turn, 5)
       : []
   const materialRows = computeMaterialRows(boardState.pieces, flipped)
+  const exportChapter =
+    (runChapterId ? repertoire.chapters.find((c) => c.id === runChapterId) : undefined) ??
+    repertoire.chapters.find((c) => runStartCard.chapterIds.includes(c.id))
+  const exportLine = () => {
+    const pgn = buildLinePgn({
+      repertoireName: repertoire.name,
+      chapterName: exportChapter?.name ?? repertoire.name,
+      startFen: exportChapter?.startFen ?? runStartCard.fen,
+      fallbackFen: runStartCard.fen,
+      leadingSans: leadingMoves.map((m) => m.san),
+      runSans: runMoves.map((m) => m.san),
+      side: repertoire.side,
+    })
+    if (pgn) downloadPgn(pgn, pgnFileName(repertoire.name, exportChapter?.name ?? 'line'))
+  }
 
   if (isPhone) {
     const answerComment =
@@ -225,8 +241,8 @@ export default function OpeningStudyPage() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: `0 ${PHONE_SIDE_PADDING}px` }}>
-          <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-            <MaterialRow cornerColor={materialRows.top.color} surplus={materialRows.top.surplus} pointsAhead={materialRows.top.pointsAhead} />
+          <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+            <MaterialRow justify="flex-start" cornerColor={materialRows.top.color} surplus={materialRows.top.surplus} pointsAhead={materialRows.top.pointsAhead} />
           </div>
 
           <Board
@@ -241,8 +257,9 @@ export default function OpeningStudyPage() {
             analysisMoves={suggestionArrows}
           />
 
-          <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-            <MaterialRow cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
+          <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <MaterialRow justify="flex-start" cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
+                <FeedbackStrip feedback={feedback} />
           </div>
 
           <div style={{ width: boardSize, height: 20, display: 'flex', alignItems: 'center' }}>
@@ -251,10 +268,9 @@ export default function OpeningStudyPage() {
             )}
           </div>
 
+
           <div style={{ width: boardSize, height: 56, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <FeedbackStrip feedback={feedback} compact />
-            </div>
+            <div style={{ flex: 1, minWidth: 0 }} />
             <button
               onClick={navBack}
               disabled={atStart}
@@ -315,6 +331,7 @@ export default function OpeningStudyPage() {
             onGotoPly={gotoPly}
             onNavBack={navBack}
             onNavForward={navForward}
+            onExport={lineComplete ? exportLine : undefined}
           />
         </div>
       </main>
@@ -325,6 +342,7 @@ export default function OpeningStudyPage() {
     <main className="min-h-screen pb-6 sm:pb-10" style={{ background: STUDY_BACKGROUND }}>
       <TopBar right={<span />} />
 
+      {isNarrow && (
       <div style={{ padding: '8px 24px 0' }}>
         <button
           onClick={changeRepertoire}
@@ -349,20 +367,18 @@ export default function OpeningStudyPage() {
           Back
         </button>
       </div>
+      )}
 
-      <div style={{ padding: `${isNarrow ? 8 : 10}px ${outerPadding}px 0` }}>
+      <div style={{ padding: `${isNarrow ? 8 : 12}px ${outerPadding}px 0` }}>
         {isNarrow ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center' }}>
-              <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                <MaterialRow cornerColor={materialRows.top.color} surplus={materialRows.top.surplus} pointsAhead={materialRows.top.pointsAhead} />
+              <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                <MaterialRow justify="flex-start" cornerColor={materialRows.top.color} surplus={materialRows.top.surplus} pointsAhead={materialRows.top.pointsAhead} />
               </div>
 
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                 <div style={{ position: 'relative', width: boardSize }}>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5, pointerEvents: 'none' }}>
-                    <FeedbackStrip feedback={feedback} />
-                  </div>
                   <Board
                     boardState={boardState}
                     onSquareClick={selectSquare}
@@ -382,9 +398,11 @@ export default function OpeningStudyPage() {
                 </div>
               </div>
 
-              <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                <MaterialRow cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
+              <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <MaterialRow justify="flex-start" cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
+                <FeedbackStrip feedback={feedback} />
               </div>
+
 
               <div
                 style={{
@@ -438,12 +456,25 @@ export default function OpeningStudyPage() {
                 onGotoPly={gotoPly}
                 onNavBack={navBack}
                 onNavForward={navForward}
+            onExport={lineComplete ? exportLine : undefined}
               />
             </div>
           </div>
         ) : (
           <div style={{ position: 'relative', width: '100%', height: groupHeight }}>
-            <div style={{ position: 'absolute', left: 0, top: 0, width: sideWidth, height: groupHeight, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ position: 'absolute', left: 0, top: 0, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center' }}>
+              <button
+                onClick={changeRepertoire}
+                title="Back to line picker"
+                style={{ display: 'flex', alignItems: 'center', gap: 5, height: 22, fontSize: 12, fontWeight: 600, color: '#6a675f', background: '#f0efe9', border: 'none', padding: '0 10px', borderRadius: 7, cursor: 'pointer' }}
+              >
+                <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+                  <path d="M6.5 1.5L2.5 5L6.5 8.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Back
+              </button>
+            </div>
+            <div style={{ position: 'absolute', left: 0, top: MATERIAL_STRIP_HEIGHT, width: sideWidth, height: boardSize, display: 'flex', flexDirection: 'column' }}>
               <LinePanel
                 repertoire={repertoire}
                 runStartCard={runStartCard}
@@ -456,12 +487,13 @@ export default function OpeningStudyPage() {
                 onGotoPly={gotoPly}
                 onNavBack={navBack}
                 onNavForward={navForward}
+            onExport={lineComplete ? exportLine : undefined}
               />
             </div>
 
             <div style={{ position: 'absolute', left: boardLeft, top: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                <MaterialRow cornerColor={materialRows.top.color} surplus={materialRows.top.surplus} pointsAhead={materialRows.top.pointsAhead} />
+              <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                <MaterialRow justify="flex-start" cornerColor={materialRows.top.color} surplus={materialRows.top.surplus} pointsAhead={materialRows.top.pointsAhead} />
               </div>
 
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: rowGap }}>
@@ -509,15 +541,14 @@ export default function OpeningStudyPage() {
                       </button>
                     </>
                   )}
-                  <div style={{ width: '100%', marginTop: 'auto' }}>
-                    <FeedbackStrip feedback={feedback} />
-                  </div>
                 </div>
               </div>
 
-              <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                <MaterialRow cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
+              <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <MaterialRow justify="flex-start" cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
+                <FeedbackStrip feedback={feedback} />
               </div>
+
             </div>
           </div>
         )}

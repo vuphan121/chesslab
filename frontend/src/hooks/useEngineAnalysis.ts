@@ -7,6 +7,7 @@ import { acquireEngine, releaseEngine } from '@/lib/engine/browserEngine'
 import type { BrowserEngine } from '@/lib/engine/browserEngine'
 import { settingsSignature } from '@/lib/engine/settings'
 import type { EngineSettings } from '@/lib/engine/settings'
+import { positionKey } from '@/lib/chess/optimisticFen'
 
 const START_DELAY_MS = 40
 const LOOKUP_TIMEOUT_MS = 4000
@@ -19,6 +20,7 @@ interface Options {
   gameOver: boolean
   enabled: boolean
   settings: EngineSettings
+  immediate?: boolean
 }
 
 export interface EngineAnalysisState {
@@ -30,7 +32,7 @@ export interface EngineAnalysisState {
 
 const IDLE: EngineAnalysisState = { analysis: null, analysisFen: null, analyzing: false, engineError: null }
 
-export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings }: Options): EngineAnalysisState {
+export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings, immediate = false }: Options): EngineAnalysisState {
   const [state, setState] = useState<EngineAnalysisState>(IDLE)
   const engineRef = useRef<BrowserEngine | null>(null)
   const cacheRef = useRef(new Map<string, Analysis>())
@@ -40,6 +42,11 @@ export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings }: 
   const depth = limit === 'depth' ? settings.depth : 0
   const timeSec = limit === 'time' ? settings.timeSec : 0
   const active = enabled && !!fen && !!gameId && !gameOver
+  const fenRef = useRef(fen)
+  fenRef.current = fen
+  const posKey = fen ? positionKey(fen) : null
+  const immediateRef = useRef(immediate)
+  immediateRef.current = immediate
 
   useEffect(() => {
     engineRef.current = acquireEngine()
@@ -51,8 +58,9 @@ export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings }: 
 
   useEffect(() => {
     const engine = engineRef.current
-    if (!active || !engine || !fen || !gameId) return
-    const key = `${fen}|${signature}`
+    const fen = fenRef.current
+    if (!active || !engine || !fen || !gameId || !posKey) return
+    const key = `${posKey}|${signature}`
     let cancelled = false
     let stopJob: (() => void) | null = null
     const lookup = new AbortController()
@@ -126,7 +134,7 @@ export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings }: 
       }
     }
 
-    const timer = setTimeout(run, cacheRef.current.has(key) ? 0 : START_DELAY_MS)
+    const timer = setTimeout(run, cacheRef.current.has(key) || immediateRef.current ? 0 : START_DELAY_MS)
     return () => {
       cancelled = true
       clearTimeout(timer)
@@ -134,7 +142,7 @@ export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings }: 
       lookup.abort()
       stopJob?.()
     }
-  }, [active, fen, gameId, signature, lines, hashMb, limit, depth, timeSec, useCloud])
+  }, [active, posKey, gameId, signature, lines, hashMb, limit, depth, timeSec, useCloud])
 
   return active ? state : { ...state, analyzing: false }
 }
