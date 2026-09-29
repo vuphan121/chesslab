@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import {
   createGame,
   getGame,
@@ -58,6 +58,7 @@ export function useChessGame(initialGameId?: string) {
   const [busy, setBusy] = useState(false)
   const [explorer, setExplorer] = useState<Explorer | null>(null)
   const [explorerLoading, setExplorerLoading] = useState(false)
+  const [openingByFen, setOpeningByFen] = useState<Record<string, { name: string; eco?: string }>>({})
   const [flipped, setFlipped] = useState(false)
   const moveSound = useRef<HTMLAudioElement | null>(null)
   const gameActionReqId = useRef(0)
@@ -68,7 +69,13 @@ export function useChessGame(initialGameId?: string) {
     setExplorerLoading(true)
     try {
       const e = await getExplorer(gameId, fen)
-      if (reqId === explorerReqId.current) setExplorer(e)
+      if (reqId === explorerReqId.current) {
+        setExplorer(e)
+        if (e?.openingName && fen) {
+          const opening = { name: e.openingName, eco: e.openingEco }
+          setOpeningByFen((prev) => ({ ...prev, [fen]: opening }))
+        }
+      }
       return e
     } catch {
 
@@ -118,6 +125,16 @@ export function useChessGame(initialGameId?: string) {
   }, [])
 
   const boardState: BoardState | null = gs ? toBoardState(gs, selected) : null
+
+  const lastOpening = useMemo(() => {
+    if (!gs) return null
+    const flat = flatten(gs.moveTree)
+    for (let entry = flat.get(gs.currentNodeId); entry; entry = entry.parentId ? flat.get(entry.parentId) : undefined) {
+      const opening = openingByFen[entry.node.fen]
+      if (opening) return opening
+    }
+    return null
+  }, [gs, openingByFen])
 
   const selectSquare = useCallback(
     async (square: Square) => {
@@ -272,7 +289,7 @@ export function useChessGame(initialGameId?: string) {
         if (reqId !== gameActionReqId.current) return
           setGs(next)
         setSelected(null)
-        moveSound.current?.play().catch(() => {})
+          moveSound.current?.play().catch(() => {})
         refreshInsights(next.id, next.fen)
         if (next.error) {
           throw new Error(
@@ -305,6 +322,7 @@ export function useChessGame(initialGameId?: string) {
     gameId: gs?.id ?? null,
     explorer,
     explorerLoading,
+    lastOpening,
     flipped,
     toggleFlipped,
   }

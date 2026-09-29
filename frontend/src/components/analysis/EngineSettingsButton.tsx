@@ -57,12 +57,11 @@ function Segmented<T extends string | number>({
   )
 }
 
-function Section({ title, children, hint }: { title: string; children: ReactNode; hint?: string }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div style={{ marginTop: 16 }}>
       <div className="lbl" style={{ color: '#b4b1a8', marginBottom: 8 }}>{title}</div>
       {children}
-      {hint && <div style={{ fontSize: 11.5, color: '#a3a099', marginTop: 6, lineHeight: 1.4 }}>{hint}</div>}
     </div>
   )
 }
@@ -153,18 +152,8 @@ export default function EngineSettingsButton({ settings, onChange, onReset }: Pr
           }}
         >
           <div className="serif" style={{ fontSize: 18, fontWeight: 500 }}>Engine</div>
-          <div style={{ fontSize: 12, color: '#a3a099', marginTop: 2 }}>Stockfish 19 Lite, running on this device</div>
 
-          <Section
-            title="Search limit"
-            hint={
-              settings.limit === 'infinite'
-                ? 'Keeps thinking until you move or turn the engine off.'
-                : settings.limit === 'depth'
-                  ? 'Stops once this many moves ahead have been searched.'
-                  : 'Stops after this long on each position.'
-            }
-          >
+          <Section title="Search limit">
             <Segmented
               label="Search limit"
               options={limitOptions}
@@ -202,7 +191,7 @@ export default function EngineSettingsButton({ settings, onChange, onReset }: Pr
             )}
           </Section>
 
-          <Section title="Arrows" hint="How many suggested moves to draw (and lines to search). The best move is blue. Others are grey, thinner the worse they are, and left out if they are much worse.">
+          <Section title="Arrows">
             <Segmented
               label="Arrows"
               options={Array.from({ length: limits.lines.max - limits.lines.min + 1 }, (_, i) => {
@@ -214,7 +203,7 @@ export default function EngineSettingsButton({ settings, onChange, onReset }: Pr
             />
           </Section>
 
-          <Section title="Memory (MB)" hint="More memory helps deep searches. Lower it on a phone.">
+          <Section title="Memory (MB)">
             <Segmented
               label="Memory in megabytes"
               options={limits.hashOptions.map((mb) => ({ id: mb, label: String(mb) }))}
@@ -223,7 +212,7 @@ export default function EngineSettingsButton({ settings, onChange, onReset }: Pr
             />
           </Section>
 
-          <Section title="Lichess" hint={settings.limit === 'infinite' ? 'Not used while the limit is infinite.' : undefined}>
+          <Section title="Lichess">
             <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontSize: 13, lineHeight: 1.4 }}>
               <input
                 type="checkbox"
@@ -231,7 +220,7 @@ export default function EngineSettingsButton({ settings, onChange, onReset }: Pr
                 onChange={(e) => onChange({ useCloud: e.target.checked })}
                 style={{ marginTop: 2, accentColor: '#4a90d9', width: 15, height: 15 }}
               />
-              <span>Use Lichess cloud analysis and endgame tablebases when they have the position</span>
+              <span>Use Lichess cloud analysis and tablebases</span>
             </label>
           </Section>
 
