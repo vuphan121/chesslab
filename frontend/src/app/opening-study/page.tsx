@@ -189,8 +189,8 @@ export default function OpeningStudyPage() {
       <main className="safe-bottom" style={{ background: STUDY_BACKGROUND, minHeight: '100dvh' }}>
         <TopBar right={<span />} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: `6px ${PHONE_SIDE_PADDING}px`, height: 44 }}>
-          <button
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: `2px ${PHONE_SIDE_PADDING}px`, height: 44 }}>
+          <button className="tap"
             onClick={changeRepertoire}
             title="Back to line picker"
             aria-label="Back to line picker"

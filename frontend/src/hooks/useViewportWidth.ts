@@ -27,6 +27,13 @@ export function useViewportHeight(): number | null {
   return useWindowDimension('height')
 }
 
+export function useIsPhoneLike(): { compact: boolean; short: boolean } {
+  const w = useViewportWidth() ?? 1000
+  const h = useViewportHeight() ?? 1000
+  const short = h < 450 && w < 1000
+  return { compact: w < 640 || short, short }
+}
+
 export function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n))
 }

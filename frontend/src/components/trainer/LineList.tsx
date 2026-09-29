@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import MiniBoard from '@/components/analysis/MiniBoard'
 import { toFigurine } from '@/lib/chess/figurine'
@@ -42,6 +42,18 @@ export default function LineList({ lines, loading }: Props) {
   }
 
   const handleLeave = () => setPopup(null)
+
+  const popupOpen = popup !== null
+  useEffect(() => {
+    if (!popupOpen) return
+    const close = () => setPopup(null)
+    window.addEventListener('pointerdown', close)
+    window.addEventListener('scroll', close, true)
+    return () => {
+      window.removeEventListener('pointerdown', close)
+      window.removeEventListener('scroll', close, true)
+    }
+  }, [popupOpen])
 
   const toggleLine = (id: string) => {
     setExpanded((prev) => {
@@ -100,7 +112,7 @@ export default function LineList({ lines, loading }: Props) {
                           </span>
                         )}
                         <span
-                          className="mono"
+                          className="mono mv"
                           onMouseEnter={(e) => handleEnter(fen, uci, e)}
                           onMouseLeave={handleLeave}
                           style={{
