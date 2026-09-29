@@ -13,11 +13,10 @@ import { useEngineAnalysis } from '@/hooks/useEngineAnalysis'
 import { arrowShapes } from '@/lib/engine/arrows'
 import type { CandidateLine } from '@/lib/engine/arrows'
 import { useEngineSettings } from '@/lib/engine/settings'
-import { Suspense, useCallback, useEffect, useState, useSyncExternalStore } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { useViewportWidth, useViewportHeight, clamp } from '@/hooks/useViewportWidth'
 import { flatten } from '@/lib/chess/moveTree'
-import { positionKey } from '@/lib/chess/optimisticFen'
+import { positionKey } from '@/lib/chess/positionKey'
 import MoveStrip from '@/components/history/MoveStrip'
 import { MaterialRow, computeMaterialRows } from '@/components/board/MaterialCorners'
 
@@ -101,19 +100,6 @@ function formatTablebaseEval(score: number, mate: number, category: string): str
 }
 
 export default function Home() {
-  return (
-    <Suspense fallback={null}>
-      <HomeInner />
-    </Suspense>
-  )
-}
-
-function HomeInner() {
-
-
-  const searchParams = useSearchParams()
-  const initialGameId = searchParams.get('gameId') ?? undefined
-
   const {
     boardState,
     selectSquare,
@@ -125,14 +111,12 @@ function HomeInner() {
     navNext,
     navEnd,
     loadPgn,
-    optimisticFen,
-    gameId,
     explorer,
     explorerLoading,
     lastOpening,
     flipped,
     toggleFlipped,
-  } = useChessGame(initialGameId)
+  } = useChessGame()
 
   const [animateMove, setAnimateMove] = useState(false)
   const stepPrev = useCallback(() => {
@@ -155,9 +139,8 @@ function HomeInner() {
   const [evalDisplay, cycleEvalDisplay] = useEvalDisplay(EVAL_DISPLAY_STORAGE_KEY, 'eval-moves')
   const [engineSettings, updateEngineSettings, resetEngineSettings] = useEngineSettings()
   const { analysis, analysisFen, analyzing, engineError } = useEngineAnalysis({
-    gameId,
-    fen: optimisticFen ?? boardState?.fen ?? null,
-    immediate: optimisticFen !== null,
+    fen: boardState.fen,
+    immediate: !animateMove,
     gameOver: boardState?.isGameOver ?? false,
     enabled: evalDisplay !== 'off',
     settings: engineSettings,
@@ -263,14 +246,14 @@ function HomeInner() {
     : (explorer?.openingName ?? lastOpening?.name ?? '')
 
   const showEval = evalDisplay !== 'off'
-  const analysisIsCurrent = !!analysis && (analysisFen === null || positionKey(analysisFen) === positionKey(optimisticFen ?? boardState.fen))
+  const analysisIsCurrent = !!analysis && (analysisFen === null || positionKey(analysisFen) === positionKey(boardState.fen))
   const candidates: CandidateLine[] = []
   if (analysis && analysisIsCurrent && !boardState.isGameOver) {
     for (const line of analysis.lines ?? []) candidates.push({ uci: line.uciMoves?.[0], score: line.score, mate: line.mate })
     if (candidates.length === 0) candidates.push({ uci: analysis.bestMove, score: analysis.score, mate: analysis.mate })
   }
   const suggestionArrows =
-    evalDisplay === 'eval-moves' ? arrowShapes(candidates, ((optimisticFen ?? boardState.fen).split(' ')[1] === 'b' ? 'b' : 'w'), engineSettings.lines) : []
+    evalDisplay === 'eval-moves' ? arrowShapes(candidates, boardState.turn, engineSettings.lines) : []
 
   const playContinuation = (uci: string) => move(uci.slice(0, 2), uci.slice(2, 4))
 

@@ -3,7 +3,8 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { MoveNode } from '@/lib/chess/types'
 import { activeLine } from '@/lib/chess/moveTree'
-import { evalFen, evalFenLookup, type FenEval } from '@/lib/api/client'
+import type { FenEval } from '@/lib/api/client'
+import { lookupEval } from '@/lib/lichess/lookup'
 import { MoveEvaluator } from '@/lib/engine/moveEval'
 import { toFigurine } from '@/lib/chess/figurine'
 
@@ -121,23 +122,38 @@ export default function MoveHistory({
     let cancelled = false
     const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
     ;(async () => {
-      for (const fen of missing) {
-        if (cancelled) return
-        try {
-          let e = await evalFenLookup(fen)
-          if (!e && engineEnabled) {
-            while (busyRef.current && !cancelled) await pause(400)
-            if (cancelled) return
-            const evaluator = (evaluatorRef.current ??= new MoveEvaluator())
-            try {
-              e = await evaluator.evaluate(fen)
-            } catch {
-              e = await evalFen(fen)
-            }
-            if (cancelled) return
+      const unresolved: string[] = []
+      const queue = [...missing]
+      const worker = async () => {
+        for (let fen = queue.shift(); fen !== undefined; fen = queue.shift()) {
+          if (cancelled) return
+          let e: FenEval | null = null
+          try {
+            e = await lookupEval(fen)
+          } catch {
           }
-          if (e || engineEnabled) attemptedRef.current.add(fen)
-          if (!cancelled && e) setEvals((prev) => ({ ...prev, [fen]: e }))
+          if (cancelled) return
+          if (e) {
+            attemptedRef.current.add(fen)
+            const found = e
+            setEvals((prev) => ({ ...prev, [fen as string]: found }))
+          } else {
+            unresolved.push(fen)
+          }
+        }
+      }
+      await Promise.all([worker(), worker(), worker(), worker()])
+      if (!engineEnabled) return
+      for (const fen of unresolved) {
+        if (cancelled) return
+        while (busyRef.current && !cancelled) await pause(400)
+        if (cancelled) return
+        const evaluator = (evaluatorRef.current ??= new MoveEvaluator())
+        try {
+          const e = await evaluator.evaluate(fen)
+          if (cancelled) return
+          attemptedRef.current.add(fen)
+          if (e) setEvals((prev) => ({ ...prev, [fen]: e }))
         } catch {
         }
       }

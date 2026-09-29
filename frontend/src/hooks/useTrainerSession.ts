@@ -2,11 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { useRouter } from 'next/navigation'
 import { Chess } from 'chess.js'
 import {
-  createGame,
-  makeMove,
   getRepertoire,
   getProgress as apiGetProgress,
   saveProgress as apiSaveProgress,
@@ -162,7 +159,6 @@ interface RunMove {
 }
 
 export function useTrainerSession() {
-  const router = useRouter()
   const [phase, setPhase] = useState<TrainerPhase>('setup')
   const [repertoire, setRepertoireState] = useState<Repertoire | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -919,26 +915,6 @@ export function useTrainerSession() {
 
 
 
-  const analyzeLine = useCallback(async () => {
-    const startId = runStartCardIdRef.current
-    if (!startId) return
-    const startCard = cardById(startId)
-    if (!startCard) return
-    setBusy(true)
-    try {
-      const gs = await createGame(startCard.fen)
-      const gid = gs.id
-      for (const mv of runMovesRef.current) {
-        const from = mv.uci.slice(0, 2)
-        const to = mv.uci.slice(2, 4)
-        await makeMove(gid, from, to, promotionFromUci(mv.uci))
-      }
-      router.push(`/?gameId=${gid}`)
-    } finally {
-      setBusy(false)
-    }
-  }, [cardById, router])
-
   const endSession = useCallback(() => {
     const session = sessionRef.current
     if (session) {
@@ -1018,7 +994,6 @@ export function useTrainerSession() {
     legalMovesFor,
     redoLine,
     nextLine,
-    analyzeLine,
     endSession,
     sameAgain,
     drillMistakes,

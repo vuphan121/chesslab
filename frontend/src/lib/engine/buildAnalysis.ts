@@ -4,7 +4,7 @@ import type { UciInfo } from './uci'
 
 export const BROWSER_ENGINE_NAME = 'Stockfish 19 Lite (browser)'
 
-function sanAndFens(fen: string, uciMoves: string[]): { sans: string[]; fens: string[]; played: string[] } {
+export function sanAndFens(fen: string, uciMoves: string[]): { sans: string[]; fens: string[]; played: string[] } {
   const game = new Chess(fen)
   const sans: string[] = []
   const fens: string[] = []

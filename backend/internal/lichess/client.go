@@ -22,10 +22,6 @@ type CloudEval struct {
 	PVs   []PV `json:"pvs"`
 }
 
-func Fetch(fen string, multiPV int) (*CloudEval, error) {
-	return FetchWithTimeout(fen, multiPV, 3*time.Second)
-}
-
 func FetchWithTimeout(fen string, multiPV int, timeout time.Duration) (*CloudEval, error) {
 	u := fmt.Sprintf("https://lichess.org/api/cloud-eval?fen=%s&multiPv=%d",
 		url.QueryEscape(fen), multiPV)

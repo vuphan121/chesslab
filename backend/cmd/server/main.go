@@ -20,7 +20,6 @@ import (
 	"github.com/chesslab/backend/internal/db"
 	"github.com/chesslab/backend/internal/engine"
 	"github.com/chesslab/backend/internal/repertoire"
-	"github.com/chesslab/backend/internal/storage"
 )
 
 func loadDotEnv(path string) {
@@ -50,19 +49,10 @@ func loadDotEnv(path string) {
 func main() {
 	loadDotEnv(".env")
 
-	store := storage.NewMemory()
-
 	sfPath := os.Getenv("STOCKFISH_PATH")
 	if sfPath == "" {
 		sfPath = "stockfish"
 	}
-	eng, err := engine.New(sfPath)
-	if err != nil {
-		log.Printf("stockfish unavailable (%v) — analysis endpoint will return 503", err)
-	} else {
-		log.Printf("engine: %s", eng.Name)
-	}
-
 	precomputeEngine, err := engine.NewLowPriority(sfPath)
 	if err != nil {
 		log.Printf("stockfish (precompute) unavailable (%v) — eval precompute will fall back to cloud-eval only, failing any position with no cached cloud result", err)
@@ -98,7 +88,7 @@ func main() {
 		cancel()
 	}
 
-	handler := api.NewHandler(store, eng, precomputeEngine, repertoires, books, dbStore, authCfg, bookSource, os.Getenv("B2_CHAPTER_PREFIX"))
+	handler := api.NewHandler(precomputeEngine, repertoires, books, dbStore, authCfg, bookSource, os.Getenv("B2_CHAPTER_PREFIX"))
 	router := api.NewRouter(handler)
 
 	port := os.Getenv("PORT")

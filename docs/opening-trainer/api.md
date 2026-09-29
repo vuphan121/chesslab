@@ -1,5 +1,9 @@
 # Opening Trainer — backend API
 
+> **Note (2026-09-29):** the `/api/games/*` endpoints referenced below (`/moves`, `/goto`, `/position`, `POST /api/games`)
+> were removed when the Analysis Board and Study from Book moved their game state into the browser. This file is kept as
+> the historical design; only the repertoire, progress and analytics endpoints still exist.
+
 Three new endpoints, two modifications to existing ones. Everything else the trainer needs
 (`/moves`, `/goto`) already exists and is used unchanged.
 

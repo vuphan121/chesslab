@@ -1,10 +1,14 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createGame, setPosition as apiSetPosition, makeMove, gotoNode, deleteGameNode, getBook, getBookProgress, markItemDone, analyzeGame, evalFen, recordBookStudyActivity, getBookSavedLine, saveBookLine } from '@/lib/api/client'
+import { getBook, getBookProgress, markItemDone, recordBookStudyActivity, getBookSavedLine, saveBookLine } from '@/lib/api/client'
 import type { Analysis, GameState, FenEval, SavedLine, SavedLineMove } from '@/lib/api/client'
 import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
 import { activeLine, flatten } from '@/lib/chess/moveTree'
+import { LocalGame } from '@/lib/chess/localGame'
+import { acquireEngine, releaseEngine } from '@/lib/engine/browserEngine'
+import { MoveEvaluator } from '@/lib/engine/moveEval'
+import { lookupAnalysis, lookupEval } from '@/lib/lichess/lookup'
 import type { Book, BookItem } from '@/lib/books/types'
 
 
@@ -38,6 +42,33 @@ function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState 
     moveTree: gs.moveTree,
     currentNodeId: gs.currentNodeId,
   }
+}
+
+const bookGame = new LocalGame()
+
+const createGame = async (fen: string): Promise<GameState> => {
+  bookGame.resetTo(fen)
+  return bookGame.snapshot()
+}
+
+const apiSetPosition = async (_gid: string, fen: string): Promise<GameState> => {
+  bookGame.resetTo(fen)
+  return bookGame.snapshot()
+}
+
+const makeMove = async (_gid: string, from: string, to: string, promotion?: string): Promise<GameState> => {
+  if (!bookGame.applyMove(from, to, promotion)) throw new Error(`illegal move: ${from}→${to}`)
+  return bookGame.snapshot()
+}
+
+const gotoNode = async (_gid: string, nodeId: string): Promise<GameState> => {
+  if (!bookGame.gotoNode(nodeId)) throw new Error(`node not found: ${nodeId}`)
+  return bookGame.snapshot()
+}
+
+const deleteGameNode = async (_gid: string, nodeId: string): Promise<GameState> => {
+  if (!bookGame.deleteNode(nodeId)) throw new Error('could not delete that move')
+  return bookGame.snapshot()
 }
 
 export type BookStudyPhase = 'setup' | 'studying' | 'done'
@@ -116,8 +147,7 @@ export function useBookStudySession() {
   const currentFen = gameState?.fen ?? null
 
   useEffect(() => {
-    const gid = gameIdRef.current
-    if (!analysisEnabled || !gid || !currentFen) return
+    if (!analysisEnabled || !currentFen) return
 
     const cached = analysisCacheRef.current.get(currentFen)
     if (cached) {
@@ -127,28 +157,74 @@ export function useBookStudySession() {
       return
     }
 
+    const fen = currentFen
     const requestID = ++analysisReqId.current
+    const isCurrent = () => requestID === analysisReqId.current
     setAnalysisLoading(true)
     setAnalysisError(null)
+    const engine = acquireEngine()
+    let job: { cancel: () => void } | null = null
+    const record = (result: Analysis) => {
+      analysisCacheRef.current.set(fen, result)
+      if (result.lines.length > 0 && !(fen in moveEvalsRef.current)) {
+        const top = result.lines[0]
+        setMoveEvals((prev) => ({ ...prev, [fen]: { score: top.score, mate: top.mate, depth: top.depth } }))
+      }
+    }
     ;(async () => {
       try {
-        const result = await analyzeGame(gid, 'quick', currentFen)
-        analysisCacheRef.current.set(currentFen, result)
-        if (result.lines.length > 0 && !(currentFen in moveEvalsRef.current)) {
-          const top = result.lines[0]
-          setMoveEvals((prev) => ({ ...prev, [currentFen]: { score: top.score, mate: top.mate, depth: top.depth } }))
+        const found = await Promise.race([
+          lookupAnalysis(fen, 3).catch(() => null),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 500)),
+        ])
+        if (!isCurrent()) return
+        if (found) {
+          record(found)
+          setAnalysis(found)
+          setAnalysisLoading(false)
+          return
         }
-        if (requestID === analysisReqId.current) setAnalysis(result)
+        const started = engine.start({
+          fen,
+          lines: 3,
+          hashMb: 16,
+          limit: 'depth',
+          depth: 14,
+          timeSec: 0,
+          onUpdate: (partial) => {
+            if (isCurrent()) setAnalysis(partial)
+          },
+        })
+        job = started
+        const result = await started.done
+        if (!isCurrent()) return
+        if (result.error) throw new Error(result.error)
+        if (result.analysis && result.completed) {
+          record(result.analysis)
+          setAnalysis(result.analysis)
+        }
       } catch (err: unknown) {
-        if (requestID === analysisReqId.current) {
+        if (isCurrent()) {
           setAnalysis(null)
           setAnalysisError(err instanceof Error ? err.message : 'Analysis is unavailable.')
         }
       } finally {
-        if (requestID === analysisReqId.current) setAnalysisLoading(false)
+        if (isCurrent()) setAnalysisLoading(false)
       }
     })()
+    return () => {
+      job?.cancel()
+      releaseEngine()
+    }
   }, [analysisEnabled, currentFen])
+
+  const evaluatorRef = useRef<MoveEvaluator | null>(null)
+  useEffect(() => {
+    return () => {
+      evaluatorRef.current?.dispose()
+      evaluatorRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
     if (!analysisEnabled || !gameState) return
@@ -161,14 +237,22 @@ export function useBookStudySession() {
       for (const fen of missing) {
         if (cancelled) return
         try {
-          const e = await evalFen(fen)
-          if (!cancelled) setMoveEvals((prev) => ({ ...prev, [fen]: e }))
+          let e = await lookupEval(fen)
+          if (!e && !cancelled) {
+            const evaluator = (evaluatorRef.current ??= new MoveEvaluator())
+            e = await evaluator.evaluate(fen)
+          }
+          if (!cancelled && e) {
+            const found = e
+            setMoveEvals((prev) => ({ ...prev, [fen]: found }))
+          }
         } catch {
         }
       }
     })()
     return () => {
       cancelled = true
+      evaluatorRef.current?.cancel()
     }
   }, [analysisEnabled, gameState])
 
