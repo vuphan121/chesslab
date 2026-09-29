@@ -1,31 +1,16 @@
 # Runtime reliability
 
-This document records the safeguards around the long-lived analysis server and its asynchronous
-frontend requests.
+This document records the safeguards around the long-lived server and its asynchronous frontend requests.
 
-## Game state and request ordering
+## Game state and analysis (moved to the browser, 2026-09-29)
 
-- Every in-memory game has its own read/write lock. API mutations hold the write lock through the
-  resulting response snapshot, while reads take the read lock. The store's map lock only protects
-  the map itself; it is not used as a global game lock.
-- Analysis and explorer requests include the exact FEN the user is viewing. The backend analyzes
-  that FEN instead of re-reading whichever node happens to be current when the request is handled.
-  Frontend request sequence numbers prevent an older response from replacing a newer position.
-- Game-state JSON includes `gameOverReason` for checkmate, stalemate, the 50-move rule, and
-  insufficient material.
-
-## Analysis load
-
-Successful analysis results are cached for ten minutes by FEN and analysis speed. Concurrent
-identical requests share one cloud/Stockfish calculation. The cache is capped at 256 entries; the
-existing short cloud-prefetch cache remains separate. This avoids repeated Stockfish work when the
-same position is revisited without allowing the cache to grow indefinitely.
-
-## Memory bounds
-
-The game store retains at most 512 games. Games inactive for six hours are removed lazily whenever
-the store is read or written, and the least recently used game is evicted when the cap is reached.
-An evicted game returns the normal `404 game not found` response.
+The backend no longer holds games or runs interactive analysis. The Analysis Board and Study from Book keep the
+move tree in the browser (`lib/chess/localGame.ts`, chess.js), so there is no per-game lock, request ordering
+or game-store memory bound to maintain. Stockfish runs in a Web Worker, and Lichess cloud-eval, the tablebase
+and the opening explorer are called directly from the page with per-position caches and in-flight
+de-duplication (`lib/lichess/`). The explorer needs the Lichess token, which the backend hands to a signed-in
+session through `GET /api/lichess-token`. The server-side Stockfish process now exists only for the eval
+precompute (`internal/evalprecompute`).
 
 ## HTTP and authentication limits
 
@@ -39,7 +24,7 @@ An evicted game returns the normal `404 game not found` response.
   assumes exactly one trusted proxy hop in front of this app; that assumption has **not** been
   empirically verified against the live Render deployment (see the comment in `loginClientKey` itself).
 - The HTTP server applies header, read, write, idle, and maximum-header-size limits. The three-minute
-  write timeout deliberately remains longer than the frontend's two-minute local-coach timeout.
+  write timeout is kept generous for the cron endpoints.
 - Browser time-zone values are validated against the embedded IANA database and fall back to UTC.
 
 ## Frontend and dependencies

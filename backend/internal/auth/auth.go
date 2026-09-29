@@ -58,14 +58,6 @@ func (c Config) parseToken(tokenString string) (*jwt.RegisteredClaims, error) {
 	return claims, nil
 }
 
-func (c Config) VerifyToken(tokenString string) (string, error) {
-	claims, err := c.parseToken(tokenString)
-	if err != nil {
-		return "", err
-	}
-	return claims.Subject, nil
-}
-
 type ctxKey int
 
 const usernameKey ctxKey = iota

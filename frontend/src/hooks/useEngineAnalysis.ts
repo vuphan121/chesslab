@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { analyzeGame, lookupAnalysis } from '@/lib/api/client'
 import type { Analysis } from '@/lib/api/client'
+import { lookupAnalysis, prefetchReplies } from '@/lib/lichess/lookup'
 import { acquireEngine, releaseEngine } from '@/lib/engine/browserEngine'
 import type { BrowserEngine } from '@/lib/engine/browserEngine'
 import { settingsSignature } from '@/lib/engine/settings'
 import type { EngineSettings } from '@/lib/engine/settings'
-import { positionKey } from '@/lib/chess/optimisticFen'
+import { positionKey } from '@/lib/chess/positionKey'
 
 const START_DELAY_MS = 40
 const LOOKUP_TIMEOUT_MS = 4000
@@ -15,7 +15,6 @@ const CACHE_LIMIT = 200
 const LOOKUP_LINES = 5
 
 interface Options {
-  gameId: string | null
   fen: string | null
   gameOver: boolean
   enabled: boolean
@@ -32,7 +31,7 @@ export interface EngineAnalysisState {
 
 const IDLE: EngineAnalysisState = { analysis: null, analysisFen: null, analyzing: false, engineError: null }
 
-export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings, immediate = false }: Options): EngineAnalysisState {
+export function useEngineAnalysis({ fen, gameOver, enabled, settings, immediate = false }: Options): EngineAnalysisState {
   const [state, setState] = useState<EngineAnalysisState>(IDLE)
   const engineRef = useRef<BrowserEngine | null>(null)
   const cacheRef = useRef(new Map<string, Analysis>())
@@ -41,12 +40,14 @@ export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings, im
   const { lines, hashMb, limit, useCloud } = settings
   const depth = limit === 'depth' ? settings.depth : 0
   const timeSec = limit === 'time' ? settings.timeSec : 0
-  const active = enabled && !!fen && !!gameId && !gameOver
+  const active = enabled && !!fen && !gameOver
   const fenRef = useRef(fen)
-  fenRef.current = fen
-  const posKey = fen ? positionKey(fen) : null
   const immediateRef = useRef(immediate)
-  immediateRef.current = immediate
+  const posKey = fen ? positionKey(fen) : null
+  useEffect(() => {
+    fenRef.current = fen
+    immediateRef.current = immediate
+  })
 
   useEffect(() => {
     engineRef.current = acquireEngine()
@@ -59,7 +60,7 @@ export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings, im
   useEffect(() => {
     const engine = engineRef.current
     const fen = fenRef.current
-    if (!active || !engine || !fen || !gameId || !posKey) return
+    if (!active || !engine || !fen || !posKey) return
     const key = `${posKey}|${signature}`
     let cancelled = false
     let stopJob: (() => void) | null = null
@@ -98,26 +99,22 @@ export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings, im
       })
       stopJob = job.cancel
 
-      job.done.then(async (result) => {
+      job.done.then((result) => {
         if (cancelled || settledByLookup) return
         if (result.error) {
-          try {
-            const server = await analyzeGame(gameId, 'full', fen)
-            if (cancelled) return
-            remember(server)
-            setState({ analysis: server, analysisFen: fen, analyzing: false, engineError: result.error })
-          } catch {
-            if (!cancelled) setState((s) => ({ ...s, analyzing: false, engineError: result.error ?? null }))
-          }
+          setState((s) => ({ ...s, analyzing: false, engineError: result.error ?? null }))
           return
         }
-        if (result.analysis && result.completed) remember(result.analysis)
+        if (result.analysis && result.completed) {
+          remember(result.analysis)
+          if (useCloud) prefetchReplies(result.analysis)
+        }
         setState((s) => ({ ...s, analyzing: false }))
       })
 
       if (useCloud && limit !== 'infinite') {
         lookupTimer = setTimeout(() => lookup.abort(), LOOKUP_TIMEOUT_MS)
-        lookupAnalysis(gameId, fen, lookup.signal, LOOKUP_LINES)
+        lookupAnalysis(fen, LOOKUP_LINES, lookup.signal)
           .then((found) => {
             if (!found || cancelled || settledByLookup) return
             if (!found.tablebaseCategory && found.depth < localDepth) return
@@ -125,6 +122,7 @@ export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings, im
             settledByLookup = true
             job.cancel()
             remember(found)
+            prefetchReplies(found)
             setState({ analysis: found, analysisFen: fen, analyzing: false, engineError: null })
           })
           .catch(() => {})
@@ -142,7 +140,7 @@ export function useEngineAnalysis({ gameId, fen, gameOver, enabled, settings, im
       lookup.abort()
       stopJob?.()
     }
-  }, [active, posKey, gameId, signature, lines, hashMb, limit, depth, timeSec, useCloud])
+  }, [active, posKey, signature, lines, hashMb, limit, depth, timeSec, useCloud])
 
   return active ? state : { ...state, analyzing: false }
 }

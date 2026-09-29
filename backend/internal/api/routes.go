@@ -29,22 +29,7 @@ func NewRouter(h *Handler) http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Use(h.authCfg.Middleware)
 
-		r.Route("/api/games", func(r chi.Router) {
-			r.Post("/", h.CreateGame)
-			r.Get("/{id}", h.GetGame)
-			r.Post("/{id}/moves", h.MakeMove)
-			r.Delete("/{id}", h.DeleteGame)
-			r.Get("/{id}/analysis", h.AnalyzeGame)
-			r.Get("/{id}/explorer", h.Explorer)
-			r.Post("/{id}/goto", h.GotoNode)
-			r.Delete("/{id}/nodes/{nodeId}", h.DeleteNode)
-			r.Post("/{id}/pgn", h.LoadPGN)
-			r.Post("/{id}/position", h.SetPosition)
-			r.Post("/{id}/coach/explain", h.ExplainMove)
-			r.Post("/{id}/coach/chat", h.CoachChat)
-		})
-
-		r.Get("/api/eval", h.EvalFEN)
+		r.Get("/api/lichess-token", h.GetLichessToken)
 		r.Get("/api/position-evals", h.GetPositionEvals)
 
 		r.Route("/api/repertoires", func(r chi.Router) {

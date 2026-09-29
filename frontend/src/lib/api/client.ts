@@ -133,61 +133,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 
 
-export const createGame = (fen?: string): Promise<GameState> =>
-  request('/api/games', {
-    method: 'POST',
-    ...(fen
-      ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fen }) }
-      : {}),
-  })
-
-
-
-export const setPosition = (id: string, fen: string): Promise<GameState> =>
-  request(`/api/games/${id}/position`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fen }),
-  })
-
-export const getGame = (id: string): Promise<GameState> =>
-  request(`/api/games/${id}`)
-
-export const makeMove = (
-  id: string,
-  from: string,
-  to: string,
-  promotion?: string,
-): Promise<GameState> =>
-  request(`/api/games/${id}/moves`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to, promotion: promotion ?? '' }),
-  })
-
-export const analyzeGame = (
-  id: string,
-  speed: 'quick' | 'full' = 'full',
-  fen?: string,
-): Promise<Analysis> => {
-  const query = new URLSearchParams()
-  if (speed === 'quick') query.set('speed', 'quick')
-  if (fen) query.set('fen', fen)
-  const suffix = query.size > 0 ? `?${query.toString()}` : ''
-  return request(`/api/games/${id}/analysis${suffix}`)
-}
-
-export async function lookupAnalysis(id: string, fen: string, signal?: AbortSignal, lines = 3): Promise<Analysis | null> {
-  const res = await apiFetch(`${API}/api/games/${id}/analysis?source=lookup&lines=${lines}&fen=${encodeURIComponent(fen)}`, {
-    headers: authHeader(),
-    signal,
-  })
-  if (res.status === 401) clearToken()
-  if (res.status === 204) return null
-  if (!res.ok) throw new ApiError((await res.text()) || res.statusText, res.status)
-  return res.json() as Promise<Analysis>
-}
-
 export interface FenEval {
   score: number
   mate: number
@@ -197,17 +142,6 @@ export interface FenEval {
 }
 
 
-
-export const evalFen = (fen: string): Promise<FenEval> =>
-  request(`/api/eval?fen=${encodeURIComponent(fen)}`)
-
-export async function evalFenLookup(fen: string): Promise<FenEval | null> {
-  const res = await apiFetch(`${API}/api/eval?source=lookup&fen=${encodeURIComponent(fen)}`, { headers: authHeader() })
-  if (res.status === 401) clearToken()
-  if (res.status === 204) return null
-  if (!res.ok) throw new ApiError((await res.text()) || res.statusText, res.status)
-  return res.json() as Promise<FenEval>
-}
 
 export interface PositionEvalMove {
   rank: number
@@ -229,117 +163,19 @@ export const getPositionEvals = (fens: string[]): Promise<Record<string, Positio
   return request(`/api/position-evals?fens=${encodeURIComponent(fens.join(','))}`)
 }
 
-export const getExplorer = (id: string, fen?: string): Promise<Explorer> =>
-  request(`/api/games/${id}/explorer${fen ? `?fen=${encodeURIComponent(fen)}` : ''}`)
+let lichessTokenPromise: Promise<string | null> | null = null
 
-export const gotoNode = (id: string, nodeId: string): Promise<GameState> =>
-  request(`/api/games/${id}/goto`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nodeId }),
-  })
-
-export const deleteGameNode = (id: string, nodeId: string): Promise<GameState> =>
-  request(`/api/games/${id}/nodes/${nodeId}`, { method: 'DELETE' })
-
-export interface LoadPGNResponse extends GameState {
-  appliedPlies: number
-  totalTokens: number
-  error?: string
-}
-
-
-
-
-export const loadPGN = async (id: string, pgn: string): Promise<LoadPGNResponse> => {
-  const res = await apiFetch(`${API}/api/games/${id}/pgn`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeader() },
-    body: JSON.stringify({ pgn }),
-  })
-  if (res.status === 401) clearToken()
-  if (!res.ok && res.status !== 422) {
-    const text = await res.text()
-    throw new Error(text || res.statusText)
+export function getLichessToken(): Promise<string | null> {
+  if (!lichessTokenPromise) {
+    lichessTokenPromise = request<{ token: string }>('/api/lichess-token')
+      .then((r) => r.token || null)
+      .catch(() => {
+        lichessTokenPromise = null
+        return null
+      })
   }
-  return res.json() as Promise<LoadPGNResponse>
+  return lichessTokenPromise
 }
-
-
-
-export interface ExplainMoveRequest {
-  fen: string
-  prevFen: string
-  lastMoveSan: string
-  viewerColor?: 'w' | 'b'
-  analysis: Analysis | null
-  explorer: Explorer | null
-}
-
-export interface ExplainMoveResponse {
-  explanation: string
-}
-
-export interface ChatTurn {
-  role: 'user' | 'assistant'
-  content: string
-}
-
-export interface CoachChatResponse {
-  reply: string
-}
-
-
-
-
-export class CoachUnavailableError extends Error {}
-
-
-
-
-const COACH_TIMEOUT_MS = 120_000
-
-async function coachRequest<T>(path: string, body: unknown): Promise<T> {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), COACH_TIMEOUT_MS)
-  let res: Response
-  try {
-    res = await apiFetch(`${API}${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeader() },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    })
-  } catch (err) {
-    if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new Error('Coach timed out — the local model took too long to respond.')
-    }
-    throw err
-  } finally {
-    clearTimeout(timer)
-  }
-  if (res.status === 401) clearToken()
-  if (!res.ok) {
-    const text = (await res.text()).trim()
-    if (res.status === 503) throw new CoachUnavailableError(text || 'coach not configured')
-    throw new Error(text || res.statusText)
-  }
-  return res.json() as Promise<T>
-}
-
-export const explainMove = (
-  id: string,
-  req: ExplainMoveRequest,
-): Promise<ExplainMoveResponse> => coachRequest(`/api/games/${id}/coach/explain`, req)
-
-export const coachChat = (
-  id: string,
-  message: string,
-  history: ChatTurn[],
-): Promise<CoachChatResponse> =>
-  coachRequest(`/api/games/${id}/coach/chat`, { message, history })
-
-
 
 export interface CachedReadOptions<T> {
   fresh?: boolean

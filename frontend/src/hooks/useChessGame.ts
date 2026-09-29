@@ -1,21 +1,11 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
-import {
-  createGame,
-  getGame,
-  makeMove,
-  getExplorer,
-  gotoNode as apiGotoNode,
-  loadPGN,
-} from '@/lib/api/client'
 import type { GameState, Explorer } from '@/lib/api/client'
 import type { BoardState, Square } from '@/lib/chess/types'
 import { flatten, mainlineEnd, childrenOf } from '@/lib/chess/moveTree'
-import { fenAfterMove } from '@/lib/chess/optimisticFen'
-
-
-
+import { LocalGame } from '@/lib/chess/localGame'
+import { cachedExplorer, fetchExplorer } from '@/lib/lichess/explorer'
 
 function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
   const pieces: BoardState['pieces'] = {}
@@ -49,87 +39,65 @@ function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState 
   }
 }
 
-
-
-
-
-export function useChessGame(initialGameId?: string) {
-  const [gs, setGs] = useState<GameState | null>(null)
+export function useChessGame() {
+  const [game] = useState(() => new LocalGame())
+  const [gs, setGs] = useState<GameState>(() => game.snapshot())
   const [selected, setSelected] = useState<Square | null>(null)
-  const [busy, setBusy] = useState(false)
   const [explorer, setExplorer] = useState<Explorer | null>(null)
   const [explorerLoading, setExplorerLoading] = useState(false)
   const [openingByFen, setOpeningByFen] = useState<Record<string, { name: string; eco?: string }>>({})
   const [flipped, setFlipped] = useState(false)
-  const [optimisticFen, setOptimisticFen] = useState<string | null>(null)
   const moveSound = useRef<HTMLAudioElement | null>(null)
-  const gameActionReqId = useRef(0)
   const explorerReqId = useRef(0)
 
-  const runExplorer = useCallback(async (gameId: string, fen?: string): Promise<Explorer | null> => {
+  const runExplorer = useCallback(async (fen: string): Promise<void> => {
     const reqId = ++explorerReqId.current
+    const apply = (e: Explorer) => {
+      setExplorer(e)
+      if (e.openingName) {
+        const opening = { name: e.openingName, eco: e.openingEco }
+        setOpeningByFen((prev) => ({ ...prev, [fen]: opening }))
+      }
+    }
+    const hit = cachedExplorer(fen)
+    if (hit) {
+      apply(hit)
+      setExplorerLoading(false)
+      return
+    }
     setExplorerLoading(true)
     try {
-      const e = await getExplorer(gameId, fen)
-      if (reqId === explorerReqId.current) {
-        setExplorer(e)
-        if (e?.openingName && fen) {
-          const opening = { name: e.openingName, eco: e.openingEco }
-          setOpeningByFen((prev) => ({ ...prev, [fen]: opening }))
-        }
-      }
-      return e
+      const e = await fetchExplorer(fen)
+      if (reqId === explorerReqId.current) apply(e)
     } catch {
-
-      return null
     } finally {
       if (reqId === explorerReqId.current) setExplorerLoading(false)
     }
   }, [])
 
-
-
-
-
-
-
-
-  const refreshInsights = useCallback(
-    async (gameId: string, fen?: string) => {
-      await runExplorer(gameId, fen)
-    },
-    [runExplorer],
-  )
-
   useEffect(() => {
-    let cancelled = false
-    const reqId = ++gameActionReqId.current
     moveSound.current = new Audio('/sounds/move.mp3')
-    const load = initialGameId ? getGame(initialGameId) : createGame()
-    load.then((g) => {
-      if (cancelled || reqId !== gameActionReqId.current) return
-      setGs(g)
-      refreshInsights(g.id, g.fen)
-    }).catch(console.error)
-    return () => {
-      cancelled = true
-    }
-  }, [initialGameId, refreshInsights])
+    void Promise.resolve().then(() => runExplorer(game.currentFen))
+  }, [game, runExplorer])
 
-
-
-
-
-
+  const commit = useCallback(
+    (sound = true) => {
+      const next = game.snapshot()
+      setGs(next)
+      setSelected(null)
+      if (sound) moveSound.current?.play().catch(() => {})
+      runExplorer(next.fen)
+    },
+    [game, runExplorer],
+  )
 
   const toggleFlipped = useCallback(() => {
     setFlipped((f) => !f)
   }, [])
 
-  const boardState: BoardState | null = gs ? toBoardState(gs, selected) : null
+  const boardState: BoardState = toBoardState(gs, selected)
 
   const lastOpening = useMemo(() => {
-    if (!gs) return null
     const flat = flatten(gs.moveTree)
     for (let entry = flat.get(gs.currentNodeId); entry; entry = entry.parentId ? flat.get(entry.parentId) : undefined) {
       const opening = openingByFen[entry.node.fen]
@@ -138,193 +106,79 @@ export function useChessGame(initialGameId?: string) {
     return null
   }, [gs, openingByFen])
 
-  const selectSquare = useCallback(
-    async (square: Square) => {
-      if (!gs || busy) return
+  const move = useCallback(
+    (from: Square, to: Square, promotion?: string) => {
+      if (game.applyMove(from, to, promotion)) commit()
+      else setSelected(null)
+    },
+    [game, commit],
+  )
 
+  const selectSquare = useCallback(
+    (square: Square) => {
       if (selected === square) {
         setSelected(null)
         return
       }
-
-      if (selected) {
-        const isLegal = gs.legalMoves.some((m) => m.from === selected && m.to === square)
-        if (isLegal) {
-          setBusy(true)
-          const reqId = ++gameActionReqId.current
-          try {
-            const piece = gs.pieces[selected]
-            const isPromo =
-              piece?.type === 'p' &&
-              ((piece.color === 'w' && square[1] === '8') ||
-                (piece.color === 'b' && square[1] === '1'))
-            const promo = isPromo ? 'q' : undefined
-            const predicted = fenAfterMove(gs.fen, selected, square, promo)
-            if (predicted) {
-              setOptimisticFen(predicted)
-              moveSound.current?.play().catch(() => {})
-            }
-            const next = await makeMove(gs.id, selected, square, promo)
-            if (reqId !== gameActionReqId.current) return
-            setGs(next)
-            setSelected(null)
-            if (!predicted) moveSound.current?.play().catch(() => {})
-            refreshInsights(next.id, next.fen)
-          } catch {
-            if (reqId === gameActionReqId.current) setSelected(null)
-          } finally {
-            if (reqId === gameActionReqId.current) {
-              setBusy(false)
-              setOptimisticFen(null)
-            }
-          }
-          return
-        }
+      if (selected && gs.legalMoves.some((m) => m.from === selected && m.to === square)) {
+        move(selected, square)
+        return
       }
-
       const piece = gs.pieces[square]
-      if (piece && piece.color === gs.turn) {
-        setSelected(square)
-      } else {
-        setSelected(null)
-      }
+      setSelected(piece && piece.color === gs.turn ? square : null)
     },
-    [gs, selected, busy, refreshInsights],
-  )
-
-  const move = useCallback(
-    async (from: Square, to: Square, promotion?: string) => {
-      if (!gs || busy) return
-      setBusy(true)
-      const reqId = ++gameActionReqId.current
-      try {
-        const piece = gs.pieces[from]
-        const isPromo =
-          piece?.type === 'p' &&
-          ((piece.color === 'w' && to[1] === '8') || (piece.color === 'b' && to[1] === '1'))
-        const promo = promotion ?? (isPromo ? 'q' : undefined)
-        const predicted = fenAfterMove(gs.fen, from, to, promo)
-        if (predicted) {
-          setOptimisticFen(predicted)
-          moveSound.current?.play().catch(() => {})
-        }
-        const next = await makeMove(gs.id, from, to, promo)
-        if (reqId !== gameActionReqId.current) return
-        setGs(next)
-        setSelected(null)
-        if (!predicted) moveSound.current?.play().catch(() => {})
-        refreshInsights(next.id, next.fen)
-      } catch {
-        if (reqId === gameActionReqId.current) setSelected(null)
-      } finally {
-        if (reqId === gameActionReqId.current) {
-          setBusy(false)
-          setOptimisticFen(null)
-        }
-      }
-    },
-    [gs, busy, refreshInsights],
+    [gs, selected, move],
   )
 
   const legalMovesFor = useCallback(
-    (square: Square): string[] => {
-      if (!gs) return []
-      return gs.legalMoves.filter((m) => m.from === square).map((m) => m.to)
-    },
+    (square: Square): string[] => gs.legalMoves.filter((m) => m.from === square).map((m) => m.to),
     [gs],
   )
 
-
-
   const gotoNodeId = useCallback(
-    async (nodeId: string) => {
-      if (!gs || busy || nodeId === gs.currentNodeId) return
-      setBusy(true)
-      const reqId = ++gameActionReqId.current
-      try {
-        const next = await apiGotoNode(gs.id, nodeId)
-        if (reqId !== gameActionReqId.current) return
-        setGs(next)
-        setSelected(null)
-        moveSound.current?.play().catch(() => {})
-        refreshInsights(next.id, next.fen)
-      } catch {
-
-      } finally {
-        if (reqId === gameActionReqId.current) setBusy(false)
-      }
+    (nodeId: string) => {
+      if (nodeId === gs.currentNodeId) return
+      if (game.gotoNode(nodeId)) commit()
     },
-    [gs, busy, refreshInsights],
+    [game, gs.currentNodeId, commit],
   )
 
   const navPrev = useCallback(() => {
-    if (!gs) return
     const parentId = flatten(gs.moveTree).get(gs.currentNodeId)?.parentId
     if (parentId != null) gotoNodeId(parentId)
   }, [gs, gotoNodeId])
 
   const navNext = useCallback(() => {
-    if (!gs) return
     const cur = flatten(gs.moveTree).get(gs.currentNodeId)?.node
     const child = cur ? childrenOf(cur)[0] : undefined
     if (child) gotoNodeId(child.id)
   }, [gs, gotoNodeId])
 
   const navStart = useCallback(() => {
-    if (!gs) return
     gotoNodeId(gs.moveTree.id)
   }, [gs, gotoNodeId])
 
   const navEnd = useCallback(() => {
-    if (!gs) return
     const cur = flatten(gs.moveTree).get(gs.currentNodeId)?.node
     if (cur) gotoNodeId(mainlineEnd(cur).id)
   }, [gs, gotoNodeId])
 
-  const reset = useCallback(async () => {
-    const reqId = ++gameActionReqId.current
-    setBusy(true)
-    try {
-      const next = await createGame()
-      if (reqId !== gameActionReqId.current) return
-      setGs(next)
-      setSelected(null)
-      setExplorer(null)
-      refreshInsights(next.id, next.fen)
-    } finally {
-      if (reqId === gameActionReqId.current) setBusy(false)
-    }
-  }, [refreshInsights])
-
-
-
+  const reset = useCallback(() => {
+    game.resetTo()
+    setExplorer(null)
+    commit(false)
+  }, [game, commit])
 
   const loadPgn = useCallback(
     async (pgn: string) => {
-      if (!gs || busy) return
-      setBusy(true)
-      const reqId = ++gameActionReqId.current
-      try {
-        const next = await loadPGN(gs.id, pgn)
-        if (reqId !== gameActionReqId.current) return
-          setGs(next)
-        setSelected(null)
-          moveSound.current?.play().catch(() => {})
-        refreshInsights(next.id, next.fen)
-        if (next.error) {
-          throw new Error(
-            `Loaded ${next.appliedPlies}/${next.totalTokens} moves — ${next.error}`,
-          )
-        }
-      } finally {
-        if (reqId === gameActionReqId.current) setBusy(false)
+      const result = game.loadPgn(pgn)
+      commit()
+      if (result.error) {
+        throw new Error(`Loaded ${result.appliedPlies}/${result.totalTokens} moves — ${result.error}`)
       }
     },
-    [gs, busy, refreshInsights],
+    [game, commit],
   )
-
-
-
 
   return {
     boardState,
@@ -338,9 +192,6 @@ export function useChessGame(initialGameId?: string) {
     navEnd,
     reset,
     loadPgn,
-    busy,
-    optimisticFen,
-    gameId: gs?.id ?? null,
     explorer,
     explorerLoading,
     lastOpening,

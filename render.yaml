@@ -18,12 +18,6 @@
 # the URLs above, per the note just above. Re-applying this blueprint from
 # scratch would need the same manual fixup again.
 #
-# The AI coach (Ollama-backed /coach/explain, /coach/chat) is intentionally
-# NOT deployed here — no local LLM runs on Render. Those two endpoints will
-# return 503 in production, same as when Stockfish is unavailable; the rest
-# of the app is unaffected. Wire OLLAMA_BASE_URL below only if you're pointing
-# at an LLM server you host elsewhere.
-#
 # The whole site sits behind one login (see internal/auth's package doc) and
 # trainer progress/analytics are backed by Postgres (see internal/db) — all
 # five secrets below (LICHESS_TOKEN, AUTH_PASSWORD, JWT_SECRET, DATABASE_URL,
@@ -52,8 +46,6 @@ services:
         value: https://chesslab-frontend.onrender.com
       - key: LICHESS_TOKEN
         sync: false # set manually in the dashboard — free token, see backend/.env.example
-      - key: OLLAMA_BASE_URL
-        value: "" # left empty on purpose — see note above
       - key: AUTH_USERNAME
         sync: false
       - key: AUTH_PASSWORD
