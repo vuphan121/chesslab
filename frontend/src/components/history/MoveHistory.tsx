@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { MoveNode } from '@/lib/chess/types'
-import { childrenOf } from '@/lib/chess/moveTree'
+import { activeLine } from '@/lib/chess/moveTree'
 import { evalFen, evalFenLookup, type FenEval } from '@/lib/api/client'
 import { MoveEvaluator } from '@/lib/engine/moveEval'
 import { toFigurine } from '@/lib/chess/figurine'
@@ -39,7 +39,6 @@ function formatMoveEval(e: FenEval): string {
 
 interface Props {
   openingName: string
-  openingEco?: string
   moveTree: MoveNode
   currentNodeId: string
   onGotoNode: (id: string) => void
@@ -52,7 +51,6 @@ interface Props {
 
 export default function MoveHistory({
   openingName,
-  openingEco,
   moveTree,
   currentNodeId,
   onGotoNode,
@@ -109,14 +107,7 @@ export default function MoveHistory({
   }, [])
 
   useEffect(() => {
-    const fens: string[] = []
-    let n: MoveNode | undefined = moveTree
-    while (n) {
-      const kids = childrenOf(n)
-      if (kids.length === 0) break
-      n = kids[0]
-      if (n) fens.push(n.fen)
-    }
+    const fens = activeLine(moveTree, currentNodeId).map((n) => n.fen)
     const missing = fens.filter((f) => !(f in evalsRef.current) && !attemptedRef.current.has(f))
     if (missing.length === 0) return
 
@@ -148,53 +139,7 @@ export default function MoveHistory({
       cancelled = true
       evaluatorRef.current?.cancel()
     }
-  }, [moveTree, engineEnabled])
-
-
-
-  const renderMove = (node: MoveNode, showNumber: boolean, variation: boolean): ReactNode => {
-    const isWhite = node.ply % 2 === 1
-    const moveNum = Math.ceil(node.ply / 2)
-    const isCurrent = node.id === currentNodeId
-    const numLabel = isWhite ? `${moveNum}.` : showNumber ? `${moveNum}…` : null
-
-    return (
-      <span key={node.id} style={{ whiteSpace: 'nowrap' }}>
-        {numLabel && (
-          <span
-            className="mono"
-            style={{ color: '#c0bdb4', fontSize: variation ? 11 : 12, marginRight: 1 }}
-          >
-            {numLabel}
-          </span>
-        )}
-        <span
-          ref={isCurrent ? currentRef : undefined}
-          className="mono"
-          onClick={() => onGotoNode(node.id)}
-          style={{
-            fontSize: variation ? 13 : 15,
-            fontWeight: isCurrent ? 700 : variation ? 400 : 500,
-            color: isCurrent ? '#1c1b18' : variation ? '#7a776f' : '#37352f',
-            background: isCurrent ? '#d4eef9' : 'transparent',
-            padding: '1px 5px',
-            borderRadius: 5,
-            cursor: 'pointer',
-            transition: 'background 0.1s',
-          }}
-          onMouseEnter={(e) => {
-            if (!isCurrent) (e.currentTarget as HTMLElement).style.background = '#f4f3ee'
-          }}
-          onMouseLeave={(e) => {
-            if (!isCurrent) (e.currentTarget as HTMLElement).style.background = 'transparent'
-          }}
-        >
-          {node.san}
-        </span>{' '}
-      </span>
-    )
-  }
-
+  }, [moveTree, currentNodeId, engineEnabled])
 
 
 
@@ -212,8 +157,8 @@ export default function MoveHistory({
           alignItems: 'baseline',
           justifyContent: 'space-between',
           gap: 6,
-          padding: '2px 8px',
-          borderRadius: 5,
+          padding: '6px 8px',
+          borderRadius: 6,
           cursor: 'pointer',
           background: isCurrent ? '#4a90d9' : 'transparent',
           transition: 'background 0.1s',
@@ -228,8 +173,8 @@ export default function MoveHistory({
         <span
           className="mono"
           style={{
-            fontSize: 15,
-            fontWeight: isCurrent ? 700 : 500,
+            fontSize: 14,
+            fontWeight: isCurrent ? 700 : 400,
             color: isCurrent ? '#fff' : '#37352f',
           }}
         >
@@ -254,23 +199,32 @@ export default function MoveHistory({
 
   const renderRows = (): ReactNode[] => {
     const rows: ReactNode[] = []
-    let node = moveTree
     let pending: { num: number; white: MoveNode | null; black: MoveNode | null } | null = null
 
     const flush = () => {
       if (!pending) return
       const { num, white, black } = pending
       rows.push(
-        <div key={`row-${(white ?? black)!.id}`} style={{ display: 'flex', alignItems: 'stretch', gap: 4 }}>
+        <div
+          key={`row-${(white ?? black)!.id}`}
+          style={{
+            display: 'flex',
+            alignItems: 'stretch',
+            gap: 4,
+            padding: '0 6px',
+            background: rows.length % 2 === 0 ? '#fbfaf7' : 'transparent',
+          }}
+        >
           <span
             className="mono"
             style={{
-              width: 26,
+              width: 34,
               flexShrink: 0,
-              color: '#c0bdb4',
-              fontSize: 12,
+              color: '#b4b1a8',
+              fontSize: 11,
               textAlign: 'right',
               alignSelf: 'center',
+              paddingRight: 8,
             }}
           >
             {white ? `${num}.` : `${num}…`}
@@ -282,90 +236,25 @@ export default function MoveHistory({
       pending = null
     }
 
-    while (true) {
-      const kids = childrenOf(node)
-      if (kids.length === 0) break
-      const main = kids[0]
-      const isWhite = main.ply % 2 === 1
-      const num = Math.ceil(main.ply / 2)
-
-      if (isWhite) {
+    for (const move of line) {
+      const num = Math.ceil(move.ply / 2)
+      if (move.ply % 2 === 1) {
         flush()
-        pending = { num, white: main, black: null }
+        pending = { num, white: move, black: null }
       } else if (pending && pending.white) {
-        pending.black = main
+        pending.black = move
       } else {
         flush()
-        pending = { num, white: null, black: main }
+        pending = { num, white: null, black: move }
       }
-
-      const sidelines = kids.slice(1)
-      if (sidelines.length > 0) {
-        flush()
-        for (const v of sidelines) {
-          rows.push(
-            <div
-              key={`var-${v.id}`}
-              style={{
-                paddingLeft: 34,
-                color: '#7a776f',
-                fontSize: 13,
-                lineHeight: 1.5,
-              }}
-            >
-              {'( '}
-              {renderMove(v, true, true)}
-              {renderContinuation(v, false, true)}
-              {') '}
-            </div>,
-          )
-        }
-      }
-
-      node = main
     }
     flush()
     return rows
   }
 
+  const line = activeLine(moveTree, currentNodeId)
 
-
-  const renderContinuation = (
-    posNode: MoveNode,
-    forceNumberFirst: boolean,
-    variation: boolean,
-  ): ReactNode[] => {
-    const out: ReactNode[] = []
-    let node = posNode
-    let forceNumber = forceNumberFirst
-    while (true) {
-      const kids = childrenOf(node)
-      if (kids.length === 0) break
-      const main = kids[0]
-      out.push(renderMove(main, forceNumber, variation))
-
-      const sidelines = kids.slice(1)
-      for (const v of sidelines) {
-        out.push(
-          <span
-            key={`var-${v.id}`}
-            style={{ color: '#7a776f', display: 'inline' }}
-          >
-            {'( '}
-            {renderMove(v, true, true)}
-            {renderContinuation(v, false, true)}
-            {') '}
-          </span>,
-        )
-      }
-
-      forceNumber = sidelines.length > 0
-      node = main
-    }
-    return out
-  }
-
-  const hasMoves = childrenOf(moveTree).length > 0
+  const hasMoves = line.length > 0
 
   return (
     <div
@@ -384,7 +273,7 @@ export default function MoveHistory({
       <div
         style={{
           flexShrink: 0,
-          display: 'flex',
+          display: openingName ? 'flex' : 'none',
           alignItems: 'baseline',
           gap: 8,
           padding: '14px 16px 12px',
@@ -397,22 +286,6 @@ export default function MoveHistory({
         >
           {openingName}
         </span>
-        {openingEco && (
-          <span
-            className="mono"
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: '#2f6db0',
-              background: '#ecf3fb',
-              padding: '2px 7px',
-              borderRadius: 5,
-              flexShrink: 0,
-            }}
-          >
-            {openingEco}
-          </span>
-        )}
       </div>
 
       {}
@@ -436,17 +309,13 @@ export default function MoveHistory({
         style={{
           flex: 1,
           minHeight: 0,
-          padding: '10px 16px 12px',
+          padding: '6px 0',
           overflow: 'auto',
           lineHeight: 1.6,
           fontSize: 15,
         }}
       >
-        {hasMoves ? (
-          <Fragment>{renderRows()}</Fragment>
-        ) : (
-          <span style={{ fontSize: 12, color: '#bbb' }}>No moves yet</span>
-        )}
+        {hasMoves && <Fragment>{renderRows()}</Fragment>}
       </div>
 
       {}

@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import type { ExplorerMove } from '@/lib/api/client'
 
 function formatGames(n: number): string {
@@ -11,8 +10,8 @@ function formatGames(n: number): string {
 
 interface Props {
   moves: ExplorerMove[]
-  totalGames: number
   loading: boolean
+  height?: number
   onPlay: (uci: string) => void
 }
 
@@ -63,24 +62,6 @@ function TreeRow({ m, isTop, onPlay }: { m: ExplorerMove; isTop: boolean; onPlay
             {m.sharePct.toFixed(0)}%
           </span>
         </div>
-        <div
-          style={{
-            height: 8,
-            borderRadius: 4,
-            background: '#eaf2f7',
-            overflow: 'hidden',
-            marginBottom: 5,
-          }}
-        >
-          <div
-            style={{
-              height: '100%',
-              width: `${m.sharePct}%`,
-              background: isTop ? '#4a90d9' : '#7ecae8',
-              borderRadius: 4,
-            }}
-          />
-        </div>
         <div style={{ display: 'flex', height: 5, borderRadius: 3, overflow: 'hidden', gap: 1 }}>
           <div style={{ width: `${m.whitePct}%`, background: '#e6e6e1' }} />
           <div style={{ width: `${m.drawPct}%`, background: '#b9b9b5' }} />
@@ -91,15 +72,12 @@ function TreeRow({ m, isTop, onPlay }: { m: ExplorerMove; isTop: boolean; onPlay
   )
 }
 
-export default function OpeningTree({ moves, totalGames, loading, onPlay }: Props) {
-  const [expanded, setExpanded] = useState(false)
-  const shown = expanded ? moves : moves.slice(0, 6)
-
+export default function OpeningTree({ moves, loading, onPlay, height = 260 }: Props) {
   return (
     <div
       style={{
         width: '100%',
-        height: 260,
+        height,
         flexShrink: 0,
         background: '#fff',
         borderRadius: 11,
@@ -110,17 +88,9 @@ export default function OpeningTree({ moves, totalGames, loading, onPlay }: Prop
       }}
     >
       <div style={{ padding: '17px 20px 14px', borderBottom: '1px solid #efeee9' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span className="lbl" style={{ color: '#b4b1a8' }}>
-            Opening Tree
-          </span>
-          <span className="mono" style={{ fontSize: 11, color: '#b4b1a8' }}>
-            {formatGames(totalGames)} games
-          </span>
-        </div>
-        <div style={{ fontSize: 13, color: '#a3a099', marginTop: 4 }}>
-          Lichess database · 2000+ rated
-        </div>
+        <span className="lbl" style={{ color: '#b4b1a8' }}>
+          Opening Tree
+        </span>
       </div>
 
       <div
@@ -151,38 +121,14 @@ export default function OpeningTree({ moves, totalGames, loading, onPlay }: Prop
       </div>
 
       <div style={{ flex: 1, overflow: 'auto' }}>
-        {shown.length === 0 && (
+        {moves.length === 0 && (
           <div style={{ padding: '16px 20px', fontSize: 12, color: '#bbb' }}>
             {loading ? 'Loading…' : 'No database moves for this position'}
           </div>
         )}
-        {shown.map((m, i) => (
+        {moves.map((m, i) => (
           <TreeRow key={m.uci} m={m} isTop={i === 0} onPlay={() => onPlay(m.uci)} />
         ))}
-      </div>
-
-      <div
-        style={{
-          marginTop: 'auto',
-          padding: '13px 20px',
-          borderTop: '1px solid #f2f1ec',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <span style={{ fontSize: 12, color: '#a3a099' }}>
-          {expanded ? `${moves.length} of ${moves.length}` : `Top ${shown.length} of ${moves.length}`}{' '}
-          continuations
-        </span>
-        {moves.length > 6 && (
-          <span
-            onClick={() => setExpanded((v) => !v)}
-            style={{ fontSize: 12, fontWeight: 600, color: '#2f6db0', cursor: 'pointer' }}
-          >
-            {expanded ? 'Show less' : 'Show all'}
-          </span>
-        )}
       </div>
     </div>
   )
