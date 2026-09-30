@@ -173,17 +173,7 @@ CREATE TABLE IF NOT EXISTS position_evals (
     computed_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS saved_puzzles (
-    id BIGSERIAL PRIMARY KEY,
-    username TEXT NOT NULL CONSTRAINT saved_puzzles_user_fk
-        REFERENCES users (username) ON DELETE CASCADE,
-    url TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE (username, url)
-);
-
-CREATE INDEX IF NOT EXISTS saved_puzzles_username_created_at_idx
-    ON saved_puzzles (username, created_at DESC);
+DROP TABLE IF EXISTS saved_puzzles;
 
 -- Observability for the eval-precompute cron endpoint (POST /api/cron/precompute-evals).
 -- One row per background run.
@@ -256,3 +246,49 @@ CREATE TABLE IF NOT EXISTS puzzle_sync_state (
     synced_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     attempts_added INT NOT NULL DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS puzzles (
+    id TEXT PRIMARY KEY,
+    fen TEXT NOT NULL,
+    moves TEXT NOT NULL,
+    rating INT NOT NULL,
+    popularity INT NOT NULL DEFAULT 0,
+    nb_plays INT NOT NULL DEFAULT 0,
+    themes TEXT[] NOT NULL DEFAULT '{}'
+);
+
+CREATE INDEX IF NOT EXISTS puzzles_themes_idx ON puzzles USING GIN (themes);
+
+CREATE INDEX IF NOT EXISTS puzzles_rating_idx ON puzzles (rating);
+
+CREATE TABLE IF NOT EXISTS puzzle_theme_ratings (
+    username TEXT NOT NULL CONSTRAINT puzzle_theme_ratings_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    theme TEXT NOT NULL,
+    rating DOUBLE PRECISION NOT NULL DEFAULT 2000,
+    attempts INT NOT NULL DEFAULT 0,
+    wins INT NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (username, theme)
+);
+
+CREATE TABLE IF NOT EXISTS puzzle_plays (
+    id BIGSERIAL PRIMARY KEY,
+    username TEXT NOT NULL CONSTRAINT puzzle_plays_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    operation_id TEXT NOT NULL,
+    puzzle_id TEXT NOT NULL,
+    theme TEXT NOT NULL,
+    solved BOOLEAN NOT NULL,
+    puzzle_rating INT NOT NULL,
+    rating_before DOUBLE PRECISION NOT NULL,
+    rating_after DOUBLE PRECISION NOT NULL,
+    played_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (username, operation_id)
+);
+
+CREATE INDEX IF NOT EXISTS puzzle_plays_user_puzzle_idx
+    ON puzzle_plays (username, puzzle_id);
+
+CREATE INDEX IF NOT EXISTS puzzle_plays_user_played_idx
+    ON puzzle_plays (username, played_at DESC);

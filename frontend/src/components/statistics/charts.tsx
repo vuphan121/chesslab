@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { StatisticsResponse, StatsTheme } from '@/lib/api/client'
+import { prettyTheme } from '@/lib/puzzle/themes'
 
 export const CARD_STYLE = { background: '#fbfaf7', border: '1px solid #eae8e2', borderRadius: 10, padding: '12px 14px' } as const
 
@@ -122,11 +123,6 @@ export function RatingChart({ stats }: { stats: StatisticsResponse }) {
       <text x={padX} y={chartH - 2} fontSize={10} fill="#a3a099" style={{ display: 'none' }}>{Math.round(lo)}</text>
     </svg>
   )
-}
-
-export function prettyTheme(key: string): string {
-  const words = key.replace(/([a-z])([A-Z0-9])/g, '$1 $2').toLowerCase()
-  return words.charAt(0).toUpperCase() + words.slice(1)
 }
 
 export function ThemeBars({ themes }: { themes: StatsTheme[] }) {

@@ -169,6 +169,9 @@ export default function Board({
   useLayoutEffect(() => {
     rightDownSquare.current = null
     dragMovedRef.current = false
+  }, [boardState.fen])
+
+  useLayoutEffect(() => {
     dispatchPosition({ type: 'sync', boardState, animate: animateLastMove })
   }, [animateLastMove, boardState])
 

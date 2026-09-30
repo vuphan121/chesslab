@@ -586,30 +586,65 @@ export const saveTodayTraining = async (settings: TodayTrainingSettings): Promis
   return saved
 }
 
-export interface SavedPuzzle {
-  id: number
-  url: string
-  createdAt: string
+export interface PuzzleTheme {
+  key: string
+  category: string
+  rating: number
+  attempts: number
+  wins: number
+  available: number
+  played: boolean
 }
 
-export const listSavedPuzzles = (): Promise<{ puzzles: SavedPuzzle[] }> =>
-  request('/api/saved-puzzles')
+export interface PuzzleThemesResponse {
+  startRating: number
+  themes: PuzzleTheme[]
+}
 
-export const savePuzzle = (url: string): Promise<SavedPuzzle> =>
-  request('/api/saved-puzzles', {
+export interface PuzzleJSON {
+  id: string
+  fen: string
+  moves: string
+  rating: number
+  themes: string[]
+  theme: string
+  themeRating: number
+  mixed: boolean
+}
+
+export interface PuzzleResult {
+  theme: string
+  ratingBefore: number
+  ratingAfter: number
+  delta: number
+  attempts: number
+  wins: number
+  puzzleRating: number
+}
+
+export const getPuzzleThemes = (): Promise<PuzzleThemesResponse> => request('/api/puzzles/themes')
+
+export const nextPuzzles = (
+  theme: string | null,
+  opts: { count: number; exclude: string[]; avoidTheme?: string },
+): Promise<PuzzleJSON[]> =>
+  request<{ puzzles: PuzzleJSON[] }>('/api/puzzles/next', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url }),
-  })
+    body: JSON.stringify({ theme: theme ?? '', avoidTheme: opts.avoidTheme ?? '', count: opts.count, exclude: opts.exclude }),
+  }).then((r) => r.puzzles)
 
-export const deleteSavedPuzzle = async (id: number): Promise<void> => {
-  const res = await apiFetch(`${API}/api/saved-puzzles/${id}`, {
-    method: 'DELETE',
-    headers: authHeader(),
+export const submitPuzzleResult = (payload: {
+  operationId: string
+  puzzleId: string
+  theme: string
+  solved: boolean
+}): Promise<PuzzleResult> =>
+  request('/api/puzzles/result', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
   })
-  if (res.status === 401) clearToken()
-  if (!res.ok) throw new Error((await res.text()) || res.statusText)
-}
 
 export const advanceTodayTraining = (
   repertoireId: string,

@@ -22,23 +22,24 @@ function ago(iso?: string): string {
 }
 
 export default function StatisticsPage() {
-  const [days, setDays] = useState<number>(30)
+  const [days, setDays] = useState<number>(() => {
+    try {
+      const saved = Number(localStorage.getItem(RANGE_KEY))
+      if ((RANGES as readonly number[]).includes(saved)) return saved
+    } catch {}
+    return 30
+  })
   const [stats, setStats] = useState<StatisticsResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [syncError, setSyncError] = useState<string | null>(null)
 
-  useEffect(() => {
-    try {
-      const saved = Number(localStorage.getItem(RANGE_KEY))
-      if ((RANGES as readonly number[]).includes(saved)) setDays(saved)
-    } catch {}
-  }, [])
-
   const load = useCallback((range: number) => {
-    setError(null)
     getStatistics(range)
-      .then(setStats)
+      .then((r) => {
+        setError(null)
+        setStats(r)
+      })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Could not load statistics.'))
   }, [])
 

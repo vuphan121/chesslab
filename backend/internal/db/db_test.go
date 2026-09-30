@@ -16,7 +16,6 @@ func TestRelationshipMigrationsMatchSchema(t *testing.T) {
 		"today_training_settings_user_fk":   "today_training_settings",
 		"today_training_queue_settings_fk":  "today_training_queue",
 		"today_training_operations_user_fk": "today_training_operations",
-		"saved_puzzles_user_fk":             "saved_puzzles",
 	}
 
 	if len(relationshipMigrations) != len(want) {

@@ -76,7 +76,6 @@ var relationshipMigrations = []foreignKeyMigration{
 	{"today_training_settings", "today_training_settings_user_fk", "FOREIGN KEY (username) REFERENCES users (username) ON DELETE CASCADE NOT VALID"},
 	{"today_training_queue", "today_training_queue_settings_fk", "FOREIGN KEY (username) REFERENCES today_training_settings (username) ON DELETE CASCADE NOT VALID"},
 	{"today_training_operations", "today_training_operations_user_fk", "FOREIGN KEY (username) REFERENCES users (username) ON DELETE CASCADE NOT VALID"},
-	{"saved_puzzles", "saved_puzzles_user_fk", "FOREIGN KEY (username) REFERENCES users (username) ON DELETE CASCADE NOT VALID"},
 }
 
 func (s *Store) migrateRelationships(ctx context.Context) error {

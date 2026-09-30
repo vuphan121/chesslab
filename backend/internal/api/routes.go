@@ -67,11 +67,9 @@ func NewRouter(h *Handler) http.Handler {
 			r.Delete("/{bookId}/{itemId}", h.DeleteBookSavedLine)
 		})
 
-		r.Route("/api/saved-puzzles", func(r chi.Router) {
-			r.Get("/", h.ListSavedPuzzles)
-			r.Post("/", h.SavePuzzle)
-			r.Delete("/{id}", h.DeleteSavedPuzzle)
-		})
+		r.Get("/api/puzzles/themes", h.GetPuzzleThemes)
+		r.Post("/api/puzzles/next", h.NextPuzzle)
+		r.Post("/api/puzzles/result", h.SubmitPuzzleResult)
 
 		r.Get("/api/user-settings", h.GetUserSettings)
 		r.Put("/api/user-settings", h.SaveUserSettings)
