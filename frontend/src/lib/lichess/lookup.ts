@@ -1,6 +1,7 @@
 import { Chess } from 'chess.js'
 import type { Analysis, AnalysisLine, FenEval, TablebaseCategory } from '@/lib/api/client'
 import { sanAndFens } from '@/lib/engine/buildAnalysis'
+import { positionKey } from '@/lib/chess/positionKey'
 
 export const MAX_TABLEBASE_PIECES = 7
 const LOOKUP_TIMEOUT_MS = 3000
@@ -140,13 +141,17 @@ interface InflightLookup {
   controller: AbortController
   subscribers: number
   settled: boolean
+  position: string
+  lines: number
 }
 
 const inflight = new Map<string, InflightLookup>()
 
-function remember(fen: string, lines: number, value: Analysis | null): void {
-  cache.delete(fen)
-  cache.set(fen, { lines, value })
+function remember(position: string, lines: number, value: Analysis | null): void {
+  const previous = cache.get(position)
+  if (previous && previous.lines > lines) return
+  cache.delete(position)
+  cache.set(position, { lines, value })
   if (cache.size > CACHE_LIMIT) cache.delete(cache.keys().next().value as string)
 }
 
@@ -198,18 +203,22 @@ function subscribe(entry: InflightLookup, signal?: AbortSignal): Promise<Analysi
 }
 
 export async function lookupAnalysis(fen: string, lines = 3, signal?: AbortSignal): Promise<Analysis | null> {
-  const hit = cache.get(fen)
+  const position = positionKey(fen)
+  const hit = cache.get(position)
   if (hit && (hit.value === null || hit.lines >= lines || hit.value.tablebaseCategory)) return hit.value
   if (signal?.aborted) throw abortError()
-  const key = `${fen}|${lines}`
-  let entry = inflight.get(key)
+  const isTablebase = pieceCount(fen) <= MAX_TABLEBASE_PIECES
+  let entry = [...inflight.values()].find(
+    (candidate) => candidate.position === position && (isTablebase || candidate.lines >= lines),
+  )
+  const key = `${position}|${lines}`
   if (!entry) {
     const controller = new AbortController()
-    entry = { promise: Promise.resolve(null), controller, subscribers: 0, settled: false }
+    entry = { promise: Promise.resolve(null), controller, subscribers: 0, settled: false, position, lines }
     const current = entry
     current.promise = fetchLookup(fen, lines, controller.signal)
       .then((value) => {
-        remember(fen, lines, value)
+        remember(position, lines, value)
         return value
       })
       .catch((error) => {
@@ -233,7 +242,10 @@ export function prefetchReplies(analysis: Analysis): void {
     if (fens.length === 2) break
   }
   for (const fen of fens) {
-    if (!cache.has(fen)) void lookupAnalysis(fen, PREFETCH_LINES).catch(() => {})
+    const hit = cache.get(positionKey(fen))
+    if (!hit || (hit.value !== null && !hit.value.tablebaseCategory && hit.lines < PREFETCH_LINES)) {
+      void lookupAnalysis(fen, PREFETCH_LINES).catch(() => {})
+    }
   }
 }
 

@@ -84,9 +84,11 @@ export async function idbList<T>(prefix: string): Promise<{ key: string; value: 
   }
 }
 
-export async function idbClear(): Promise<void> {
+export async function idbClear(): Promise<boolean> {
   try {
     await run('readwrite', (s) => s.clear())
+    return true
   } catch {
+    return false
   }
 }

@@ -670,7 +670,7 @@ export function useTrainerSession() {
       try {
         const queue = await getTodayTraining()
         if (reqId !== startSessionReqId.current) return
-        const first = queue.entries[0]
+        const first = queue.nextEntry
         if (!first) throw new Error("Today's queue is empty.")
         await startTodayEntry(first, reqId)
       } catch (err) {
@@ -873,7 +873,7 @@ export function useTrainerSession() {
         const queue = await (todayAdvanceRef.current ?? getTodayTraining())
         todayAdvanceRef.current = null
         if (reqId !== startSessionReqId.current) return
-        const next = queue.entries[0]
+        const next = queue.nextEntry
         if (!next) {
           setLoadError("Today's queue is empty.")
           setPhase('setup')

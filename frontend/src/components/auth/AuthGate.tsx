@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { getToken, onAuthChange } from '@/lib/auth/token'
-import { getTodayTraining, pingBackend } from '@/lib/api/client'
+import { pingBackend } from '@/lib/api/client'
 import Login from './Login'
 import UserSettingsProvider from '@/components/settings/UserSettingsProvider'
 import OfflineSync from '@/components/pwa/OfflineSync'
@@ -23,7 +23,6 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     const syncAuth = () => {
       const authenticated = !!getToken()
       setAuthed(authenticated)
-      if (authenticated) getTodayTraining().catch(() => {})
     }
     syncAuth()
     return onAuthChange(syncAuth)

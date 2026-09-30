@@ -443,10 +443,19 @@ export interface TodayTrainingEntry {
 
 export interface TodayTrainingResponse {
   settings: TodayTrainingSettings | null
-  entries: TodayTrainingEntry[]
+  entryCount: number
+  nextEntry: TodayTrainingEntry | null
 }
 
-export const getTodayTraining = (): Promise<TodayTrainingResponse> => request('/api/today-training')
+let todayTrainingRequest: Promise<TodayTrainingResponse> | null = null
+
+export const getTodayTraining = (): Promise<TodayTrainingResponse> => {
+  if (!todayTrainingRequest) {
+    todayTrainingRequest = request<TodayTrainingResponse>('/api/today-training')
+      .finally(() => { todayTrainingRequest = null })
+  }
+  return todayTrainingRequest
+}
 
 export const saveTodayTraining = (settings: TodayTrainingSettings): Promise<TodayTrainingResponse> =>
   request('/api/today-training', {

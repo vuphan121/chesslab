@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import Board from '@/components/board/Board'
 import { MaterialRow, computeMaterialRows } from '@/components/board/MaterialCorners'
 import EvalBar from '@/components/analysis/EvalBar'
-import { buildLinePgn, downloadPgn, pgnFileName } from '@/lib/trainer/exportPgn'
+import { buildLinePgn, copyPgnToClipboard } from '@/lib/trainer/exportPgn'
 import { EVAL_DISPLAY_LABEL, EvalIcon, useEvalDisplay } from '@/components/analysis/EvalToggle'
 import { arrowShapes } from '@/lib/engine/arrows'
 import TopBar from '@/components/layout/TopBar'
@@ -192,7 +192,7 @@ export default function OpeningStudyPage() {
       runSans: runMoves.map((m) => m.san),
       side: repertoire.side,
     })
-    if (pgn) downloadPgn(pgn, pgnFileName(repertoire.name, exportChapter?.name ?? 'line'))
+    if (pgn) void copyPgnToClipboard(pgn).catch((error) => console.error('Failed to copy PGN', error))
   }
 
   if (isPhone) {

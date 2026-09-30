@@ -20,8 +20,9 @@ type TodayTrainingEntryJSON struct {
 }
 
 type TodayTrainingResponse struct {
-	Settings *TodayTrainingSettingsJSON `json:"settings"`
-	Entries  []TodayTrainingEntryJSON   `json:"entries"`
+	Settings   *TodayTrainingSettingsJSON `json:"settings"`
+	EntryCount int                        `json:"entryCount"`
+	NextEntry  *TodayTrainingEntryJSON    `json:"nextEntry"`
 }
 
 type AdvanceTodayTrainingRequest struct {
@@ -169,12 +170,13 @@ func sameTodayTrainingEntries(left, right []db.TodayTrainingEntry) bool {
 }
 
 func todayTrainingResponse(queue db.TodayTrainingQueue) TodayTrainingResponse {
-	response := TodayTrainingResponse{Entries: make([]TodayTrainingEntryJSON, 0, len(queue.Entries))}
+	response := TodayTrainingResponse{EntryCount: len(queue.Entries)}
 	if queue.Settings != nil {
 		response.Settings = &TodayTrainingSettingsJSON{RepertoireIDs: queue.Settings.RepertoireIDs}
 	}
-	for _, entry := range queue.Entries {
-		response.Entries = append(response.Entries, TodayTrainingEntryJSON{RepertoireID: entry.RepertoireID, CardID: entry.CardID})
+	if len(queue.Entries) > 0 {
+		entry := queue.Entries[0]
+		response.NextEntry = &TodayTrainingEntryJSON{RepertoireID: entry.RepertoireID, CardID: entry.CardID}
 	}
 	return response
 }

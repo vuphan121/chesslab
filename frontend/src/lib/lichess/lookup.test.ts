@@ -110,6 +110,23 @@ describe('lookup fetching', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
+  it('reuses an evaluation when only the full-move number changes', async () => {
+    fetchMock.mockImplementation(() => json({ depth: 50, pvs: [{ moves: 'e2e4', cp: 30 }] }))
+    await lookupAnalysis(START, 3)
+    await lookupAnalysis(START.replace('0 1', '0 99'), 3)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('lets a one-line subscriber share a wider in-flight lookup', async () => {
+    let resolveFetch: ((response: Response) => void) | undefined
+    fetchMock.mockImplementation(() => new Promise<Response>((resolve) => { resolveFetch = resolve }))
+    const wide = lookupAnalysis(START, 5)
+    const narrow = lookupAnalysis(START.replace('0 1', '0 2'), 1)
+    resolveFetch?.(new Response(JSON.stringify({ depth: 25, pvs: [{ moves: 'e2e4', cp: 12 }] }), { status: 200 }))
+    await Promise.all([wide, narrow])
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
   it('uses the tablebase for seven pieces or fewer and skips finished games', async () => {
     fetchMock.mockImplementation(() => json({ category: 'draw', moves: [] }))
     const a = await lookupAnalysis('8/8/8/8/8/4k3/8/4K2R w - - 0 1', 3)

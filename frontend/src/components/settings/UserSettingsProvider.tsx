@@ -18,13 +18,9 @@ const UserSettingsContext = createContext<UserSettingsContextValue | null>(null)
 
 export default function UserSettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
-  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     let active = true
-    const giveUp = setTimeout(() => {
-      if (active) setReady(true)
-    }, 1500)
     getUserSettings({
       onUpdate: (updated) => {
         if (active) setSettings(updated)
@@ -34,12 +30,8 @@ export default function UserSettingsProvider({ children }: { children: ReactNode
         if (active) setSettings(loaded)
       })
       .catch(() => {})
-      .finally(() => {
-        if (active) setReady(true)
-      })
     return () => {
       active = false
-      clearTimeout(giveUp)
     }
   }, [])
 
@@ -58,7 +50,6 @@ export default function UserSettingsProvider({ children }: { children: ReactNode
     },
   }), [settings])
 
-  if (!ready) return null
   return <UserSettingsContext.Provider value={value}>{children}</UserSettingsContext.Provider>
 }
 

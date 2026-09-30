@@ -88,7 +88,7 @@ export default function RepertoireManagement({ repertoires, onClose, onChanged }
     setSuccess(null)
     try {
       const queue = await saveTodayTraining({ repertoireIds: [...todayRepertoireIds] })
-      setSuccess(`Mixed training queue is ready with ${queue.entries.length} line${queue.entries.length === 1 ? '' : 's'}.`)
+      setSuccess(`Mixed training queue is ready with ${queue.entryCount} line${queue.entryCount === 1 ? '' : 's'}.`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update the mixed training queue.')
     } finally {

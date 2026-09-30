@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { buildLinePgn, pgnFileName } from './exportPgn'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { buildLinePgn, copyPgnToClipboard } from './exportPgn'
 
 const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
@@ -58,8 +58,13 @@ describe('buildLinePgn', () => {
   })
 })
 
-describe('pgnFileName', () => {
-  it('makes a safe file name', () => {
-    expect(pgnFileName('Queen’s Gambit', 'Open, a6 b5')).toBe('queen-s-gambit-open-a6-b5.pgn')
+describe('copyPgnToClipboard', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('copies the generated PGN without creating a download', async () => {
+    const writeText = vi.fn(async () => undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+    await copyPgnToClipboard('[Event "Test"]\n\n1. e4 *')
+    expect(writeText).toHaveBeenCalledWith('[Event "Test"]\n\n1. e4 *')
   })
 })

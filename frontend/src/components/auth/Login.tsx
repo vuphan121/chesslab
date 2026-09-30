@@ -25,7 +25,7 @@ export default function Login() {
       const { token } = await login(username, password)
       await claimOfflineStore(username)
       setToken(token)
-      void refreshOfflineData().catch(() => {})
+      void refreshOfflineData({ includeCatalog: false }).catch(() => {})
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed.')
     } finally {

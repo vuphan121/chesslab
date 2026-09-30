@@ -38,21 +38,24 @@ export function buildLinePgn(input: LinePgnInput): string | null {
   return chess.pgn()
 }
 
-export function pgnFileName(repertoireName: string, chapterName: string): string {
-  const slug = `${repertoireName}-${chapterName}`
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-  return `${slug || 'line'}.pgn`
-}
+export async function copyPgnToClipboard(pgn: string): Promise<void> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(pgn)
+      return
+    }
+  } catch {
+    // Fall through for browsers that expose Clipboard API but deny the call.
+  }
 
-export function downloadPgn(pgn: string, fileName: string): void {
-  const url = URL.createObjectURL(new Blob([pgn], { type: 'application/x-chess-pgn' }))
-  const a = document.createElement('a')
-  a.href = url
-  a.download = fileName
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+  const input = document.createElement('textarea')
+  input.value = pgn
+  input.setAttribute('readonly', '')
+  input.style.position = 'fixed'
+  input.style.opacity = '0'
+  document.body.appendChild(input)
+  input.select()
+  const copied = document.execCommand('copy')
+  input.remove()
+  if (!copied) throw new Error('Could not copy PGN to the clipboard.')
 }

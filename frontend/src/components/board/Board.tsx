@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useMemo, useEffect, useLayoutEffect, useCallback } from 'react'
+import { useState, useRef, useMemo, useEffect, useLayoutEffect, useCallback, useReducer } from 'react'
 import { createPortal } from 'react-dom'
 import Square from './Square'
 import Piece from './Piece'
@@ -16,6 +16,87 @@ const USER_MOVE_SLIDE_MS = 140
 const PENDING_MAX_MS = 3000
 
 type PromoPiece = 'q' | 'r' | 'b' | 'n'
+
+interface InteractionState {
+  fen: string
+  dragFrom: string | null
+  dragPos: { x: number; y: number }
+  dragOver: string | null
+  hasMoved: boolean
+  rightDragFrom: string | null
+  rightDragTo: string | null
+  arrows: { from: string; to: string }[]
+  circles: Set<string>
+  promo: { from: string; to: string; color: 'w' | 'b' } | null
+}
+
+interface MoveAnimation {
+  from: string
+  to: string
+  piece: NonNullable<BoardState['pieces'][string]>
+}
+
+interface PositionState {
+  fen: string
+  pieces: BoardState['pieces']
+  lastMove?: BoardState['lastMove']
+  animation: MoveAnimation | null
+  skipNextAnimation: boolean
+}
+
+type PositionAction =
+  | { type: 'sync'; boardState: BoardState; animate: boolean }
+  | { type: 'skip-next-animation' }
+  | { type: 'finish-animation'; fen: string }
+
+function emptyInteraction(fen: string): InteractionState {
+  return {
+    fen,
+    dragFrom: null,
+    dragPos: { x: 0, y: 0 },
+    dragOver: null,
+    hasMoved: false,
+    rightDragFrom: null,
+    rightDragTo: null,
+    arrows: [],
+    circles: new Set(),
+    promo: null,
+  }
+}
+
+function inferMoveAnimation(previous: PositionState, current: BoardState): MoveAnimation | null {
+  const samePiece = (a?: { type: string; color: string } | null, b?: { type: string; color: string } | null) =>
+    !!a && !!b && a.type === b.type && a.color === b.color
+  const lastMove = current.lastMove
+  if (lastMove && samePiece(previous.pieces[lastMove.from], current.pieces[lastMove.to])) {
+    return { from: lastMove.from, to: lastMove.to, piece: previous.pieces[lastMove.from]! }
+  }
+  if (previous.lastMove && samePiece(previous.pieces[previous.lastMove.to], current.pieces[previous.lastMove.from])) {
+    return {
+      from: previous.lastMove.to,
+      to: previous.lastMove.from,
+      piece: previous.pieces[previous.lastMove.to]!,
+    }
+  }
+  return null
+}
+
+function positionReducer(state: PositionState, action: PositionAction): PositionState {
+  if (action.type === 'skip-next-animation') return { ...state, skipNextAnimation: true }
+  if (action.type === 'finish-animation') {
+    return state.fen === action.fen ? { ...state, animation: null } : state
+  }
+  if (state.fen === action.boardState.fen) return state
+  return {
+    fen: action.boardState.fen,
+    pieces: action.boardState.pieces,
+    lastMove: action.boardState.lastMove,
+    animation: action.animate && !state.skipNextAnimation
+      ? inferMoveAnimation(state, action.boardState)
+      : null,
+    skipNextAnimation: false,
+  }
+}
 
 interface Props {
   boardState: BoardState
@@ -48,22 +129,20 @@ export default function Board({
   const boardRef = useRef<HTMLDivElement>(null)
   const downPos = useRef({ x: 0, y: 0 })
   const dragMovedRef = useRef(false)
-  const [dragFrom, setDragFrom] = useState<string | null>(null)
-  const [dragPos, setDragPos] = useState({ x: 0, y: 0 })
-  const [dragOver, setDragOver] = useState<string | null>(null)
-  const [hasMoved, setHasMoved] = useState(false)
-  const [moveAnimation, setMoveAnimation] = useState<{
-    from: string
-    to: string
-    piece: NonNullable<BoardState['pieces'][string]>
-    hasStarted: boolean
-  } | null>(null)
-  const previousPosition = useRef<{
-    fen: string
-    pieces: BoardState['pieces']
-    lastMove?: BoardState['lastMove']
-  }>({ fen: boardState.fen, pieces: boardState.pieces, lastMove: boardState.lastMove })
-  const justPlayedRef = useRef(false)
+  const [interactionState, setInteractionState] = useState(() => emptyInteraction(boardState.fen))
+  const interaction = interactionState.fen === boardState.fen
+    ? interactionState
+    : emptyInteraction(boardState.fen)
+  const { dragFrom, dragPos, dragOver, hasMoved, rightDragFrom, rightDragTo, arrows, circles, promo } = interaction
+  const updateInteraction = useCallback((update: (current: InteractionState) => InteractionState) => {
+    setInteractionState((previous) => update(
+      previous.fen === boardState.fen ? previous : emptyInteraction(boardState.fen),
+    ))
+  }, [boardState.fen])
+  const patchInteraction = useCallback((patch: Partial<InteractionState>) => {
+    updateInteraction((current) => ({ ...current, ...patch }))
+  }, [updateInteraction])
+  const moveAnimationElement = useRef<HTMLDivElement>(null)
   const pendingSequence = useRef(0)
   const pendingTimers = useRef<Set<number>>(new Set())
   const [pending, setPending] = useState<{
@@ -76,35 +155,22 @@ export default function Board({
     rook?: { from: string; to: string; piece: NonNullable<BoardState['pieces'][string]> }
     ep?: string
   } | null>(null)
-
-  const rightDownSquare = useRef<string | null>(null)
-  const [rightDragFrom, setRightDragFrom] = useState<string | null>(null)
-  const [rightDragTo, setRightDragTo] = useState<string | null>(null)
-  const [arrows, setArrows] = useState<{ from: string; to: string }[]>([])
-  const [circles, setCircles] = useState<Set<string>>(new Set())
-  const [promo, setPromo] = useState<{ from: string; to: string; color: 'w' | 'b' } | null>(null)
-  const [positionState, setPositionState] = useState(() => ({
+  const [positionState, dispatchPosition] = useReducer(positionReducer, null, () => ({
     fen: boardState.fen,
     pieces: boardState.pieces,
     lastMove: boardState.lastMove,
+    animation: null,
+    skipNextAnimation: false,
   }))
+  const moveAnimation = positionState.fen === boardState.fen ? positionState.animation : null
 
-  if (positionState.fen !== boardState.fen) {
-    setPositionState({ fen: boardState.fen, pieces: boardState.pieces, lastMove: boardState.lastMove })
-    setArrows([])
-    setCircles(new Set())
-    setPromo(null)
-    setRightDragFrom(null)
-    setRightDragTo(null)
-    setDragFrom(null)
-    setDragOver(null)
-    setHasMoved(false)
-  }
+  const rightDownSquare = useRef<string | null>(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     rightDownSquare.current = null
     dragMovedRef.current = false
-  }, [boardState.fen])
+    dispatchPosition({ type: 'sync', boardState, animate: animateLastMove })
+  }, [animateLastMove, boardState])
 
   useEffect(() => () => {
     pendingSequence.current++
@@ -115,11 +181,11 @@ export default function Board({
   useEffect(() => {
     if (!promo) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setPromo(null)
+      if (e.key === 'Escape') patchInteraction({ promo: null })
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [promo])
+  }, [promo, patchInteraction])
 
   const commitMove = useCallback((
     from: string,
@@ -134,6 +200,7 @@ export default function Board({
       return
     }
     const id = ++pendingSequence.current
+    dispatchPosition({ type: 'skip-next-animation' })
     const next: NonNullable<typeof pending> = {
       id,
       from,
@@ -198,70 +265,21 @@ export default function Board({
     if (piece.color === 'b' && to[1] === '1') return 'b'
     return null
   }
-
-
-
-
-
-  useLayoutEffect(() => {
-    const previous = previousPosition.current
-    const lastMove = positionState.lastMove
-    previousPosition.current = { fen: positionState.fen, pieces: positionState.pieces, lastMove }
-    if (justPlayedRef.current) {
-      justPlayedRef.current = false
-      setMoveAnimation(null)
-      return
-    }
-    if (!animateLastMove || previous.fen === positionState.fen) {
-      setMoveAnimation(null)
-      return
-    }
-    const same = (a?: { type: string; color: string } | null, b?: { type: string; color: string } | null) =>
-      !!a && !!b && a.type === b.type && a.color === b.color
-    let step: { from: string; to: string; piece: NonNullable<BoardState['pieces'][string]> } | null = null
-    if (lastMove && same(previous.pieces[lastMove.from], positionState.pieces[lastMove.to])) {
-      step = { from: lastMove.from, to: lastMove.to, piece: previous.pieces[lastMove.from]! }
-    } else if (previous.lastMove && same(previous.pieces[previous.lastMove.to], positionState.pieces[previous.lastMove.from])) {
-      step = { from: previous.lastMove.to, to: previous.lastMove.from, piece: previous.pieces[previous.lastMove.to]! }
-    }
-    if (!step) {
-      setMoveAnimation(null)
-      return
-    }
-
-    let firstFrame = 0
-    let secondFrame = 0
-    const timer = window.setTimeout(() => setMoveAnimation(null), MOVE_ANIMATION_MS + 24)
-    setMoveAnimation({ ...step, hasStarted: false })
-
-
-
-    firstFrame = window.requestAnimationFrame(() => {
-      secondFrame = window.requestAnimationFrame(() => {
-        setMoveAnimation((active) => active && { ...active, hasStarted: true })
-      })
-    })
-    return () => {
-      window.cancelAnimationFrame(firstFrame)
-      window.cancelAnimationFrame(secondFrame)
-      window.clearTimeout(timer)
-    }
-  }, [animateLastMove, positionState])
-
   const toggleAnnotation = (from: string, to: string) => {
     if (from === to) {
-      setCircles((prev) => {
-        const next = new Set(prev)
+      updateInteraction((current) => {
+        const next = new Set(current.circles)
         if (next.has(from)) next.delete(from)
         else next.add(from)
-        return next
+        return { ...current, circles: next }
       })
     } else {
-      setArrows((prev) =>
-        prev.some((a) => a.from === from && a.to === to)
-          ? prev.filter((a) => !(a.from === from && a.to === to))
-          : [...prev, { from, to }],
-      )
+      updateInteraction((current) => ({
+        ...current,
+        arrows: current.arrows.some((a) => a.from === from && a.to === to)
+          ? current.arrows.filter((a) => !(a.from === from && a.to === to))
+          : [...current.arrows, { from, to }],
+      }))
     }
   }
 
@@ -298,23 +316,19 @@ export default function Board({
     if (e.button === 2) {
       e.preventDefault()
       if (dragFrom) {
-        setDragFrom(null)
-        setDragOver(null)
-        setHasMoved(false)
+        patchInteraction({ dragFrom: null, dragOver: null, hasMoved: false })
         dragMovedRef.current = false
       }
       boardRef.current?.setPointerCapture(e.pointerId)
       rightDownSquare.current = sq
-      setRightDragFrom(sq)
-      setRightDragTo(sq)
+      patchInteraction({ rightDragFrom: sq, rightDragTo: sq })
       return
     }
 
-    setArrows([])
-    setCircles(new Set())
+    patchInteraction({ arrows: [], circles: new Set() })
 
     if (promo) {
-      setPromo(null)
+      patchInteraction({ promo: null })
       return
     }
 
@@ -324,18 +338,15 @@ export default function Board({
       boardRef.current?.setPointerCapture(e.pointerId)
       downPos.current = { x: e.clientX, y: e.clientY }
       dragMovedRef.current = false
-      setDragFrom(sq)
-      setDragPos({ x: e.clientX, y: e.clientY })
-      setHasMoved(false)
+      patchInteraction({ dragFrom: sq, dragPos: { x: e.clientX, y: e.clientY }, hasMoved: false })
     } else {
       const sel = boardState.selectedSquare
       const isMoveTarget = !!sel && boardState.legalMoves.includes(sq)
       const promoColor = isMoveTarget ? isPromotionMove(sel!, sq) : null
       if (promoColor) {
-        setPromo({ from: sel!, to: sq, color: promoColor })
+        patchInteraction({ promo: { from: sel!, to: sq, color: promoColor } })
       } else {
         if (isMoveTarget) {
-          justPlayedRef.current = true
           commitMove(sel!, sq, true, undefined, () => onSquareClick(sq))
         } else {
           onSquareClick(sq)
@@ -346,7 +357,7 @@ export default function Board({
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (rightDownSquare.current) {
-      setRightDragTo(squareFromPoint(e.clientX, e.clientY))
+      patchInteraction({ rightDragTo: squareFromPoint(e.clientX, e.clientY) })
       return
     }
     if (!dragFrom) return
@@ -354,10 +365,9 @@ export default function Board({
     const dy = e.clientY - downPos.current.y
     if (!dragMovedRef.current && Math.sqrt(dx * dx + dy * dy) > 5) {
       dragMovedRef.current = true
-      setHasMoved(true)
+      patchInteraction({ hasMoved: true })
     }
-    setDragPos({ x: e.clientX, y: e.clientY })
-    setDragOver(squareFromPoint(e.clientX, e.clientY))
+    patchInteraction({ dragPos: { x: e.clientX, y: e.clientY }, dragOver: squareFromPoint(e.clientX, e.clientY) })
   }
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -365,8 +375,7 @@ export default function Board({
       const from = rightDownSquare.current
       const to = squareFromPoint(e.clientX, e.clientY)
       rightDownSquare.current = null
-      setRightDragFrom(null)
-      setRightDragTo(null)
+      patchInteraction({ rightDragFrom: null, rightDragTo: null })
       if (to) toggleAnnotation(from, to)
       return
     }
@@ -374,18 +383,15 @@ export default function Board({
     const target = squareFromPoint(e.clientX, e.clientY)
     const from = dragFrom
     const moved = dragMovedRef.current
-    setDragFrom(null)
-    setDragOver(null)
-    setHasMoved(false)
+    patchInteraction({ dragFrom: null, dragOver: null, hasMoved: false })
     dragMovedRef.current = false
     if (!moved) {
       onSquareClick(from)
     } else if (target && dragTargets.has(target)) {
       const promoColor = isPromotionMove(from, target)
       if (promoColor) {
-        setPromo({ from, to: target, color: promoColor })
+        patchInteraction({ promo: { from, to: target, color: promoColor } })
       } else {
-        justPlayedRef.current = true
         commitMove(from, target, false, undefined, () => onMove(from, target))
       }
     }
@@ -393,11 +399,7 @@ export default function Board({
 
   const handlePointerCancel = () => {
     rightDownSquare.current = null
-    setRightDragFrom(null)
-    setRightDragTo(null)
-    setDragFrom(null)
-    setDragOver(null)
-    setHasMoved(false)
+    patchInteraction({ rightDragFrom: null, rightDragTo: null, dragFrom: null, dragOver: null, hasMoved: false })
     dragMovedRef.current = false
   }
 
@@ -408,6 +410,24 @@ export default function Board({
   const animationToFile = moveAnimation ? files.indexOf(moveAnimation.to[0]) : -1
   const animationToRank = moveAnimation ? ranks.indexOf(moveAnimation.to[1]) : -1
 
+  useLayoutEffect(() => {
+    const element = moveAnimationElement.current
+    if (!element || !moveAnimation) return
+    const animation = element.animate(
+      [
+        { transform: 'translate3d(0, 0, 0)' },
+        { transform: `translate3d(${(animationToFile - animationFromFile) * squareSize}px, ${(animationToRank - animationFromRank) * squareSize}px, 0)` },
+      ],
+      { duration: MOVE_ANIMATION_MS, easing: 'cubic-bezier(0.22, 0.8, 0.28, 1)', fill: 'forwards' },
+    )
+    const finish = () => dispatchPosition({ type: 'finish-animation', fen: boardState.fen })
+    animation.addEventListener('finish', finish, { once: true })
+    return () => {
+      animation.removeEventListener('finish', finish)
+      animation.cancel()
+    }
+  }, [animationFromFile, animationFromRank, animationToFile, animationToRank, boardState.fen, moveAnimation, squareSize])
+
   const handlePromotionPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
@@ -415,8 +435,7 @@ export default function Board({
     const piece = e.currentTarget.dataset.promotion as PromoPiece | undefined
     if (!piece) return
     const { from, to } = promo
-    setPromo(null)
-    justPlayedRef.current = true
+    patchInteraction({ promo: null })
     commitMove(from, to, false, piece, () => onMove(from, to, piece))
   }
 
@@ -562,6 +581,7 @@ export default function Board({
 
         {moveAnimation && animationFromFile >= 0 && animationFromRank >= 0 && animationToFile >= 0 && animationToRank >= 0 && (
           <div
+            ref={moveAnimationElement}
             style={{
               position: 'absolute',
               left: animationFromFile * squareSize + squareSize * 0.05,
@@ -570,14 +590,7 @@ export default function Board({
               height: squareSize * 0.9,
               zIndex: 25,
               pointerEvents: 'none',
-              transform: moveAnimation.hasStarted
-                ? `translate3d(${(animationToFile - animationFromFile) * squareSize}px, ${(animationToRank - animationFromRank) * squareSize}px, 0)`
-                : 'translate3d(0, 0, 0)',
-
-
-              transition: moveAnimation.hasStarted
-                ? `transform ${MOVE_ANIMATION_MS}ms cubic-bezier(0.22, 0.8, 0.28, 1)`
-                : 'none',
+              transform: 'translate3d(0, 0, 0)',
               willChange: 'transform',
             }}
           >
@@ -623,7 +636,7 @@ export default function Board({
           return (
             <>
               <div
-                onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); setPromo(null) }}
+                onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); patchInteraction({ promo: null }) }}
                 style={{ position: 'absolute', inset: 0, background: 'rgba(18,20,24,0.44)', zIndex: 30, cursor: 'pointer' }}
               />
               <div

@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const store = new Map<string, unknown>()
+let clearSucceeds = true
 
 vi.mock('./idb', () => ({
   idbGet: async (key: string) => store.get(key),
@@ -13,14 +14,19 @@ vi.mock('./idb', () => ({
   },
   idbList: async (prefix: string) =>
     [...store.entries()].filter(([k]) => k.startsWith(prefix)).map(([key, value]) => ({ key, value })),
-  idbClear: async () => store.clear(),
+  idbClear: async () => {
+    if (!clearSucceeds) return false
+    store.clear()
+    return true
+  },
 }))
 
 import { ApiError } from './errors'
-import { cacheAgeMs, cacheFirst, dropCachedRepertoiresExcept, networkFirst, readCache, writeCache } from './cache'
+import { cacheAgeMs, cacheFirst, claimOfflineStore, dropCachedRepertoiresExcept, networkFirst, readCache, writeCache } from './cache'
 
 beforeEach(() => {
   store.clear()
+  clearSucceeds = true
   vi.useRealTimers()
 })
 
@@ -108,6 +114,16 @@ describe('networkFirst', () => {
     expect(await networkFirst('k', async () => 'fresh', 1500)).toBe('fresh')
   })
 
+  it('shares one network request between concurrent callers', async () => {
+    const slow = deferred<string>()
+    const fetcher = vi.fn(() => slow.promise)
+    const first = networkFirst('shared', fetcher, 1500)
+    const second = networkFirst('shared', fetcher, 1500)
+    slow.resolve('fresh')
+    await expect(Promise.all([first, second])).resolves.toEqual(['fresh', 'fresh'])
+    expect(fetcher).toHaveBeenCalledTimes(1)
+  })
+
   it('falls back to the cache on a network error and on a gateway error', async () => {
     await writeCache('k', 'cached')
     expect(await networkFirst('k', async () => Promise.reject(new TypeError('offline')))).toBe('cached')
@@ -131,5 +147,24 @@ describe('dropCachedRepertoiresExcept', () => {
     expect(await readCache('repertoire:gone')).toBeUndefined()
     expect(await readCache('repertoires')).toBeDefined()
     expect(await readCache('progress:gone')).toBeDefined()
+  })
+})
+
+afterEach(() => vi.unstubAllGlobals())
+
+describe('claimOfflineStore', () => {
+  it('does not transfer cache ownership when clearing IndexedDB fails', async () => {
+    const local = new Map<string, string>([['chesslab.offline.owner', 'alice']])
+    vi.stubGlobal('window', {
+      localStorage: {
+        getItem: (key: string) => local.get(key) ?? null,
+        setItem: (key: string, value: string) => local.set(key, value),
+      },
+    })
+    await writeCache('progress:private', { cards: { secret: true } })
+    clearSucceeds = false
+    await claimOfflineStore('bob')
+    expect(local.get('chesslab.offline.owner')).toBe('alice')
+    expect(await readCache('progress:private')).toBeDefined()
   })
 })

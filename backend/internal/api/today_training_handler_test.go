@@ -45,3 +45,20 @@ func TestSameTodayTrainingEntriesIgnoresOrderButRequiresFullSet(t *testing.T) {
 		t.Fatal("a partial queue should not match the full entry set")
 	}
 }
+
+func TestTodayTrainingResponseOnlyReturnsQueueSummary(t *testing.T) {
+	queue := db.TodayTrainingQueue{
+		Settings: &db.TodayTrainingSettings{RepertoireIDs: []string{"one", "two"}},
+		Entries: []db.TodayTrainingEntry{
+			{RepertoireID: "one", CardID: "A"},
+			{RepertoireID: "two", CardID: "B"},
+		},
+	}
+	response := todayTrainingResponse(queue)
+	if response.EntryCount != 2 {
+		t.Fatalf("entry count = %d, want 2", response.EntryCount)
+	}
+	if response.NextEntry == nil || response.NextEntry.RepertoireID != "one" || response.NextEntry.CardID != "A" {
+		t.Fatalf("next entry = %#v, want first queue entry", response.NextEntry)
+	}
+}

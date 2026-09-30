@@ -5,7 +5,6 @@ import { listRepertoires, getRepertoire, getTodayTraining } from '@/lib/api/clie
 import type { TodayTrainingResponse } from '@/lib/api/client'
 import RepertoireManagement from '@/components/trainer/RepertoireManagement'
 import LineList from '@/components/trainer/LineList'
-import { prefetchRepertoires } from '@/lib/offline/prefetch'
 import { useIsPhoneLike } from '@/hooks/useViewportWidth'
 import { enumerateLines } from '@/lib/trainer/lineQueue'
 import type { ChapterLine } from '@/lib/trainer/lineQueue'
@@ -88,7 +87,6 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
       .then((list) => {
         setReps(list)
         if (list.length > 0) selectRepertoire(list[0].id, list[0].chapters.map((c) => c.id))
-        void prefetchRepertoires(list)
       })
       .catch((err) => setListError(err instanceof Error ? err.message : 'Failed to reach the backend.'))
     loadTodayTraining()
@@ -192,7 +190,7 @@ export default function RepertoirePicker({ onStart, onResumeToday, starting, sta
     return <RepertoireManagement repertoires={reps} onClose={() => { setManaging(false); loadTodayTraining() }} onChanged={refreshCatalog} />
   }
 
-  const todayReady = today?.settings ? today.entries.length : 0
+  const todayReady = today?.settings ? today.entryCount : 0
   const filteredReps = search.trim()
     ? reps.filter((r) => r.name.toLowerCase().includes(search.trim().toLowerCase()))
     : reps

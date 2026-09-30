@@ -23,8 +23,9 @@ function refreshAppShell(): Promise<boolean> {
   )
 }
 
-export async function refreshOfflineData(): Promise<void> {
+export async function refreshOfflineData(opts: { includeCatalog?: boolean } = {}): Promise<void> {
   await flushProgressOutbox()
-  const [, shellOk] = await Promise.all([refreshAllCachedData(), refreshAppShell()])
+  const dataRefresh = opts.includeCatalog === false ? Promise.resolve() : refreshAllCachedData()
+  const [, shellOk] = await Promise.all([dataRefresh, refreshAppShell()])
   if (!shellOk) throw new Error('The app files could not be refreshed.')
 }

@@ -3,6 +3,7 @@ import { isRetryable } from './errors'
 
 const OWNER_KEY = 'chesslab.offline.owner'
 const OUTBOX_PREFIX = 'outbox:'
+const inflight = new Map<string, Promise<unknown>>()
 
 interface Cached<T> {
   value: T
@@ -23,10 +24,7 @@ export async function cacheAgeMs(key: string): Promise<number | null> {
 }
 
 export async function networkFirst<T>(key: string, fetcher: () => Promise<T>, timeoutMs = 5000): Promise<T> {
-  const net = fetcher().then((value) => {
-    void writeCache(key, value)
-    return value
-  })
+  const net = revalidate(key, fetcher)
   net.catch(() => {})
   const cached = await readCache<T>(key)
   if (!cached) return net
@@ -36,7 +34,11 @@ export async function networkFirst<T>(key: string, fetcher: () => Promise<T>, ti
   })
   try {
     const result = await Promise.race([net, timeout])
-    return result === 'timeout' ? cached.value : result
+    if (result === 'timeout') {
+      if (inflight.get(key) === net) inflight.delete(key)
+      return cached.value
+    }
+    return result
   } catch (err) {
     if (isRetryable(err)) return cached.value
     throw err
@@ -46,7 +48,6 @@ export async function networkFirst<T>(key: string, fetcher: () => Promise<T>, ti
 }
 
 const REVALIDATE_MIN_AGE_MS = 30_000
-const inflight = new Map<string, Promise<unknown>>()
 
 export interface CacheFirstOptions<T> {
   onUpdate?: (value: T) => void
@@ -131,7 +132,8 @@ export async function claimOfflineStore(username: string): Promise<void> {
   try {
     const owner = window.localStorage.getItem(OWNER_KEY)
     if (owner !== username) {
-      await idbClear()
+      const cleared = await idbClear()
+      if (!cleared) return
       window.localStorage.setItem(OWNER_KEY, username)
       notifyOutbox()
     }
