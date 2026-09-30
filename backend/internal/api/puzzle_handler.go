@@ -10,6 +10,7 @@ import (
 	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/db"
 	"github.com/chesslab/backend/internal/puzzle"
+	"github.com/chesslab/backend/internal/puzzledb"
 )
 
 type puzzleThemeJSON struct {
@@ -45,7 +46,7 @@ const (
 )
 
 type puzzleNextResponse struct {
-	db.Puzzle
+	puzzle.Puzzle
 	Theme       string `json:"theme"`
 	ThemeRating int    `json:"themeRating"`
 	Mixed       bool   `json:"mixed"`
@@ -73,6 +74,10 @@ func (h *Handler) puzzleUser(w http.ResponseWriter, r *http.Request) (string, bo
 		http.Error(w, "puzzles require database sync", http.StatusServiceUnavailable)
 		return "", false
 	}
+	if h.puzzles == nil {
+		http.Error(w, puzzledb.ErrNotConfigured.Error(), http.StatusServiceUnavailable)
+		return "", false
+	}
 	username, ok := auth.UsernameFromContext(r.Context())
 	if !ok {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -82,7 +87,7 @@ func (h *Handler) puzzleUser(w http.ResponseWriter, r *http.Request) (string, bo
 }
 
 func (h *Handler) loadThemes(r *http.Request, username string) ([]puzzleThemeJSON, error) {
-	counts, err := h.db.PuzzleThemeCounts(r.Context())
+	counts, err := h.puzzles.ThemeCounts(r.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -171,6 +176,12 @@ func (h *Handler) NextPuzzle(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	recent, err := h.db.RecentPuzzleIDs(r.Context(), username, db.RecentPuzzleLimit)
+	if err != nil {
+		http.Error(w, "failed to load recent puzzles: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	batch := puzzleNextBatch{Puzzles: []puzzleNextResponse{}}
 	avoid := req.AvoidTheme
 	for attempts := 0; len(batch.Puzzles) < count && attempts < count*6; attempts++ {
@@ -189,7 +200,11 @@ func (h *Handler) NextPuzzle(w http.ResponseWriter, r *http.Request) {
 			}
 			chosen = pool[rand.Intn(len(pool))]
 		}
-		p, err := h.db.NextPuzzle(r.Context(), username, chosen.Key, chosen.exact, exclude)
+		strict := append(append([]string(nil), exclude...), recent...)
+		p, err := h.puzzles.Next(r.Context(), chosen.Key, chosen.exact, strict)
+		if err == nil && p == nil {
+			p, err = h.puzzles.Next(r.Context(), chosen.Key, chosen.exact, exclude)
+		}
 		if err != nil {
 			http.Error(w, "failed to pick a puzzle: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -222,7 +237,16 @@ func (h *Handler) SubmitPuzzleResult(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
-	res, err := h.db.RecordPuzzlePlay(r.Context(), username, req.OperationID, req.PuzzleID, req.Theme, req.Solved)
+	found, err := h.puzzles.Get(r.Context(), req.PuzzleID)
+	if err != nil {
+		http.Error(w, "failed to look up the puzzle: "+err.Error(), http.StatusBadGateway)
+		return
+	}
+	if found == nil {
+		http.Error(w, db.ErrUnknownPuzzle.Error(), http.StatusBadRequest)
+		return
+	}
+	res, err := h.db.RecordPuzzlePlay(r.Context(), username, req.OperationID, req.PuzzleID, req.Theme, req.Solved, found.Rating, found.Themes)
 	if errors.Is(err, db.ErrUnknownPuzzle) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

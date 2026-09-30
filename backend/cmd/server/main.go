@@ -18,6 +18,7 @@ import (
 	"github.com/chesslab/backend/internal/book"
 	"github.com/chesslab/backend/internal/booksource"
 	"github.com/chesslab/backend/internal/db"
+	"github.com/chesslab/backend/internal/puzzledb"
 	"github.com/chesslab/backend/internal/engine"
 	"github.com/chesslab/backend/internal/repertoire"
 )
@@ -89,6 +90,16 @@ func main() {
 	}
 
 	handler := api.NewHandler(precomputeEngine, repertoires, books, dbStore, authCfg, bookSource, os.Getenv("B2_CHAPTER_PREFIX"))
+	if puzzleURL := os.Getenv("PUZZLE_DB_URL"); puzzleURL != "" {
+		if puzzleStore, err := puzzledb.Open(puzzleURL, os.Getenv("PUZZLE_DB_TOKEN")); err != nil {
+			log.Printf("puzzle database: could not open (%v) — the puzzle endpoints will return 503", err)
+		} else {
+			handler.SetPuzzleStore(puzzleStore)
+			log.Printf("puzzle database: configured")
+		}
+	} else {
+		log.Printf("puzzle database: PUZZLE_DB_URL is not set — the puzzle endpoints will return 503")
+	}
 	router := api.NewRouter(handler)
 
 	port := os.Getenv("PORT")

@@ -56,6 +56,10 @@ services:
         sync: false # generate with: openssl rand -hex 32
       - key: DATABASE_URL
         sync: false # Postgres connection string (Neon or any Postgres) — trainer sync/analytics 503 without it
+      - key: PUZZLE_DB_URL
+        sync: false # Turso libsql:// URL of the puzzle database — /api/puzzles/* 503 without it
+      - key: PUZZLE_DB_TOKEN
+        sync: false # Turso auth token for that database
       - key: CRON_SECRET
         sync: false # generate with: openssl rand -hex 32 — see note above
 

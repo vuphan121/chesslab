@@ -1,7 +1,6 @@
 package puzzle
 
 import (
-	"fmt"
 	"math"
 	"strings"
 	"testing"
@@ -24,46 +23,6 @@ func TestNextRating(t *testing.T) {
 	}
 	if got := NextRating(2000, 2000, true, 50); math.Abs(got-2012) > 1e-9 {
 		t.Fatalf("settled K: got %v, want 2012", got)
-	}
-}
-
-func TestSampler(t *testing.T) {
-	csv := "PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags\n" +
-		"a,f,m1 m2,1500,80,90,900,fork short,u,\n" +
-		"b,f,m1 m2,1510,80,90,900,fork pin,u,\n" +
-		"c,f,m1 m2,1520,80,90,900,fork,u,\n" +
-		"d,f,m1 m2,1530,80,20,900,fork,u,\n" +
-		"e,f,m1 m2,1540,80,90,10,fork,u,\n" +
-		"f,f,m1 m2,300,80,90,900,fork,u,\n" +
-		"g,f,m1 m2,1800,80,90,900,notATheme,u,\n" +
-		"bad,row\n"
-	s := NewSampler(SampleOptions{PerBand: 2, BandWidth: 50, MinRating: 400, MaxRating: 3500, MinPopularity: 50, MinPlays: 100, Seed: 1})
-	bad, err := ReadCSV(strings.NewReader(csv), s.Add)
-	if err != nil || bad != 1 {
-		t.Fatalf("bad=%d err=%v", bad, err)
-	}
-	got := map[string]bool{}
-	for _, r := range s.Result() {
-		got[r.ID] = true
-	}
-	for _, id := range []string{"d", "e", "f", "g"} {
-		if got[id] {
-			t.Errorf("%s should have been filtered out", id)
-		}
-	}
-	if !got["b"] {
-		t.Errorf("b is the only pin puzzle in its band and must be kept: got %v", got)
-	}
-	perFork := 0
-	for _, r := range s.Result() {
-		for _, th := range r.Themes {
-			if th == "fork" && r.Rating/50 == 30 {
-				perFork++
-			}
-		}
-	}
-	if perFork != 2 {
-		t.Errorf("fork band 30 should hold at most 2 puzzles, got %d", perFork)
 	}
 }
 
@@ -93,27 +52,29 @@ func TestThemeCatalog(t *testing.T) {
 	}
 }
 
-func TestResultLimitedSpreadsAcrossSlots(t *testing.T) {
-	s := NewSampler(SampleOptions{PerBand: 5, BandWidth: 100, MinRating: 400, MaxRating: 3500, MinPopularity: 0, MinPlays: 0, Seed: 1})
-	id := 0
-	add := func(theme string, rating, n int) {
-		for i := 0; i < n; i++ {
-			id++
-			s.Add(Row{ID: fmt.Sprintf("p%d", id), Rating: rating, Themes: []string{theme}})
-		}
+func TestRatingKey(t *testing.T) {
+	k := RatingKey(2034, 123456)
+	if KeyRating(k) != 2034 {
+		t.Fatalf("round trip: got %d", KeyRating(k))
 	}
-	add("fork", 1500, 50)
-	add("pin", 1500, 50)
-	add("skewer", 2500, 50)
-	got := s.ResultLimited(3)
-	themes := map[string]bool{}
-	for _, r := range got {
-		themes[r.Themes[0]] = true
+	if RatingKey(2034, 999999) >= RatingKey(2035, 0) {
+		t.Fatal("keys of one rating must sort below the next rating")
 	}
-	if len(got) != 3 || len(themes) != 3 {
-		t.Fatalf("3 slots, target 3: want one puzzle from each theme, got %v", got)
+}
+
+func TestReadCSVAndSelectableThemes(t *testing.T) {
+	data := strings.Join([]string{
+		"PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags",
+		"a,f,m1 m2,1900,80,90,900,fork notATheme short,u,",
+		"bad,row",
+	}, "\n")
+	var rows []Row
+	bad, err := ReadCSV(strings.NewReader(data), func(r Row) { rows = append(rows, r) })
+	if err != nil || bad != 1 || len(rows) != 1 {
+		t.Fatalf("rows=%d bad=%d err=%v", len(rows), bad, err)
 	}
-	if n := len(s.ResultLimited(0)); n != 15 {
-		t.Fatalf("no target keeps every sampled puzzle: got %d, want 15", n)
+	got := rows[0].SelectableThemes()
+	if len(got) != 2 || got[0] != "fork" || got[1] != "short" {
+		t.Fatalf("selectable themes: %v", got)
 	}
 }

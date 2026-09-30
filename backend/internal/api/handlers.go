@@ -12,6 +12,7 @@ import (
 	"github.com/chesslab/backend/internal/booksource"
 	"github.com/chesslab/backend/internal/db"
 	"github.com/chesslab/backend/internal/engine"
+	"github.com/chesslab/backend/internal/puzzledb"
 	"github.com/chesslab/backend/internal/repertoire"
 )
 
@@ -22,6 +23,7 @@ type Handler struct {
 	bookSource        booksource.Reader
 	bookChapterPrefix string
 	db                *db.Store
+	puzzles           *puzzledb.Store
 	authCfg           auth.Config
 	loginLimiter      *loginLimiter
 	lineImportanceMu  sync.Mutex
@@ -43,3 +45,5 @@ func respondJSON(w http.ResponseWriter, status int, v any) {
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(v)
 }
+
+func (h *Handler) SetPuzzleStore(store *puzzledb.Store) { h.puzzles = store }

@@ -247,19 +247,7 @@ CREATE TABLE IF NOT EXISTS puzzle_sync_state (
     attempts_added INT NOT NULL DEFAULT 0
 );
 
-CREATE TABLE IF NOT EXISTS puzzles (
-    id TEXT PRIMARY KEY,
-    fen TEXT NOT NULL,
-    moves TEXT NOT NULL,
-    rating INT NOT NULL,
-    popularity INT NOT NULL DEFAULT 0,
-    nb_plays INT NOT NULL DEFAULT 0,
-    themes TEXT[] NOT NULL DEFAULT '{}'
-);
-
-CREATE INDEX IF NOT EXISTS puzzles_themes_idx ON puzzles USING GIN (themes);
-
-CREATE INDEX IF NOT EXISTS puzzles_rating_idx ON puzzles (rating);
+DROP TABLE IF EXISTS puzzles;
 
 CREATE TABLE IF NOT EXISTS puzzle_theme_ratings (
     username TEXT NOT NULL CONSTRAINT puzzle_theme_ratings_user_fk

@@ -3,10 +3,9 @@ package puzzle
 import (
 	"encoding/csv"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"math"
-	"math/rand"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -113,79 +112,33 @@ func ParseRow(rec []string) (Row, error) {
 	return Row{ID: rec[0], FEN: rec[1], Moves: rec[2], Rating: rating, Popularity: pop, NbPlays: plays, Themes: strings.Fields(rec[7])}, nil
 }
 
-type SampleOptions struct {
-	PerBand       int
-	BandWidth     int
-	MinRating     int
-	MaxRating     int
-	MinPopularity int
-	MinPlays      int
-	Seed          int64
+type Puzzle struct {
+	ID     string   `json:"id"`
+	FEN    string   `json:"fen"`
+	Moves  string   `json:"moves"`
+	Rating int      `json:"rating"`
+	Themes []string `json:"themes"`
 }
 
-type Sampler struct {
-	opt    SampleOptions
-	rnd    *rand.Rand
-	slots  map[string][]*Row
-	counts map[string]int
-	Seen   int
+const KeyScale = 1_000_000
+
+func RatingKey(rating int, salt int64) int64 {
+	return int64(rating)*KeyScale + salt%KeyScale
 }
 
-func NewSampler(opt SampleOptions) *Sampler {
-	return &Sampler{opt: opt, rnd: rand.New(rand.NewSource(opt.Seed)), slots: map[string][]*Row{}, counts: map[string]int{}}
+func KeyRating(key int64) int { return int(key / KeyScale) }
+
+func Salt(id string) int64 {
+	h := fnv.New64a()
+	h.Write([]byte(id))
+	return int64(h.Sum64() % KeyScale)
 }
 
-func (s *Sampler) Add(r Row) {
-	s.Seen++
-	if r.Rating < s.opt.MinRating || r.Rating > s.opt.MaxRating || r.Popularity < s.opt.MinPopularity || r.NbPlays < s.opt.MinPlays {
-		return
-	}
-	var row *Row
-	band := r.Rating / s.opt.BandWidth
+func (r Row) SelectableThemes() []string {
+	out := make([]string, 0, len(r.Themes))
 	for _, t := range r.Themes {
-		if !themeSet[t] {
-			continue
-		}
-		key := t + "|" + strconv.Itoa(band)
-		s.counts[key]++
-		if row == nil {
-			cp := r
-			row = &cp
-		}
-		slot := s.slots[key]
-		if len(slot) < s.opt.PerBand {
-			s.slots[key] = append(slot, row)
-			continue
-		}
-		if j := s.rnd.Intn(s.counts[key]); j < s.opt.PerBand {
-			slot[j] = row
-		}
-	}
-}
-
-func (s *Sampler) Result() []Row { return s.ResultLimited(0) }
-
-func (s *Sampler) ResultLimited(target int) []Row {
-	keys := make([]string, 0, len(s.slots))
-	deepest := 0
-	for k, slot := range s.slots {
-		keys = append(keys, k)
-		deepest = max(deepest, len(slot))
-	}
-	sort.Strings(keys)
-	seen := map[string]bool{}
-	var out []Row
-	for round := 0; round < deepest; round++ {
-		for _, k := range keys {
-			slot := s.slots[k]
-			if round >= len(slot) || seen[slot[round].ID] {
-				continue
-			}
-			if target > 0 && len(out) >= target {
-				return out
-			}
-			seen[slot[round].ID] = true
-			out = append(out, *slot[round])
+		if themeSet[t] {
+			out = append(out, t)
 		}
 	}
 	return out
