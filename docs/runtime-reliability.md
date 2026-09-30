@@ -20,8 +20,12 @@ halfmove-clock-sensitive 50-move rule.
 
 Lichess lookups use subscriber-counted in-flight requests. Leaving a position releases that caller;
 the underlying fetch is aborted only when no remaining consumer needs it, so deduplication and real
-network cancellation coexist. Opening Explorer cache keys use the first four FEN fields because move
-clocks do not affect its result. Move-history cloud results are committed to React in batches, and
+network cancellation coexist. Cloud/tablebase evaluation keys use the first five FEN fields: the
+halfmove clock is preserved for 50-move-rule correctness while the irrelevant fullmove number is
+discarded. A wider in-flight MultiPV request can serve a narrower subscriber. Opening Explorer cache
+keys use the first four FEN fields because move clocks do not affect its result. Move-tree indexes are
+memoized by immutable root, and active paths are collected then reversed instead of repeatedly
+prepending. Move-history cloud results are committed to React in batches, and
 local Stockfish fallback evaluations are serialized behind the foreground engine.
 
 Bulk persisted evaluations use `POST /api/position-evals` with `{ "fens": [...] }`, avoiding URL-size
@@ -50,6 +54,17 @@ Browser saves are ordered, retries carry a persistent operation ID, and the data
 in the same transaction as progress and analytics. Today’s Training uses a per-user advisory lock
 for queue changes and rejects stale automatic rebuilds. These guarantees apply across tabs, devices,
 and multiple backend instances sharing Postgres.
+
+On phones, `OfflineSync` owns a singleton idle-scheduled catalog prefetch that downloads every
+repertoire and progress map and keeps running while Opening Study is active. `networkFirst` and
+`cacheFirst` share one in-flight operation per cache key. A timed-out cached read detaches the stuck
+operation so a later caller can retry. IndexedDB ownership changes only after the previous user’s
+store has been successfully cleared. User settings render from defaults immediately and update from
+cache/network asynchronously, avoiding a blank authenticated screen during a cold request.
+
+Board annotations, drag state, and promotion state are keyed to the current FEN and transition
+through one reducer, so a position change resets them atomically without render-time state updates.
+Move navigation animation uses the browser animation API and preserves the optimistic user-move path.
 
 Chess piece images load eagerly because the board is the page's primary visual content. Production
 dependency audits should remain at zero npm findings and zero reachable/imported-package Go

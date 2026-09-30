@@ -12,6 +12,29 @@ There is no daily line-count cap. If the selected repertoires contain 640 distin
 
 This queue is independent from normal single-repertoire sessions. Normal sessions retain their existing scheduler and per-card progress behavior.
 
+## API payload and mobile cache
+
+The Today’s Training endpoints return a compact queue summary rather than serializing every persisted
+entry after each line:
+
+```json
+{
+  "settings": { "repertoireIds": ["catalan-white"] },
+  "entryCount": 900,
+  "nextEntry": { "repertoireId": "catalan-white", "cardId": "..." }
+}
+```
+
+`nextEntry` is enough to start a run because the complete repertoire contains the card, its chapter
+path, answers, opponent replies, and resulting FENs. On phone-sized devices, one shared low-priority
+background job downloads every repertoire and progress map into IndexedDB. That job continues after
+the picker closes and while a drill is running, and retries on the next online event. Duplicate mounts
+and readers share in-flight requests, so this offline-first behavior does not create duplicate catalog
+downloads.
+
+The persisted Today queue order itself remains server-owned. Cached repertoire lines can be drilled
+offline, but advancing the mixed Today queue still requires the server to return its next entry.
+
 ## Day boundary
 
 The frontend sends the browser's IANA time zone (for example, `Asia/Bangkok`) in the
