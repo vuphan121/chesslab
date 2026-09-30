@@ -7,15 +7,16 @@ import (
 
 func TestRelationshipMigrationsMatchSchema(t *testing.T) {
 	want := map[string]string{
-		"card_progress_user_fk":            "card_progress",
-		"line_attempts_user_fk":            "line_attempts",
-		"progress_operations_user_fk":      "progress_operations",
-		"book_item_progress_user_fk":       "book_item_progress",
-		"book_study_activity_user_fk":      "book_study_activity",
-		"book_saved_lines_user_fk":         "book_saved_lines",
-		"today_training_settings_user_fk":  "today_training_settings",
-		"today_training_queue_settings_fk": "today_training_queue",
-		"saved_puzzles_user_fk":            "saved_puzzles",
+		"card_progress_user_fk":             "card_progress",
+		"line_attempts_user_fk":             "line_attempts",
+		"progress_operations_user_fk":       "progress_operations",
+		"book_item_progress_user_fk":        "book_item_progress",
+		"book_study_activity_user_fk":       "book_study_activity",
+		"book_saved_lines_user_fk":          "book_saved_lines",
+		"today_training_settings_user_fk":   "today_training_settings",
+		"today_training_queue_settings_fk":  "today_training_queue",
+		"today_training_operations_user_fk": "today_training_operations",
+		"saved_puzzles_user_fk":             "saved_puzzles",
 	}
 
 	if len(relationshipMigrations) != len(want) {

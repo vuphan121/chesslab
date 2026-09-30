@@ -37,12 +37,10 @@ result back to every full FEN requested by the browser.
 - Request bodies are capped at 4 MiB.
 - A client address is allowed five failed login attempts per five-minute window. Further attempts
   receive `429 Too Many Requests` with `Retry-After`; a successful login clears the failures. The
-  client address is resolved by `loginClientKey` (`backend/internal/api/login_limiter.go`): it prefers
-  `CF-Connecting-IP`/`True-Client-IP` when present (set authoritatively by a fronting Cloudflare edge,
-  not spoofable by the caller), falling back to the right-most `X-Forwarded-For` entry — never the
-  left-most, which is caller-controlled and would make the whole limiter a no-op. That XFF fallback
-  assumes exactly one trusted proxy hop in front of this app; that assumption has **not** been
-  empirically verified against the live Render deployment (see the comment in `loginClientKey` itself).
+  client address normally comes from the direct TCP peer. `TRUST_PROXY_HEADERS=true` opts a deployment
+  behind a managed reverse proxy into `CF-Connecting-IP`, `True-Client-IP`, and the right-most
+  `X-Forwarded-For` entry. It is enabled in the Render blueprint, but stays off for local/direct
+  deployments so a caller cannot evade the limiter with a forged forwarding header.
 - The HTTP server applies header, read, write, idle, and maximum-header-size limits. The three-minute
   write timeout is kept generous for the cron endpoints.
 - Browser time-zone values are validated against the embedded IANA database and fall back to UTC.
@@ -52,15 +50,25 @@ result back to every full FEN requested by the browser.
 Trainer progress is merged through atomic per-run increments rather than whole-snapshot overwrites.
 Browser saves are ordered, retries carry a persistent operation ID, and the database records that ID
 in the same transaction as progress and analytics. Today’s Training uses a per-user advisory lock
-for queue changes and rejects stale automatic rebuilds. These guarantees apply across tabs, devices,
-and multiple backend instances sharing Postgres.
+for queue changes and rejects stale automatic rebuilds. Mobile queue advances also carry a persistent
+operation ID and their original queue date; the operation and queue move commit together, so reconnect
+retries cannot rotate an entry twice or alter a new day's queue. These guarantees apply across tabs,
+devices, and multiple backend instances sharing Postgres. Dated queue rows and their operation IDs are
+pruned by the existing retention sweep so the daily snapshots do not grow without bound.
 
-On phones, `OfflineSync` owns a singleton idle-scheduled catalog prefetch that downloads every
-repertoire and progress map and keeps running while Opening Study is active. `networkFirst` and
-`cacheFirst` share one in-flight operation per cache key. A timed-out cached read detaches the stuck
-operation so a later caller can retry. IndexedDB ownership changes only after the previous user’s
-store has been successfully cleared. User settings render from defaults immediately and update from
-cache/network asynchronously, avoiding a blank authenticated screen during a cold request.
+On phone-sized or coarse-pointer mobile devices, `OfflineSync` owns a singleton idle-scheduled catalog prefetch that downloads every
+repertoire, progress map, and the complete dated Today queue, and keeps running while Opening Study is
+active. Completed Today entries rotate in IndexedDB immediately; failed server advances remain in a
+typed persistent outbox and sync before the server snapshot is refreshed. Both outbox flushers keep
+draining records added while a flush is active. `networkFirst` and `cacheFirst` share one in-flight
+operation per cache key. Cache write generations prevent an older network response from replacing a
+newer local rotation or refresh; a timed-out cached read detaches only its own registry slot so a later
+caller can retry safely. IndexedDB ownership changes only after the previous user’s store has been
+successfully cleared; old-account in-flight reads are invalidated, and login fails closed if that
+clear cannot be completed. User settings render
+from defaults immediately and update from cache/network asynchronously, avoiding a blank authenticated
+screen during a cold request. The service worker removes the previous versioned caches on activation
+and bounds unreferenced hashed Next.js assets while retaining a grace set for concurrent page refreshes.
 
 Board annotations, drag state, and promotion state are keyed to the current FEN and transition
 through one reducer, so a position change resets them atomically without render-time state updates.

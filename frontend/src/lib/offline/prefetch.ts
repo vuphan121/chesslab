@@ -2,8 +2,9 @@ import { getProgress, getRepertoire } from '@/lib/api/client'
 import { cacheAgeMs } from './cache'
 import type { RepertoireSummary } from '@/lib/trainer/types'
 
+export { isMobileOfflineDevice } from './device'
+
 const FRESH_MS = 24 * 60 * 60 * 1000
-const PHONE_MEDIA = '(max-width: 639px)'
 
 interface NetworkInformationLike {
   saveData?: boolean
@@ -22,10 +23,6 @@ function yieldToBrowser(): Promise<void> {
       setTimeout(resolve, 0)
     }
   })
-}
-
-export function isMobileOfflineDevice(): boolean {
-  return typeof window !== 'undefined' && window.matchMedia(PHONE_MEDIA).matches
 }
 
 async function drainPrefetchQueue(): Promise<void> {

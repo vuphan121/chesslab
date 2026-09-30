@@ -25,15 +25,27 @@ entry after each line:
 }
 ```
 
-`nextEntry` is enough to start a run because the complete repertoire contains the card, its chapter
-path, answers, opponent replies, and resulting FENs. On phone-sized devices, one shared low-priority
-background job downloads every repertoire and progress map into IndexedDB. That job continues after
-the picker closes and while a drill is running, and retries on the next online event. Duplicate mounts
-and readers share in-flight requests, so this offline-first behavior does not create duplicate catalog
-downloads.
+`nextEntry` is enough to start an online run because the complete repertoire contains the card, its
+chapter path, answers, opponent replies, and resulting FENs. Phone-sized or coarse-pointer mobile devices additionally fetch
+`GET /api/today-training/snapshot` once and store its full `{ queueDate, settings, entries }` queue in
+IndexedDB. The same low-priority background job downloads every repertoire and progress map, continues
+after the picker closes and while a drill is running, and retries on the next online event. Duplicate
+mounts and readers share in-flight requests, so this offline-first behavior does not create duplicate
+catalog downloads.
 
-The persisted Today queue order itself remains server-owned. Cached repertoire lines can be drilled
-offline, but advancing the mixed Today queue still requires the server to return its next entry.
+After a mobile line finishes, the cached entry moves to the back immediately and the next cached entry
+can start without a network response. The advance is sent with a stable operation ID and the snapshot's
+original queue date. Failed requests enter the same persistent IndexedDB outbox used for progress and
+are replayed in order after reconnecting. The server records an operation ID in the same transaction as
+the queue move, making an ambiguous retry safe: a response can be lost without moving the entry twice.
+Progress saves and queue advances use discriminated outbox records, so either flusher ignores the other
+kind of work. A pending advance prevents a server prefetch from replacing the locally rotated snapshot,
+and cache write generations reject late responses that began before a newer local write. Reconnect
+flushes keep draining work that is added while a flush is already running.
+
+If the device remains offline across a calendar-day boundary, it keeps cycling the downloaded queue
+rather than blocking training. On reconnect, pending operations are applied to their original dated
+queue before the current day's server snapshot replaces the local copy.
 
 ## Day boundary
 

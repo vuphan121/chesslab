@@ -3,7 +3,17 @@ import type { Repertoire, RepertoireSummary } from '@/lib/trainer/types'
 import type { Book, BookSummary } from '@/lib/books/types'
 import { getToken, setToken, clearToken } from '@/lib/auth/token'
 import { ApiError, isRetryable } from '@/lib/offline/errors'
-import { cacheFirst, dropCachedRepertoiresExcept, enqueue, listOutbox, networkFirst, readCache, refreshCache, removeOutboxItem, writeCache } from '@/lib/offline/cache'
+import { cacheFirst, deleteCache, dropCachedRepertoiresExcept, enqueue, listOutbox, networkFirst, readCache, refreshCache, removeOutboxItem, writeCache } from '@/lib/offline/cache'
+import { isMobileOfflineDevice } from '@/lib/offline/device'
+import {
+  rotateTodayTraining,
+  summarizeTodayTraining,
+  type TodayTrainingResponse,
+  type TodayTrainingSettings,
+  type TodayTrainingSnapshot,
+} from '@/lib/trainer/todayTraining'
+
+export type { TodayTrainingEntry, TodayTrainingResponse, TodayTrainingSettings } from '@/lib/trainer/todayTraining'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
 
@@ -203,10 +213,16 @@ export async function refreshAllCachedData(): Promise<void> {
   }
   await dropCachedRepertoiresExcept(new Set(list.map((r) => r.id)))
   await refreshCache('user-settings', () => request<UserSettings>('/api/user-settings')).catch(() => {})
-  const pending = new Set((await listOutbox<QueuedProgress>()).map((item) => item.payload.repertoireId))
+  const pending = new Set((await listOutbox<unknown>())
+    .filter((item): item is typeof item & { payload: QueuedProgress } => isQueuedProgress(item.payload))
+    .map((item) => item.payload.repertoireId))
   for (const rep of list) {
     if (pending.has(rep.id)) continue
     await refreshCache(progressCacheKey(rep.id), () => request<GetProgressResponse>(`/api/progress/${rep.id}`)).catch(() => {})
+  }
+  if (isMobileOfflineDevice()) {
+    await flushTodayTrainingOutbox()
+    await prefetchTodayTrainingSnapshot().catch(() => {})
   }
 }
 
@@ -333,7 +349,9 @@ const progressCacheKey = (repertoireId: string) => `progress:${repertoireId}`
 
 export const getProgress = async (repertoireId: string): Promise<GetProgressResponse> => {
   await Promise.race([flushProgressOutbox(), new Promise((resolve) => setTimeout(resolve, 1000))])
-  const pending = (await listOutbox<QueuedProgress>()).some((item) => item.payload.repertoireId === repertoireId)
+  const pending = (await listOutbox<unknown>()).some(
+    (item) => isQueuedProgress(item.payload) && item.payload.repertoireId === repertoireId,
+  )
   if (pending) {
     const local = await readCache<GetProgressResponse>(progressCacheKey(repertoireId))
     if (local) return local.value
@@ -356,11 +374,21 @@ export interface CardProgressDelta {
 }
 
 interface QueuedProgress {
+  kind?: 'progress'
   repertoireId: string
   cards: Record<string, ServerCardState>
   lineAttempt?: LineAttempt
   deltas?: Record<string, CardProgressDelta>
   operationId?: string
+}
+
+function isQueuedProgress(payload: unknown): payload is QueuedProgress {
+  if (!payload || typeof payload !== 'object') return false
+  const value = payload as Partial<QueuedProgress>
+  return (value.kind === undefined || value.kind === 'progress')
+    && typeof value.repertoireId === 'string'
+    && typeof value.cards === 'object'
+    && value.cards !== null
 }
 
 const postProgress = (p: QueuedProgress): Promise<{ ok: boolean }> =>
@@ -372,23 +400,41 @@ const postProgress = (p: QueuedProgress): Promise<{ ok: boolean }> =>
   })
 
 let flushing: Promise<void> | null = null
+let flushProgressAgain = false
 
 export function flushProgressOutbox(): Promise<void> {
-  if (flushing) return flushing
+  if (flushing) {
+    flushProgressAgain = true
+    return flushing
+  }
+  flushProgressAgain = false
   flushing = (async () => {
-    for (const item of await listOutbox<QueuedProgress>()) {
-      try {
-        await postProgress(item.payload)
-      } catch (err) {
-        if (isRetryable(err) || (err instanceof ApiError && (err.status === 401 || err.status === 408 || err.status === 429))) return
-        console.warn('dropping unsyncable queued progress', err)
+    const processed = new Set<string>()
+    while (true) {
+      const items = (await listOutbox<unknown>()).filter((item) => !processed.has(item.id) && isQueuedProgress(item.payload))
+      if (items.length === 0) {
+        if (flushProgressAgain) {
+          flushProgressAgain = false
+          continue
+        }
+        return
       }
-      await removeOutboxItem(item.id)
+      for (const item of items) {
+        try {
+          await postProgress(item.payload as QueuedProgress)
+        } catch (err) {
+          if (isRetryable(err) || (err instanceof ApiError && (err.status === 401 || err.status === 408 || err.status === 429))) return
+          console.warn('dropping unsyncable queued progress', err)
+        }
+        await removeOutboxItem(item.id)
+        processed.add(item.id)
+      }
     }
   })()
     .catch(() => {})
     .finally(() => {
       flushing = null
+      if (flushProgressAgain) void flushProgressOutbox()
     })
   return flushing
 }
@@ -400,7 +446,7 @@ export const saveProgress = async (
   deltas?: Record<string, CardProgressDelta>,
   operationId?: string,
 ): Promise<{ ok: boolean; queued?: boolean }> => {
-  const payload: QueuedProgress = { repertoireId, cards, lineAttempt, deltas, operationId }
+  const payload: QueuedProgress = { kind: 'progress', repertoireId, cards, lineAttempt, deltas, operationId }
   void writeCache<GetProgressResponse>(progressCacheKey(repertoireId), { cards })
   try {
     const result = await postProgress(payload)
@@ -408,6 +454,7 @@ export const saveProgress = async (
     return result
   } catch (err) {
     if (!isRetryable(err) || !operationId || !(await enqueue(payload))) throw err
+    if (flushing) flushProgressAgain = true
     return { ok: true, queued: true }
   }
 }
@@ -432,37 +479,71 @@ export interface AnalyticsResponse {
 
 export const getAnalytics = (): Promise<AnalyticsResponse> => request('/api/analytics')
 
-export interface TodayTrainingSettings {
-  repertoireIds: string[]
-}
-
-export interface TodayTrainingEntry {
-  repertoireId: string
-  cardId: string
-}
-
-export interface TodayTrainingResponse {
-  settings: TodayTrainingSettings | null
-  entryCount: number
-  nextEntry: TodayTrainingEntry | null
-}
-
 let todayTrainingRequest: Promise<TodayTrainingResponse> | null = null
 
-export const getTodayTraining = (): Promise<TodayTrainingResponse> => {
+const TODAY_TRAINING_CACHE_KEY = 'today-training-snapshot'
+
+interface QueuedTodayTrainingAdvance {
+  kind: 'today-training-advance'
+  repertoireId: string
+  cardId: string
+  queueDate: string
+  operationId: string
+}
+
+function isQueuedTodayTrainingAdvance(payload: unknown): payload is QueuedTodayTrainingAdvance {
+  if (!payload || typeof payload !== 'object') return false
+  const value = payload as Partial<QueuedTodayTrainingAdvance>
+  return value.kind === 'today-training-advance'
+    && typeof value.repertoireId === 'string'
+    && typeof value.cardId === 'string'
+    && typeof value.queueDate === 'string'
+    && typeof value.operationId === 'string'
+}
+
+const fetchTodayTrainingSnapshot = (): Promise<TodayTrainingSnapshot> =>
+  request('/api/today-training/snapshot')
+
+async function hasPendingTodayTrainingAdvance(): Promise<boolean> {
+  return (await listOutbox<unknown>()).some((item) => isQueuedTodayTrainingAdvance(item.payload))
+}
+
+export const prefetchTodayTrainingSnapshot = async (): Promise<TodayTrainingSnapshot> => {
+  if (await hasPendingTodayTrainingAdvance()) {
+    const cached = await readCache<TodayTrainingSnapshot>(TODAY_TRAINING_CACHE_KEY)
+    if (cached) return cached.value
+    throw new Error('Today training has pending offline changes and no local snapshot.')
+  }
+  return refreshCache(TODAY_TRAINING_CACHE_KEY, fetchTodayTrainingSnapshot)
+}
+
+export const getTodayTraining = async (): Promise<TodayTrainingResponse> => {
   if (!todayTrainingRequest) {
-    todayTrainingRequest = request<TodayTrainingResponse>('/api/today-training')
+    todayTrainingRequest = (async () => {
+      if (!isMobileOfflineDevice()) return request<TodayTrainingResponse>('/api/today-training')
+      await Promise.race([flushTodayTrainingOutbox(), new Promise((resolve) => setTimeout(resolve, 1000))])
+      if (await hasPendingTodayTrainingAdvance()) {
+        const cached = await readCache<TodayTrainingSnapshot>(TODAY_TRAINING_CACHE_KEY)
+        if (cached) return summarizeTodayTraining(cached.value)
+      }
+      const snapshot = await networkFirst(TODAY_TRAINING_CACHE_KEY, fetchTodayTrainingSnapshot, 800)
+      return summarizeTodayTraining(snapshot)
+    })()
       .finally(() => { todayTrainingRequest = null })
   }
   return todayTrainingRequest
 }
 
-export const saveTodayTraining = (settings: TodayTrainingSettings): Promise<TodayTrainingResponse> =>
-  request('/api/today-training', {
+export const saveTodayTraining = async (settings: TodayTrainingSettings): Promise<TodayTrainingResponse> => {
+  const saved = await request<TodayTrainingResponse>('/api/today-training', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(settings),
   })
+  await deleteCache(TODAY_TRAINING_CACHE_KEY)
+  if (isMobileOfflineDevice()) await prefetchTodayTrainingSnapshot().catch(() => {})
+  return saved
+}
 
 export interface SavedPuzzle {
   id: number
@@ -492,12 +573,80 @@ export const deleteSavedPuzzle = async (id: number): Promise<void> => {
 export const advanceTodayTraining = (
   repertoireId: string,
   cardId: string,
-): Promise<TodayTrainingResponse> =>
+): Promise<TodayTrainingResponse> => advanceTodayTrainingOfflineFirst(repertoireId, cardId)
+
+const postTodayTrainingAdvance = (payload: QueuedTodayTrainingAdvance): Promise<TodayTrainingResponse> =>
   request('/api/today-training/advance', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ repertoireId, cardId }),
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(15000),
   })
+
+async function advanceTodayTrainingOfflineFirst(
+  repertoireId: string,
+  cardId: string,
+): Promise<TodayTrainingResponse> {
+  const cached = await readCache<TodayTrainingSnapshot>(TODAY_TRAINING_CACHE_KEY)
+  const rotated = cached ? rotateTodayTraining(cached.value, repertoireId, cardId) : null
+  const payload: QueuedTodayTrainingAdvance = {
+    kind: 'today-training-advance',
+    repertoireId,
+    cardId,
+    queueDate: cached?.value.queueDate ?? '',
+    operationId: crypto.randomUUID(),
+  }
+  if (rotated && await enqueue(payload)) {
+    if (await writeCache(TODAY_TRAINING_CACHE_KEY, rotated)) {
+      void flushTodayTrainingOutbox()
+      return summarizeTodayTraining(rotated)
+    }
+  }
+  const response = await postTodayTrainingAdvance(payload)
+  void flushTodayTrainingOutbox()
+  if (rotated) await deleteCache(TODAY_TRAINING_CACHE_KEY)
+  return response
+}
+
+let flushingTodayTraining: Promise<void> | null = null
+let flushTodayTrainingAgain = false
+
+export function flushTodayTrainingOutbox(): Promise<void> {
+  if (flushingTodayTraining) {
+    flushTodayTrainingAgain = true
+    return flushingTodayTraining
+  }
+  flushTodayTrainingAgain = false
+  flushingTodayTraining = (async () => {
+    const processed = new Set<string>()
+    while (true) {
+      const items = (await listOutbox<unknown>()).filter((item) => !processed.has(item.id) && isQueuedTodayTrainingAdvance(item.payload))
+      if (items.length === 0) {
+        if (flushTodayTrainingAgain) {
+          flushTodayTrainingAgain = false
+          continue
+        }
+        return
+      }
+      for (const item of items) {
+        try {
+          await postTodayTrainingAdvance(item.payload as QueuedTodayTrainingAdvance)
+        } catch (err) {
+          if (isRetryable(err) || (err instanceof ApiError && (err.status === 401 || err.status === 408 || err.status === 429))) return
+          console.warn('dropping unsyncable queued today training advance', err)
+        }
+        await removeOutboxItem(item.id)
+        processed.add(item.id)
+      }
+    }
+  })()
+    .catch(() => {})
+    .finally(() => {
+      flushingTodayTraining = null
+      if (flushTodayTrainingAgain) void flushTodayTrainingOutbox()
+    })
+  return flushingTodayTraining
+}
 
 export type PieceTheme = 'classic' | 'glass'
 

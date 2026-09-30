@@ -3,6 +3,8 @@ package api
 import (
 	"net"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -66,16 +68,19 @@ func (l *loginLimiter) success(key string) {
 }
 
 func loginClientKey(r *http.Request) string {
-	if ip := net.ParseIP(strings.TrimSpace(r.Header.Get("CF-Connecting-IP"))); ip != nil {
-		return ip.String()
-	}
-	if ip := net.ParseIP(strings.TrimSpace(r.Header.Get("True-Client-IP"))); ip != nil {
-		return ip.String()
-	}
-	candidates := strings.Split(r.Header.Get("X-Forwarded-For"), ",")
-	for i := len(candidates) - 1; i >= 0; i-- {
-		if ip := net.ParseIP(strings.TrimSpace(candidates[i])); ip != nil {
+	trustForwarded, _ := strconv.ParseBool(strings.TrimSpace(os.Getenv("TRUST_PROXY_HEADERS")))
+	if trustForwarded {
+		if ip := net.ParseIP(strings.TrimSpace(r.Header.Get("CF-Connecting-IP"))); ip != nil {
 			return ip.String()
+		}
+		if ip := net.ParseIP(strings.TrimSpace(r.Header.Get("True-Client-IP"))); ip != nil {
+			return ip.String()
+		}
+		candidates := strings.Split(r.Header.Get("X-Forwarded-For"), ",")
+		for i := len(candidates) - 1; i >= 0; i-- {
+			if ip := net.ParseIP(strings.TrimSpace(candidates[i])); ip != nil {
+				return ip.String()
+			}
 		}
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)

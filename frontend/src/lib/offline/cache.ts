@@ -4,6 +4,23 @@ import { isRetryable } from './errors'
 const OWNER_KEY = 'chesslab.offline.owner'
 const OUTBOX_PREFIX = 'outbox:'
 const inflight = new Map<string, Promise<unknown>>()
+const cacheRevisions = new Map<string, number>()
+
+function cacheRevision(key: string): number {
+  return cacheRevisions.get(key) ?? 0
+}
+
+function advanceCacheRevision(key: string): number {
+  const next = cacheRevision(key) + 1
+  cacheRevisions.set(key, next)
+  return next
+}
+
+function invalidateAllCacheRequests(): void {
+  const keys = new Set([...cacheRevisions.keys(), ...inflight.keys()])
+  for (const key of keys) advanceCacheRevision(key)
+  inflight.clear()
+}
 
 interface Cached<T> {
   value: T
@@ -14,8 +31,14 @@ export async function readCache<T>(key: string): Promise<Cached<T> | undefined> 
   return idbGet<Cached<T>>(`cache:${key}`)
 }
 
-export async function writeCache<T>(key: string, value: T): Promise<void> {
-  await idbSet(`cache:${key}`, { value, at: Date.now() } satisfies Cached<T>)
+export async function writeCache<T>(key: string, value: T): Promise<boolean> {
+  advanceCacheRevision(key)
+  return idbSet(`cache:${key}`, { value, at: Date.now() } satisfies Cached<T>)
+}
+
+export async function deleteCache(key: string): Promise<void> {
+  advanceCacheRevision(key)
+  await idbDelete(`cache:${key}`)
 }
 
 export async function cacheAgeMs(key: string): Promise<number | null> {
@@ -56,12 +79,17 @@ export interface CacheFirstOptions<T> {
 function revalidate<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
   const running = inflight.get(key) as Promise<T> | undefined
   if (running) return running
+  const revision = advanceCacheRevision(key)
   const p = fetcher()
     .then(async (value) => {
-      await writeCache(key, value)
+      if (cacheRevision(key) === revision) {
+        await idbSet(`cache:${key}`, { value, at: Date.now() } satisfies Cached<T>)
+      }
       return value
     })
-    .finally(() => inflight.delete(key))
+    .finally(() => {
+      if (inflight.get(key) === p) inflight.delete(key)
+    })
   inflight.set(key, p)
   return p
 }
@@ -84,7 +112,7 @@ export const refreshCache = revalidate
 export async function dropCachedRepertoiresExcept(keepIds: Set<string>): Promise<void> {
   const prefix = 'cache:repertoire:'
   for (const { key } of await idbList<unknown>(prefix)) {
-    if (!keepIds.has(key.slice(prefix.length))) await idbDelete(key)
+    if (!keepIds.has(key.slice(prefix.length))) await deleteCache(key.slice('cache:'.length))
   }
 }
 
@@ -128,15 +156,17 @@ export async function outboxCount(): Promise<number> {
   return (await idbList(OUTBOX_PREFIX)).length
 }
 
-export async function claimOfflineStore(username: string): Promise<void> {
+export async function claimOfflineStore(username: string): Promise<boolean> {
   try {
     const owner = window.localStorage.getItem(OWNER_KEY)
-    if (owner !== username) {
-      const cleared = await idbClear()
-      if (!cleared) return
-      window.localStorage.setItem(OWNER_KEY, username)
-      notifyOutbox()
-    }
+    if (owner === username) return true
+    const cleared = await idbClear()
+    if (!cleared) return false
+    invalidateAllCacheRequests()
+    window.localStorage.setItem(OWNER_KEY, username)
+    notifyOutbox()
+    return true
   } catch {
+    return false
   }
 }

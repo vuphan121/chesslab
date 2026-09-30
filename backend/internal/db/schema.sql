@@ -131,6 +131,21 @@ ALTER TABLE today_training_queue ALTER COLUMN queue_rank SET NOT NULL;
 CREATE INDEX IF NOT EXISTS today_training_queue_username_date_rank_idx
     ON today_training_queue (username, queue_date, queue_rank);
 
+CREATE TABLE IF NOT EXISTS today_training_operations (
+    username TEXT NOT NULL CONSTRAINT today_training_operations_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    operation_id TEXT NOT NULL,
+    queue_date DATE NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (username, operation_id)
+);
+
+CREATE INDEX IF NOT EXISTS today_training_operations_created_at_idx
+    ON today_training_operations (created_at);
+
+CREATE INDEX IF NOT EXISTS today_training_queue_date_idx
+    ON today_training_queue (queue_date);
+
 CREATE TABLE IF NOT EXISTS repertoire_sources (
     id TEXT PRIMARY KEY,
     source_url TEXT NOT NULL,

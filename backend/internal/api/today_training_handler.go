@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/db"
@@ -25,9 +26,17 @@ type TodayTrainingResponse struct {
 	NextEntry  *TodayTrainingEntryJSON    `json:"nextEntry"`
 }
 
+type TodayTrainingSnapshotResponse struct {
+	QueueDate string                     `json:"queueDate"`
+	Settings  *TodayTrainingSettingsJSON `json:"settings"`
+	Entries   []TodayTrainingEntryJSON   `json:"entries"`
+}
+
 type AdvanceTodayTrainingRequest struct {
 	RepertoireID string `json:"repertoireId"`
 	CardID       string `json:"cardId"`
+	QueueDate    string `json:"queueDate"`
+	OperationID  string `json:"operationId"`
 }
 
 func (h *Handler) GetTodayTraining(w http.ResponseWriter, r *http.Request) {
@@ -35,28 +44,23 @@ func (h *Handler) GetTodayTraining(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	queueDate := currentRequestClock(r).date
-	queue, err := h.db.GetTodayTraining(r.Context(), username, queueDate)
-	if err != nil {
-		http.Error(w, "failed to load today's training: "+err.Error(), http.StatusInternalServerError)
+	queue, _, ok := h.loadTodayTraining(w, r, username)
+	if !ok {
 		return
 	}
-	if queue.Settings != nil {
-		expected, expectedErr := h.todayTrainingEntries(*queue.Settings)
-		if expectedErr != nil {
-			http.Error(w, "failed to prepare today's training: "+expectedErr.Error(), http.StatusBadRequest)
-			return
-		}
-		if !sameTodayTrainingEntries(queue.Entries, expected) {
-			expected = shuffleTodayTrainingEntries(expected, rand.IntN)
-			queue, err = h.db.RefreshTodayTraining(r.Context(), username, queueDate, *queue.Settings, expected)
-		}
-		if err != nil {
-			http.Error(w, "failed to prepare today's training: "+err.Error(), http.StatusBadRequest)
-			return
-		}
-	}
 	respondJSON(w, http.StatusOK, todayTrainingResponse(queue))
+}
+
+func (h *Handler) GetTodayTrainingSnapshot(w http.ResponseWriter, r *http.Request) {
+	username, ok := h.todayTrainingUsername(w, r)
+	if !ok {
+		return
+	}
+	queue, queueDate, ok := h.loadTodayTraining(w, r, username)
+	if !ok {
+		return
+	}
+	respondJSON(w, http.StatusOK, todayTrainingSnapshotResponse(queueDate, queue))
 }
 
 func (h *Handler) SaveTodayTraining(w http.ResponseWriter, r *http.Request) {
@@ -92,12 +96,44 @@ func (h *Handler) AdvanceTodayTraining(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "repertoireId and cardId are required", http.StatusBadRequest)
 		return
 	}
-	queue, err := h.db.AdvanceTodayTraining(r.Context(), username, currentRequestClock(r).date, req.RepertoireID, req.CardID)
+	queueDate := req.QueueDate
+	if queueDate == "" {
+		queueDate = currentRequestClock(r).date
+	} else if _, err := time.Parse("2006-01-02", queueDate); err != nil {
+		http.Error(w, "queueDate must be YYYY-MM-DD", http.StatusBadRequest)
+		return
+	}
+	queue, err := h.db.AdvanceTodayTraining(r.Context(), username, queueDate, req.RepertoireID, req.CardID, req.OperationID)
 	if err != nil {
 		http.Error(w, "failed to advance today's training: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	respondJSON(w, http.StatusOK, todayTrainingResponse(queue))
+}
+
+func (h *Handler) loadTodayTraining(w http.ResponseWriter, r *http.Request, username string) (db.TodayTrainingQueue, string, bool) {
+	queueDate := currentRequestClock(r).date
+	queue, err := h.db.GetTodayTraining(r.Context(), username, queueDate)
+	if err != nil {
+		http.Error(w, "failed to load today's training: "+err.Error(), http.StatusInternalServerError)
+		return db.TodayTrainingQueue{}, queueDate, false
+	}
+	if queue.Settings != nil {
+		expected, expectedErr := h.todayTrainingEntries(*queue.Settings)
+		if expectedErr != nil {
+			http.Error(w, "failed to prepare today's training: "+expectedErr.Error(), http.StatusBadRequest)
+			return db.TodayTrainingQueue{}, queueDate, false
+		}
+		if !sameTodayTrainingEntries(queue.Entries, expected) {
+			expected = shuffleTodayTrainingEntries(expected, rand.IntN)
+			queue, err = h.db.RefreshTodayTraining(r.Context(), username, queueDate, *queue.Settings, expected)
+		}
+		if err != nil {
+			http.Error(w, "failed to prepare today's training: "+err.Error(), http.StatusBadRequest)
+			return db.TodayTrainingQueue{}, queueDate, false
+		}
+	}
+	return queue, queueDate, true
 }
 
 func (h *Handler) todayTrainingUsername(w http.ResponseWriter, r *http.Request) (string, bool) {
@@ -177,6 +213,17 @@ func todayTrainingResponse(queue db.TodayTrainingQueue) TodayTrainingResponse {
 	if len(queue.Entries) > 0 {
 		entry := queue.Entries[0]
 		response.NextEntry = &TodayTrainingEntryJSON{RepertoireID: entry.RepertoireID, CardID: entry.CardID}
+	}
+	return response
+}
+
+func todayTrainingSnapshotResponse(queueDate string, queue db.TodayTrainingQueue) TodayTrainingSnapshotResponse {
+	response := TodayTrainingSnapshotResponse{QueueDate: queueDate, Entries: make([]TodayTrainingEntryJSON, 0, len(queue.Entries))}
+	if queue.Settings != nil {
+		response.Settings = &TodayTrainingSettingsJSON{RepertoireIDs: queue.Settings.RepertoireIDs}
+	}
+	for _, entry := range queue.Entries {
+		response.Entries = append(response.Entries, TodayTrainingEntryJSON{RepertoireID: entry.RepertoireID, CardID: entry.CardID})
 	}
 	return response
 }

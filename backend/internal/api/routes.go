@@ -50,6 +50,7 @@ func NewRouter(h *Handler) http.Handler {
 			r.Post("/{repertoireId}", h.SaveProgress)
 		})
 		r.Get("/api/today-training", h.GetTodayTraining)
+		r.Get("/api/today-training/snapshot", h.GetTodayTrainingSnapshot)
 		r.Put("/api/today-training", h.SaveTodayTraining)
 		r.Post("/api/today-training/advance", h.AdvanceTodayTraining)
 

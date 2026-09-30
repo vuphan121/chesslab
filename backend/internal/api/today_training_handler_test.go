@@ -62,3 +62,23 @@ func TestTodayTrainingResponseOnlyReturnsQueueSummary(t *testing.T) {
 		t.Fatalf("next entry = %#v, want first queue entry", response.NextEntry)
 	}
 }
+
+func TestTodayTrainingSnapshotResponseReturnsDatedFullQueue(t *testing.T) {
+	queue := db.TodayTrainingQueue{
+		Settings: &db.TodayTrainingSettings{RepertoireIDs: []string{"one", "two"}},
+		Entries: []db.TodayTrainingEntry{
+			{RepertoireID: "one", CardID: "A"},
+			{RepertoireID: "two", CardID: "B"},
+		},
+	}
+	response := todayTrainingSnapshotResponse("2026-09-30", queue)
+	if response.QueueDate != "2026-09-30" {
+		t.Fatalf("queue date = %q, want 2026-09-30", response.QueueDate)
+	}
+	if response.Settings == nil || len(response.Settings.RepertoireIDs) != 2 {
+		t.Fatalf("settings = %#v, want both repertoire IDs", response.Settings)
+	}
+	if len(response.Entries) != 2 || response.Entries[0].CardID != "A" || response.Entries[1].CardID != "B" {
+		t.Fatalf("entries = %#v, want the complete ordered queue", response.Entries)
+	}
+}

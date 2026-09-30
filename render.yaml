@@ -44,6 +44,8 @@ services:
     envVars:
       - key: ALLOWED_ORIGIN
         value: https://chesslab-frontend.onrender.com
+      - key: TRUST_PROXY_HEADERS
+        value: "true" # Render terminates public traffic at its managed proxy
       - key: LICHESS_TOKEN
         sync: false # set manually in the dashboard — free token, see backend/.env.example
       - key: AUTH_USERNAME

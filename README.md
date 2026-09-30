@@ -213,6 +213,7 @@ you're in.
 | `DATABASE_URL` | No | Enables cross-device trainer progress sync + analytics (Postgres) |
 | `JWT_SECRET` | No (random at boot) | Set explicitly in production so tokens survive a redeploy |
 | `ALLOWED_ORIGIN` | No (default `*`) | Restrict CORS to your deployed frontend in production |
+| `TRUST_PROXY_HEADERS` | No (default `false`) | Trust managed proxy client-IP headers for login rate limiting; enable only behind a trusted proxy |
 
 **Frontend** (`frontend/.env.local`, see `frontend/.env.example`):
 

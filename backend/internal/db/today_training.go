@@ -154,7 +154,7 @@ func (s *Store) RefreshTodayTraining(ctx context.Context, username, queueDate st
 	return TodayTrainingQueue{Settings: &expected, Entries: entries}, nil
 }
 
-func (s *Store) AdvanceTodayTraining(ctx context.Context, username, queueDate, repertoireID, cardID string) (TodayTrainingQueue, error) {
+func (s *Store) AdvanceTodayTraining(ctx context.Context, username, queueDate, repertoireID, cardID, operationID string) (TodayTrainingQueue, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return TodayTrainingQueue{}, fmt.Errorf("begin today training advance: %w", err)
@@ -162,6 +162,27 @@ func (s *Store) AdvanceTodayTraining(ctx context.Context, username, queueDate, r
 	defer tx.Rollback(ctx)
 	if err := lockTodayTraining(ctx, tx, username); err != nil {
 		return TodayTrainingQueue{}, err
+	}
+	if operationID != "" {
+		var inserted string
+		err := tx.QueryRow(ctx, `
+			INSERT INTO today_training_operations (username, operation_id, queue_date)
+			VALUES ($1, $2, $3::date)
+			ON CONFLICT (username, operation_id) DO NOTHING
+			RETURNING operation_id`, username, operationID, queueDate).Scan(&inserted)
+		if errors.Is(err, pgx.ErrNoRows) {
+			queue, fetchErr := fetchTodayTraining(ctx, tx, username, queueDate)
+			if fetchErr != nil {
+				return TodayTrainingQueue{}, fetchErr
+			}
+			if err := tx.Commit(ctx); err != nil {
+				return TodayTrainingQueue{}, fmt.Errorf("commit duplicate today training advance: %w", err)
+			}
+			return queue, nil
+		}
+		if err != nil {
+			return TodayTrainingQueue{}, fmt.Errorf("record today training operation: %w", err)
+		}
 	}
 
 	settings, err := fetchTodayTrainingSettings(ctx, tx, username)

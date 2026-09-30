@@ -1,7 +1,8 @@
-const VERSION = 'v2'
+const VERSION = 'v3'
 const STATIC_CACHE = `chesslab-static-${VERSION}`
 const PAGE_CACHE = `chesslab-pages-${VERSION}`
 const REVALIDATE_MIN_GAP_MS = 60000
+const UNREFERENCED_STATIC_GRACE = 32
 
 const PRECACHE_PAGES = ['/opening-study']
 const PIECES = ['bb', 'bk', 'bn', 'bp', 'bq', 'br', 'wb', 'wk', 'wn', 'wp', 'wq', 'wr']
@@ -53,6 +54,40 @@ async function cacheAssetsFromHtml(html, assets) {
   return true
 }
 
+async function referencedStaticAssets() {
+  const pages = await caches.open(PAGE_CACHE)
+  const assets = await caches.open(STATIC_CACHE)
+  const referenced = new Set()
+  for (const request of await pages.keys()) {
+    const response = await pages.match(request)
+    if (!response) continue
+    const html = await response.text()
+    for (const path of html.match(STATIC_PATTERN) ?? []) {
+      referenced.add(new URL(path, self.location.origin).href)
+    }
+  }
+  for (const url of [...referenced].filter((value) => value.endsWith('.css'))) {
+    const response = await assets.match(url)
+    if (!response) continue
+    const css = await response.text()
+    for (const match of css.matchAll(CSS_URL_PATTERN)) {
+      referenced.add(new URL(match[1], self.location.origin).href)
+    }
+  }
+  return referenced
+}
+
+async function pruneStaticAssets() {
+  const assets = await caches.open(STATIC_CACHE)
+  const referenced = await referencedStaticAssets()
+  const unreferenced = (await assets.keys()).filter((request) => {
+    const url = new URL(request.url)
+    return url.pathname.startsWith('/_next/static/') && !referenced.has(request.url)
+  })
+  const removable = unreferenced.slice(0, Math.max(0, unreferenced.length - UNREFERENCED_STATIC_GRACE))
+  await Promise.all(removable.map((request) => assets.delete(request)))
+}
+
 const lastRevalidated = new Map()
 const revalidating = new Map()
 
@@ -68,6 +103,7 @@ function revalidatePage(url, force) {
     if (!(await cacheAssetsFromHtml(html, assets))) return false
     const pages = await caches.open(PAGE_CACHE)
     await pages.put(key, res)
+    await pruneStaticAssets()
     lastRevalidated.set(key.url, Date.now())
     return true
   })()
@@ -173,7 +209,10 @@ async function handleNavigation(event) {
         (async () => {
           const html = await forHtml.text()
           const assets = await caches.open(STATIC_CACHE)
-          if (await cacheAssetsFromHtml(html, assets)) await cache.put(pageKey(req.url), forCache)
+          if (await cacheAssetsFromHtml(html, assets)) {
+            await cache.put(pageKey(req.url), forCache)
+            await pruneStaticAssets()
+          }
         })().catch(() => {}),
       )
     }

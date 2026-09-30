@@ -134,6 +134,36 @@ describe('networkFirst', () => {
     await writeCache('k', 'cached')
     await expect(networkFirst('k', async () => Promise.reject(new ApiError('nope', 404)))).rejects.toThrow('nope')
   })
+
+  it('does not let a late network response overwrite a newer local write', async () => {
+    await writeCache('race', 'old')
+    const slow = deferred<string>()
+    const pending = networkFirst('race', () => slow.promise, 1500)
+    await writeCache('race', 'local')
+    slow.resolve('server-stale')
+    await expect(pending).resolves.toBe('server-stale')
+    expect((await readCache<string>('race'))?.value).toBe('local')
+  })
+
+  it('does not let a timed-out request replace a newer refresh', async () => {
+    vi.useFakeTimers()
+    await writeCache('timeout-race', 'cached')
+    const oldRequest = deferred<string>()
+    const first = networkFirst('timeout-race', () => oldRequest.promise, 100)
+    await vi.advanceTimersByTimeAsync(101)
+    await expect(first).resolves.toBe('cached')
+
+    const newRequest = deferred<string>()
+    const second = networkFirst('timeout-race', () => newRequest.promise, 100)
+    oldRequest.resolve('stale')
+    await vi.advanceTimersByTimeAsync(0)
+    expect((await readCache<string>('timeout-race'))?.value).toBe('cached')
+
+    newRequest.resolve('fresh')
+    await expect(second).resolves.toBe('fresh')
+    await vi.runAllTimersAsync()
+    expect((await readCache<string>('timeout-race'))?.value).toBe('fresh')
+  })
 })
 
 describe('dropCachedRepertoiresExcept', () => {
@@ -163,8 +193,42 @@ describe('claimOfflineStore', () => {
     })
     await writeCache('progress:private', { cards: { secret: true } })
     clearSucceeds = false
-    await claimOfflineStore('bob')
+    await expect(claimOfflineStore('bob')).resolves.toBe(false)
     expect(local.get('chesslab.offline.owner')).toBe('alice')
     expect(await readCache('progress:private')).toBeDefined()
+  })
+
+  it('clears private data before transferring cache ownership', async () => {
+    const local = new Map<string, string>([['chesslab.offline.owner', 'alice']])
+    vi.stubGlobal('window', {
+      localStorage: {
+        getItem: (key: string) => local.get(key) ?? null,
+        setItem: (key: string, value: string) => local.set(key, value),
+      },
+    })
+    await writeCache('progress:private', { cards: { secret: true } })
+    await expect(claimOfflineStore('bob')).resolves.toBe(true)
+    expect(local.get('chesslab.offline.owner')).toBe('bob')
+    expect(await readCache('progress:private')).toBeUndefined()
+  })
+
+  it('does not reuse or restore an old account request after ownership changes', async () => {
+    const local = new Map<string, string>([['chesslab.offline.owner', 'alice']])
+    vi.stubGlobal('window', {
+      localStorage: {
+        getItem: (key: string) => local.get(key) ?? null,
+        setItem: (key: string, value: string) => local.set(key, value),
+      },
+    })
+    const oldRequest = deferred<string>()
+    const oldFetcher = vi.fn(() => oldRequest.promise)
+    const oldPending = cacheFirst('progress:private', oldFetcher)
+    await vi.waitFor(() => expect(oldFetcher).toHaveBeenCalledOnce())
+
+    await expect(claimOfflineStore('bob')).resolves.toBe(true)
+    await expect(cacheFirst('progress:private', async () => 'bob-data')).resolves.toBe('bob-data')
+    oldRequest.resolve('alice-data')
+    await expect(oldPending).resolves.toBe('alice-data')
+    expect((await readCache<string>('progress:private'))?.value).toBe('bob-data')
   })
 })

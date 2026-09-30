@@ -54,6 +54,7 @@ func TestLoginLimiterReserveIsAtomicUnderConcurrency(t *testing.T) {
 }
 
 func TestLoginClientKeyUsesRightmostForwardedIP(t *testing.T) {
+	t.Setenv("TRUST_PROXY_HEADERS", "true")
 	r := httptest.NewRequest("POST", "/api/login", nil)
 	r.RemoteAddr = "203.0.113.8:4321"
 	r.Header.Set("X-Forwarded-For", "203.0.113.8, 10.0.0.2")
@@ -63,6 +64,7 @@ func TestLoginClientKeyUsesRightmostForwardedIP(t *testing.T) {
 }
 
 func TestLoginClientKeyIgnoresSpoofedLeftmostEntry(t *testing.T) {
+	t.Setenv("TRUST_PROXY_HEADERS", "true")
 	r1 := httptest.NewRequest("POST", "/api/login", nil)
 	r1.RemoteAddr = "203.0.113.1:4321"
 	r1.Header.Set("X-Forwarded-For", "1.1.1.1, 10.0.0.2")
@@ -89,6 +91,7 @@ func TestLoginClientKeyFallsBackToRemoteAddr(t *testing.T) {
 }
 
 func TestLoginClientKeyPrefersCFConnectingIP(t *testing.T) {
+	t.Setenv("TRUST_PROXY_HEADERS", "true")
 	r := httptest.NewRequest("POST", "/api/login", nil)
 	r.RemoteAddr = "10.0.0.2:4321"
 	r.Header.Set("X-Forwarded-For", "1.1.1.1, 10.0.0.2")
@@ -99,11 +102,24 @@ func TestLoginClientKeyPrefersCFConnectingIP(t *testing.T) {
 }
 
 func TestLoginClientKeyFallsBackToTrueClientIP(t *testing.T) {
+	t.Setenv("TRUST_PROXY_HEADERS", "true")
 	r := httptest.NewRequest("POST", "/api/login", nil)
 	r.RemoteAddr = "10.0.0.2:4321"
 	r.Header.Set("X-Forwarded-For", "1.1.1.1, 10.0.0.2")
 	r.Header.Set("True-Client-IP", "198.51.100.9")
 	if got := loginClientKey(r); got != "198.51.100.9" {
 		t.Fatalf("loginClientKey = %q, want True-Client-IP to win over X-Forwarded-For", got)
+	}
+}
+
+func TestLoginClientKeyIgnoresForwardedHeadersByDefault(t *testing.T) {
+	t.Setenv("TRUST_PROXY_HEADERS", "false")
+	r := httptest.NewRequest("POST", "/api/login", nil)
+	r.RemoteAddr = "192.0.2.4:4321"
+	r.Header.Set("CF-Connecting-IP", "198.51.100.7")
+	r.Header.Set("True-Client-IP", "198.51.100.9")
+	r.Header.Set("X-Forwarded-For", "1.1.1.1, 10.0.0.2")
+	if got := loginClientKey(r); got != "192.0.2.4" {
+		t.Fatalf("loginClientKey = %q, want direct peer when proxy headers are not trusted", got)
 	}
 }

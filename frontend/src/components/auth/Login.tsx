@@ -23,7 +23,9 @@ export default function Login() {
     setError(null)
     try {
       const { token } = await login(username, password)
-      await claimOfflineStore(username)
+      if (!(await claimOfflineStore(username))) {
+        throw new Error('Could not safely prepare offline storage. Please reload and try again.')
+      }
       setToken(token)
       void refreshOfflineData({ includeCatalog: false }).catch(() => {})
     } catch (err) {

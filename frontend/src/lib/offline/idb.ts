@@ -27,9 +27,14 @@ function run<T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => IDBRequ
   return openDb().then(
     (db) =>
       new Promise<T>((resolve, reject) => {
-        const req = fn(db.transaction(STORE, mode).objectStore(STORE))
-        req.onsuccess = () => resolve(req.result)
+        const tx = db.transaction(STORE, mode)
+        const req = fn(tx.objectStore(STORE))
+        let result!: T
+        req.onsuccess = () => { result = req.result }
         req.onerror = () => reject(req.error)
+        tx.oncomplete = () => resolve(result)
+        tx.onerror = () => reject(tx.error ?? req.error)
+        tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'))
       }),
   )
 }
