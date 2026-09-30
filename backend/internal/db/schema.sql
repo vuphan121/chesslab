@@ -226,3 +226,33 @@ CREATE INDEX IF NOT EXISTS precompute_run_positions_run_idx
 
 CREATE INDEX IF NOT EXISTS precompute_run_positions_fen_idx
     ON precompute_run_positions (fen_key, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS puzzle_attempts (
+    username TEXT NOT NULL CONSTRAINT puzzle_attempts_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    puzzle_id TEXT NOT NULL,
+    played_at TIMESTAMPTZ NOT NULL,
+    win BOOLEAN NOT NULL,
+    puzzle_rating INT NOT NULL DEFAULT 0,
+    themes JSONB NOT NULL DEFAULT '[]',
+    PRIMARY KEY (username, puzzle_id, played_at)
+);
+
+CREATE INDEX IF NOT EXISTS puzzle_attempts_username_played_at_idx
+    ON puzzle_attempts (username, played_at DESC);
+
+CREATE TABLE IF NOT EXISTS puzzle_rating_history (
+    username TEXT NOT NULL CONSTRAINT puzzle_rating_history_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    day DATE NOT NULL,
+    rating INT NOT NULL,
+    PRIMARY KEY (username, day)
+);
+
+CREATE TABLE IF NOT EXISTS puzzle_sync_state (
+    username TEXT PRIMARY KEY CONSTRAINT puzzle_sync_state_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    lichess_username TEXT NOT NULL,
+    synced_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    attempts_added INT NOT NULL DEFAULT 0
+);

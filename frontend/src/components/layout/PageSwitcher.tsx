@@ -8,6 +8,7 @@ const PAGES = [
   { href: '/', label: 'Analysis Board', sub: 'Board, engine, explorer' },
   { href: '/opening-study', label: 'Opening Study', sub: 'Drill your repertoire' },
   { href: '/book-study', label: 'Study from Book', sub: 'Work through book chapters' },
+  { href: '/statistics', label: 'Statistics', sub: 'Drills, puzzles and progress' },
   { href: '/saved-puzzles', label: 'Saved Puzzles', sub: 'Your ChessTempo puzzle links' },
   { href: '/settings', label: 'Settings', sub: 'Board appearance and preferences' },
 ]

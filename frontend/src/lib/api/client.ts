@@ -479,6 +479,47 @@ export interface AnalyticsResponse {
 
 export const getAnalytics = (): Promise<AnalyticsResponse> => request('/api/analytics')
 
+export interface StatsDay {
+  date: string
+  drills: number
+  puzzles: number
+}
+
+export interface StatsWeek {
+  weekStart: string
+  drillAccuracy: number | null
+  puzzleAccuracy: number | null
+  drills: number
+  puzzles: number
+}
+
+export interface StatsTheme {
+  theme: string
+  nb: number
+  wins: number
+}
+
+export interface StatisticsResponse {
+  days: number
+  endDate: string
+  daily: StatsDay[]
+  totals: { drills: number; drillMistakes: number; puzzles: number; puzzleWins: number }
+  streak: number
+  bestStreak: number
+  rating: { current: number | null; delta: number | null; points: { date: string; rating: number }[] }
+  themeDays: number
+  themes: StatsTheme[]
+  weekly: StatsWeek[]
+  boxes: number[]
+  coverage: { learned: number; shaky: number; untouched: number }
+  puzzleSync: { configured: boolean; lichessUsername?: string; syncedAt?: string }
+}
+
+export const getStatistics = (days: number): Promise<StatisticsResponse> => request(`/api/statistics?days=${days}`)
+
+export const syncPuzzles = (): Promise<{ added: number; durationMs: number }> =>
+  request('/api/statistics/sync-puzzles', { method: 'POST' })
+
 let todayTrainingRequest: Promise<TodayTrainingResponse> | null = null
 
 const TODAY_TRAINING_CACHE_KEY = 'today-training-snapshot'

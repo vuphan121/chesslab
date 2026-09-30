@@ -25,6 +25,7 @@ func NewRouter(h *Handler) http.Handler {
 
 	r.Post("/api/cron/refresh-repertoires", h.RefreshAllRepertoires)
 	r.Post("/api/cron/precompute-evals", h.PrecomputeEvals)
+	r.Post("/api/cron/sync-puzzles", h.CronSyncPuzzles)
 
 	r.Group(func(r chi.Router) {
 		r.Use(h.authCfg.Middleware)
@@ -76,6 +77,8 @@ func NewRouter(h *Handler) http.Handler {
 		r.Put("/api/user-settings", h.SaveUserSettings)
 
 		r.Get("/api/analytics", h.Analytics)
+		r.Get("/api/statistics", h.GetStatistics)
+		r.Post("/api/statistics/sync-puzzles", h.SyncPuzzles)
 	})
 
 	return r
