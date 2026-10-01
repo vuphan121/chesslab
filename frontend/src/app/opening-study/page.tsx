@@ -20,6 +20,10 @@ const SIDE_WIDTH = 371
 const BUTTON_COL_WIDTH = 170
 const NARROW_BREAKPOINT = 1040
 const PHONE_BREAKPOINT = 640
+const LANDSCAPE_MAX_HEIGHT = 450
+const LANDSCAPE_CHROME_HEIGHT = 58 + 8 + 8 + 8
+const LANDSCAPE_COLUMN_MIN = 220
+const LANDSCAPE_COLUMN_MAX = 340
 const PHONE_SIDE_PADDING = 10
 const PHONE_CHROME_HEIGHT = 52 + 44 + 44 + 20 + 56 + 16
 const PHONE_BTN = 44
@@ -89,6 +93,8 @@ export default function OpeningStudyPage() {
   const viewportHeight = useViewportHeight()
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
   const isPhone = viewportWidth != null && viewportWidth < PHONE_BREAKPOINT
+  const isLandscape =
+    viewportWidth != null && viewportHeight != null && viewportHeight < LANDSCAPE_MAX_HEIGHT && viewportWidth >= PHONE_BREAKPOINT && isNarrow
   const outerPadding = isNarrow ? OUTER_PADDING_NARROW : OUTER_PADDING_DESKTOP
   const desktopScale = isNarrow
     ? 1
@@ -106,6 +112,8 @@ export default function OpeningStudyPage() {
   )
   const squareSize = isPhone
     ? phoneSquareSize
+    : isLandscape
+    ? clamp(Math.floor(((viewportHeight ?? 0) - LANDSCAPE_CHROME_HEIGHT) / 8), 28, DESKTOP_SQUARE_SIZE)
     : isNarrow
     ? clamp(
         Math.floor(((viewportWidth ?? NARROW_BREAKPOINT) - outerPadding * 2 - 8 - EVAL_BAR_WIDTH) / 8),
@@ -342,7 +350,7 @@ export default function OpeningStudyPage() {
     <main className="min-h-screen pb-6 sm:pb-10" style={{ background: STUDY_BACKGROUND }}>
       <TopBar right={<span />} />
 
-      {isNarrow && (
+      {isNarrow && !isLandscape && (
       <div style={{ padding: '8px 24px 0' }}>
         <button
           onClick={changeRepertoire}
@@ -370,7 +378,89 @@ export default function OpeningStudyPage() {
       )}
 
       <div style={{ padding: `${isNarrow ? 8 : 12}px ${outerPadding}px 0` }}>
-        {isNarrow ? (
+        {isLandscape ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <div style={{ position: 'relative', width: boardSize }}>
+                <Board
+                  boardState={boardState}
+                  onSquareClick={selectSquare}
+                  onMove={move}
+                  legalMovesFor={legalMovesFor}
+                  squareSize={squareSize}
+                  flipped={flipped}
+                  animateLastMove={animateLastMove}
+                  bestMove={isViewingHistory ? undefined : (hintUci ?? undefined)}
+                  analysisMoves={suggestionArrows}
+                />
+              </div>
+              <div style={{ width: EVAL_BAR_WIDTH, height: boardSize, flexShrink: 0 }}>
+                {showEvalBar && (
+                  <EvalBar score={viewEval?.score ?? 0} mate={viewEval?.mate ?? 0} height={boardSize} hasEval={!!viewEval} />
+                )}
+              </div>
+            </div>
+            <div
+              style={{
+                width: clamp((viewportWidth ?? 0) - outerPadding * 2 - boardSize - EVAL_BAR_WIDTH - 20, LANDSCAPE_COLUMN_MIN, LANDSCAPE_COLUMN_MAX),
+                height: boardSize,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
+                <button
+                  className="tap"
+                  onClick={changeRepertoire}
+                  title="Back to line picker"
+                  aria-label="Back to line picker"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, fontSize: 13, fontWeight: 600, color: '#6a675f', background: '#f0efe9', border: 'none', padding: '0 12px', borderRadius: 8, cursor: 'pointer' }}
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M6.5 1.5L2.5 5L6.5 8.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Back
+                </button>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {lineComplete && (
+                    <>
+                      <button onClick={cycleEvalDisplay} disabled={busy} title={EVAL_DISPLAY_LABEL[evalDisplay]} aria-label={EVAL_DISPLAY_LABEL[evalDisplay]} style={iconBtn(false)}>
+                        <EvalIcon state={evalDisplay} />
+                      </button>
+                      <button onClick={redoLine} disabled={busy} title="Do it again" aria-label="Do it again" style={iconBtn(runHadMistake)}>
+                        <RedoIcon />
+                      </button>
+                    </>
+                  )}
+                  <button onClick={nextLine} disabled={busy} title="Next line" aria-label="Next line" style={iconBtn(lineComplete && !runHadMistake)}>
+                    <NextLineIcon />
+                  </button>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 22 }}>
+                <MaterialRow justify="flex-start" cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
+                <FeedbackStrip feedback={feedback} />
+              </div>
+              <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                <LinePanel
+                  repertoire={repertoire}
+                  runStartCard={runStartCard}
+                  runChapterId={runChapterId}
+                  runMoves={runMoves}
+                  leadingMoves={leadingMoves}
+                  isTodayTraining={isTodayTraining}
+                  answerComment={feedback?.kind === 'correct' || feedback?.kind === 'correct-alt' ? feedback.comment : undefined}
+                  viewIndex={viewIndex}
+                  onGotoPly={gotoPly}
+                  onNavBack={navBack}
+                  onNavForward={navForward}
+                  onExport={lineComplete ? exportLine : undefined}
+                />
+              </div>
+            </div>
+          </div>
+        ) : isNarrow ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center' }}>
               <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
