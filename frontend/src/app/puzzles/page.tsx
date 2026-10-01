@@ -171,7 +171,12 @@ export default function PuzzlesPage() {
         minHeight: isNarrow ? CONTROLS_HEIGHT : undefined,
       }}
     >
-      {!finished && (
+      {s.status === 'idle' && s.error && (
+        <button onClick={s.next} className="tap" style={{ ...secondaryButton, background: '#4a90d9', borderColor: '#4a90d9', color: '#fff' }}>
+          Try again
+        </button>
+      )}
+      {!finished && !(s.status === 'idle' && s.error) && (
         <button onClick={s.giveUp} disabled={s.status !== 'playing'} className="tap" style={{ ...secondaryButton, opacity: s.status === 'playing' ? 1 : 0.5 }}>
           Give up
         </button>

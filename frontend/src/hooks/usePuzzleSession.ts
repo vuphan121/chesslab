@@ -236,7 +236,8 @@ export function usePuzzleSession() {
         await ensureFetch()
       } catch (err) {
         if (generation !== generationRef.current) return
-        setError(err instanceof Error ? err.message : 'Could not load a puzzle.')
+        void err
+        setError('Could not load a puzzle. Check your connection and try again.')
         setStatusBoth('idle')
         return
       }
@@ -271,7 +272,7 @@ export function usePuzzleSession() {
   )
 
   const next = useCallback(() => {
-    if (!modeRef.current) return
+    if (!modeRef.current || !(isFinished(statusRef.current) || statusRef.current === 'idle')) return
     void advance()
   }, [advance])
 
@@ -334,6 +335,7 @@ export function usePuzzleSession() {
       setHintUci(null)
       indexRef.current += 1
       if (verdict.mate || indexRef.current >= movesRef.current.length) {
+        if (missedRef.current) setFeedback(null)
         setStatusBoth(missedRef.current ? 'failed' : 'solved')
         submit(true)
         return
@@ -355,7 +357,12 @@ export function usePuzzleSession() {
   const selectSquare = useCallback(
     (square: Square) => {
       if (!gameState || (statusRef.current !== 'playing' && !isFinished(statusRef.current))) return
-      if (statusRef.current === 'playing' && currentIdRef.current !== tipRef.current) return
+      if (statusRef.current === 'playing' && tipRef.current && currentIdRef.current !== tipRef.current) {
+        game.gotoNode(tipRef.current)
+        setSelected(null)
+        commit()
+        return
+      }
       if (selected === square) {
         setSelected(null)
         return
@@ -367,7 +374,7 @@ export function usePuzzleSession() {
       const piece = gameState.pieces[square]
       setSelected(piece && piece.color === gameState.turn ? square : null)
     },
-    [gameState, selected, attemptMove],
+    [gameState, selected, attemptMove, game, commit],
   )
 
   const move = useCallback(
