@@ -157,19 +157,11 @@ export default function SettingsPage() {
             boxShadow: '0 1px 3px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.05)',
           }}
         >
-          <p className="lbl" style={{ color: '#2f6db0', marginBottom: 8 }}>Offline</p>
-          <h1 className="serif" style={{ fontSize: 32, fontWeight: 500, color: '#213744' }}>Saved on this device</h1>
-          <p style={{ color: '#77736b', fontSize: 14, marginTop: 7, lineHeight: 1.55 }}>
-            The app and your repertoires are saved on this device so they open instantly and work without a connection.
-            They update by themselves whenever you are online. Use this to update them right now. Drills you played offline
-            are kept and sent to your account, not removed.
-          </p>
           <button
             type="button"
             onClick={refreshOffline}
             disabled={refreshing}
             style={{
-              marginTop: 22,
               fontSize: 14,
               fontWeight: 700,
               color: '#fff',
