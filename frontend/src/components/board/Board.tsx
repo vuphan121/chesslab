@@ -1,5 +1,6 @@
 'use client'
 
+import { pieceImagePath, useUserSettings } from '@/components/settings/UserSettingsProvider'
 import { useState, useRef, useMemo, useEffect, useLayoutEffect, useCallback, useReducer } from 'react'
 import { createPortal } from 'react-dom'
 import Square from './Square'
@@ -11,7 +12,6 @@ const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1']
 
 const ANNOTATION_COLOR = 'rgba(255, 152, 0, 0.8)'
-const MOVE_ANIMATION_MS = 280
 const USER_MOVE_SLIDE_MS = 140
 const PENDING_MAX_MS = 3000
 
@@ -142,7 +142,6 @@ export default function Board({
   const patchInteraction = useCallback((patch: Partial<InteractionState>) => {
     updateInteraction((current) => ({ ...current, ...patch }))
   }, [updateInteraction])
-  const moveAnimationElement = useRef<HTMLDivElement>(null)
   const pendingSequence = useRef(0)
   const pendingTimers = useRef<Set<number>>(new Set())
   const [pending, setPending] = useState<{
@@ -174,6 +173,17 @@ export default function Board({
   useLayoutEffect(() => {
     dispatchPosition({ type: 'sync', boardState, animate: animateLastMove })
   }, [animateLastMove, boardState])
+
+  const { settings: userSettings } = useUserSettings()
+  useEffect(() => {
+    for (const color of ['w', 'b']) {
+      for (const type of ['p', 'n', 'b', 'r', 'q', 'k']) {
+        const img = new window.Image()
+        img.src = pieceImagePath(userSettings.pieceTheme, `${color}${type}.png`)
+        img.decode?.().catch(() => {})
+      }
+    }
+  }, [userSettings.pieceTheme])
 
   useEffect(() => () => {
     pendingSequence.current++
@@ -408,28 +418,21 @@ export default function Board({
 
   const dragPiece = dragFrom ? (boardState.pieces[dragFrom] ?? null) : null
   const boardSize = squareSize * 8
-  const animationFromFile = moveAnimation ? files.indexOf(moveAnimation.from[0]) : -1
-  const animationFromRank = moveAnimation ? ranks.indexOf(moveAnimation.from[1]) : -1
-  const animationToFile = moveAnimation ? files.indexOf(moveAnimation.to[0]) : -1
-  const animationToRank = moveAnimation ? ranks.indexOf(moveAnimation.to[1]) : -1
-
-  useLayoutEffect(() => {
-    const element = moveAnimationElement.current
-    if (!element || !moveAnimation) return
-    const animation = element.animate(
-      [
-        { transform: 'translate3d(0, 0, 0)' },
-        { transform: `translate3d(${(animationToFile - animationFromFile) * squareSize}px, ${(animationToRank - animationFromRank) * squareSize}px, 0)` },
-      ],
-      { duration: MOVE_ANIMATION_MS, easing: 'cubic-bezier(0.22, 0.8, 0.28, 1)', fill: 'forwards' },
-    )
-    const finish = () => dispatchPosition({ type: 'finish-animation', fen: boardState.fen })
-    animation.addEventListener('finish', finish, { once: true })
-    return () => {
-      animation.removeEventListener('finish', finish)
-      animation.cancel()
+  const slideFor = (square: string) => {
+    let from: string | null = null
+    let key = ''
+    if (pending?.slide && pending.to === square) {
+      from = pending.from
+      key = `p${pending.id}`
+    } else if (moveAnimation && moveAnimation.to === square) {
+      from = moveAnimation.from
+      key = `a${boardState.fen}`
     }
-  }, [animationFromFile, animationFromRank, animationToFile, animationToRank, boardState.fen, moveAnimation, squareSize])
+    if (!from) return null
+    const dx = (files.indexOf(from[0]) - files.indexOf(square[0])) * squareSize
+    const dy = (ranks.indexOf(from[1]) - ranks.indexOf(square[1])) * squareSize
+    return { key, dx, dy }
+  }
 
   const handlePromotionPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     e.preventDefault()
@@ -496,7 +499,8 @@ export default function Board({
                       piece.color === boardState.turn
                     }
                     isDragHighlight={isDragging && dragOver === square && dragTargets.has(square)}
-                    hidePiece={isDragSource || moveAnimation?.to === square || (pending?.slide && pending.to === square)}
+                    hidePiece={isDragSource}
+                    slide={slideFor(square)}
                     rankLabel={file === firstFile ? rank : undefined}
                     fileLabel={rank === lastRank ? file : undefined}
                   />
@@ -581,53 +585,6 @@ export default function Board({
             />
           )}
         </svg>
-
-        {moveAnimation && animationFromFile >= 0 && animationFromRank >= 0 && animationToFile >= 0 && animationToRank >= 0 && (
-          <div
-            ref={moveAnimationElement}
-            style={{
-              position: 'absolute',
-              left: animationFromFile * squareSize + squareSize * 0.05,
-              top: animationFromRank * squareSize + squareSize * 0.05,
-              width: squareSize * 0.9,
-              height: squareSize * 0.9,
-              zIndex: 25,
-              pointerEvents: 'none',
-              transform: 'translate3d(0, 0, 0)',
-              willChange: 'transform',
-            }}
-          >
-            <Piece piece={moveAnimation.piece} size={squareSize * 0.9} />
-          </div>
-        )}
-
-        {pending?.slide && (() => {
-          const fromFile = files.indexOf(pending.from[0])
-          const fromRank = ranks.indexOf(pending.from[1])
-          const toFile = files.indexOf(pending.to[0])
-          const toRank = ranks.indexOf(pending.to[1])
-          if (fromFile < 0 || fromRank < 0 || toFile < 0 || toRank < 0) return null
-          return (
-            <div
-              style={{
-                position: 'absolute',
-                left: fromFile * squareSize + squareSize * 0.05,
-                top: fromRank * squareSize + squareSize * 0.05,
-                width: squareSize * 0.9,
-                height: squareSize * 0.9,
-                zIndex: 25,
-                pointerEvents: 'none',
-                transform: pending.started
-                  ? `translate3d(${(toFile - fromFile) * squareSize}px, ${(toRank - fromRank) * squareSize}px, 0)`
-                  : 'translate3d(0, 0, 0)',
-                transition: pending.started ? `transform ${USER_MOVE_SLIDE_MS}ms cubic-bezier(0.22, 0.8, 0.28, 1)` : 'none',
-                willChange: 'transform',
-              }}
-            >
-              <Piece piece={pending.piece} size={squareSize * 0.9} />
-            </div>
-          )
-        })()}
 
         {promo && (() => {
           const fi = files.indexOf(promo.to[0])

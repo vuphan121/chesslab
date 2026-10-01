@@ -1,5 +1,8 @@
 import type { Piece as PieceType, Square as SquareType } from '@/lib/chess/types'
+import { useLayoutEffect, useRef } from 'react'
 import Piece from './Piece'
+
+const SLIDE_MS = 160
 
 interface Props {
   square: SquareType
@@ -13,6 +16,7 @@ interface Props {
   isCheck: boolean
   isDragHighlight?: boolean
   hidePiece?: boolean
+  slide?: { key: string; dx: number; dy: number } | null
   rankLabel?: string
   fileLabel?: string
 }
@@ -28,9 +32,33 @@ export default function Square({
   isCheck,
   isDragHighlight,
   hidePiece,
+  slide,
   rankLabel,
   fileLabel,
 }: Props) {
+  const pieceRef = useRef<HTMLDivElement>(null)
+  const slideKey = slide?.key
+  const dx = slide?.dx ?? 0
+  const dy = slide?.dy ?? 0
+  useLayoutEffect(() => {
+    const el = pieceRef.current
+    if (!el || !slideKey) return
+    el.style.zIndex = '24'
+    const animation = el.animate(
+      [{ transform: `translate3d(${dx}px, ${dy}px, 0)` }, { transform: 'translate3d(0, 0, 0)' }],
+      { duration: SLIDE_MS, easing: 'cubic-bezier(0.22, 0.8, 0.28, 1)' },
+    )
+    const done = () => {
+      el.style.zIndex = ''
+    }
+    animation.addEventListener('finish', done, { once: true })
+    animation.addEventListener('cancel', done, { once: true })
+    window.setTimeout(() => {
+      animation.cancel()
+      done()
+    }, SLIDE_MS + 100)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slideKey])
 
   const isDark = (spriteCol + spriteRow) % 2 === 1
   const labelColor = isDark ? 'rgba(176, 196, 216, 0.9)' : 'rgba(100, 140, 170, 0.9)'
@@ -64,7 +92,7 @@ export default function Square({
       )}
 
       {piece && !hidePiece && (
-        <div className="absolute inset-0 flex items-center justify-center z-10">
+        <div ref={pieceRef} className="absolute inset-0 flex items-center justify-center z-10">
           <Piece piece={piece} size={squareSize * 0.9} />
         </div>
       )}
