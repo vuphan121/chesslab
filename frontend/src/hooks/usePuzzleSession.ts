@@ -139,7 +139,7 @@ export function usePuzzleSession() {
     (uci: string) => {
       const { from, to, promotion } = splitUci(uci)
       game.applyMove(from, to, promotion)
-      playMoveSound()
+      playMoveSound(game.currentSan.includes('x'))
       commit()
       markTip()
     },
@@ -329,7 +329,7 @@ export function usePuzzleSession() {
     (from: string, to: string, promotion?: string) => {
       if (statusRef.current === 'solved' || statusRef.current === 'failed') {
         if (game.applyMove(from, to, promotion)) {
-          playMoveSound()
+          playMoveSound(game.currentSan.includes('x'))
           setSelected(null)
           setHintUci(null)
           commit()

@@ -92,7 +92,7 @@ export function useChessGame() {
       const next = game.snapshot()
       setGs(next)
       setSelected(null)
-      if (sound) playMoveSound()
+      if (sound) playMoveSound(game.currentSan.includes('x'))
       runExplorer(next.fen)
     },
     [game, runExplorer],

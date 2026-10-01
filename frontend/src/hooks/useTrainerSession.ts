@@ -356,7 +356,8 @@ export function useTrainerSession() {
 
 
   function pushSnapshot(gs: GameState, animateMove = false) {
-    playMoveSound()
+    const previous = runSnapshotsRef.current[runSnapshotsRef.current.length - 1]
+    playMoveSound(!!previous && Object.keys(gs.pieces).length < Object.keys(previous.pieces).length)
     const next = [...runSnapshotsRef.current, gs]
     runSnapshotsRef.current = next
     setRunSnapshots(next)

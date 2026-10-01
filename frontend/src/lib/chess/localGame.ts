@@ -148,6 +148,10 @@ export class LocalGame {
     this.counter = 0
   }
 
+  get currentSan(): string {
+    return this.current.san ?? ''
+  }
+
   get currentFen(): string {
     return this.current.fen
   }

@@ -1,4 +1,4 @@
-const VERSION = 'v3'
+const VERSION = 'v4'
 const STATIC_CACHE = `chesslab-static-${VERSION}`
 const PAGE_CACHE = `chesslab-pages-${VERSION}`
 const REVALIDATE_MIN_GAP_MS = 60000
@@ -11,7 +11,8 @@ const PRECACHE_ASSETS = [
   '/icons/icon-192.png',
   '/icons/apple-touch-icon.png',
   '/board-texture.png',
-  '/sounds/move.mp3',
+  '/sounds/move-self.mp3',
+  '/sounds/capture.mp3',
   '/stockfish/stockfish-19-lite-single.js',
   '/stockfish/stockfish-19-lite-single.wasm',
   ...PIECES.map((p) => `/pieces/${p}.png`),
