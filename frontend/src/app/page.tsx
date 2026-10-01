@@ -238,9 +238,6 @@ export default function Home() {
 
   const atStart = boardState.currentNodeId === boardState.moveTree.id
   const atEnd = !(boardState.moveTree && flatten(boardState.moveTree).get(boardState.currentNodeId)?.node.children?.length)
-  // Past the Lichess explorer's book, explorer.openingName comes back empty —
-  // keep showing the last named opening reached on this line instead of a
-  // generic placeholder (see useChessGame's lastOpening).
   const openingName = atStart
     ? 'Starting Position'
     : (explorer?.openingName ?? lastOpening?.name ?? '')

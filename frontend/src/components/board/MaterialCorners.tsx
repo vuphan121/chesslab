@@ -5,7 +5,6 @@ import Piece from './Piece'
 import { computeMaterialDiff, type MaterialSurplus } from '@/lib/chess/materialDiff'
 
 export const MATERIAL_CORNERS_WIDTH = 40
-export const MATERIAL_CORNERS_GAP = 8
 
 const ICON_SIZE = 13
 

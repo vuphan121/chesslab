@@ -45,7 +45,6 @@ export async function copyPgnToClipboard(pgn: string): Promise<void> {
       return
     }
   } catch {
-    // Fall through for browsers that expose Clipboard API but deny the call.
   }
 
   const input = document.createElement('textarea')

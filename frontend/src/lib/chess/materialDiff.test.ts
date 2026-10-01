@@ -36,7 +36,7 @@ describe('computeMaterialDiff', () => {
     const diff = computeMaterialDiff(pieces)
     expect(diff.white).toEqual([{ type: 'b', count: 1 }])
     expect(diff.black).toEqual([{ type: 'p', count: 1 }])
-    expect(diff.advantage).toBe(2) // bishop (3) - pawn (1)
+    expect(diff.advantage).toBe(2)
   })
 
   it('shows nothing when both sides traded a pawn each (equal)', () => {
@@ -59,7 +59,7 @@ describe('computeMaterialDiff', () => {
   })
 
   it('is negative when Black is ahead', () => {
-    const pieces = without(START_FEN_PIECES, 'd1') // White's queen captured
+    const pieces = without(START_FEN_PIECES, 'd1')
     const diff = computeMaterialDiff(pieces)
     expect(diff.black).toEqual([{ type: 'q', count: 1 }])
     expect(diff.white).toEqual([])

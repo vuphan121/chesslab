@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 func hasAdjacentEnemyPawn(pos *Position, sq Square, enemyColor Color) bool {
@@ -120,8 +119,6 @@ type Node struct {
 }
 
 type Game struct {
-	mu sync.RWMutex
-
 	ID      string
 	Root    *Node
 	Current *Node
@@ -130,11 +127,6 @@ type Game struct {
 	LastMove *Move
 	counter  int
 }
-
-func (g *Game) Lock()    { g.mu.Lock() }
-func (g *Game) Unlock()  { g.mu.Unlock() }
-func (g *Game) RLock()   { g.mu.RLock() }
-func (g *Game) RUnlock() { g.mu.RUnlock() }
 
 func NewGame(id string) *Game {
 	g, _ := NewGameFromFEN(id, StartFEN)
@@ -182,60 +174,6 @@ func (g *Game) ResetTo(fen string) error {
 	g.Root = root
 	g.counter = 0
 	g.setCurrent(root)
-	return nil
-}
-
-func (g *Game) GotoNode(id string) error {
-	if n := findNode(g.Root, id); n != nil {
-		g.setCurrent(n)
-		return nil
-	}
-	return fmt.Errorf("node not found: %s", id)
-}
-
-func (g *Game) DeleteNode(id string) error {
-	if id == g.Root.ID {
-		return fmt.Errorf("cannot delete root node")
-	}
-	target := findNode(g.Root, id)
-	if target == nil {
-		return fmt.Errorf("node not found: %s", id)
-	}
-	parent := target.Parent
-	kept := make([]*Node, 0, len(parent.Children))
-	for _, ch := range parent.Children {
-		if ch != target {
-			kept = append(kept, ch)
-		}
-	}
-	parent.Children = kept
-	if isDescendant(target, g.Current) {
-		g.setCurrent(parent)
-	}
-	return nil
-}
-
-func isDescendant(root, n *Node) bool {
-	if root == n {
-		return true
-	}
-	for _, ch := range root.Children {
-		if isDescendant(ch, n) {
-			return true
-		}
-	}
-	return false
-}
-
-func findNode(n *Node, id string) *Node {
-	if n.ID == id {
-		return n
-	}
-	for _, ch := range n.Children {
-		if found := findNode(ch, id); found != nil {
-			return found
-		}
-	}
 	return nil
 }
 

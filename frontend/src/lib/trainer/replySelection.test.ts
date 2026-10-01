@@ -32,7 +32,7 @@ describe('chooseOpponentReply', () => {
 
   it('weights by lapses (capped) when choosing freely', () => {
     const replies = [reply('Nf3', 'fenA'), reply('Bd3', 'fenB')]
-    const lapsesFor = (fen: string) => (fen === 'fenB' ? 10 : 0) // capped at WEAKNESS_LAPSE_CAP=3
+    const lapsesFor = (fen: string) => (fen === 'fenB' ? 10 : 0)
     const justBelowSplit = 1 / 4.25 - 0.001
     const justAboveSplit = 1 / 4.25 + 0.001
     const low = chooseOpponentReply(replies, null, [], lapsesFor, () => justBelowSplit)
@@ -47,9 +47,9 @@ describe('chooseOpponentReply', () => {
 
   it('REGRESSION: a full run replayed from the start reproduces the exact same line', () => {
     const branchesByReply: RepReply[][] = [
-      [reply('Nc3', 'p1a'), reply('Nd2', 'p1b')], // the due line's own recorded reply
-      [reply('e5', 'p2a'), reply('Qd2', 'p2b'), reply('a3', 'p2c')], // beyond the due path
-      [reply('Bd3', 'p3a'), reply('Be2', 'p3b')], // also beyond
+      [reply('Nc3', 'p1a'), reply('Nd2', 'p1b')],
+      [reply('e5', 'p2a'), reply('Qd2', 'p2b'), reply('a3', 'p2c')],
+      [reply('Bd3', 'p3a'), reply('Be2', 'p3b')],
     ]
     const userMoves = ['d6', 'g6', 'Bg7']
 

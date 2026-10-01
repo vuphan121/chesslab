@@ -299,15 +299,6 @@ export const saveBookLine = (
     body: JSON.stringify({ startFen, moves }),
   })
 
-export const deleteBookSavedLine = async (bookId: string, itemId: string): Promise<void> => {
-  const res = await apiFetch(`${API}/api/book-saved-lines/${encodeURIComponent(bookId)}/${encodeURIComponent(itemId)}`, {
-    method: 'DELETE',
-    headers: authHeader(),
-  })
-  if (res.status === 401) clearToken()
-  if (!res.ok) throw new Error((await res.text()) || res.statusText)
-}
-
 export const recordBookStudyActivity = (
   bookId: string,
   chapterId: string,
@@ -458,26 +449,6 @@ export const saveProgress = async (
     return { ok: true, queued: true }
   }
 }
-
-export interface ChapterCount {
-  repertoireId: string
-  chapterId: string
-  chapterName: string
-  count: number
-}
-
-export interface DayCount {
-  date: string
-  total: number
-}
-
-export interface AnalyticsResponse {
-  todayTotal: number
-  todayByChapter: ChapterCount[]
-  last7Days: DayCount[]
-}
-
-export const getAnalytics = (): Promise<AnalyticsResponse> => request('/api/analytics')
 
 export interface StatsDay {
   date: string

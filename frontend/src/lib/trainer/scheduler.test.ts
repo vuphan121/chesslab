@@ -206,7 +206,7 @@ describe('scheduler', () => {
       C: { box: 1, lapses: 1, seen: 2, correct: 1, lastSeenISO: null },
     }
     const s = createSession(cards, { sessionLength: null, mode: 'mistakes' }, saved, mulberry32(1))
-    expect(s.order.sort()).toEqual(['A', 'C']) // only cards with lapses > 0
+    expect(s.order.sort()).toEqual(['A', 'C'])
 
     const picked = new Set<string>()
     for (let i = 0; i < 6; i++) {

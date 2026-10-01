@@ -149,9 +149,3 @@ export function fetchExplorer(fen: string, signal?: AbortSignal): Promise<Explor
   }
   return subscribe(entry, signal)
 }
-
-export function clearExplorerCache(): void {
-  cache.clear()
-  for (const entry of inflight.values()) entry.controller.abort()
-  inflight.clear()
-}

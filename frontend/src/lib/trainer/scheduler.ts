@@ -12,11 +12,6 @@ export const LAPSE_DECAY = 0.8
 export const JITTER = 0.35
 export const RETIRE_STREAK = 2
 
-export const defaultSessionOptions: SessionOptions = {
-  sessionLength: 40,
-  mode: 'mixed',
-}
-
 function freshCardState(cardId: string): CardState {
   return {
     cardId,
