@@ -227,7 +227,7 @@ export default function PuzzlesPage() {
   )
 
   return (
-    <main className="min-h-screen" style={{ background: '#e8e8e6' }}>
+    <main className="safe-bottom" style={{ background: '#e8e8e6', minHeight: '100dvh' }}>
       <TopBar right={topRight} />
       {isNarrow ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: CONTROLS_GAP, padding: `${PAGE_PADDING}px 10px` }}>

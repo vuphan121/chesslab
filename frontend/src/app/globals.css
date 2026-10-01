@@ -87,6 +87,9 @@ html {
   .topbar button {
     min-height: 40px;
   }
+  .tap {
+    --nav-min: 40px;
+  }
   .mv {
     padding: 6px 5px !important;
   }

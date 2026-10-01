@@ -19,12 +19,14 @@ interface Props {
 function NavBtn({ label, disabled, onClick, title }: { label: ReactNode; disabled: boolean; onClick: () => void; title: string }) {
   return (
     <button
+      className="tap"
       onClick={onClick}
       disabled={disabled}
       title={title}
       aria-label={title}
       style={{
         width: 26,
+        minWidth: 'var(--nav-min, 26px)',
         height: 24,
         border: '1px solid #eae8e2',
         background: '#fff',
