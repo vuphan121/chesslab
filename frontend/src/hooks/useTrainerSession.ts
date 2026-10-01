@@ -1,5 +1,6 @@
 'use client'
 
+import { playMoveSound } from '@/lib/sound'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Chess } from 'chess.js'
@@ -353,6 +354,7 @@ export function useTrainerSession() {
 
 
   function pushSnapshot(gs: GameState, animateMove = false) {
+    playMoveSound()
     const next = [...runSnapshotsRef.current, gs]
     runSnapshotsRef.current = next
     setRunSnapshots(next)

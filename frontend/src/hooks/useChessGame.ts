@@ -1,5 +1,6 @@
 'use client'
 
+import { playMoveSound } from '@/lib/sound'
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import type { GameState, Explorer } from '@/lib/api/client'
 import type { BoardState, Square } from '@/lib/chess/types'
@@ -47,7 +48,6 @@ export function useChessGame() {
   const [explorerLoading, setExplorerLoading] = useState(true)
   const [openingByFen, setOpeningByFen] = useState<Record<string, { name: string; eco?: string }>>({})
   const [flipped, setFlipped] = useState(false)
-  const moveSound = useRef<HTMLAudioElement | null>(null)
   const explorerReqId = useRef(0)
   const explorerAbort = useRef<AbortController | null>(null)
 
@@ -83,7 +83,6 @@ export function useChessGame() {
   }, [])
 
   useEffect(() => {
-    moveSound.current = new Audio('/sounds/move.mp3')
     void Promise.resolve().then(() => runExplorer(game.currentFen))
     return () => explorerAbort.current?.abort()
   }, [game, runExplorer])
@@ -93,7 +92,7 @@ export function useChessGame() {
       const next = game.snapshot()
       setGs(next)
       setSelected(null)
-      if (sound) moveSound.current?.play().catch(() => {})
+      if (sound) playMoveSound()
       runExplorer(next.fen)
     },
     [game, runExplorer],

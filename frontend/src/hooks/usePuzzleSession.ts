@@ -14,6 +14,7 @@ import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
 import { LocalGame } from '@/lib/chess/localGame'
 import { activeLine, flatten } from '@/lib/chess/moveTree'
 import type { Feedback } from '@/hooks/useTrainerSession'
+import { playMoveSound } from '@/lib/sound'
 import { judgeMove, splitUci } from '@/lib/puzzle/judge'
 
 const OPPONENT_MOVE_DELAY_MS = 450
@@ -134,6 +135,7 @@ export function usePuzzleSession() {
     (uci: string) => {
       const { from, to, promotion } = splitUci(uci)
       game.applyMove(from, to, promotion)
+      playMoveSound()
       commit()
       markTip()
     },
@@ -302,6 +304,7 @@ export function usePuzzleSession() {
     (from: string, to: string, promotion?: string) => {
       if (statusRef.current === 'solved' || statusRef.current === 'failed') {
         if (game.applyMove(from, to, promotion)) {
+          playMoveSound()
           setSelected(null)
           setHintUci(null)
           commit()
