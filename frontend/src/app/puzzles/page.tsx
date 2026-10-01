@@ -15,6 +15,7 @@ import { useViewportWidth, useViewportHeight, clamp } from '@/hooks/useViewportW
 import { useEngineSettings } from '@/lib/engine/settings'
 import { arrowShapes, type CandidateLine } from '@/lib/engine/arrows'
 import { positionKey } from '@/lib/chess/positionKey'
+import { prettyTheme } from '@/lib/puzzle/themes'
 
 const MAX_SQUARE_SIZE = 112
 const TOP_BAR_HEIGHT = 58
@@ -34,6 +35,7 @@ const PANEL_MAX_WIDTH = 340
 const EVAL_SLOT = 38
 const SIDE_GAP = 16
 const BUTTON_COLUMN_WIDTH = 150
+const RESULT_BOX_WIDTH = 176
 const SOLUTION_ARROW_COLOR = 'rgba(0, 48, 136, 0.4)'
 
 export default function PuzzlesPage() {
@@ -187,6 +189,39 @@ export default function PuzzlesPage() {
     </button>
   )
 
+  const resultBox = s.puzzle ? (
+    <div
+      style={{
+        width: RESULT_BOX_WIDTH,
+        marginTop: 12,
+        padding: '10px 12px',
+        background: '#fff',
+        border: '1px solid #eae8e2',
+        borderTop: '3px solid #4a90d9',
+        borderRadius: '0 0 10px 10px',
+      }}
+    >
+      {s.result && (
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
+          <span style={{ fontSize: 22, fontWeight: 500, lineHeight: 1.2, color: s.result.delta < 0 ? '#c4443b' : '#2e8b57' }}>
+            {s.result.delta < 0 ? '−' : '+'}
+            {Math.abs(s.result.delta)}
+          </span>
+          <span style={{ fontSize: 13, color: '#6a675f' }}>
+            {s.result.ratingBefore} → {s.result.ratingAfter}
+          </span>
+        </div>
+      )}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {s.puzzle.themes.map((theme) => (
+          <span key={theme} style={{ background: '#e8f1fb', color: '#2f6db0', borderRadius: 999, padding: '3px 10px', fontSize: 12, cursor: 'default' }}>
+            {prettyTheme(theme)}
+          </span>
+        ))}
+      </div>
+    </div>
+  ) : null
+
   const controls = (
     <div
       style={{
@@ -304,6 +339,7 @@ export default function PuzzlesPage() {
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', minHeight: boardSize }}>
               <div>
                 {controls}
+                {finished && s.puzzle && resultBox}
                 {s.error && <p role="alert" style={{ color: '#b34343', fontSize: 13, marginTop: 10, maxWidth: BUTTON_COLUMN_WIDTH }}>{s.error}</p>}
               </div>
               {finished && retryQueueButton}
