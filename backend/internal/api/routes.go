@@ -70,6 +70,8 @@ func NewRouter(h *Handler) http.Handler {
 		r.Get("/api/puzzles/themes", h.GetPuzzleThemes)
 		r.Post("/api/puzzles/next", h.NextPuzzle)
 		r.Post("/api/puzzles/result", h.SubmitPuzzleResult)
+		r.Post("/api/puzzles/retry-queue", h.AddPuzzleRetry)
+		r.Delete("/api/puzzles/retry-queue/{puzzleId}", h.RemovePuzzleRetry)
 
 		r.Get("/api/user-settings", h.GetUserSettings)
 		r.Put("/api/user-settings", h.SaveUserSettings)

@@ -24,6 +24,8 @@ import { chooseOpponentReply } from '@/lib/trainer/replySelection'
 import { buildDrillLines, createLineQueue, nextQueuedLine, switchToLineThrough } from '@/lib/trainer/lineQueue'
 import type { DrillLine, LineQueue } from '@/lib/trainer/lineQueue'
 
+const OPPONENT_REPLY_DELAY_MS = 450
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -746,7 +748,7 @@ export function useTrainerSession() {
             })
           })
           if (planned && planned.san !== playedSan) followPlayedAnswer(gs.fen, matchAnswer.chapterIds)
-          await sleep(150)
+          await sleep(OPPONENT_REPLY_DELAY_MS)
           if (reqId !== moveReqId.current) return
           await proceedAfterCorrect(gs)
         } else {

@@ -280,3 +280,12 @@ CREATE INDEX IF NOT EXISTS puzzle_plays_user_puzzle_idx
 
 CREATE INDEX IF NOT EXISTS puzzle_plays_user_played_idx
     ON puzzle_plays (username, played_at DESC);
+
+CREATE TABLE IF NOT EXISTS puzzle_retry_queue (
+    username TEXT NOT NULL CONSTRAINT puzzle_retry_queue_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    puzzle_id TEXT NOT NULL,
+    theme TEXT NOT NULL,
+    added_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (username, puzzle_id)
+);

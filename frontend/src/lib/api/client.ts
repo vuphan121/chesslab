@@ -610,6 +610,7 @@ export interface PuzzleJSON {
   theme: string
   themeRating: number
   mixed: boolean
+  retry?: boolean
 }
 
 export interface PuzzleResult {
@@ -645,6 +646,16 @@ export const submitPuzzleResult = (payload: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
+
+export const addPuzzleToRetryQueue = (puzzleId: string, theme: string): Promise<void> =>
+  request('/api/puzzles/retry-queue', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ puzzleId, theme }),
+  })
+
+export const removePuzzleFromRetryQueue = (puzzleId: string): Promise<void> =>
+  request(`/api/puzzles/retry-queue/${encodeURIComponent(puzzleId)}`, { method: 'DELETE' })
 
 export const advanceTodayTraining = (
   repertoireId: string,

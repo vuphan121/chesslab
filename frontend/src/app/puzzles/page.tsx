@@ -168,6 +168,25 @@ export default function PuzzlesPage() {
     />
   )
 
+  const fromQueue = !!s.puzzle?.retry
+  const retryQueueTitle = s.inRetryQueue ? (fromQueue ? 'Remove from retry queue' : 'In retry queue (tap to undo)') : 'Add to retry queue'
+  const retryQueueButton = (
+    <button
+      onClick={s.toggleRetryQueue}
+      className="tap"
+      style={
+        s.inRetryQueue && fromQueue
+          ? { ...iconButton('plain'), background: '#fdecec', border: '1px solid #e8b4b4', color: '#b34343' }
+          : iconButton(s.inRetryQueue ? 'active' : 'plain')
+      }
+      title={retryQueueTitle}
+      aria-label={retryQueueTitle}
+      aria-pressed={s.inRetryQueue}
+    >
+      <BookmarkIcon filled={s.inRetryQueue && !fromQueue} slashed={s.inRetryQueue && fromQueue} />
+    </button>
+  )
+
   const controls = (
     <div
       style={{
@@ -205,6 +224,7 @@ export default function PuzzlesPage() {
             <RetryIcon />
           </button>
           <EngineSettingsButton size={40} settings={engineSettings} onChange={updateEngineSettings} onReset={resetEngineSettings} />
+          {(stacked || isLandscape) && retryQueueButton}
           {!isPhone && !isLandscape && (
             <span className="mono" style={{ fontSize: 12, color: '#6a675f', alignSelf: 'center', minWidth: 52 }}>{analysis?.depth ? `depth ${analysis.depth}` : ''}</span>
           )}
@@ -296,8 +316,13 @@ export default function PuzzlesPage() {
           </div>
           {boardBlock}
           <div style={{ justifySelf: 'start', marginLeft: SIDE_GAP }}>
-            {controls}
-            {s.error && <p role="alert" style={{ color: '#b34343', fontSize: 13, marginTop: 10, maxWidth: BUTTON_COLUMN_WIDTH }}>{s.error}</p>}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', minHeight: boardSize }}>
+              <div>
+                {controls}
+                {s.error && <p role="alert" style={{ color: '#b34343', fontSize: 13, marginTop: 10, maxWidth: BUTTON_COLUMN_WIDTH }}>{s.error}</p>}
+              </div>
+              {finished && retryQueueButton}
+            </div>
           </div>
         </div>
       )}
@@ -331,6 +356,15 @@ function NextIcon() {
     <svg {...iconProps}>
       <line x1="4" y1="12" x2="18" y2="12" />
       <polyline points="12 6 18 12 12 18" />
+    </svg>
+  )
+}
+
+function BookmarkIcon({ filled, slashed }: { filled: boolean; slashed: boolean }) {
+  return (
+    <svg {...iconProps} fill={filled ? 'currentColor' : 'none'}>
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+      {slashed && <line x1="3" y1="3" x2="21" y2="21" />}
     </svg>
   )
 }

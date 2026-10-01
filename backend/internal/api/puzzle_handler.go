@@ -1,11 +1,14 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"math"
 	"math/rand"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 
 	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/db"
@@ -43,6 +46,7 @@ type puzzleNextBatch struct {
 const (
 	maxPuzzleBatch   = 10
 	maxPuzzleExclude = 100
+	retryQueueChance = 0.10
 )
 
 type puzzleNextResponse struct {
@@ -50,6 +54,12 @@ type puzzleNextResponse struct {
 	Theme       string `json:"theme"`
 	ThemeRating int    `json:"themeRating"`
 	Mixed       bool   `json:"mixed"`
+	Retry       bool   `json:"retry,omitempty"`
+}
+
+type puzzleRetryRequest struct {
+	PuzzleID string `json:"puzzleId"`
+	Theme    string `json:"theme"`
 }
 
 type puzzleResultRequest struct {
@@ -185,6 +195,18 @@ func (h *Handler) NextPuzzle(w http.ResponseWriter, r *http.Request) {
 	batch := puzzleNextBatch{Puzzles: []puzzleNextResponse{}}
 	avoid := req.AvoidTheme
 	for attempts := 0; len(batch.Puzzles) < count && attempts < count*6; attempts++ {
+		if mixed && rand.Float64() < retryQueueChance {
+			rp, err := h.pickRetryPuzzle(r.Context(), username, exclude, themes)
+			if err != nil {
+				http.Error(w, "failed to pick a retry puzzle: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			if rp != nil {
+				exclude = append(exclude, rp.ID)
+				batch.Puzzles = append(batch.Puzzles, *rp)
+				continue
+			}
+		}
 		chosen := only
 		if mixed {
 			var pool []*puzzleThemeJSON
@@ -246,6 +268,10 @@ func (h *Handler) SubmitPuzzleResult(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, db.ErrUnknownPuzzle.Error(), http.StatusBadRequest)
 		return
 	}
+	if err := h.db.RequeuePuzzleRetry(r.Context(), username, req.PuzzleID); err != nil {
+		http.Error(w, "failed to update the retry queue: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 	res, err := h.db.RecordPuzzlePlay(r.Context(), username, req.OperationID, req.PuzzleID, req.Theme, req.Solved, found.Rating, found.Themes)
 	if errors.Is(err, db.ErrUnknownPuzzle) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -260,4 +286,75 @@ func (h *Handler) SubmitPuzzleResult(w http.ResponseWriter, r *http.Request) {
 		Theme: res.Theme, RatingBefore: before, RatingAfter: after, Delta: after - before,
 		Attempts: res.Attempts, Wins: res.Wins, PuzzleRating: res.PuzzleRating,
 	})
+}
+
+func (h *Handler) pickRetryPuzzle(ctx context.Context, username string, exclude []string, themes []puzzleThemeJSON) (*puzzleNextResponse, error) {
+	eligible, err := h.db.EligibleRetryPuzzles(ctx, username, exclude)
+	if err != nil {
+		return nil, err
+	}
+	rand.Shuffle(len(eligible), func(i, j int) { eligible[i], eligible[j] = eligible[j], eligible[i] })
+	for _, e := range eligible {
+		p, err := h.puzzles.Get(ctx, e.PuzzleID)
+		if err != nil {
+			return nil, err
+		}
+		if p == nil {
+			continue
+		}
+		themeRating := int(puzzle.StartRating)
+		for _, t := range themes {
+			if t.Key == e.Theme {
+				themeRating = t.Rating
+			}
+		}
+		return &puzzleNextResponse{Puzzle: *p, Theme: e.Theme, ThemeRating: themeRating, Mixed: true, Retry: true}, nil
+	}
+	return nil, nil
+}
+
+func (h *Handler) AddPuzzleRetry(w http.ResponseWriter, r *http.Request) {
+	username, ok := h.puzzleUser(w, r)
+	if !ok {
+		return
+	}
+	var req puzzleRetryRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.PuzzleID == "" || !puzzle.IsTheme(req.Theme) {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	found, err := h.puzzles.Get(r.Context(), req.PuzzleID)
+	if err != nil {
+		http.Error(w, "failed to look up the puzzle: "+err.Error(), http.StatusBadGateway)
+		return
+	}
+	hasTheme := false
+	if found != nil {
+		for _, t := range found.Themes {
+			if t == req.Theme {
+				hasTheme = true
+			}
+		}
+	}
+	if !hasTheme {
+		http.Error(w, db.ErrUnknownPuzzle.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := h.db.AddPuzzleRetry(r.Context(), username, req.PuzzleID, req.Theme); err != nil {
+		http.Error(w, "failed to add to the retry queue: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+func (h *Handler) RemovePuzzleRetry(w http.ResponseWriter, r *http.Request) {
+	username, ok := h.puzzleUser(w, r)
+	if !ok {
+		return
+	}
+	if err := h.db.RemovePuzzleRetry(r.Context(), username, chi.URLParam(r, "puzzleId")); err != nil {
+		http.Error(w, "failed to remove from the retry queue: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }

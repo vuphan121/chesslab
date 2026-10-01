@@ -7,6 +7,7 @@ import EvalBar from '@/components/analysis/EvalBar'
 import { buildLinePgn, copyPgnToClipboard } from '@/lib/trainer/exportPgn'
 import { EVAL_DISPLAY_LABEL, EvalIcon, useEvalDisplay } from '@/components/analysis/EvalToggle'
 import { arrowShapes } from '@/lib/engine/arrows'
+import { showToast } from '@/lib/toast'
 import TopBar from '@/components/layout/TopBar'
 import RepertoirePicker from '@/components/trainer/RepertoirePicker'
 import LinePanel from '@/components/trainer/LinePanel'
@@ -206,7 +207,14 @@ export default function OpeningStudyPage() {
       runSans: runMoves.map((m) => m.san),
       side: repertoire.side,
     })
-    if (pgn) void copyPgnToClipboard(pgn).catch((error) => console.error('Failed to copy PGN', error))
+    if (pgn) {
+      copyPgnToClipboard(pgn)
+        .then(() => showToast('PGN copied to clipboard'))
+        .catch((error) => {
+          console.error('Failed to copy PGN', error)
+          showToast('Could not copy the PGN')
+        })
+    }
   }
 
   if (isPhone) {

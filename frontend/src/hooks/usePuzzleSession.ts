@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  addPuzzleToRetryQueue,
   getPuzzleThemes,
   nextPuzzles,
+  removePuzzleFromRetryQueue,
   submitPuzzleResult,
   type GameState,
   type PuzzleJSON,
@@ -70,6 +72,7 @@ export function usePuzzleSession() {
   const [hintUci, setHintUci] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [tipId, setTipId] = useState<string | null>(null)
+  const [inRetryQueue, setInRetryQueue] = useState(false)
 
   const puzzleRef = useRef<PuzzleJSON | null>(null)
   const movesRef = useRef<string[]>([])
@@ -86,6 +89,7 @@ export function usePuzzleSession() {
   const currentIdRef = useRef<string | null>(null)
   const tipRef = useRef<string | null>(null)
   const modeRef = useRef<PuzzleMode | null>(null)
+  const inRetryQueueRef = useRef(false)
 
   const setStatusBoth = useCallback((s: PuzzleStatus) => {
     statusRef.current = s
@@ -183,6 +187,8 @@ export function usePuzzleSession() {
       submittedRef.current = false
       missedRef.current = false
       operationRef.current = newOperationId()
+      inRetryQueueRef.current = !!p.retry
+      setInRetryQueue(!!p.retry)
       game.resetTo(p.fen)
       const opponentToMove = p.fen.split(' ')[1] === 'b' ? 'b' : 'w'
       setFlipped(opponentToMove === 'w')
@@ -281,11 +287,29 @@ export function usePuzzleSession() {
       const p = puzzleRef.current
       const wasSubmitted = submittedRef.current
       const previousResult = result
+      const queued = inRetryQueueRef.current
       startPuzzle(p)
+      inRetryQueueRef.current = queued
+      setInRetryQueue(queued)
       submittedRef.current = wasSubmitted
       if (wasSubmitted) setResult(previousResult)
     }
   }, [result, startPuzzle])
+
+  const toggleRetryQueue = useCallback(() => {
+    const p = puzzleRef.current
+    if (!p || !isFinished(statusRef.current)) return
+    const adding = !inRetryQueueRef.current
+    inRetryQueueRef.current = adding
+    setInRetryQueue(adding)
+    const call = adding ? addPuzzleToRetryQueue(p.id, p.theme) : removePuzzleFromRetryQueue(p.id)
+    call.catch(() => {
+      if (puzzleRef.current?.id !== p.id) return
+      inRetryQueueRef.current = !adding
+      setInRetryQueue(!adding)
+      setError('Could not update the retry queue.')
+    })
+  }, [])
 
   const backToPicker = useCallback(() => {
     generationRef.current++
@@ -430,6 +454,6 @@ export function usePuzzleSession() {
 
   return {
     themes, themesError, mode, puzzle, status, error, result, boardState, flipped, session, hintUci, userColor, themeRating,
-    start, next, retry, giveUp, navPrev, navNext, gotoNode, moveNodes, currentNodeId, canPrev, canNext, feedback, backToPicker, selectSquare, move, legalMovesFor, loadThemes,
+    inRetryQueue, toggleRetryQueue, start, next, retry, giveUp, navPrev, navNext, gotoNode, moveNodes, currentNodeId, canPrev, canNext, feedback, backToPicker, selectSquare, move, legalMovesFor, loadThemes,
   }
 }
