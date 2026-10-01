@@ -18,7 +18,6 @@ interface Props {
   runMoves: RunMove[]
   leadingMoves?: RunMove[]
   isTodayTraining?: boolean
-  answerComment?: string
   viewIndex: number | null
   onGotoPly: (index: number) => void
   onNavBack: () => void
@@ -59,7 +58,6 @@ export default function LinePanel({
   runMoves,
   leadingMoves = [],
   isTodayTraining,
-  answerComment,
   viewIndex,
   onGotoPly,
   onNavBack,
@@ -214,14 +212,6 @@ export default function LinePanel({
           </div>
         ))}
       </div>
-
-      {answerComment && (
-        <div style={{ padding: '10px 16px 14px', borderTop: '1px solid #efeee9' }}>
-          <p className="serif" style={{ fontSize: 13, color: '#4a4740', lineHeight: 1.5 }}>
-            “{answerComment}”
-          </p>
-        </div>
-      )}
 
       {onExport && (
         <div style={{ padding: '10px 16px 12px', borderTop: '1px solid #efeee9', flexShrink: 0 }}>

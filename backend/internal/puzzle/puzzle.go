@@ -12,8 +12,8 @@ import (
 
 const (
 	StartRating   = 2000.0
-	newPlayerK    = 32.0
-	settledK      = 24.0
+	newPlayerK    = 12.0
+	settledK      = 10.0
 	settledAfter  = 30
 	MinMixedCount = 20
 )

@@ -10,19 +10,19 @@ func TestNextRating(t *testing.T) {
 	if got := Expected(2000, 2000); math.Abs(got-0.5) > 1e-9 {
 		t.Fatalf("even match expected 0.5, got %v", got)
 	}
-	if got := NextRating(2000, 2000, true, 0); math.Abs(got-2016) > 1e-9 {
-		t.Fatalf("solve even puzzle: got %v, want 2016", got)
+	if got := NextRating(2000, 2000, true, 0); math.Abs(got-2006) > 1e-9 {
+		t.Fatalf("solve even puzzle: got %v, want 2006", got)
 	}
-	if got := NextRating(2000, 2000, false, 0); math.Abs(got-1984) > 1e-9 {
-		t.Fatalf("fail even puzzle: got %v, want 1984", got)
+	if got := NextRating(2000, 2000, false, 0); math.Abs(got-1994) > 1e-9 {
+		t.Fatalf("fail even puzzle: got %v, want 1994", got)
 	}
 	easy := NextRating(2000, 1600, false, 0)
 	hard := NextRating(2000, 2400, false, 0)
-	if !(easy < hard) || !(easy < 1984) {
+	if !(easy < hard) || !(easy < 1994) {
 		t.Fatalf("failing an easy puzzle should cost more: easy=%v hard=%v", easy, hard)
 	}
-	if got := NextRating(2000, 2000, true, 50); math.Abs(got-2012) > 1e-9 {
-		t.Fatalf("settled K: got %v, want 2012", got)
+	if got := NextRating(2000, 2000, true, 50); math.Abs(got-2005) > 1e-9 {
+		t.Fatalf("settled K: got %v, want 2005", got)
 	}
 }
 

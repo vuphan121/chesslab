@@ -218,8 +218,6 @@ export default function OpeningStudyPage() {
   }
 
   if (isPhone) {
-    const answerComment =
-      feedback?.kind === 'correct' || feedback?.kind === 'correct-alt' ? feedback.comment : undefined
     const activePly = viewIndex ?? runMoves.length
     const atStart = activePly <= 0
     const atLive = activePly >= runMoves.length
@@ -348,7 +346,6 @@ export default function OpeningStudyPage() {
             runMoves={runMoves}
             leadingMoves={leadingMoves}
             isTodayTraining={isTodayTraining}
-            answerComment={answerComment}
             viewIndex={viewIndex}
             onGotoPly={gotoPly}
             onNavBack={navBack}
@@ -464,7 +461,6 @@ export default function OpeningStudyPage() {
                   runMoves={runMoves}
                   leadingMoves={leadingMoves}
                   isTodayTraining={isTodayTraining}
-                  answerComment={feedback?.kind === 'correct' || feedback?.kind === 'correct-alt' ? feedback.comment : undefined}
                   viewIndex={viewIndex}
                   onGotoPly={gotoPly}
                   onNavBack={navBack}
@@ -555,7 +551,6 @@ export default function OpeningStudyPage() {
                 runMoves={runMoves}
                 leadingMoves={leadingMoves}
                 isTodayTraining={isTodayTraining}
-                answerComment={feedback?.kind === 'correct' || feedback?.kind === 'correct-alt' ? feedback.comment : undefined}
                 viewIndex={viewIndex}
                 onGotoPly={gotoPly}
                 onNavBack={navBack}
@@ -586,7 +581,6 @@ export default function OpeningStudyPage() {
                 runMoves={runMoves}
                 leadingMoves={leadingMoves}
                 isTodayTraining={isTodayTraining}
-                answerComment={feedback?.kind === 'correct' || feedback?.kind === 'correct-alt' ? feedback.comment : undefined}
                 viewIndex={viewIndex}
                 onGotoPly={gotoPly}
                 onNavBack={navBack}
