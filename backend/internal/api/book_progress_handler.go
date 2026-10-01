@@ -11,6 +11,24 @@ type GetBookProgressResponse struct {
 	Done []string `json:"done"`
 }
 
+func (h *Handler) bookHasItem(bookID, itemID string) bool {
+	if h.books == nil {
+		return false
+	}
+	b, ok := h.books.Get(bookID)
+	if !ok {
+		return false
+	}
+	for _, chapter := range b.Chapters {
+		for _, item := range chapter.Items {
+			if item.ID == itemID {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (h *Handler) GetBookProgress(w http.ResponseWriter, r *http.Request) {
 	if h.db == nil {
 		http.Error(w, "progress sync not configured", http.StatusServiceUnavailable)
@@ -47,6 +65,10 @@ func (h *Handler) MarkItemDone(w http.ResponseWriter, r *http.Request) {
 	}
 	bookID := chi.URLParam(r, "bookId")
 	itemID := chi.URLParam(r, "itemId")
+	if !h.bookHasItem(bookID, itemID) {
+		http.Error(w, "book item not found", http.StatusNotFound)
+		return
+	}
 
 	if err := h.db.MarkItemDone(r.Context(), username, bookID, itemID); err != nil {
 		http.Error(w, "failed to save progress: "+err.Error(), http.StatusInternalServerError)

@@ -55,6 +55,10 @@ func (h *Handler) SaveBookLine(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "a saved line needs a start position and at least one move", http.StatusBadRequest)
 		return
 	}
+	if !h.bookHasItem(chi.URLParam(r, "bookId"), chi.URLParam(r, "itemId")) {
+		http.Error(w, "book item not found", http.StatusNotFound)
+		return
+	}
 	line, err := h.db.SaveBookLine(r.Context(), username, chi.URLParam(r, "bookId"), chi.URLParam(r, "itemId"), req.StartFen, req.Moves)
 	if err != nil {
 		http.Error(w, "failed to save line: "+err.Error(), http.StatusInternalServerError)
