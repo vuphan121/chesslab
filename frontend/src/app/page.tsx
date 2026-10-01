@@ -240,7 +240,12 @@ export default function Home() {
     : (explorer?.openingName ?? lastOpening?.name ?? '')
 
   const showEval = evalDisplay !== 'off'
-  const analysisIsCurrent = !!analysis && (analysisFen === null || positionKey(analysisFen) === positionKey(boardState.fen))
+  const gameOver = boardState.isGameOver
+  const checkmateWinner = gameOver && boardState.gameOverReason === 'checkmate' ? (boardState.turn === 'w' ? -1 : 1) : 0
+  const analysisIsCurrent = gameOver || (!!analysis && (analysisFen === null || positionKey(analysisFen) === positionKey(boardState.fen)))
+  const barScore = gameOver ? 0 : (analysis?.score ?? 0)
+  const barMate = gameOver ? checkmateWinner : (analysis?.mate ?? 0)
+  const barHasEval = !gameOver && (!!analysis?.depth || !!analysis?.tablebaseCategory)
   const candidates: CandidateLine[] = []
   if (analysis && analysisIsCurrent && !boardState.isGameOver) {
     for (const line of analysis.lines ?? []) candidates.push({ uci: line.uciMoves?.[0], score: line.score, mate: line.mate })
@@ -270,7 +275,7 @@ export default function Home() {
     }}
   >
     <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-        {showEval && (!!analysis?.depth || !!analysis?.tablebaseCategory) && (
+        {showEval && !gameOver && (!!analysis?.depth || !!analysis?.tablebaseCategory) && (
           <span
             className="mono"
             style={{ fontSize: 11, color: '#a3a099', opacity: analysisIsCurrent ? 1 : 0.45, transition: 'opacity 120ms' }}
@@ -444,11 +449,11 @@ export default function Home() {
                   {showEval && (
                     <EvalBar
                       horizontal
-                      score={analysis?.score ?? 0}
-                      mate={analysis?.mate ?? 0}
+                      score={barScore}
+                      mate={barMate}
                       height={boardSize}
                       flipped={flipped}
-                      hasEval={!!analysis?.depth || !!analysis?.tablebaseCategory}
+                      hasEval={barHasEval}
                     />
                   )}
                 </div>
@@ -500,11 +505,11 @@ export default function Home() {
                 <div style={{ width: 22, height: boardSize, flexShrink: 0, opacity: analysisIsCurrent ? 1 : 0.45, transition: 'opacity 120ms' }}>
                   {showEval && (
                     <EvalBar
-                      score={analysis?.score ?? 0}
-                      mate={analysis?.mate ?? 0}
+                      score={barScore}
+                      mate={barMate}
                       height={boardSize}
                       flipped={flipped}
-                      hasEval={!!analysis?.depth || !!analysis?.tablebaseCategory}
+                      hasEval={barHasEval}
                     />
                   )}
                 </div>

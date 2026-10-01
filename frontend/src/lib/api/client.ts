@@ -141,6 +141,7 @@ export interface FenEval {
   depth: number
   tablebaseCategory?: TablebaseCategory
   tablebaseDtz?: number
+  checkmate?: 'white' | 'black'
 }
 
 export interface PositionEvalMove {

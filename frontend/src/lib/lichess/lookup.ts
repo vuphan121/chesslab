@@ -105,6 +105,18 @@ export function tablebaseAnalysis(fen: string, tb: TablebaseResult): Analysis {
   return out
 }
 
+function gameResult(fen: string): FenEval | null {
+  try {
+    const chess = new Chess(fen)
+    if (chess.moves().length > 0) return null
+    if (!chess.inCheck()) return { score: 0, mate: 0, depth: 0 }
+    const winner = chess.turn() === 'w' ? 'black' : 'white'
+    return { score: winner === 'white' ? 10000 : -10000, mate: 0, depth: 0, checkmate: winner }
+  } catch {
+    return { score: 0, mate: 0, depth: 0 }
+  }
+}
+
 function isGameOver(fen: string): boolean {
   try {
     return new Chess(fen).moves().length === 0
@@ -250,7 +262,8 @@ export function prefetchReplies(analysis: Analysis): void {
 }
 
 export async function lookupEval(fen: string, signal?: AbortSignal): Promise<FenEval | null> {
-  if (isGameOver(fen)) return { score: 0, mate: 0, depth: 0 }
+  const over = gameResult(fen)
+  if (over) return over
   const a = await lookupAnalysis(fen, 1, signal)
   if (!a) return null
   return {

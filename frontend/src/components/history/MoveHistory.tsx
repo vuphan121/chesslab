@@ -9,6 +9,7 @@ import { MoveEvaluator } from '@/lib/engine/moveEval'
 import { toFigurine } from '@/lib/chess/figurine'
 
 function formatMoveEval(e: FenEval): string {
+  if (e.checkmate) return e.checkmate === 'white' ? '1-0' : '0-1'
   if (e.mate !== 0) return `#${e.mate}`
   if (e.tablebaseCategory) {
     switch (e.tablebaseCategory) {
@@ -126,9 +127,12 @@ export default function MoveHistory({
 
     let cancelled = false
     const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+    const commit = (fen: string, e: FenEval) => {
+      attemptedRef.current.add(fen)
+      setEvals((prev) => (fen in prev ? prev : { ...prev, [fen]: e }))
+    }
     ;(async () => {
       const unresolved: string[] = []
-      const cloudResults: Record<string, FenEval> = {}
       const queue = [...missing]
       const worker = async () => {
         for (let fen = queue.shift(); fen !== undefined; fen = queue.shift()) {
@@ -138,47 +142,27 @@ export default function MoveHistory({
             e = await lookupEval(fen)
           } catch {
           }
-          if (cancelled) return
-          if (e) {
-            attemptedRef.current.add(fen)
-            cloudResults[fen] = e
-          } else {
-            unresolved.push(fen)
-          }
+          if (e) commit(fen, e)
+          else unresolved.push(fen)
         }
       }
       await Promise.all([worker(), worker(), worker(), worker()])
-      if (cancelled) return
-      if (Object.keys(cloudResults).length > 0) {
-        setEvals((prev) => ({ ...prev, ...cloudResults }))
-      }
-      if (!engineEnabled) return
-      let localResults: Record<string, FenEval> = {}
-      const flushLocalResults = () => {
-        if (cancelled || Object.keys(localResults).length === 0) return
-        const batch = localResults
-        localResults = {}
-        setEvals((prev) => ({ ...prev, ...batch }))
-      }
+      if (cancelled || !engineEnabled) return
       for (const fen of unresolved) {
         if (cancelled) return
-        if (evalsRef.current[fen]) continue
+        if (evalsRef.current[fen] || attemptedRef.current.has(fen)) continue
         while (busyRef.current && !cancelled) await pause(400)
         if (cancelled) return
-        if (evalsRef.current[fen]) continue
+        if (evalsRef.current[fen] || attemptedRef.current.has(fen)) continue
         const evaluator = (evaluatorRef.current ??= new MoveEvaluator())
         try {
           const e = await evaluator.evaluate(fen)
-          if (cancelled) return
-          attemptedRef.current.add(fen)
-          if (e) {
-            localResults[fen] = e
-            if (Object.keys(localResults).length >= 2) flushLocalResults()
-          }
+          if (e) commit(fen, e)
+          else if (!cancelled) attemptedRef.current.add(fen)
         } catch {
+          if (!cancelled) attemptedRef.current.add(fen)
         }
       }
-      flushLocalResults()
     })()
     return () => {
       cancelled = true
