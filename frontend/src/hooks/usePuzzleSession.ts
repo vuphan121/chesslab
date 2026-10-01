@@ -90,6 +90,7 @@ export function usePuzzleSession() {
   const tipRef = useRef<string | null>(null)
   const modeRef = useRef<PuzzleMode | null>(null)
   const inRetryQueueRef = useRef(false)
+  const retryChainRef = useRef<Promise<void>>(Promise.resolve())
 
   const setStatusBoth = useCallback((s: PuzzleStatus) => {
     statusRef.current = s
@@ -302,13 +303,15 @@ export function usePuzzleSession() {
     const adding = !inRetryQueueRef.current
     inRetryQueueRef.current = adding
     setInRetryQueue(adding)
-    const call = adding ? addPuzzleToRetryQueue(p.id, p.theme) : removePuzzleFromRetryQueue(p.id)
-    call.catch(() => {
-      if (puzzleRef.current?.id !== p.id) return
-      inRetryQueueRef.current = !adding
-      setInRetryQueue(!adding)
-      setError('Could not update the retry queue.')
-    })
+    retryChainRef.current = retryChainRef.current
+      .then(() => (adding ? addPuzzleToRetryQueue(p.id, p.theme) : removePuzzleFromRetryQueue(p.id)))
+      .then(() => undefined)
+      .catch(() => {
+        if (puzzleRef.current?.id !== p.id) return
+        inRetryQueueRef.current = !adding
+        setInRetryQueue(!adding)
+        setError('Could not update the retry queue.')
+      })
   }, [])
 
   const backToPicker = useCallback(() => {
