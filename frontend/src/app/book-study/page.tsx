@@ -43,7 +43,6 @@ export default function BookStudyPage() {
     : DESKTOP_SQUARE_SIZE
   const boardSize = squareSize * 8
 
-
   const centerWidth = boardSize + MATERIAL_GAP + MATERIAL_CORNERS_WIDTH + EVAL_SLOT_WIDTH
   const shellWidth = SECTIONS_WIDTH + centerWidth + PDF_WIDTH + COLUMN_GAP * 2 + OUTER_PADDING * 2
   const frameHeight = Math.max(720, boardSize + 370)

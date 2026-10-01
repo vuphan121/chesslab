@@ -1,7 +1,5 @@
 
 
-
-
 export function mulberry32(seed: number): () => number {
   let a = seed >>> 0
   return function () {
@@ -17,12 +15,9 @@ export function newRng(seed?: number): () => number {
   return mulberry32(seed ?? Date.now())
 }
 
-
 export function uniform(lo: number, hi: number, rng: () => number): number {
   return lo + rng() * (hi - lo)
 }
-
-
 
 export function weightedChoice<T>(items: T[], weight: (item: T) => number, rng: () => number): T {
   const weights = items.map(weight)
@@ -34,8 +29,6 @@ export function weightedChoice<T>(items: T[], weight: (item: T) => number, rng: 
   }
   return items[items.length - 1]
 }
-
-
 
 export function shuffle<T>(items: T[], rng: () => number): T[] {
   const out = [...items]

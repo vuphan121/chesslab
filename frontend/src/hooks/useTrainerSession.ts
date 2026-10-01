@@ -78,15 +78,6 @@ function applyLocalMove(state: GameState, from: string, to: string, promotion?: 
   return { state: localGameState(game.fen(), { from: move.from, to: move.to, promotion: move.promotion }), san: move.san }
 }
 
-
-
-
-
-
-
-
-
-
 function findPathInChapterTree(node: RepNode, targetKey: string, path: string[] = []): string[] | null {
   if (cardKey(node.fen) === targetKey) return path
   for (const child of node.children ?? []) {
@@ -173,14 +164,8 @@ export function useTrainerSession() {
     return () => clearInterval(interval)
   }, [phase])
 
-
-
-
-
-
   const [runSnapshots, setRunSnapshots] = useState<GameState[]>([])
   const runSnapshotsRef = useRef<GameState[]>([])
-
 
   const [viewIndex, setViewIndex] = useState<number | null>(null)
   const [selected, setSelected] = useState<Square | null>(null)
@@ -195,12 +180,6 @@ export function useTrainerSession() {
   const [hintUci, setHintUci] = useState<string | null>(null)
   const [runHadMistake, setRunHadMistake] = useState(false)
   const [runMoves, setRunMoves] = useState<RunMove[]>([])
-
-
-
-
-
-
 
   const [leadingMoves, setLeadingMoves] = useState<RunMove[]>([])
 
@@ -232,34 +211,17 @@ export function useTrainerSession() {
   const runChapterIdRef = useRef<string | null>(null)
   const runMovesRef = useRef<RunMove[]>([])
 
-
-
-
-
-
-
-
-
-
-
-
-
   const dueTargetPathRef = useRef<string[] | null>(null)
   const lineQueueRef = useRef<LineQueue | null>(null)
   const lineModeRef = useRef(false)
   const runLineIdRef = useRef<string | null>(null)
   const offLineRef = useRef(false)
 
-
-
   const leadingMovesRef = useRef<RunMove[]>([])
   const gradedThisPresentationRef = useRef(false)
   const moveReqId = useRef(0)
   const startSessionReqId = useRef(0)
   const lastArgsRef = useRef<{ repertoireId: string; chapterIds: string[]; opts: SessionOptions } | null>(null)
-
-
-
 
   const sessionProgressRef = useRef<Record<string, PersistedCardState>>({})
   const progressSaveChainRef = useRef<Promise<void>>(Promise.resolve())
@@ -272,7 +234,6 @@ export function useTrainerSession() {
   const viewedGameState: GameState | null =
     viewIndex !== null ? (runSnapshots[viewIndex] ?? liveGameState) : liveGameState
 
-
   const boardState: BoardState | null = viewedGameState
     ? toBoardState(viewedGameState, isViewingHistory ? null : selected)
     : null
@@ -281,62 +242,6 @@ export function useTrainerSession() {
     (id: string): RepCard | undefined => sessionCardsRef.current.find((c) => c.id === id),
     [],
   )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   const resolveRunStartCard = useCallback(
     (
@@ -353,8 +258,6 @@ export function useTrainerSession() {
     [cardById],
   )
 
-
-
   function pushSnapshot(gs: GameState, animateMove = false) {
     const previous = runSnapshotsRef.current[runSnapshotsRef.current.length - 1]
     playMoveSound(!!previous && Object.keys(gs.pieces).length < Object.keys(previous.pieces).length)
@@ -365,9 +268,6 @@ export function useTrainerSession() {
     setAnimateLastMove(animateMove)
   }
 
-
-
-
   function replaceLastSnapshot(gs: GameState) {
     const next = runSnapshotsRef.current.length > 0 ? [...runSnapshotsRef.current] : [gs]
     if (next.length > 0) next[next.length - 1] = gs
@@ -376,9 +276,6 @@ export function useTrainerSession() {
     setViewIndex(null)
     setAnimateLastMove(false)
   }
-
-
-
 
   const beginRun = useCallback((card: RepCard, chapterId: string | null, gs: GameState, leading: RunMove[] = []) => {
     runStartCardIdRef.current = card.id
@@ -399,13 +296,6 @@ export function useTrainerSession() {
     setViewIndex(null)
     setAnimateLastMove(false)
   }, [])
-
-
-
-
-
-
-
 
   const pickOpponentReply = useCallback(
     (fen: string) => {
@@ -430,15 +320,6 @@ export function useTrainerSession() {
     },
     [repertoire],
   )
-
-
-
-
-
-
-
-
-
 
   const endRun = useCallback((opts?: { logAttempt?: boolean }) => {
     const logAttempt = opts?.logAttempt ?? true
@@ -479,17 +360,12 @@ export function useTrainerSession() {
       todayAdvanceRef.current = advanceTodayTraining(todayEntry.repertoireId, todayEntry.cardId)
     }
 
-
-
     setHintUci(null)
     if (logAttempt) {
       setEvalByFen({})
       setPhase('line-complete')
     }
   }, [repertoire, cardById, runHadMistake])
-
-
-
 
   const proceedAfterCorrect = useCallback(
     async (answerState: GameState) => {
@@ -521,16 +397,11 @@ export function useTrainerSession() {
       gradedThisPresentationRef.current = false
       setCurrentCard(nextCard)
 
-
-
-
       setHintUci(null)
       setSelected(null)
     },
     [pickOpponentReply, endRun, cardById],
   )
-
-
 
   const startNextQueuedLine = useCallback(
     (rep: Repertoire): boolean => {
@@ -767,11 +638,9 @@ export function useTrainerSession() {
           })
           setHintUci(primary?.uci ?? null)
 
-
-
           if (reqId !== moveReqId.current) return
           setSelected(null)
-          replaceLastSnapshot(localGameState(card.fen))
+          replaceLastSnapshot(localGameState(card.fen, liveGameState.lastMove))
         }
       } catch (err) {
         if (reqId === moveReqId.current) {
@@ -786,8 +655,6 @@ export function useTrainerSession() {
     },
     [currentCard, phase, busy, boardState, isViewingHistory, liveGameState, proceedAfterCorrect, followPlayedAnswer],
   )
-
-
 
   const selectSquare = useCallback(
     (square: Square) => {
@@ -821,8 +688,6 @@ export function useTrainerSession() {
     [liveGameState, isViewingHistory],
   )
 
-
-
   const playForIndex = useCallback((index: number) => {
     const snaps = runSnapshotsRef.current
     const at = snaps[index]
@@ -847,9 +712,6 @@ export function useTrainerSession() {
     setViewIndex(next >= last ? null : next)
   }, [viewIndex, playForIndex])
 
-
-
-
   const gotoPly = useCallback(
     (index: number) => {
       setAnimateLastMove(false)
@@ -860,8 +722,6 @@ export function useTrainerSession() {
     },
     [viewIndex, playForIndex],
   )
-
-
 
   const redoLine = useCallback(async () => {
     const startId = runStartCardIdRef.current
@@ -876,9 +736,6 @@ export function useTrainerSession() {
       setBusy(false)
     }
   }, [cardById, beginRun])
-
-
-
 
   const advanceToNextLine = useCallback(async () => {
     if (todayEntryRef.current) {
@@ -927,9 +784,6 @@ export function useTrainerSession() {
     await advanceToNextLine()
   }, [phase, endRun, advanceToNextLine])
 
-
-
-
   const endSession = useCallback(() => {
     const session = sessionRef.current
     if (session) {
@@ -938,16 +792,12 @@ export function useTrainerSession() {
     setPhase('summary')
   }, [])
 
-
-
   const sameAgain = useCallback(() => {
     const args = lastArgsRef.current
     if (!args) return
     setSummary(null)
     startSession(args.repertoireId, args.chapterIds, args.opts)
   }, [startSession])
-
-
 
   const drillMistakes = useCallback(() => {
     const args = lastArgsRef.current

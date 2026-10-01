@@ -1,6 +1,5 @@
 
 
-
 'use client'
 
 const STORAGE_KEY = 'chesslab.auth.token'

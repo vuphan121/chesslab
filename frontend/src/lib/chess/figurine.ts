@@ -1,6 +1,5 @@
 
 
-
 const figurineMap: Record<string, string> = {
   K: '♚',
   Q: '♛',

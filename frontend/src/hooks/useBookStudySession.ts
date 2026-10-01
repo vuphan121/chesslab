@@ -11,9 +11,6 @@ import { MoveEvaluator } from '@/lib/engine/moveEval'
 import { lookupAnalysis, lookupEval } from '@/lib/lichess/lookup'
 import type { Book, BookItem } from '@/lib/books/types'
 
-
-
-
 function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
   const pieces: BoardState['pieces'] = {}
   for (const [sq, p] of Object.entries(gs.pieces)) {
@@ -46,25 +43,12 @@ function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState 
 
 export type BookStudyPhase = 'setup' | 'studying' | 'done'
 
-
 export interface FlatItem {
   item: BookItem
   chapterId: string
   chapterName: string
   chapterNumber: number
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 export function useBookStudySession() {
   const [bookGame] = useState(() => new LocalGame())
@@ -293,8 +277,6 @@ export function useBookStudySession() {
     const canBack = entry?.parentId != null
     return { ply: (entry?.node.ply ?? 0) - gameState.moveTree.ply, canBack, canForward }
   }, [gameState])
-
-
 
   const enterItem = useCallback(async (gid: string, item: BookItem): Promise<boolean> => {
     const reqId = ++itemReqId.current
@@ -580,8 +562,6 @@ export function useBookStudySession() {
     }
   }, [book, current, gameState, savingLine])
 
-
-
   const attemptMove = useCallback(
     async (from: Square, to: Square, promotion?: string) => {
       const gid = gameIdRef.current
@@ -655,9 +635,6 @@ export function useBookStudySession() {
   const toggleAnalysis = useCallback(() => {
     setAnalysisEnabled((enabled) => !enabled)
   }, [])
-
-
-
 
   const markCurrentComplete = useCallback(async () => {
     if (!book || !current || completionBusy || completedItemIds.has(current.item.id)) return

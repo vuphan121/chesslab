@@ -26,9 +26,6 @@ function authHeader(): Record<string, string> {
   return headers
 }
 
-
-
-
 async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   const sentToken = getToken()
   const res = await fetch(input, init)
@@ -129,8 +126,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   })
   if (res.status === 401) {
 
-
-
     clearToken()
   }
   if (!res.ok) {
@@ -140,9 +135,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-
-
-
 export interface FenEval {
   score: number
   mate: number
@@ -150,8 +142,6 @@ export interface FenEval {
   tablebaseCategory?: TablebaseCategory
   tablebaseDtz?: number
 }
-
-
 
 export interface PositionEvalMove {
   rank: number
@@ -243,13 +233,9 @@ export const importRepertoire = (input: ImportRepertoireRequest): Promise<Repert
 export const refreshRepertoire = (id: string): Promise<RepertoireSummary> =>
   request(`/api/repertoires/${encodeURIComponent(id)}/refresh`, { method: 'POST' })
 
-
-
 export const listBooks = (): Promise<BookSummary[]> => request('/api/books')
 
 export const getBook = (id: string): Promise<Book> => request(`/api/books/${id}`)
-
-
 
 export const getBookChapterPDF = async (id: string, chapterId: string): Promise<Blob> => {
   const res = await apiFetch(`${API}/api/books/${encodeURIComponent(id)}/chapters/${encodeURIComponent(chapterId)}/source.pdf`, { headers: authHeader() })
@@ -308,8 +294,6 @@ export const recordBookStudyActivity = (
     method: 'POST',
   })
 
-
-
 export interface LoginResponse {
   token: string
 }
@@ -320,9 +304,6 @@ export const login = (username: string, password: string): Promise<LoginResponse
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   })
-
-
-
 
 export interface ServerCardState {
   box: number

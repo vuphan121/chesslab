@@ -1,6 +1,5 @@
 
 
-
 const chapterOnePages: Record<string, number> = {
   'buyc1-ch1-lesson-1': 1,
   'buyc1-ch1-lesson-2': 1,

@@ -10,9 +10,6 @@ interface Props {
   sourcePage?: number
 }
 
-
-
-
 export default function BookPDFViewer({ bookId, chapterId, navigationKey, sourcePage }: Props) {
   const [url, setUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)

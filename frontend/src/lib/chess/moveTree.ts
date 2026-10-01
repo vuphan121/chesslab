@@ -1,6 +1,5 @@
 import type { MoveNode } from './types'
 
-
 export function childrenOf(node: MoveNode): MoveNode[] {
   return node.children ?? []
 }
@@ -24,7 +23,6 @@ export function flatten(root: MoveNode): Map<string, FlatEntry> {
   flatCache.set(root, map)
   return map
 }
-
 
 export function mainlineEnd(node: MoveNode): MoveNode {
   let cur = node

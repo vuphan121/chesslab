@@ -38,10 +38,6 @@ const MATERIAL_STRIP_HEIGHT = 22
 
 const EVAL_DISPLAY_STORAGE_KEY = 'chesslab.trainer.evalDisplay'
 
-
-
-
-
 const FIXED_OVERHEAD = ROW_GAP_DESKTOP * 3 + OUTER_PADDING_DESKTOP * 2 + EVAL_BAR_WIDTH
 const SCALABLE_WIDTH = DESKTOP_SQUARE_SIZE * 8 + SIDE_WIDTH + BUTTON_COL_WIDTH
 const FULL_CONTAINER_WIDTH = SCALABLE_WIDTH + FIXED_OVERHEAD
@@ -288,7 +284,6 @@ export default function OpeningStudyPage() {
             )}
           </div>
 
-
           <div style={{ width: boardSize, height: 56, display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ flex: 1, minWidth: 0 }} />
             <button
@@ -502,7 +497,6 @@ export default function OpeningStudyPage() {
                 <MaterialRow justify="flex-start" cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
                 <FeedbackStrip feedback={feedback} />
               </div>
-
 
               <div
                 style={{

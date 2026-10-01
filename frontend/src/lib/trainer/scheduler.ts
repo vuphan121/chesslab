@@ -1,6 +1,5 @@
 
 
-
 import type { RepCard, CardState, SessionOptions, SessionState, PersistedCardState, SessionSummary } from './types'
 import { uniform, shuffle } from './rng'
 
@@ -26,20 +25,6 @@ function freshCardState(cardId: string): CardState {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export function createSession(
   cards: RepCard[],
   opts: SessionOptions,
@@ -48,11 +33,6 @@ export function createSession(
 ): SessionState {
   const states = new Map<string, CardState>()
   const order: string[] = []
-
-
-
-
-
 
   for (const card of shuffle(cards, rng)) {
     if (opts.mode === 'mistakes' && !(saved?.[card.id]?.lapses)) continue
@@ -94,8 +74,6 @@ function activeCards(s: SessionState): CardState[] {
   return s.order.map((id) => s.cards.get(id)!).filter((c) => !c.retired)
 }
 
-
-
 export function pickNext(s: SessionState): CardState | null {
   const active = activeCards(s)
   if (active.length === 0) return null
@@ -107,8 +85,6 @@ export function pickNext(s: SessionState): CardState | null {
   s.lastCardId = picked.cardId
   return picked
 }
-
-
 
 export function grade(s: SessionState, cardId: string, correct: boolean): void {
   const c = s.cards.get(cardId)

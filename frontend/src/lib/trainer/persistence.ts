@@ -1,9 +1,5 @@
 
 
-
-
-
-
 import type { PersistedCardState, SessionState } from './types'
 
 export interface ProgressDelta {

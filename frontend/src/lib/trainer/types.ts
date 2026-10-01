@@ -1,7 +1,5 @@
 import type { Color } from '@/lib/chess/types'
 
-
-
 export interface RepertoireChapterSummary {
   id: string
   name: string
@@ -85,8 +83,6 @@ export interface Repertoire {
   replies: Record<string, RepReply[]>
 }
 
-
-
 export interface CardState {
   cardId: string
   box: number
@@ -123,11 +119,6 @@ export interface SessionSummary {
   learned: string[]
   missed: { cardId: string; lapses: number }[]
 }
-
-
-
-
-
 
 export interface PersistedCardState {
   box: number

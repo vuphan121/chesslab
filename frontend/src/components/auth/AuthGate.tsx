@@ -8,13 +8,6 @@ import UserSettingsProvider from '@/components/settings/UserSettingsProvider'
 import OfflineSync from '@/components/pwa/OfflineSync'
 import OfflineBadge from '@/components/pwa/OfflineBadge'
 
-
-
-
-
-
-
-
 export default function AuthGate({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState<boolean | null>(null)
 

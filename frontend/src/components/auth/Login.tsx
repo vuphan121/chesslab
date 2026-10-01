@@ -6,10 +6,6 @@ import { setToken } from '@/lib/auth/token'
 import { claimOfflineStore } from '@/lib/offline/cache'
 import { refreshOfflineData } from '@/lib/offline/refresh'
 
-
-
-
-
 export default function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')

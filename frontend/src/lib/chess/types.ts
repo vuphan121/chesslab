@@ -8,9 +8,6 @@ export interface Piece {
 
 export type Square = string
 
-
-
-
 export interface MoveNode {
   id: string
   san: string

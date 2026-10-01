@@ -8,8 +8,6 @@ import { lookupEval } from '@/lib/lichess/lookup'
 import { MoveEvaluator } from '@/lib/engine/moveEval'
 import { toFigurine } from '@/lib/chess/figurine'
 
-
-
 function formatMoveEval(e: FenEval): string {
   if (e.mate !== 0) return `#${e.mate}`
   if (e.tablebaseCategory) {
@@ -47,8 +45,6 @@ interface Props {
   engineEnabled?: boolean
   engineBusy?: boolean
 }
-
-
 
 export default function MoveHistory({
   openingName,
@@ -88,9 +84,6 @@ export default function MoveHistory({
     if (elRect.top < boxRect.top) box.scrollTop -= boxRect.top - elRect.top
     else if (elRect.bottom > boxRect.bottom) box.scrollTop += elRect.bottom - boxRect.bottom
   }, [currentNodeId])
-
-
-
 
   const [evals, setEvals] = useState<Record<string, FenEval>>({})
   const evalsRef = useRef(evals)
@@ -179,8 +172,6 @@ export default function MoveHistory({
     }
   }, [moveTree, currentNodeId, engineEnabled])
 
-
-
   const renderCell = (node: MoveNode | null): ReactNode => {
     if (!node) return <span style={{ flex: 1 }} />
     const isCurrent = node.id === currentNodeId
@@ -230,10 +221,6 @@ export default function MoveHistory({
       </span>
     )
   }
-
-
-
-
 
   const renderRows = (): ReactNode[] => {
     const rows: ReactNode[] = []
@@ -374,7 +361,6 @@ export default function MoveHistory({
           rows={2}
           style={{
             resize: 'vertical',
-
 
             fontSize: 16,
             fontFamily: 'var(--font-mono, monospace)',

@@ -120,7 +120,6 @@ describe('scheduler', () => {
     const cards = [makeCard('A'), makeCard('B'), makeCard('C')]
     const s = session(cards)
 
-
     const active = s.order.map((id) => s.cards.get(id)!).filter((c) => !c.retired)
     expect(active).toHaveLength(3)
   })

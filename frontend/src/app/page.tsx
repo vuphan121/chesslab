@@ -55,19 +55,13 @@ function subscribeTree(callback: () => void): () => void {
   }
 }
 
-
 const FULL_CONTAINER_WIDTH =
   SIDE_WIDTH * 2 + ROW_GAP_DESKTOP * 2 + (DESKTOP_SQUARE_SIZE * 8 + 11 + 15 + 11 + MATERIAL_CORNERS_WIDTH) + OUTER_PADDING_DESKTOP * 2
 const MIN_DESKTOP_SCALE = 0.45
 
-
-
-
 const CAPTION_ROW_HEIGHT = 30
 const COLUMN_GAP = 10
 const BOARD_TOP_OFFSET = CAPTION_ROW_HEIGHT + COLUMN_GAP
-
-
 
 function formatEval(score: number, mate: number): string {
   if (mate !== 0) return `#${mate}`
@@ -157,21 +151,9 @@ export default function Home() {
     treeListeners.forEach((l) => l())
   }, [])
 
-
-
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
   const isPhone = viewportWidth != null && viewportWidth < PHONE_BREAKPOINT
   const outerPadding = isNarrow ? OUTER_PADDING_NARROW : OUTER_PADDING_DESKTOP
-
-
-
-
-
-
-
-
-
-
 
   const desktopScale = isNarrow
     ? 1
