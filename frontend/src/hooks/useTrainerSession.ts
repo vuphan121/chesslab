@@ -823,33 +823,43 @@ export function useTrainerSession() {
 
 
 
+  const playForIndex = useCallback((index: number) => {
+    const snaps = runSnapshotsRef.current
+    const at = snaps[index]
+    const before = snaps[index - 1]
+    playMoveSound(!!at && !!before && Object.keys(at.pieces).length < Object.keys(before.pieces).length)
+  }, [])
+
   const navBack = useCallback(() => {
     setAnimateLastMove(false)
-    setViewIndex((v) => {
-      const last = runSnapshotsRef.current.length - 1
-      const current = v ?? last
-      return Math.max(0, current - 1)
-    })
-  }, [])
+    const last = runSnapshotsRef.current.length - 1
+    const target = Math.max(0, (viewIndex ?? last) - 1)
+    if (target !== (viewIndex ?? last)) playForIndex(target)
+    setViewIndex(target)
+  }, [viewIndex, playForIndex])
 
   const navForward = useCallback(() => {
     setAnimateLastMove(false)
-    setViewIndex((v) => {
-      if (v === null) return null
-      const last = runSnapshotsRef.current.length - 1
-      const next = v + 1
-      return next >= last ? null : next
-    })
-  }, [])
-
-
-
-
-  const gotoPly = useCallback((index: number) => {
-    setAnimateLastMove(false)
+    if (viewIndex === null) return
     const last = runSnapshotsRef.current.length - 1
-    setViewIndex(index >= last ? null : Math.max(0, index))
-  }, [])
+    const next = viewIndex + 1
+    playForIndex(Math.min(next, last))
+    setViewIndex(next >= last ? null : next)
+  }, [viewIndex, playForIndex])
+
+
+
+
+  const gotoPly = useCallback(
+    (index: number) => {
+      setAnimateLastMove(false)
+      const last = runSnapshotsRef.current.length - 1
+      const target = Math.min(last, Math.max(0, index))
+      if (target !== (viewIndex ?? last)) playForIndex(target)
+      setViewIndex(index >= last ? null : Math.max(0, index))
+    },
+    [viewIndex, playForIndex],
+  )
 
 
 

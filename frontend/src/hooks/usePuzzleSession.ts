@@ -417,6 +417,7 @@ export function usePuzzleSession() {
   const gotoNode = useCallback(
     (id: string) => {
       if (!navigable() || !game.gotoNode(id)) return
+      playMoveSound(game.currentSan.includes('x'))
       setSelected(null)
       setHintUci(null)
       commit()

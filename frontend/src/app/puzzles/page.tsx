@@ -225,9 +225,6 @@ export default function PuzzlesPage() {
           </button>
           <EngineSettingsButton size={40} settings={engineSettings} onChange={updateEngineSettings} onReset={resetEngineSettings} />
           {(stacked || isLandscape) && retryQueueButton}
-          {!isPhone && !isLandscape && (
-            <span className="mono" style={{ fontSize: 12, color: '#6a675f', alignSelf: 'center', minWidth: 52 }}>{analysis?.depth ? `depth ${analysis.depth}` : ''}</span>
-          )}
         </div>
       )}
     </div>
@@ -237,7 +234,7 @@ export default function PuzzlesPage() {
     <div style={{ width: boardSize }}>
       <div style={{ position: 'relative', width: boardSize, height: boardSize }}>
         {analysisActive && !stacked && (
-          <div style={{ position: 'absolute', right: '100%', marginRight: 8, top: 0, width: 22, opacity: analysisIsCurrent ? 1 : 0.45, transition: 'opacity 120ms' }}>
+          <div style={{ position: 'absolute', left: '100%', marginLeft: 8, top: 0, width: 22, opacity: analysisIsCurrent ? 1 : 0.45, transition: 'opacity 120ms' }}>
             <EvalBar {...evalBarProps} />
           </div>
         )}
@@ -261,16 +258,7 @@ export default function PuzzlesPage() {
         </div>
       )}
       {!isLandscape && <div style={{ width: boardSize, height: FEEDBACK_HEIGHT, display: 'flex', alignItems: 'center' }}>
-        {isPhone ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-            <div style={{ display: 'flex' }}><FeedbackStrip feedback={s.feedback} /></div>
-            {analysisActive && analysis?.depth ? (
-              <span className="mono" style={{ fontSize: 12, color: '#6a675f' }}>depth {analysis.depth}</span>
-            ) : null}
-          </div>
-        ) : (
-          <FeedbackStrip feedback={s.feedback} />
-        )}
+        <FeedbackStrip feedback={s.feedback} />
       </div>}
     </div>
   )
@@ -285,11 +273,8 @@ export default function PuzzlesPage() {
           <div style={{ marginLeft: EVAL_SLOT }}>{boardBlock}</div>
           <div style={{ width: columnWidth, height: boardSize, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ height: 32 }}>{backButton}</div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 22 }}>
-              <div style={{ display: 'flex' }}><FeedbackStrip feedback={s.feedback} /></div>
-              {analysisActive && analysis?.depth ? (
-                <span className="mono" style={{ fontSize: 12, color: '#6a675f' }}>depth {analysis.depth}</span>
-              ) : null}
+            <div style={{ display: 'flex', alignItems: 'center', minHeight: 22 }}>
+              <FeedbackStrip feedback={s.feedback} />
             </div>
             {controls}
             {moves}
@@ -310,12 +295,12 @@ export default function PuzzlesPage() {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'start', padding: `${PAGE_PADDING}px 16px` }}>
-          <div style={{ justifySelf: 'end', width: panelWidth, marginRight: EVAL_SLOT + SIDE_GAP }}>
+          <div style={{ justifySelf: 'end', width: panelWidth, marginRight: SIDE_GAP }}>
             <div style={{ height: 32, marginBottom: 8 }}>{backButton}</div>
             {moves}
           </div>
           {boardBlock}
-          <div style={{ justifySelf: 'start', marginLeft: SIDE_GAP }}>
+          <div style={{ justifySelf: 'start', marginLeft: EVAL_SLOT + SIDE_GAP }}>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', minHeight: boardSize }}>
               <div>
                 {controls}
