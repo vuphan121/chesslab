@@ -13,7 +13,7 @@ import { useEngineAnalysis } from '@/hooks/useEngineAnalysis'
 import { arrowShapes } from '@/lib/engine/arrows'
 import type { CandidateLine } from '@/lib/engine/arrows'
 import { useEngineSettings } from '@/lib/engine/settings'
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { useViewportWidth, useViewportHeight, clamp } from '@/hooks/useViewportWidth'
 import { flatten } from '@/lib/chess/moveTree'
 import { positionKey } from '@/lib/chess/positionKey'
@@ -139,6 +139,21 @@ export default function Home() {
     enabled: evalDisplay !== 'off',
     settings: engineSettings,
   })
+
+  const liveEval = useMemo(
+    () =>
+      analysis && analysisFen && (analysis.depth > 0 || analysis.tablebaseCategory)
+        ? {
+            fen: analysisFen,
+            score: analysis.score,
+            mate: analysis.mate,
+            depth: analysis.depth,
+            ...(analysis.tablebaseCategory ? { tablebaseCategory: analysis.tablebaseCategory } : {}),
+            ...(analysis.tablebaseDtz !== undefined ? { tablebaseDtz: analysis.tablebaseDtz } : {}),
+          }
+        : null,
+    [analysis, analysisFen],
+  )
   const viewportWidth = useViewportWidth()
   const viewportHeight = useViewportHeight()
   const showTree = useSyncExternalStore(subscribeTree, readShowTree, () => true)
@@ -520,6 +535,7 @@ export default function Home() {
               onLoadPgn={jump(loadPgn)}
               engineEnabled={evalDisplay !== 'off'}
               engineBusy={analyzing}
+              liveEval={liveEval}
             />
           </div>
 

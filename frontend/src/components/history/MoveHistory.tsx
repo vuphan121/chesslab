@@ -44,6 +44,7 @@ interface Props {
   onLoadPgn: (pgn: string) => Promise<void>
   engineEnabled?: boolean
   engineBusy?: boolean
+  liveEval?: (FenEval & { fen: string }) | null
 }
 
 export default function MoveHistory({
@@ -54,6 +55,7 @@ export default function MoveHistory({
   onLoadPgn,
   engineEnabled = true,
   engineBusy = false,
+  liveEval = null,
 }: Props) {
   const currentRef = useRef<HTMLSpanElement | null>(null)
   const [pgnInput, setPgnInput] = useState('')
@@ -99,6 +101,16 @@ export default function MoveHistory({
   useEffect(() => {
     busyRef.current = engineBusy
   }, [engineBusy])
+
+  useEffect(() => {
+    if (!liveEval || engineBusy) return
+    void Promise.resolve().then(() =>
+      setEvals((prev) => {
+        const known = prev[liveEval.fen]
+        return known && known.depth >= liveEval.depth ? prev : { ...prev, [liveEval.fen]: liveEval }
+      }),
+    )
+  }, [liveEval, engineBusy])
 
   useEffect(() => {
     return () => {
@@ -150,8 +162,10 @@ export default function MoveHistory({
       }
       for (const fen of unresolved) {
         if (cancelled) return
+        if (evalsRef.current[fen]) continue
         while (busyRef.current && !cancelled) await pause(400)
         if (cancelled) return
+        if (evalsRef.current[fen]) continue
         const evaluator = (evaluatorRef.current ??= new MoveEvaluator())
         try {
           const e = await evaluator.evaluate(fen)
@@ -175,7 +189,7 @@ export default function MoveHistory({
   const renderCell = (node: MoveNode | null): ReactNode => {
     if (!node) return <span style={{ flex: 1 }} />
     const isCurrent = node.id === currentNodeId
-    const e = evals[node.fen]
+    const e = evals[node.fen] ?? (liveEval && liveEval.fen === node.fen ? liveEval : undefined)
     return (
       <span
         ref={isCurrent ? currentRef : undefined}
