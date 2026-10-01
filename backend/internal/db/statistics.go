@@ -120,6 +120,10 @@ func (s *Store) StatsDaily(ctx context.Context, username, timeZone, endDate stri
 			SELECT (played_at AT TIME ZONE $2)::date, 0, 1, 0, CASE WHEN win THEN 1 ELSE 0 END
 			FROM puzzle_attempts, bounds
 			WHERE username = $1 AND played_at >= lo AND played_at < hi
+			UNION ALL
+			SELECT day, 0, plays, 0, wins
+			FROM puzzle_daily_stats
+			WHERE username = $1 AND day >= ($3::date - ($4::int - 1)) AND day <= $3::date
 		)
 		SELECT day::text, SUM(drill), SUM(puzzle), SUM(mistake), SUM(win) FROM d GROUP BY day ORDER BY day`,
 		username, timeZone, endDate, days)
@@ -150,6 +154,8 @@ func (s *Store) ActivityDays(ctx context.Context, username, timeZone, endDate st
 			SELECT (played_at AT TIME ZONE $2)::date AS day FROM line_attempts WHERE username = $1
 			UNION
 			SELECT (played_at AT TIME ZONE $2)::date FROM puzzle_attempts WHERE username = $1
+			UNION
+			SELECT day FROM puzzle_daily_stats WHERE username = $1
 		) x WHERE day <= $3::date ORDER BY 1`, username, timeZone, endDate)
 	if err != nil {
 		return nil, fmt.Errorf("activity days: %w", err)
@@ -180,6 +186,10 @@ func (s *Store) StatsWeekly(ctx context.Context, username, timeZone, endDate str
 			SELECT date_trunc('week', (played_at AT TIME ZONE $2)::date)::date, 0, 1, 0, CASE WHEN win THEN 1 ELSE 0 END
 			FROM puzzle_attempts, bounds
 			WHERE username = $1 AND (played_at AT TIME ZONE $2)::date >= first_week AND (played_at AT TIME ZONE $2)::date < hi
+			UNION ALL
+			SELECT date_trunc('week', day)::date, 0, plays, 0, wins
+			FROM puzzle_daily_stats, bounds
+			WHERE username = $1 AND day >= first_week AND day < hi
 		)
 		SELECT wk::text, SUM(drill), SUM(puzzle), SUM(mistake), SUM(win) FROM d GROUP BY wk ORDER BY wk`,
 		username, timeZone, endDate, weeks)
@@ -209,14 +219,23 @@ func (s *Store) StatsWeekly(ctx context.Context, username, timeZone, endDate str
 
 func (s *Store) StatsThemes(ctx context.Context, username, timeZone, endDate string, days int) ([]StatsTheme, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT t.theme, COUNT(*), COUNT(*) FILTER (WHERE a.win)
-		FROM puzzle_attempts a, jsonb_array_elements_text(a.themes) AS t(theme)
-		WHERE a.username = $1
-		  AND a.played_at >= (($3::date - ($4::int - 1))::timestamp AT TIME ZONE $2)
-		  AND a.played_at < (($3::date + 1)::timestamp AT TIME ZONE $2)
-		  AND t.theme NOT IN ('short', 'long', 'veryLong', 'oneMove', 'advantage', 'crushing', 'equality',
-		                      'opening', 'middlegame', 'endgame', 'master', 'masterVsMaster', 'superGM')
-		GROUP BY t.theme ORDER BY COUNT(*) DESC`, username, timeZone, endDate, days)
+		SELECT theme, SUM(nb)::int, SUM(wins)::int FROM (
+			SELECT t.theme AS theme, COUNT(*) AS nb, COUNT(*) FILTER (WHERE a.win) AS wins
+			FROM puzzle_attempts a, jsonb_array_elements_text(a.themes) AS t(theme)
+			WHERE a.username = $1
+			  AND a.played_at >= (($3::date - ($4::int - 1))::timestamp AT TIME ZONE $2)
+			  AND a.played_at < (($3::date + 1)::timestamp AT TIME ZONE $2)
+			  AND t.theme NOT IN ('short', 'long', 'veryLong', 'oneMove', 'advantage', 'crushing', 'equality',
+			                      'opening', 'middlegame', 'endgame', 'master', 'masterVsMaster', 'superGM')
+			GROUP BY t.theme
+			UNION ALL
+			SELECT theme, SUM(plays), SUM(wins)
+			FROM puzzle_theme_daily
+			WHERE username = $1 AND day >= ($3::date - ($4::int - 1)) AND day <= $3::date
+			  AND theme NOT IN ('short', 'long', 'veryLong', 'oneMove', 'advantage', 'crushing', 'equality',
+			                    'opening', 'middlegame', 'endgame', 'master', 'masterVsMaster', 'superGM')
+			GROUP BY theme
+		) x GROUP BY theme ORDER BY SUM(nb) DESC`, username, timeZone, endDate, days)
 	if err != nil {
 		return nil, fmt.Errorf("stats themes: %w", err)
 	}
@@ -232,10 +251,24 @@ func (s *Store) StatsThemes(ctx context.Context, username, timeZone, endDate str
 	return out, rows.Err()
 }
 
+func (s *Store) appRatingExists(ctx context.Context, username string) (bool, error) {
+	var ok bool
+	err := s.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM puzzle_daily_stats WHERE username = $1 AND avg_rating IS NOT NULL)`, username).Scan(&ok)
+	return ok, err
+}
+
 func (s *Store) StatsRating(ctx context.Context, username, endDate string, days int) ([]StatsRatingPoint, error) {
-	rows, err := s.pool.Query(ctx, `
+	query := `
 		SELECT day::text, rating FROM puzzle_rating_history
-		WHERE username = $1 AND day > ($2::date - $3::int) AND day <= $2::date ORDER BY day`,
+		WHERE username = $1 AND day > ($2::date - $3::int) AND day <= $2::date ORDER BY day`
+	if app, err := s.appRatingExists(ctx, username); err != nil {
+		return nil, fmt.Errorf("stats rating: %w", err)
+	} else if app {
+		query = `
+		SELECT day::text, ROUND(avg_rating)::int FROM puzzle_daily_stats
+		WHERE username = $1 AND avg_rating IS NOT NULL AND day > ($2::date - $3::int) AND day <= $2::date ORDER BY day`
+	}
+	rows, err := s.pool.Query(ctx, query,
 		username, endDate, days)
 	if err != nil {
 		return nil, fmt.Errorf("stats rating: %w", err)
@@ -254,9 +287,17 @@ func (s *Store) StatsRating(ctx context.Context, username, endDate string, days 
 
 func (s *Store) LastRatingAtOrBefore(ctx context.Context, username, day string) (*int, error) {
 	var r int
-	err := s.pool.QueryRow(ctx, `
+	query := `
 		SELECT rating FROM puzzle_rating_history
-		WHERE username = $1 AND day <= $2::date ORDER BY day DESC LIMIT 1`, username, day).Scan(&r)
+		WHERE username = $1 AND day <= $2::date ORDER BY day DESC LIMIT 1`
+	if app, err := s.appRatingExists(ctx, username); err != nil {
+		return nil, err
+	} else if app {
+		query = `
+		SELECT ROUND(avg_rating)::int FROM puzzle_daily_stats
+		WHERE username = $1 AND avg_rating IS NOT NULL AND day <= $2::date ORDER BY day DESC LIMIT 1`
+	}
+	err := s.pool.QueryRow(ctx, query, username, day).Scan(&r)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}

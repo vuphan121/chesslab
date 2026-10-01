@@ -6,10 +6,16 @@ import (
 	"time"
 )
 
-func (s *Store) StartCleanupLoop(retention, interval time.Duration) {
+func (s *Store) StartCleanupLoop(retention, puzzlePlaysRetention, interval time.Duration) {
 	sweep := func() {
 		cutoff := time.Now().Add(-retention)
-		ct, err := s.pool.Exec(context.Background(), "DELETE FROM line_attempts WHERE played_at < $1", cutoff)
+		ct, err := s.pool.Exec(context.Background(), "DELETE FROM puzzle_plays WHERE played_at < $1", time.Now().Add(-puzzlePlaysRetention))
+		if err != nil {
+			log.Printf("db: puzzle_plays cleanup failed: %v", err)
+		} else if n := ct.RowsAffected(); n > 0 {
+			log.Printf("db: pruned %d puzzle_plays row(s) older than %s", n, puzzlePlaysRetention)
+		}
+		ct, err = s.pool.Exec(context.Background(), "DELETE FROM line_attempts WHERE played_at < $1", cutoff)
 		if err != nil {
 			log.Printf("db: line_attempts cleanup failed: %v", err)
 			return

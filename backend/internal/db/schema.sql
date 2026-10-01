@@ -289,3 +289,48 @@ CREATE TABLE IF NOT EXISTS puzzle_retry_queue (
     added_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (username, puzzle_id)
 );
+
+CREATE TABLE IF NOT EXISTS puzzle_daily_stats (
+    username TEXT NOT NULL CONSTRAINT puzzle_daily_stats_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    day DATE NOT NULL,
+    plays INT NOT NULL DEFAULT 0,
+    wins INT NOT NULL DEFAULT 0,
+    avg_rating DOUBLE PRECISION,
+    PRIMARY KEY (username, day)
+);
+
+CREATE TABLE IF NOT EXISTS puzzle_theme_daily (
+    username TEXT NOT NULL CONSTRAINT puzzle_theme_daily_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    day DATE NOT NULL,
+    theme TEXT NOT NULL,
+    plays INT NOT NULL DEFAULT 0,
+    wins INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (username, day, theme)
+);
+
+-- One-off backfill of the aggregates from the existing puzzle_plays rows (runs only while the aggregate table is empty).
+-- Days use Asia/Ho_Chi_Minh because old rows did not record the user's time zone.
+INSERT INTO puzzle_theme_daily (username, day, theme, plays, wins)
+SELECT username, (played_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date, theme, COUNT(*), COUNT(*) FILTER (WHERE solved)
+FROM puzzle_plays
+WHERE NOT EXISTS (SELECT 1 FROM puzzle_theme_daily)
+GROUP BY 1, 2, 3;
+
+WITH local_plays AS (
+    SELECT username, (played_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date AS day, theme, solved, rating_after, played_at
+    FROM puzzle_plays
+), days AS (
+    SELECT username, day, COUNT(*) AS plays, COUNT(*) FILTER (WHERE solved) AS wins FROM local_plays GROUP BY 1, 2
+), latest AS (
+    SELECT d.username, d.day, p.theme, (array_agg(p.rating_after ORDER BY p.played_at DESC))[1] AS r
+    FROM days d JOIN local_plays p ON p.username = d.username AND p.day <= d.day
+    GROUP BY d.username, d.day, p.theme
+), avg_by_day AS (
+    SELECT username, day, AVG(r) AS avg_rating FROM latest GROUP BY 1, 2
+)
+INSERT INTO puzzle_daily_stats (username, day, plays, wins, avg_rating)
+SELECT d.username, d.day, d.plays, d.wins, a.avg_rating
+FROM days d JOIN avg_by_day a ON a.username = d.username AND a.day = d.day
+WHERE NOT EXISTS (SELECT 1 FROM puzzle_daily_stats);

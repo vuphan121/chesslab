@@ -63,7 +63,7 @@ func (s *Store) RecentPuzzleIDs(ctx context.Context, username string, limit int)
 	return out, rows.Err()
 }
 
-func (s *Store) RecordPuzzlePlay(ctx context.Context, username, operationID, puzzleID, theme string, solved bool, puzzleRating int, puzzleThemes []string) (*PuzzlePlayResult, error) {
+func (s *Store) RecordPuzzlePlay(ctx context.Context, username, operationID, day, puzzleID, theme string, solved bool, puzzleRating int, puzzleThemes []string) (*PuzzlePlayResult, error) {
 	hasTheme := false
 	for _, t := range puzzleThemes {
 		if t == theme {
@@ -122,6 +122,24 @@ func (s *Store) RecordPuzzlePlay(ctx context.Context, username, operationID, puz
 		INSERT INTO puzzle_plays (username, operation_id, puzzle_id, theme, solved, puzzle_rating, rating_before, rating_after)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
 		username, operationID, puzzleID, theme, solved, puzzleRating, before, after); err != nil {
+		return nil, err
+	}
+	win := 0
+	if solved {
+		win = 1
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO puzzle_theme_daily (username, day, theme, plays, wins) VALUES ($1, $2::date, $3, 1, $4)
+		ON CONFLICT (username, day, theme) DO UPDATE SET plays = puzzle_theme_daily.plays + 1, wins = puzzle_theme_daily.wins + $4`,
+		username, day, theme, win); err != nil {
+		return nil, err
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO puzzle_daily_stats (username, day, plays, wins, avg_rating)
+		VALUES ($1, $2::date, 1, $3, (SELECT AVG(rating) FROM puzzle_theme_ratings WHERE username = $1))
+		ON CONFLICT (username, day) DO UPDATE SET plays = puzzle_daily_stats.plays + 1, wins = puzzle_daily_stats.wins + $3,
+			avg_rating = EXCLUDED.avg_rating`,
+		username, day, win); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(ctx); err != nil {

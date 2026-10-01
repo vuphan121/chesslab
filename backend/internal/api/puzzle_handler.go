@@ -272,7 +272,7 @@ func (h *Handler) SubmitPuzzleResult(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to update the retry queue: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	res, err := h.db.RecordPuzzlePlay(r.Context(), username, req.OperationID, req.PuzzleID, req.Theme, req.Solved, found.Rating, found.Themes)
+	res, err := h.db.RecordPuzzlePlay(r.Context(), username, req.OperationID, currentRequestClock(r).date, req.PuzzleID, req.Theme, req.Solved, found.Rating, found.Themes)
 	if errors.Is(err, db.ErrUnknownPuzzle) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

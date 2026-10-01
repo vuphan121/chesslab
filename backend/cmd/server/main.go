@@ -206,7 +206,13 @@ func newDBStore() *db.Store {
 			retentionDays = n
 		}
 	}
-	store.StartCleanupLoop(time.Duration(retentionDays)*24*time.Hour, 12*time.Hour)
+	puzzlePlaysDays := 30
+	if v := os.Getenv("PUZZLE_PLAYS_RETENTION_DAYS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			puzzlePlaysDays = n
+		}
+	}
+	store.StartCleanupLoop(time.Duration(retentionDays)*24*time.Hour, time.Duration(puzzlePlaysDays)*24*time.Hour, 12*time.Hour)
 	log.Printf("db: line_attempts retention %d days", retentionDays)
 
 	return store
