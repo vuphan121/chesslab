@@ -655,7 +655,9 @@ export function useBookStudySession() {
     const next = new Set(bookmarkedItemIds)
     if (next.has(current.item.id)) next.delete(current.item.id)
     else next.add(current.item.id)
-    localStorage.setItem(`chesslab.book-bookmarks.${book.id}`, JSON.stringify([...next]))
+    try {
+      localStorage.setItem(`chesslab.book-bookmarks.${book.id}`, JSON.stringify([...next]))
+    } catch {}
     setBookmarkedItemIds(next)
   }, [book, current, bookmarkedItemIds])
 

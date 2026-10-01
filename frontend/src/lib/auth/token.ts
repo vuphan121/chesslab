@@ -4,22 +4,40 @@
 
 const STORAGE_KEY = 'chesslab.auth.token'
 
+let memoryToken: string | null = null
+
+function readStored(): string | null {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY)
+  } catch {
+    return memoryToken
+  }
+}
+
+function writeStored(token: string | null): void {
+  memoryToken = token
+  try {
+    if (token === null) window.localStorage.removeItem(STORAGE_KEY)
+    else window.localStorage.setItem(STORAGE_KEY, token)
+  } catch {}
+}
+
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null
-  return window.localStorage.getItem(STORAGE_KEY)
+  return readStored()
 }
 
 export function setToken(token: string): void {
   if (typeof window === 'undefined') return
-  if (window.localStorage.getItem(STORAGE_KEY) === token) return
-  window.localStorage.setItem(STORAGE_KEY, token)
+  if (readStored() === token) return
+  writeStored(token)
   notifyChange()
 }
 
 export function clearToken(): void {
   if (typeof window === 'undefined') return
-  if (window.localStorage.getItem(STORAGE_KEY) === null) return
-  window.localStorage.removeItem(STORAGE_KEY)
+  if (readStored() === null) return
+  writeStored(null)
   notifyChange()
 }
 
