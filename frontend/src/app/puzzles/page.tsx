@@ -25,6 +25,10 @@ const FEEDBACK_HEIGHT = 30
 const NARROW_BREAKPOINT = 900
 const PHONE_BREAKPOINT = 640
 const PHONE_EXTRA_HEIGHT = 108
+const LANDSCAPE_MAX_HEIGHT = 450
+const LANDSCAPE_MAX_WIDTH = 1000
+const LANDSCAPE_COLUMN_MIN = 200
+const LANDSCAPE_COLUMN_MAX = 300
 const PANEL_MIN_WIDTH = 220
 const PANEL_MAX_WIDTH = 340
 const EVAL_SLOT = 38
@@ -39,6 +43,9 @@ export default function PuzzlesPage() {
   const viewportHeight = useViewportHeight()
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
   const isPhone = viewportWidth != null && viewportWidth < PHONE_BREAKPOINT
+  const isLandscape =
+    viewportWidth != null && viewportHeight != null && viewportHeight < LANDSCAPE_MAX_HEIGHT && viewportWidth >= PHONE_BREAKPOINT && viewportWidth < LANDSCAPE_MAX_WIDTH
+  const stacked = isNarrow && !isLandscape
 
   const finished = s.status === 'solved' || s.status === 'failed'
   const navigable = finished || s.status === 'playing'
@@ -86,13 +93,15 @@ export default function PuzzlesPage() {
 
   const vw = viewportWidth ?? 375
   const vh = viewportHeight ?? 900
-  const widthFit = isNarrow ? Math.floor((vw - 20) / 8) : Math.floor((vw - 2 * (PANEL_MIN_WIDTH + EVAL_SLOT) - 2 * SIDE_GAP - 32) / 8)
+  const widthFit = isLandscape
+    ? Math.floor((vw - 32 - EVAL_SLOT - SIDE_GAP - LANDSCAPE_COLUMN_MIN) / 8)
+    : isNarrow ? Math.floor((vw - 20) / 8) : Math.floor((vw - 2 * (PANEL_MIN_WIDTH + EVAL_SLOT) - 2 * SIDE_GAP - 32) / 8)
   const heightFit = Math.floor(
-    (vh - TOP_BAR_HEIGHT - PAGE_PADDING * 2 - FEEDBACK_HEIGHT - (isNarrow ? CONTROLS_HEIGHT + CONTROLS_GAP + (analysisActive ? 20 : 0) + (isPhone ? PHONE_EXTRA_HEIGHT : 0) : 0)) / 8,
+    (vh - TOP_BAR_HEIGHT - PAGE_PADDING * 2 - (isLandscape ? 8 : FEEDBACK_HEIGHT) - (stacked ? CONTROLS_HEIGHT + CONTROLS_GAP + (analysisActive ? 20 : 0) + (isPhone ? PHONE_EXTRA_HEIGHT : 0) : 0)) / 8,
   )
-  const squareSize = clamp(Math.min(widthFit, heightFit), 36, MAX_SQUARE_SIZE)
+  const squareSize = clamp(Math.min(widthFit, heightFit), isLandscape ? 28 : 36, MAX_SQUARE_SIZE)
   const boardSize = squareSize * 8
-  const panelWidth = isNarrow ? boardSize : clamp(Math.floor((vw - 32 - boardSize) / 2 - EVAL_SLOT - SIDE_GAP), PANEL_MIN_WIDTH, PANEL_MAX_WIDTH)
+  const panelWidth = stacked ? boardSize : clamp(Math.floor((vw - 32 - boardSize) / 2 - EVAL_SLOT - SIDE_GAP), PANEL_MIN_WIDTH, PANEL_MAX_WIDTH)
 
   const board = s.boardState
   const analysisIsCurrent = !!board && !!analysis && (analysisFen === null || positionKey(analysisFen) === positionKey(board.fen))
@@ -155,7 +164,7 @@ export default function PuzzlesPage() {
       onGoto={s.gotoNode}
       onPrev={s.navPrev}
       onNext={s.navNext}
-      height={isNarrow ? 190 : boardSize - 40}
+      height={isLandscape ? boardSize - 118 : isNarrow ? 190 : boardSize - 40}
     />
   )
 
@@ -163,12 +172,12 @@ export default function PuzzlesPage() {
     <div
       style={{
         display: 'flex',
-        flexDirection: isNarrow ? 'row' : 'column',
+        flexDirection: stacked || isLandscape ? 'row' : 'column',
         flexWrap: 'wrap',
         gap: 8,
-        alignItems: isNarrow ? 'center' : 'stretch',
-        width: isNarrow ? boardSize : BUTTON_COLUMN_WIDTH,
-        minHeight: isNarrow ? CONTROLS_HEIGHT : undefined,
+        alignItems: stacked || isLandscape ? 'center' : 'stretch',
+        width: isLandscape ? '100%' : stacked ? boardSize : BUTTON_COLUMN_WIDTH,
+        minHeight: stacked ? CONTROLS_HEIGHT : undefined,
       }}
     >
       {s.status === 'idle' && s.error && (
@@ -182,7 +191,7 @@ export default function PuzzlesPage() {
         </button>
       )}
       {finished && (
-        <div style={{ display: 'flex', flexDirection: isNarrow ? 'row' : 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: stacked || isLandscape ? 'row' : 'column', gap: 8 }}>
           <button onClick={s.next} className="tap" style={iconButton('primary')} title="Next puzzle" aria-label="Next puzzle">
             <NextIcon />
           </button>
@@ -196,7 +205,7 @@ export default function PuzzlesPage() {
             <RetryIcon />
           </button>
           <EngineSettingsButton size={40} settings={engineSettings} onChange={updateEngineSettings} onReset={resetEngineSettings} />
-          {!isPhone && (
+          {!isPhone && !isLandscape && (
             <span className="mono" style={{ fontSize: 12, color: '#6a675f', alignSelf: 'center', minWidth: 52 }}>{analysis?.depth ? `depth ${analysis.depth}` : ''}</span>
           )}
         </div>
@@ -207,7 +216,7 @@ export default function PuzzlesPage() {
   const boardBlock = (
     <div style={{ width: boardSize }}>
       <div style={{ position: 'relative', width: boardSize, height: boardSize }}>
-        {analysisActive && !isNarrow && (
+        {analysisActive && !stacked && (
           <div style={{ position: 'absolute', right: '100%', marginRight: 8, top: 0, width: 22, opacity: analysisIsCurrent ? 1 : 0.45, transition: 'opacity 120ms' }}>
             <EvalBar {...evalBarProps} />
           </div>
@@ -226,12 +235,12 @@ export default function PuzzlesPage() {
           <div style={{ width: boardSize, height: boardSize, background: '#f0efe9', borderRadius: 6 }} />
         )}
       </div>
-      {analysisActive && isNarrow && (
+      {analysisActive && stacked && (
         <div style={{ width: boardSize, height: 20, opacity: analysisIsCurrent ? 1 : 0.45 }}>
           <EvalBar horizontal {...evalBarProps} />
         </div>
       )}
-      <div style={{ width: boardSize, height: FEEDBACK_HEIGHT, display: 'flex', alignItems: 'center' }}>
+      {!isLandscape && <div style={{ width: boardSize, height: FEEDBACK_HEIGHT, display: 'flex', alignItems: 'center' }}>
         {isPhone ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
             <div style={{ display: 'flex' }}><FeedbackStrip feedback={s.feedback} /></div>
@@ -242,14 +251,32 @@ export default function PuzzlesPage() {
         ) : (
           <FeedbackStrip feedback={s.feedback} />
         )}
-      </div>
+      </div>}
     </div>
   )
 
+  const columnWidth = clamp(vw - 32 - boardSize - EVAL_SLOT - SIDE_GAP, LANDSCAPE_COLUMN_MIN, LANDSCAPE_COLUMN_MAX)
+
   return (
-    <main className="safe-bottom" style={{ background: '#e8e8e6', minHeight: '100dvh' }}>
+    <main className={isLandscape ? undefined : 'safe-bottom'} style={{ background: '#e8e8e6', minHeight: '100dvh' }}>
       <TopBar right={topRight} />
-      {isNarrow ? (
+      {isLandscape ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: `${PAGE_PADDING}px 16px`, gap: SIDE_GAP }}>
+          <div style={{ marginLeft: EVAL_SLOT }}>{boardBlock}</div>
+          <div style={{ width: columnWidth, height: boardSize, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ height: 32 }}>{backButton}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 22 }}>
+              <div style={{ display: 'flex' }}><FeedbackStrip feedback={s.feedback} /></div>
+              {analysisActive && analysis?.depth ? (
+                <span className="mono" style={{ fontSize: 12, color: '#6a675f' }}>depth {analysis.depth}</span>
+              ) : null}
+            </div>
+            {controls}
+            {moves}
+            {s.error && <p role="alert" style={{ color: '#b34343', fontSize: 13 }}>{s.error}</p>}
+          </div>
+        </div>
+      ) : isNarrow ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: CONTROLS_GAP, padding: `${PAGE_PADDING}px 10px` }}>
           <div style={{ width: boardSize }}>{backButton}</div>
           {boardBlock}
