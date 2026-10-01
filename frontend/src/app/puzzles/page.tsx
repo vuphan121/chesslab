@@ -6,6 +6,7 @@ import EvalBar from '@/components/analysis/EvalBar'
 import EngineSettingsButton from '@/components/analysis/EngineSettingsButton'
 import TopBar from '@/components/layout/TopBar'
 import ThemePicker from '@/components/puzzles/ThemePicker'
+import MoveStrip from '@/components/history/MoveStrip'
 import PuzzleMoves from '@/components/puzzles/PuzzleMoves'
 import FeedbackStrip from '@/components/trainer/FeedbackStrip'
 import { usePuzzleSession } from '@/hooks/usePuzzleSession'
@@ -22,6 +23,8 @@ const CONTROLS_HEIGHT = 44
 const CONTROLS_GAP = 12
 const FEEDBACK_HEIGHT = 30
 const NARROW_BREAKPOINT = 900
+const PHONE_BREAKPOINT = 640
+const PHONE_EXTRA_HEIGHT = 108
 const PANEL_MIN_WIDTH = 220
 const PANEL_MAX_WIDTH = 340
 const EVAL_SLOT = 38
@@ -35,6 +38,7 @@ export default function PuzzlesPage() {
   const viewportWidth = useViewportWidth()
   const viewportHeight = useViewportHeight()
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
+  const isPhone = viewportWidth != null && viewportWidth < PHONE_BREAKPOINT
 
   const finished = s.status === 'solved' || s.status === 'failed'
   const navigable = finished || s.status === 'playing'
@@ -84,7 +88,7 @@ export default function PuzzlesPage() {
   const vh = viewportHeight ?? 900
   const widthFit = isNarrow ? Math.floor((vw - 20) / 8) : Math.floor((vw - 2 * (PANEL_MIN_WIDTH + EVAL_SLOT) - 2 * SIDE_GAP - 32) / 8)
   const heightFit = Math.floor(
-    (vh - TOP_BAR_HEIGHT - PAGE_PADDING * 2 - FEEDBACK_HEIGHT - (isNarrow ? CONTROLS_HEIGHT + CONTROLS_GAP + (analysisActive ? 20 : 0) : 0)) / 8,
+    (vh - TOP_BAR_HEIGHT - PAGE_PADDING * 2 - FEEDBACK_HEIGHT - (isNarrow ? CONTROLS_HEIGHT + CONTROLS_GAP + (analysisActive ? 20 : 0) + (isPhone ? PHONE_EXTRA_HEIGHT : 0) : 0)) / 8,
   )
   const squareSize = clamp(Math.min(widthFit, heightFit), 36, MAX_SQUARE_SIZE)
   const boardSize = squareSize * 8
@@ -187,7 +191,9 @@ export default function PuzzlesPage() {
             <RetryIcon />
           </button>
           <EngineSettingsButton size={40} settings={engineSettings} onChange={updateEngineSettings} onReset={resetEngineSettings} />
-          <span className="mono" style={{ fontSize: 12, color: '#6a675f', alignSelf: 'center', minWidth: 52 }}>{analysis?.depth ? `depth ${analysis.depth}` : ''}</span>
+          {!isPhone && (
+            <span className="mono" style={{ fontSize: 12, color: '#6a675f', alignSelf: 'center', minWidth: 52 }}>{analysis?.depth ? `depth ${analysis.depth}` : ''}</span>
+          )}
         </div>
       )}
     </div>
@@ -221,7 +227,16 @@ export default function PuzzlesPage() {
         </div>
       )}
       <div style={{ width: boardSize, height: FEEDBACK_HEIGHT, display: 'flex', alignItems: 'center' }}>
-        <FeedbackStrip feedback={s.feedback} />
+        {isPhone ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <div style={{ display: 'flex' }}><FeedbackStrip feedback={s.feedback} /></div>
+            {analysisActive && analysis?.depth ? (
+              <span className="mono" style={{ fontSize: 12, color: '#6a675f' }}>depth {analysis.depth}</span>
+            ) : null}
+          </div>
+        ) : (
+          <FeedbackStrip feedback={s.feedback} />
+        )}
       </div>
     </div>
   )
@@ -234,7 +249,11 @@ export default function PuzzlesPage() {
           <div style={{ width: boardSize }}>{backButton}</div>
           {boardBlock}
           {controls}
-          <div style={{ width: boardSize }}>{moves}</div>
+          {isPhone && board ? (
+            <MoveStrip moveTree={board.moveTree} currentNodeId={board.currentNodeId} onGotoNode={s.gotoNode} width={boardSize} />
+          ) : (
+            <div style={{ width: boardSize }}>{moves}</div>
+          )}
           {s.error && <p role="alert" style={{ color: '#b34343', fontSize: 13 }}>{s.error}</p>}
         </div>
       ) : (
@@ -289,16 +308,6 @@ function RetryIcon() {
     <svg {...iconProps}>
       <path d="M23 4v6h-6" />
       <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-    </svg>
-  )
-}
-
-function AnalysisIcon() {
-  return (
-    <svg {...iconProps}>
-      <line x1="6" y1="20" x2="6" y2="12" />
-      <line x1="12" y1="20" x2="12" y2="5" />
-      <line x1="18" y1="20" x2="18" y2="9" />
     </svg>
   )
 }
