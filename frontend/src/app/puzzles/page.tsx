@@ -258,7 +258,7 @@ export default function PuzzlesPage() {
   const columnWidth = clamp(vw - 32 - boardSize - EVAL_SLOT - SIDE_GAP, LANDSCAPE_COLUMN_MIN, LANDSCAPE_COLUMN_MAX)
 
   return (
-    <main className={isLandscape ? undefined : 'safe-bottom'} style={{ background: '#e8e8e6', minHeight: '100dvh' }}>
+    <main className={isPhone && !isLandscape ? 'safe-bottom' : undefined} style={{ background: '#e8e8e6', minHeight: '100dvh' }}>
       <TopBar right={topRight} />
       {isLandscape ? (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: `${PAGE_PADDING}px 16px`, gap: SIDE_GAP }}>

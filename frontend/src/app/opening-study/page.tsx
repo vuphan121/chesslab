@@ -20,7 +20,6 @@ const SIDE_WIDTH = 371
 const BUTTON_COL_WIDTH = 170
 const NARROW_BREAKPOINT = 1040
 const PHONE_BREAKPOINT = 640
-const LANDSCAPE_MAX_HEIGHT = 450
 const LANDSCAPE_CHROME_HEIGHT = 58 + 8 + 8 + 8
 const LANDSCAPE_COLUMN_MIN = 220
 const LANDSCAPE_COLUMN_MAX = 340
@@ -94,7 +93,7 @@ export default function OpeningStudyPage() {
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
   const isPhone = viewportWidth != null && viewportWidth < PHONE_BREAKPOINT
   const isLandscape =
-    viewportWidth != null && viewportHeight != null && viewportHeight < LANDSCAPE_MAX_HEIGHT && viewportWidth >= PHONE_BREAKPOINT && isNarrow
+    viewportWidth != null && viewportHeight != null && viewportWidth > viewportHeight && viewportWidth >= PHONE_BREAKPOINT && isNarrow
   const outerPadding = isNarrow ? OUTER_PADDING_NARROW : OUTER_PADDING_DESKTOP
   const desktopScale = isNarrow
     ? 1
@@ -113,7 +112,14 @@ export default function OpeningStudyPage() {
   const squareSize = isPhone
     ? phoneSquareSize
     : isLandscape
-    ? clamp(Math.floor(((viewportHeight ?? 0) - LANDSCAPE_CHROME_HEIGHT) / 8), 28, DESKTOP_SQUARE_SIZE)
+    ? clamp(
+        Math.min(
+          Math.floor(((viewportHeight ?? 0) - LANDSCAPE_CHROME_HEIGHT) / 8),
+          Math.floor(((viewportWidth ?? 0) - outerPadding * 2 - EVAL_BAR_WIDTH - 20 - LANDSCAPE_COLUMN_MIN) / 8),
+        ),
+        28,
+        DESKTOP_SQUARE_SIZE,
+      )
     : isNarrow
     ? clamp(
         Math.floor(((viewportWidth ?? NARROW_BREAKPOINT) - outerPadding * 2 - 8 - EVAL_BAR_WIDTH) / 8),
