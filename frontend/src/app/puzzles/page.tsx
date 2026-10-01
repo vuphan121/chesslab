@@ -149,13 +149,18 @@ export default function PuzzlesPage() {
     </button>
   )
 
-  const evalBarProps = {
-    score: analysis?.score ?? 0,
-    mate: analysis?.mate ?? 0,
-    height: boardSize,
-    flipped: s.flipped,
-    hasEval: !!analysis?.depth || !!analysis?.tablebaseCategory,
-  }
+  const gameOver = !!board?.isGameOver
+  const checkmateWinner = gameOver && board?.gameOverReason === 'checkmate' ? (board.turn === 'w' ? -1 : 1) : 0
+  const evalBarProps = gameOver
+    ? { score: 0, mate: checkmateWinner, height: boardSize, flipped: s.flipped, hasEval: false }
+    : {
+        score: analysis?.score ?? 0,
+        mate: analysis?.mate ?? 0,
+        height: boardSize,
+        flipped: s.flipped,
+        hasEval: !!analysis?.depth || !!analysis?.tablebaseCategory,
+      }
+  const evalBarOpacity = gameOver || analysisIsCurrent ? 1 : 0.45
 
   const moves = (
     <PuzzleMoves
@@ -269,7 +274,7 @@ export default function PuzzlesPage() {
     <div style={{ width: boardSize }}>
       <div style={{ position: 'relative', width: boardSize, height: boardSize }}>
         {analysisActive && !stacked && (
-          <div style={{ position: 'absolute', left: '100%', marginLeft: 8, top: 0, width: 22, opacity: analysisIsCurrent ? 1 : 0.45, transition: 'opacity 120ms' }}>
+          <div style={{ position: 'absolute', left: '100%', marginLeft: 8, top: 0, width: 22, opacity: evalBarOpacity, transition: 'opacity 120ms' }}>
             <EvalBar {...evalBarProps} />
           </div>
         )}
@@ -288,7 +293,7 @@ export default function PuzzlesPage() {
         )}
       </div>
       {analysisActive && stacked && (
-        <div style={{ width: boardSize, height: 20, opacity: analysisIsCurrent ? 1 : 0.45 }}>
+        <div style={{ width: boardSize, height: 20, opacity: evalBarOpacity }}>
           <EvalBar horizontal {...evalBarProps} />
         </div>
       )}
