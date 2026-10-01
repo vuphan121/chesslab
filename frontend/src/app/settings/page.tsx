@@ -187,6 +187,10 @@ export default function SettingsPage() {
             {refreshMessage}
           </div>
         </section>
+
+        <p className="mono" style={{ width: 'min(760px, 100%)', margin: '14px auto 0', fontSize: 12, color: '#8a867e' }}>
+          Build {process.env.NEXT_PUBLIC_BUILD_ID}
+        </p>
       </div>
     </main>
   )
