@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Board from '@/components/board/Board'
 import EvalBar from '@/components/analysis/EvalBar'
 import EngineSettingsButton from '@/components/analysis/EngineSettingsButton'
@@ -32,16 +32,13 @@ const SOLUTION_ARROW_COLOR = 'rgba(0, 48, 136, 0.4)'
 export default function PuzzlesPage() {
   const s = usePuzzleSession()
   const [engineSettings, updateEngineSettings, resetEngineSettings] = useEngineSettings()
-  const [analysisFor, setAnalysisFor] = useState<string | null>(null)
   const viewportWidth = useViewportWidth()
   const viewportHeight = useViewportHeight()
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
 
-  const puzzleId = s.puzzle?.id ?? null
-  const analysisOn = analysisFor !== null && analysisFor === puzzleId
   const finished = s.status === 'solved' || s.status === 'failed'
   const navigable = finished || s.status === 'playing'
-  const analysisActive = finished && analysisOn
+  const analysisActive = finished
   const { analysis, analysisFen } = useEngineAnalysis({
     fen: s.boardState?.fen ?? null,
     gameOver: s.boardState?.isGameOver ?? false,
@@ -107,9 +104,33 @@ export default function PuzzlesPage() {
       ? [{ uci: s.hintUci, scale: 1, color: SOLUTION_ARROW_COLOR }]
       : []
 
-  const topRight = (
-    <button onClick={s.backToPicker} style={{ fontSize: 12, fontWeight: 600, color: '#6a675f', background: 'transparent', border: 'none', padding: '6px 4px', cursor: 'pointer' }}>
-      Themes
+  const topRight = <span />
+
+  const backButton = (
+    <button
+      className="tap"
+      onClick={s.backToPicker}
+      title="Back to themes"
+      aria-label="Back to themes"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        height: 32,
+        fontSize: 13,
+        fontWeight: 600,
+        color: '#6a675f',
+        background: '#f0efe9',
+        border: 'none',
+        padding: '0 12px',
+        borderRadius: 8,
+        cursor: 'pointer',
+      }}
+    >
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+        <path d="M6.5 1.5L2.5 5L6.5 8.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      Back
     </button>
   )
 
@@ -130,7 +151,7 @@ export default function PuzzlesPage() {
       onGoto={s.gotoNode}
       onPrev={s.navPrev}
       onNext={s.navNext}
-      height={isNarrow ? 190 : boardSize}
+      height={isNarrow ? 190 : boardSize - 40}
     />
   )
 
@@ -157,10 +178,7 @@ export default function PuzzlesPage() {
             <NextIcon />
           </button>
           <button
-            onClick={() => {
-              setAnalysisFor(null)
-              s.retry()
-            }}
+            onClick={s.retry}
             className="tap"
             style={iconButton('plain')}
             title="Retry this puzzle (your rating won't change)"
@@ -168,23 +186,9 @@ export default function PuzzlesPage() {
           >
             <RetryIcon />
           </button>
-          <button
-            onClick={() => setAnalysisFor(analysisOn ? null : puzzleId)}
-            aria-pressed={analysisOn}
-            className="tap"
-            style={iconButton(analysisOn ? 'active' : 'plain')}
-            title="Engine analysis"
-            aria-label="Engine analysis"
-          >
-            <AnalysisIcon />
-          </button>
+          <EngineSettingsButton size={40} settings={engineSettings} onChange={updateEngineSettings} onReset={resetEngineSettings} />
+          <span className="mono" style={{ fontSize: 12, color: '#6a675f', alignSelf: 'center', minWidth: 52 }}>{analysis?.depth ? `depth ${analysis.depth}` : ''}</span>
         </div>
-      )}
-      {analysisActive && (
-        <span style={{ marginLeft: isNarrow ? 'auto' : 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <span className="mono" style={{ fontSize: 12, color: '#6a675f' }}>{analysis?.depth ? `depth ${analysis.depth}` : ''}</span>
-          <EngineSettingsButton size={36} settings={engineSettings} onChange={updateEngineSettings} onReset={resetEngineSettings} />
-        </span>
       )}
     </div>
   )
@@ -227,6 +231,7 @@ export default function PuzzlesPage() {
       <TopBar right={topRight} />
       {isNarrow ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: CONTROLS_GAP, padding: `${PAGE_PADDING}px 10px` }}>
+          <div style={{ width: boardSize }}>{backButton}</div>
           {boardBlock}
           {controls}
           <div style={{ width: boardSize }}>{moves}</div>
@@ -234,7 +239,10 @@ export default function PuzzlesPage() {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'start', padding: `${PAGE_PADDING}px 16px` }}>
-          <div style={{ justifySelf: 'end', width: panelWidth, marginRight: EVAL_SLOT + SIDE_GAP }}>{moves}</div>
+          <div style={{ justifySelf: 'end', width: panelWidth, marginRight: EVAL_SLOT + SIDE_GAP }}>
+            <div style={{ height: 32, marginBottom: 8 }}>{backButton}</div>
+            {moves}
+          </div>
           {boardBlock}
           <div style={{ justifySelf: 'start', marginLeft: SIDE_GAP }}>
             {controls}
