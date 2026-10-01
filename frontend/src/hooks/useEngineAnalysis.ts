@@ -12,6 +12,7 @@ import { positionKey } from '@/lib/chess/positionKey'
 const START_DELAY_MS = 40
 const LOOKUP_TIMEOUT_MS = 4000
 const CACHE_LIMIT = 200
+const INFINITE_MAX_MS = 60000
 const LOOKUP_LINES = 5
 
 interface Options {
@@ -66,6 +67,7 @@ export function useEngineAnalysis({ fen, gameOver, enabled, settings, immediate 
     let stopJob: (() => void) | null = null
     const lookup = new AbortController()
     let lookupTimer: ReturnType<typeof setTimeout> | null = null
+    let infiniteTimer: ReturnType<typeof setTimeout> | null = null
 
     const remember = (analysis: Analysis) => {
       const cache = cacheRef.current
@@ -98,6 +100,7 @@ export function useEngineAnalysis({ fen, gameOver, enabled, settings, immediate 
         },
       })
       stopJob = job.cancel
+      if (limit === 'infinite') infiniteTimer = setTimeout(() => job.cancel(), INFINITE_MAX_MS)
 
       job.done.then((result) => {
         if (cancelled || settledByLookup) return
@@ -137,6 +140,7 @@ export function useEngineAnalysis({ fen, gameOver, enabled, settings, immediate 
       cancelled = true
       clearTimeout(timer)
       if (lookupTimer) clearTimeout(lookupTimer)
+      if (infiniteTimer) clearTimeout(infiniteTimer)
       lookup.abort()
       stopJob?.()
     }
