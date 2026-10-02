@@ -329,14 +329,21 @@ export function useTrainerSession() {
       const deltas = progressDeltas(sessionProgressRef.current, merged)
       sessionProgressRef.current = merged
 
-      let lineAttempt: { chapterId: string; chapterName: string; cardId: string; hadMistake: boolean; playedAt: string } | undefined
+      let lineAttempt: { chapterId: string; chapterName: string; cardId: string; hadMistake: boolean; playedAt: string; lineId: string } | undefined
       if (logAttempt) {
         const startCard = runStartCardIdRef.current ? cardById(runStartCardIdRef.current) : undefined
         const chapterId = runChapterIdRef.current ?? startCard?.chapterIds[0]
         const chapter = chapterId ? repertoire.chapters.find((c) => c.id === chapterId) : undefined
         lineAttempt =
           startCard && chapter
-            ? { chapterId: chapter.id, chapterName: chapter.name, cardId: startCard.id, hadMistake: runHadMistake, playedAt: new Date().toISOString() }
+            ? {
+                chapterId: chapter.id,
+                chapterName: chapter.name,
+                cardId: startCard.id,
+                hadMistake: runHadMistake,
+                playedAt: new Date().toISOString(),
+                lineId: `${chapter.id}:${[...leadingMovesRef.current, ...runMovesRef.current].map((m) => m.san).join(' ')}`,
+              }
             : undefined
       }
 

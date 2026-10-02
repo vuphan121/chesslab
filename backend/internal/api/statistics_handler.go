@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -15,19 +17,19 @@ import (
 	"github.com/chesslab/backend/internal/auth"
 	"github.com/chesslab/backend/internal/db"
 	"github.com/chesslab/backend/internal/lichess"
+	"github.com/chesslab/backend/internal/repertoire"
 )
 
 const (
 	puzzleBackfillWindow = 365 * 24 * time.Hour
 	puzzleFetchMax       = 5000
-	learnedBox           = 4
-	leitnerBoxes         = 6
 )
 
-type statsCoverage struct {
-	Learned   int `json:"learned"`
-	Shaky     int `json:"shaky"`
-	Untouched int `json:"untouched"`
+type statsProgress struct {
+	Learned      int `json:"learned"`
+	GettingThere int `json:"gettingThere"`
+	NeedsWork    int `json:"needsWork"`
+	NotStarted   int `json:"notStarted"`
 }
 
 type statsPuzzleSync struct {
@@ -44,18 +46,72 @@ type statsRating struct {
 
 type StatisticsResponse struct {
 	Days       int             `json:"days"`
+	StartDate  string          `json:"startDate"`
 	EndDate    string          `json:"endDate"`
 	Daily      []db.StatsDay   `json:"daily"`
 	Totals     db.StatsTotals  `json:"totals"`
 	Streak     int             `json:"streak"`
 	BestStreak int             `json:"bestStreak"`
 	Rating     statsRating     `json:"rating"`
-	ThemeDays  int             `json:"themeDays"`
-	Themes     []db.StatsTheme `json:"themes"`
-	Weekly     []db.StatsWeek  `json:"weekly"`
-	Boxes      []int           `json:"boxes"`
-	Coverage   statsCoverage   `json:"coverage"`
+	ThemeRatings []statsThemeRating `json:"themeRatings"`
+	TroubleSpots []statsSpot        `json:"troubleSpots"`
+	Progress   statsProgress   `json:"progress"`
 	PuzzleSync statsPuzzleSync `json:"puzzleSync"`
+}
+
+type statsThemeRating struct {
+	Theme    string `json:"theme"`
+	Rating   int    `json:"rating"`
+	Attempts int    `json:"attempts"`
+	Recent   int    `json:"recent"`
+	Wins     int    `json:"wins"`
+}
+
+type statsSpot struct {
+	RepertoireID   string `json:"repertoireId"`
+	RepertoireName string `json:"repertoireName"`
+	ChapterID      string `json:"chapterId"`
+	ChapterName    string `json:"chapterName"`
+	Drills         int    `json:"drills"`
+	Mistakes       int    `json:"mistakes"`
+}
+
+const (
+	spotMinDrills = 3
+	spotLimit     = 5
+
+	maxRangeDays = 366
+)
+
+func statsRange(r *http.Request, today string) (from, to string, days int, err error) {
+	q := r.URL.Query()
+	fromParam, toParam := q.Get("from"), q.Get("to")
+	if fromParam == "" && toParam == "" {
+		days = 30
+		if v, convErr := strconv.Atoi(q.Get("days")); convErr == nil && v >= 1 && v <= maxRangeDays {
+			days = v
+		}
+		return startDate(today, days-1), today, days, nil
+	}
+	end, err := time.Parse(time.DateOnly, toParam)
+	if err != nil {
+		return "", "", 0, fmt.Errorf("invalid to date")
+	}
+	start, err := time.Parse(time.DateOnly, fromParam)
+	if err != nil {
+		return "", "", 0, fmt.Errorf("invalid from date")
+	}
+	if now, parseErr := time.Parse(time.DateOnly, today); parseErr == nil && end.After(now) {
+		end = now
+	}
+	if start.After(end) {
+		start = end
+	}
+	if end.Sub(start) > time.Duration(maxRangeDays-1)*24*time.Hour {
+		start = end.AddDate(0, 0, -(maxRangeDays - 1))
+	}
+	days = int(end.Sub(start).Hours()/24) + 1
+	return start.Format(time.DateOnly), end.Format(time.DateOnly), days, nil
 }
 
 func (h *Handler) GetStatistics(w http.ResponseWriter, r *http.Request) {
@@ -68,38 +124,37 @@ func (h *Handler) GetStatistics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
-	days := 30
-	if v, err := strconv.Atoi(r.URL.Query().Get("days")); err == nil && v >= 7 && v <= 365 {
-		days = v
-	}
 	clock := currentRequestClock(r)
+	from, to, days, err := statsRange(r, clock.date)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	ctx := r.Context()
 
-	resp := StatisticsResponse{Days: days, EndDate: clock.date}
-	var err error
-	if resp.Daily, resp.Totals, err = h.db.StatsDaily(ctx, username, clock.timeZone, clock.date, days); err != nil {
+	resp := StatisticsResponse{Days: days, StartDate: from, EndDate: to}
+	if resp.Daily, resp.Totals, err = h.db.StatsDaily(ctx, username, to, days); err != nil {
 		statsError(w, err)
 		return
 	}
-	activity, err := h.db.ActivityDays(ctx, username, clock.timeZone, clock.date)
+	activity, err := h.db.ActivityDays(ctx, username, clock.date)
 	if err != nil {
 		statsError(w, err)
 		return
 	}
 	resp.Streak, resp.BestStreak = streaks(activity, clock.date)
 
-	resp.Rating.Points, err = h.db.StatsRating(ctx, username, clock.date, days)
+	resp.Rating.Points, err = h.db.StatsRating(ctx, username, to, days)
 	if err != nil {
 		statsError(w, err)
 		return
 	}
-	if current, err := h.db.LastRatingAtOrBefore(ctx, username, clock.date); err != nil {
+	if current, err := h.db.LastRatingAtOrBefore(ctx, username, to); err != nil {
 		statsError(w, err)
 		return
 	} else if current != nil {
 		resp.Rating.Current = current
-		start := startDate(clock.date, days)
-		if base, err := h.db.LastRatingAtOrBefore(ctx, username, start); err != nil {
+		if base, err := h.db.LastRatingAtOrBefore(ctx, username, startDate(from, 1)); err != nil {
 			statsError(w, err)
 			return
 		} else if base != nil {
@@ -111,44 +166,55 @@ func (h *Handler) GetStatistics(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	resp.ThemeDays = days
-	if resp.ThemeDays < 30 {
-		resp.ThemeDays = 30
-	}
-	if resp.Themes, err = h.db.StatsThemes(ctx, username, clock.timeZone, clock.date, resp.ThemeDays); err != nil {
+	themeStats, err := h.db.ThemeRangeStats(ctx, username, from, to)
+	if err != nil {
 		statsError(w, err)
 		return
 	}
-	if resp.Weekly, err = h.db.StatsWeekly(ctx, username, clock.timeZone, clock.date, 8); err != nil {
+	resp.ThemeRatings = make([]statsThemeRating, 0, len(themeStats))
+	for _, st := range themeStats {
+		resp.ThemeRatings = append(resp.ThemeRatings, statsThemeRating{Theme: st.Theme, Rating: int(math.Round(st.Rating)), Attempts: st.Plays, Recent: st.Plays, Wins: st.Wins})
+	}
+	sort.Slice(resp.ThemeRatings, func(i, j int) bool {
+		if resp.ThemeRatings[i].Rating != resp.ThemeRatings[j].Rating {
+			return resp.ThemeRatings[i].Rating < resp.ThemeRatings[j].Rating
+		}
+		return resp.ThemeRatings[i].Theme < resp.ThemeRatings[j].Theme
+	})
+
+	spots, err := h.db.StatsTroubleSpots(ctx, username, to, days, spotMinDrills, spotLimit)
+	if err != nil {
 		statsError(w, err)
 		return
+	}
+	resp.TroubleSpots = make([]statsSpot, 0, len(spots))
+	for _, sp := range spots {
+		name := sp.RepertoireID
+		if rep, ok := h.repertoires.Get(sp.RepertoireID); ok {
+			name = rep.Name
+		}
+		resp.TroubleSpots = append(resp.TroubleSpots, statsSpot{
+			RepertoireID: sp.RepertoireID, RepertoireName: name, ChapterID: sp.ChapterID, ChapterName: sp.ChapterName,
+			Drills: sp.Drills, Mistakes: sp.Mistakes,
+		})
 	}
 
-	resp.Boxes = make([]int, leitnerBoxes)
-	seen, err := h.db.SeenCardBoxes(ctx, username)
+	lineHistories, err := h.db.LineHistories(ctx, username)
 	if err != nil {
 		statsError(w, err)
 		return
 	}
 	for _, rep := range h.repertoires.List() {
-		progress := seen[rep.ID]
-		for _, card := range rep.Cards {
-			box, ok := progress[card.ID]
-			if !ok {
-				resp.Coverage.Untouched++
-				continue
-			}
-			if box < 0 {
-				box = 0
-			}
-			if box >= leitnerBoxes {
-				box = leitnerBoxes - 1
-			}
-			resp.Boxes[box]++
-			if box >= learnedBox {
-				resp.Coverage.Learned++
-			} else {
-				resp.Coverage.Shaky++
+		for _, line := range repertoire.Lines(rep) {
+			switch stageOf(lineHistories[rep.ID][line.ID]) {
+			case stageLearned:
+				resp.Progress.Learned++
+			case stageGettingThere:
+				resp.Progress.GettingThere++
+			case stageNeedsWork:
+				resp.Progress.NeedsWork++
+			default:
+				resp.Progress.NotStarted++
 			}
 		}
 	}
@@ -159,6 +225,37 @@ func (h *Handler) GetStatistics(w http.ResponseWriter, r *http.Request) {
 		resp.PuzzleSync.SyncedAt = &st.SyncedAt
 	}
 	respondJSON(w, http.StatusOK, resp)
+}
+
+type lineStage int
+
+const (
+	stageNotStarted lineStage = iota
+	stageNeedsWork
+	stageGettingThere
+	stageLearned
+)
+
+func stageOf(h db.CardHistory) lineStage {
+	switch {
+	case h.N == 0:
+		return stageNotStarted
+	case h.N >= db.RecentWindow && h.Bits == 1<<db.RecentWindow-1:
+		return stageLearned
+	case h.Bits != 0:
+		return stageGettingThere
+	default:
+		return stageNeedsWork
+	}
+}
+
+func statsTimeZone() string {
+	if tz := os.Getenv("STATS_TIME_ZONE"); tz != "" {
+		if _, err := time.LoadLocation(tz); err == nil {
+			return tz
+		}
+	}
+	return "Asia/Ho_Chi_Minh"
 }
 
 func statsError(w http.ResponseWriter, err error) {
@@ -240,12 +337,14 @@ func (h *Handler) syncPuzzles(ctx context.Context, username string) (int, error)
 	}
 	defer puzzleSyncMu.Unlock()
 
-	latest, err := h.db.LatestPuzzleAttempt(ctx, username)
-	if err != nil {
-		return 0, err
-	}
 	since := time.Now().Add(-puzzleBackfillWindow)
-	if !latest.IsZero() {
+	if state, err := h.db.GetPuzzleSyncState(ctx, username); err != nil {
+		return 0, err
+	} else if state != nil {
+		since = state.SyncedAt.Add(-time.Hour)
+	} else if latest, err := h.db.LatestPuzzleAttempt(ctx, username); err != nil {
+		return 0, err
+	} else if !latest.IsZero() {
 		since = latest.Add(-time.Hour)
 	}
 	attempts, err := lichess.FetchPuzzleActivity(ctx, token, since, puzzleFetchMax)
@@ -257,7 +356,7 @@ func (h *Handler) syncPuzzles(ctx context.Context, username string) (int, error)
 		log.Printf("puzzle sync: rating history skipped: %v", err)
 		ratings = nil
 	}
-	if err := h.db.SavePuzzleSync(ctx, username, lichessUser, attempts, ratings); err != nil {
+	if err := h.db.SavePuzzleSync(ctx, username, lichessUser, statsTimeZone(), attempts, ratings); err != nil {
 		return 0, err
 	}
 	return len(attempts), nil

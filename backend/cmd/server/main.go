@@ -89,6 +89,9 @@ func main() {
 		cancel()
 	}
 
+	if dbStore != nil {
+		api.SeedLineHistories(context.Background(), dbStore, repertoires)
+	}
 	handler := api.NewHandler(precomputeEngine, repertoires, books, dbStore, authCfg, bookSource, os.Getenv("B2_CHAPTER_PREFIX"))
 	if puzzleURL := os.Getenv("PUZZLE_DB_URL"); puzzleURL != "" {
 		if puzzleStore, err := puzzledb.Open(puzzleURL, os.Getenv("PUZZLE_DB_TOKEN")); err != nil {
@@ -206,7 +209,7 @@ func newDBStore() *db.Store {
 			retentionDays = n
 		}
 	}
-	puzzlePlaysDays := 30
+	puzzlePlaysDays := 90
 	if v := os.Getenv("PUZZLE_PLAYS_RETENTION_DAYS"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			puzzlePlaysDays = n

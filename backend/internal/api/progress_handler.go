@@ -25,7 +25,10 @@ type LineAttemptJSON struct {
 	CardID      string `json:"cardId"`
 	HadMistake  bool   `json:"hadMistake"`
 	PlayedAt    string `json:"playedAt,omitempty"`
+	LineID      string `json:"lineId,omitempty"`
 }
+
+const maxLineIDLength = 4000
 
 const (
 	playedAtMaxAge  = 45 * 24 * time.Hour
@@ -131,6 +134,10 @@ func (h *Handler) SaveProgress(w http.ResponseWriter, r *http.Request) {
 			deltas[id] = db.CardProgressDelta{Lapses: delta.Lapses, Seen: delta.Seen, Correct: delta.Correct}
 		}
 	}
+	if req.LineAttempt != nil && len(req.LineAttempt.LineID) > maxLineIDLength {
+		http.Error(w, "invalid line id", http.StatusBadRequest)
+		return
+	}
 	var attempt *db.LineAttempt
 	if req.LineAttempt != nil {
 		attempt = &db.LineAttempt{
@@ -139,7 +146,17 @@ func (h *Handler) SaveProgress(w http.ResponseWriter, r *http.Request) {
 			CardID:      req.LineAttempt.CardID,
 			HadMistake:  req.LineAttempt.HadMistake,
 			PlayedAt:    parsePlayedAt(req.LineAttempt.PlayedAt, time.Now()),
+			LineID:      req.LineAttempt.LineID,
 		}
+		playedAt := time.Now()
+		if attempt.PlayedAt != nil {
+			playedAt = *attempt.PlayedAt
+		}
+		loc, err := time.LoadLocation(currentRequestClock(r).timeZone)
+		if err != nil {
+			loc = time.UTC
+		}
+		attempt.Day = playedAt.In(loc).Format(time.DateOnly)
 	}
 
 	if err := h.db.SaveProgress(r.Context(), username, repertoireID, cards, deltas, attempt, req.OperationID); err != nil {

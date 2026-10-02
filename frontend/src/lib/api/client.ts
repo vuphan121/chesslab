@@ -338,6 +338,7 @@ export interface LineAttempt {
   cardId: string
   hadMistake: boolean
   playedAt?: string
+  lineId?: string
 }
 
 export interface CardProgressDelta {
@@ -436,39 +437,26 @@ export interface StatsDay {
   date: string
   drills: number
   puzzles: number
-}
-
-export interface StatsWeek {
-  weekStart: string
-  drillAccuracy: number | null
-  puzzleAccuracy: number | null
-  drills: number
-  puzzles: number
-}
-
-export interface StatsTheme {
-  theme: string
-  nb: number
-  wins: number
+  puzzlesSolved: number
 }
 
 export interface StatisticsResponse {
   days: number
+  startDate: string
   endDate: string
   daily: StatsDay[]
   totals: { drills: number; drillMistakes: number; puzzles: number; puzzleWins: number }
   streak: number
   bestStreak: number
   rating: { current: number | null; delta: number | null; points: { date: string; rating: number }[] }
-  themeDays: number
-  themes: StatsTheme[]
-  weekly: StatsWeek[]
-  boxes: number[]
-  coverage: { learned: number; shaky: number; untouched: number }
+  themeRatings: { theme: string; rating: number; attempts: number; recent: number; wins: number }[]
+  troubleSpots: { repertoireId: string; repertoireName: string; chapterId: string; chapterName: string; drills: number; mistakes: number }[]
+  progress: { learned: number; gettingThere: number; needsWork: number; notStarted: number }
   puzzleSync: { configured: boolean; lichessUsername?: string; syncedAt?: string }
 }
 
-export const getStatistics = (days: number): Promise<StatisticsResponse> => request(`/api/statistics?days=${days}`)
+export const getStatistics = (from: string, to: string): Promise<StatisticsResponse> =>
+  request(`/api/statistics?from=${from}&to=${to}`)
 
 export const syncPuzzles = (): Promise<{ added: number; durationMs: number }> =>
   request('/api/statistics/sync-puzzles', { method: 'POST' })

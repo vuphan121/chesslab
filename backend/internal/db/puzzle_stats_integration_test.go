@@ -43,34 +43,46 @@ func TestPuzzleStatsAggregatesAndCleanup(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	daily, totals, err := store.StatsDaily(ctx, username, "UTC", "2099-01-02", 7)
+	daily, totals, err := store.StatsDaily(ctx, username, "2099-01-02", 7)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(daily) != 2 || daily[0].Puzzles != 2 || daily[1].Puzzles != 1 || totals.Puzzles != 3 || totals.PuzzleWins != 2 {
+	if len(daily) != 2 || daily[0].Puzzles != 2 || daily[1].Puzzles != 1 || daily[0].PuzzlesSolved != 1 || daily[1].PuzzlesSolved != 1 || totals.Puzzles != 3 || totals.PuzzleWins != 2 {
 		t.Fatalf("daily = %+v totals = %+v", daily, totals)
 	}
-	themeStats, err := store.StatsThemes(ctx, username, "UTC", "2099-01-02", 30)
+	form, err := store.ThemeRecentForm(ctx, username, 100)
+	if err != nil || form["fork"] != (ThemeForm{Plays: 2, Wins: 2}) || form["pin"] != (ThemeForm{Plays: 1, Wins: 0}) {
+		t.Fatalf("theme form = %+v err = %v", form, err)
+	}
+	ratings, err := store.PuzzleThemeStats(ctx, username)
 	if err != nil {
 		t.Fatal(err)
 	}
-	got := map[string][2]int{}
-	for _, th := range themeStats {
-		got[th.Theme] = [2]int{th.Nb, th.Wins}
+	if ratings["fork"].Attempts != 2 || ratings["pin"].Attempts != 1 {
+		t.Fatalf("theme ratings = %+v", ratings)
 	}
-	if got["fork"] != [2]int{2, 2} || got["pin"] != [2]int{1, 0} {
-		t.Fatalf("themes = %+v", got)
+	seenAt := time.Now().UTC().Format(time.RFC3339)
+	card := map[string]CardProgress{"A": {Box: 1, Seen: 1, Correct: 1, LastSeenISO: &seenAt}}
+	delta := map[string]CardProgressDelta{"A": {Seen: 1, Correct: 1}}
+	for i, mistake := range []bool{true, true, true, false, false, false, false} {
+		chapter := "c1"
+		if i >= 4 {
+			chapter = "c2"
+		}
+		attempt := &LineAttempt{ChapterID: chapter, ChapterName: chapter, CardID: "A", HadMistake: mistake, Day: "2099-01-02"}
+		if err := store.SaveProgress(ctx, username, "rep", card, delta, attempt, "attempt-"+string(rune('a'+i))); err != nil {
+			t.Fatal(err)
+		}
 	}
-	weekly, err := store.StatsWeekly(ctx, username, "UTC", "2099-01-02", 2)
+	spots, err := store.StatsTroubleSpots(ctx, username, "2099-01-02", 30, 3, 5)
 	if err != nil {
 		t.Fatal(err)
 	}
-	puzzles := 0
-	for _, w := range weekly {
-		puzzles += w.Puzzles
+	if len(spots) != 1 || spots[0].ChapterID != "c1" || spots[0].Drills != 4 || spots[0].Mistakes != 3 {
+		t.Fatalf("trouble spots = %+v", spots)
 	}
-	if puzzles != 3 {
-		t.Fatalf("weekly puzzles = %d", puzzles)
+	if _, totals, err := store.StatsDaily(ctx, username, "2099-01-02", 7); err != nil || totals.Drills != 7 || totals.DrillMistakes != 3 {
+		t.Fatalf("drill totals = %+v err = %v", totals, err)
 	}
 	points, err := store.StatsRating(ctx, username, "2099-01-02", 7)
 	if err != nil || len(points) != 2 {
@@ -79,7 +91,7 @@ func TestPuzzleStatsAggregatesAndCleanup(t *testing.T) {
 	if last, err := store.LastRatingAtOrBefore(ctx, username, "2099-01-02"); err != nil || last == nil || *last != points[1].Rating {
 		t.Fatalf("last rating = %v err = %v", last, err)
 	}
-	days, err := store.ActivityDays(ctx, username, "UTC", "2099-01-02")
+	days, err := store.ActivityDays(ctx, username, "2099-01-02")
 	if err != nil || len(days) != 2 {
 		t.Fatalf("activity days = %v err = %v", days, err)
 	}
@@ -95,7 +107,7 @@ func TestPuzzleStatsAggregatesAndCleanup(t *testing.T) {
 	if left != 2 {
 		t.Fatalf("puzzle_plays left after cleanup = %d, want 2", left)
 	}
-	_, totals, err = store.StatsDaily(ctx, username, "UTC", "2099-01-02", 7)
+	_, totals, err = store.StatsDaily(ctx, username, "2099-01-02", 7)
 	if err != nil || totals.Puzzles != 3 {
 		t.Fatalf("aggregates changed after cleanup: totals = %+v err = %v", totals, err)
 	}

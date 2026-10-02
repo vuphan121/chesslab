@@ -1,15 +1,47 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import TopBar from '@/components/layout/TopBar'
 import { getStatistics, syncPuzzles, type StatisticsResponse } from '@/lib/api/client'
-import { AccuracyChart, ActivityLanes, Card, CoverageRing, LeitnerBar, RatingChart, StatTile, ThemeBars } from '@/components/statistics/charts'
+import { ActivityLanes, Card, RatingChart, RepertoireProgress, StatTile, ThemeRatings, TroubleSpots } from '@/components/statistics/charts'
 
-const RANGES = [7, 30, 90] as const
-const RANGE_KEY = 'chesslab.statistics.days'
+type Mode = 'week' | 'month' | 'custom'
+interface Range {
+  mode: Mode
+  from: string
+  to: string
+}
 
-function pct(part: number, whole: number): string {
-  return whole > 0 ? `${Math.round((100 * part) / whole)}%` : '–'
+const MODES: { mode: Mode; label: string }[] = [
+  { mode: 'week', label: 'This week' },
+  { mode: 'month', label: 'This month' },
+  { mode: 'custom', label: 'Custom' },
+]
+const RANGE_KEY = 'chesslab.statistics.range'
+const ISO = /^\d{4}-\d{2}-\d{2}$/
+
+function iso(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function presetRange(mode: 'week' | 'month'): Range {
+  const now = new Date()
+  const start = mode === 'month' ? new Date(now.getFullYear(), now.getMonth(), 1) : new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7))
+  return { mode, from: iso(start), to: iso(now) }
+}
+
+function loadRange(): Range {
+  try {
+    const saved = JSON.parse(localStorage.getItem(RANGE_KEY) ?? 'null')
+    if (saved?.mode === 'week' || saved?.mode === 'month') return presetRange(saved.mode)
+    if (saved?.mode === 'custom' && ISO.test(saved.from) && ISO.test(saved.to) && saved.from <= saved.to) return saved
+  } catch {}
+  return presetRange('month')
+}
+
+function shortDay(day: string): string {
+  const [y, m, d] = day.split('-').map(Number)
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(new Date(y, m - 1, d))
 }
 
 function ago(iso?: string): string {
@@ -22,36 +54,51 @@ function ago(iso?: string): string {
 }
 
 export default function StatisticsPage() {
-  const [days, setDays] = useState<number>(() => {
-    try {
-      const saved = Number(localStorage.getItem(RANGE_KEY))
-      if ((RANGES as readonly number[]).includes(saved)) return saved
-    } catch {}
-    return 30
-  })
+  const [range, setRange] = useState<Range>(loadRange)
   const [stats, setStats] = useState<StatisticsResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [syncError, setSyncError] = useState<string | null>(null)
 
-  const load = useCallback((range: number) => {
-    getStatistics(range)
+  const latestRequest = useRef(0)
+
+  const load = useCallback((from: string, to: string) => {
+    const id = ++latestRequest.current
+    getStatistics(from, to)
       .then((r) => {
+        if (id !== latestRequest.current) return
         setError(null)
         setStats(r)
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Could not load statistics.'))
+      .catch((err: unknown) => {
+        if (id !== latestRequest.current) return
+        setError(err instanceof Error ? err.message : 'Could not load statistics.')
+      })
   }, [])
 
   useEffect(() => {
-    load(days)
-  }, [days, load])
+    load(range.from, range.to)
+  }, [range.from, range.to, load])
 
-  function pickRange(range: number) {
-    setDays(range)
+  function applyRange(next: Range) {
+    setRange(next)
     try {
-      localStorage.setItem(RANGE_KEY, String(range))
+      localStorage.setItem(RANGE_KEY, JSON.stringify(next))
     } catch {}
+  }
+
+  function pickMode(mode: Mode) {
+    applyRange(mode === 'custom' ? { mode, from: range.from, to: range.to } : presetRange(mode))
+  }
+
+  function pickDate(edge: 'from' | 'to', value: string) {
+    if (!ISO.test(value)) return
+    const next = { ...range, mode: 'custom' as const, [edge]: value }
+    if (next.from > next.to) {
+      if (edge === 'from') next.to = value
+      else next.from = value
+    }
+    applyRange(next)
   }
 
   async function onSync() {
@@ -59,7 +106,7 @@ export default function StatisticsPage() {
     setSyncError(null)
     try {
       await syncPuzzles()
-      load(days)
+      load(range.from, range.to)
     } catch (err) {
       setSyncError(err instanceof Error ? err.message : 'Could not sync puzzles.')
     } finally {
@@ -68,7 +115,6 @@ export default function StatisticsPage() {
   }
 
   const totals = stats?.totals
-  const delta = stats?.rating.delta ?? null
 
   return (
     <main className="min-h-screen pb-6 sm:pb-10" style={{ background: '#e8e8e6' }}>
@@ -77,27 +123,42 @@ export default function StatisticsPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
           <h1 className="serif" style={{ fontSize: 24, fontWeight: 400 }}>Statistics</h1>
           <span style={{ flex: 1 }} />
-          <div role="group" aria-label="Time range" style={{ display: 'flex', gap: 6 }}>
-            {RANGES.map((r) => (
-              <button
-                key={r}
-                onClick={() => pickRange(r)}
-                aria-pressed={days === r}
-                className="tap"
-                style={{
-                  fontSize: 12,
-                  padding: '4px 12px',
-                  borderRadius: 999,
-                  cursor: 'pointer',
-                  border: `1px solid ${days === r ? '#4a90d9' : '#eae8e2'}`,
-                  background: days === r ? '#4a90d9' : '#fbfaf7',
-                  color: days === r ? '#fff' : '#37352f',
-                }}
-              >
-                {r}d
-              </button>
-            ))}
+          <div role="group" aria-label="Time range" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {MODES.map(({ mode, label }) => {
+              const active = range.mode === mode
+              return (
+                <button
+                  key={mode}
+                  onClick={() => pickMode(mode)}
+                  aria-pressed={active}
+                  className="tap"
+                  style={{
+                    fontSize: 12,
+                    padding: '4px 12px',
+                    borderRadius: 999,
+                    cursor: 'pointer',
+                    border: `1px solid ${active ? '#4a90d9' : '#eae8e2'}`,
+                    background: active ? '#4a90d9' : '#fbfaf7',
+                    color: active ? '#fff' : '#37352f',
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
           </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14, fontSize: 12, color: '#6a675f' }}>
+          {range.mode === 'custom' ? (
+            <>
+              <input type="date" aria-label="From date" value={range.from} max={range.to} onChange={(e) => pickDate('from', e.target.value)} style={{ fontSize: 12, padding: '3px 6px', border: '1px solid #eae8e2', borderRadius: 6, background: '#fbfaf7' }} />
+              <span>to</span>
+              <input type="date" aria-label="To date" value={range.to} min={range.from} max={iso(new Date())} onChange={(e) => pickDate('to', e.target.value)} style={{ fontSize: 12, padding: '3px 6px', border: '1px solid #eae8e2', borderRadius: 6, background: '#fbfaf7' }} />
+            </>
+          ) : (
+            <span>{range.from === range.to ? shortDay(range.from) : `${shortDay(range.from)} – ${shortDay(range.to)}`}</span>
+          )}
         </div>
 
         {error && <p role="alert" style={{ color: '#b34343', fontSize: 13, marginBottom: 12 }}>{error}</p>}
@@ -106,15 +167,10 @@ export default function StatisticsPage() {
         {stats && totals && (
           <div style={{ display: 'grid', gap: 10 }}>
             <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
-              <StatTile label="Lines drilled" value={String(totals.drills)} sub={`${pct(totals.drills - totals.drillMistakes, totals.drills)} without a mistake`} />
-              <StatTile label="Puzzles" value={String(totals.puzzles)} sub={`${pct(totals.puzzleWins, totals.puzzles)} solved first try`} />
-              <StatTile label="Streak" value={`${stats.streak} d`} sub={`best ${stats.bestStreak}`} />
-              <StatTile
-                label="Puzzle rating"
-                value={stats.rating.current === null ? '–' : String(stats.rating.current)}
-                sub={delta === null ? undefined : `${delta >= 0 ? '+' : ''}${delta} in ${days}d`}
-                subColor={delta === null ? undefined : delta >= 0 ? '#2f6db0' : '#c0392b'}
-              />
+              <StatTile label="Lines drilled" value={String(totals.drills)} />
+              <StatTile label="Puzzles" value={String(totals.puzzles)} />
+              <StatTile label="Streak" value={`${stats.streak} d`} />
+              <StatTile label="Puzzle rating" value={stats.rating.current === null ? '–' : String(stats.rating.current)} />
             </div>
 
             <Card title="Daily activity">
@@ -125,16 +181,14 @@ export default function StatisticsPage() {
               <Card title="Puzzle rating">
                 <RatingChart stats={stats} />
               </Card>
-              <Card title="Solve rate by theme">
-                <ThemeBars themes={stats.themes} />
+              <Card title="Weakest and strongest themes">
+                <ThemeRatings themes={stats.themeRatings} />
               </Card>
-              <Card title="Accuracy over time">
-                <AccuracyChart weekly={stats.weekly} />
+              <Card title="Trouble spots">
+                <TroubleSpots spots={stats.troubleSpots} />
               </Card>
               <Card title="Repertoire progress">
-                <LeitnerBar boxes={stats.boxes} />
-                <div style={{ height: 14 }} />
-                <CoverageRing coverage={stats.coverage} />
+                <RepertoireProgress progress={stats.progress} />
               </Card>
             </div>
 

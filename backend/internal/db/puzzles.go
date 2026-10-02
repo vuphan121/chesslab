@@ -63,6 +63,67 @@ func (s *Store) RecentPuzzleIDs(ctx context.Context, username string, limit int)
 	return out, rows.Err()
 }
 
+type ThemeRangeStat struct {
+	Theme  string
+	Rating float64
+	Plays  int
+	Wins   int
+}
+
+func (s *Store) ThemeRangeStats(ctx context.Context, username, from, to string) ([]ThemeRangeStat, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT theme, SUM(plays)::int, SUM(wins)::int,
+		       (array_agg(last_rating ORDER BY day DESC) FILTER (WHERE last_rating IS NOT NULL))[1]
+		FROM puzzle_theme_daily
+		WHERE username = $1 AND day BETWEEN $2::date AND $3::date
+		GROUP BY theme
+		HAVING SUM(plays) > 0`, username, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("theme range stats: %w", err)
+	}
+	defer rows.Close()
+	out := []ThemeRangeStat{}
+	for rows.Next() {
+		var st ThemeRangeStat
+		var rating *float64
+		if err := rows.Scan(&st.Theme, &st.Plays, &st.Wins, &rating); err != nil {
+			return nil, err
+		}
+		if rating != nil {
+			st.Rating = *rating
+		}
+		out = append(out, st)
+	}
+	return out, rows.Err()
+}
+
+type ThemeForm struct {
+	Plays int
+	Wins  int
+}
+
+func (s *Store) ThemeRecentForm(ctx context.Context, username string, perTheme int) (map[string]ThemeForm, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT theme, COUNT(*)::int, (COUNT(*) FILTER (WHERE solved))::int FROM (
+			SELECT theme, solved, ROW_NUMBER() OVER (PARTITION BY theme ORDER BY played_at DESC) AS rn
+			FROM puzzle_plays WHERE username = $1
+		) x WHERE rn <= $2 GROUP BY theme`, username, perTheme)
+	if err != nil {
+		return nil, fmt.Errorf("theme recent form: %w", err)
+	}
+	defer rows.Close()
+	out := map[string]ThemeForm{}
+	for rows.Next() {
+		var theme string
+		var f ThemeForm
+		if err := rows.Scan(&theme, &f.Plays, &f.Wins); err != nil {
+			return nil, err
+		}
+		out[theme] = f
+	}
+	return out, rows.Err()
+}
+
 func (s *Store) RecordPuzzlePlay(ctx context.Context, username, operationID, day, puzzleID, theme string, solved bool, puzzleRating int, puzzleThemes []string) (*PuzzlePlayResult, error) {
 	hasTheme := false
 	for _, t := range puzzleThemes {
@@ -129,9 +190,10 @@ func (s *Store) RecordPuzzlePlay(ctx context.Context, username, operationID, day
 		win = 1
 	}
 	if _, err := tx.Exec(ctx, `
-		INSERT INTO puzzle_theme_daily (username, day, theme, plays, wins) VALUES ($1, $2::date, $3, 1, $4)
-		ON CONFLICT (username, day, theme) DO UPDATE SET plays = puzzle_theme_daily.plays + 1, wins = puzzle_theme_daily.wins + $4`,
-		username, day, theme, win); err != nil {
+		INSERT INTO puzzle_theme_daily (username, day, theme, plays, wins, last_rating) VALUES ($1, $2::date, $3, 1, $4, $5)
+		ON CONFLICT (username, day, theme) DO UPDATE SET plays = puzzle_theme_daily.plays + 1, wins = puzzle_theme_daily.wins + $4,
+			last_rating = EXCLUDED.last_rating`,
+		username, day, theme, win, after); err != nil {
 		return nil, err
 	}
 	if _, err := tx.Exec(ctx, `

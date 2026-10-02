@@ -15,6 +15,16 @@ func (s *Store) StartCleanupLoop(retention, puzzlePlaysRetention, interval time.
 		} else if n := ct.RowsAffected(); n > 0 {
 			log.Printf("db: pruned %d puzzle_plays row(s) older than %s", n, puzzlePlaysRetention)
 		}
+		for _, table := range []struct{ name, column string }{{"puzzle_attempts", "played_at"}, {"book_study_activity", "first_moved_at"}} {
+			ct, err = s.pool.Exec(context.Background(), "DELETE FROM "+table.name+" WHERE "+table.column+" < $1", cutoff)
+			if err != nil {
+				log.Printf("db: %s cleanup failed: %v", table.name, err)
+				continue
+			}
+			if n := ct.RowsAffected(); n > 0 {
+				log.Printf("db: pruned %d %s row(s) older than %s", n, table.name, retention)
+			}
+		}
 		ct, err = s.pool.Exec(context.Background(), "DELETE FROM line_attempts WHERE played_at < $1", cutoff)
 		if err != nil {
 			log.Printf("db: line_attempts cleanup failed: %v", err)

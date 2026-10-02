@@ -17,6 +17,23 @@ type CardProgress struct {
 	LastSeenISO *string `json:"lastSeenISO"`
 }
 
+const RecentWindow = 5
+
+func pushResults(bits, n, lapses, correct int) (int, int) {
+	for i := 0; i < lapses; i++ {
+		bits = (bits << 1) & (1<<RecentWindow - 1)
+		n++
+	}
+	for i := 0; i < correct; i++ {
+		bits = (bits<<1 | 1) & (1<<RecentWindow - 1)
+		n++
+	}
+	if n > RecentWindow {
+		n = RecentWindow
+	}
+	return bits, n
+}
+
 type CardProgressDelta struct {
 	Lapses  int
 	Seen    int
@@ -29,6 +46,8 @@ type LineAttempt struct {
 	CardID      string
 	HadMistake  bool
 	PlayedAt    *time.Time
+	Day         string
+	LineID      string
 }
 
 func (s *Store) GetProgress(ctx context.Context, username, repertoireID string) (map[string]CardProgress, error) {
@@ -136,6 +155,40 @@ func (s *Store) SaveProgress(ctx context.Context, username, repertoireID string,
 			username, repertoireID, attempt.ChapterID, attempt.ChapterName, attempt.CardID, attempt.HadMistake, attempt.PlayedAt)
 		if err != nil {
 			return fmt.Errorf("insert line_attempt: %w", err)
+		}
+		mistake := 0
+		if attempt.HadMistake {
+			mistake = 1
+		}
+		if attempt.LineID != "" {
+			var bits, n int
+			err := tx.QueryRow(ctx, `SELECT recent_bits, recent_n FROM line_history WHERE username = $1 AND repertoire_id = $2 AND line_id = $3 FOR UPDATE`, username, repertoireID, attempt.LineID).Scan(&bits, &n)
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				return fmt.Errorf("read line history: %w", err)
+			}
+			if attempt.HadMistake {
+				bits, n = pushResults(bits, n, 1, 0)
+			} else {
+				bits, n = pushResults(bits, n, 0, 1)
+			}
+			if _, err := tx.Exec(ctx, `
+				INSERT INTO line_history (username, repertoire_id, line_id, recent_bits, recent_n, updated_at) VALUES ($1, $2, $3, $4, $5, now())
+				ON CONFLICT (username, repertoire_id, line_id) DO UPDATE SET recent_bits = $4, recent_n = $5, estimated = false, updated_at = now()`,
+				username, repertoireID, attempt.LineID, bits, n); err != nil {
+				return fmt.Errorf("update line history: %w", err)
+			}
+		}
+		var day any
+		if attempt.Day != "" {
+			day = attempt.Day
+		}
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO drill_daily_stats (username, day, repertoire_id, chapter_id, chapter_name, drills, mistakes)
+			VALUES ($1, COALESCE($2::date, (now() AT TIME ZONE 'UTC')::date), $3, $4, $5, 1, $6)
+			ON CONFLICT (username, day, repertoire_id, chapter_id) DO UPDATE SET
+				drills = drill_daily_stats.drills + 1, mistakes = drill_daily_stats.mistakes + $6, chapter_name = EXCLUDED.chapter_name`,
+			username, day, repertoireID, attempt.ChapterID, attempt.ChapterName, mistake); err != nil {
+			return fmt.Errorf("update drill_daily_stats: %w", err)
 		}
 	}
 

@@ -307,17 +307,33 @@ CREATE TABLE IF NOT EXISTS puzzle_theme_daily (
     theme TEXT NOT NULL,
     plays INT NOT NULL DEFAULT 0,
     wins INT NOT NULL DEFAULT 0,
+    last_rating DOUBLE PRECISION,
     PRIMARY KEY (username, day, theme)
 );
 
--- One-off backfill of the aggregates from the existing puzzle_plays rows (runs only while the aggregate table is empty).
+ALTER TABLE puzzle_theme_daily ADD COLUMN IF NOT EXISTS last_rating DOUBLE PRECISION;
+
+UPDATE puzzle_theme_daily t SET last_rating = x.r
+FROM (
+    SELECT username, (played_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date AS day, theme, (array_agg(rating_after ORDER BY played_at DESC))[1] AS r
+    FROM puzzle_plays GROUP BY 1, 2, 3
+) x
+WHERE t.last_rating IS NULL AND x.username = t.username AND x.day = t.day AND x.theme = t.theme;
+
+-- One-off backfill from the surviving puzzle_plays rows (runs only while the table is empty).
 -- Days use Asia/Ho_Chi_Minh because old rows did not record the user's time zone.
-INSERT INTO puzzle_theme_daily (username, day, theme, plays, wins)
-SELECT username, (played_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date, theme, COUNT(*), COUNT(*) FILTER (WHERE solved)
+INSERT INTO puzzle_theme_daily (username, day, theme, plays, wins, last_rating)
+SELECT username, (played_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date, theme, COUNT(*), COUNT(*) FILTER (WHERE solved),
+       (array_agg(rating_after ORDER BY played_at DESC))[1]
 FROM puzzle_plays
 WHERE NOT EXISTS (SELECT 1 FROM puzzle_theme_daily)
 GROUP BY 1, 2, 3;
 
+ALTER TABLE puzzle_daily_stats ADD COLUMN IF NOT EXISTS lichess_plays INT NOT NULL DEFAULT 0;
+ALTER TABLE puzzle_daily_stats ADD COLUMN IF NOT EXISTS lichess_wins INT NOT NULL DEFAULT 0;
+
+-- One-off backfill of the aggregates from the existing puzzle_plays rows (runs only while the aggregate table is empty).
+-- Days use Asia/Ho_Chi_Minh because old rows did not record the user's time zone.
 WITH local_plays AS (
     SELECT username, (played_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date AS day, theme, solved, rating_after, played_at
     FROM puzzle_plays
@@ -334,3 +350,46 @@ INSERT INTO puzzle_daily_stats (username, day, plays, wins, avg_rating)
 SELECT d.username, d.day, d.plays, d.wins, a.avg_rating
 FROM days d JOIN avg_by_day a ON a.username = d.username AND a.day = d.day
 WHERE NOT EXISTS (SELECT 1 FROM puzzle_daily_stats);
+
+ALTER TABLE card_progress DROP COLUMN IF EXISTS recent_bits;
+ALTER TABLE card_progress DROP COLUMN IF EXISTS recent_n;
+ALTER TABLE card_progress DROP COLUMN IF EXISTS history_ready;
+
+CREATE TABLE IF NOT EXISTS drill_daily_stats (
+    username TEXT NOT NULL CONSTRAINT drill_daily_stats_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    day DATE NOT NULL,
+    repertoire_id TEXT NOT NULL,
+    chapter_id TEXT NOT NULL,
+    chapter_name TEXT NOT NULL,
+    drills INT NOT NULL DEFAULT 0,
+    mistakes INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (username, day, repertoire_id, chapter_id)
+);
+
+-- One-off backfills (each runs only while its aggregate is still empty). Days use Asia/Ho_Chi_Minh because old rows did not record the user's time zone.
+INSERT INTO drill_daily_stats (username, day, repertoire_id, chapter_id, chapter_name, drills, mistakes)
+SELECT username, (played_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date, repertoire_id, chapter_id, MAX(chapter_name), COUNT(*), COUNT(*) FILTER (WHERE had_mistake)
+FROM line_attempts
+WHERE NOT EXISTS (SELECT 1 FROM drill_daily_stats)
+GROUP BY 1, 2, 3, 4;
+
+INSERT INTO puzzle_daily_stats (username, day, plays, wins, lichess_plays, lichess_wins)
+SELECT username, (played_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date, 0, 0, COUNT(*), COUNT(*) FILTER (WHERE win)
+FROM puzzle_attempts
+WHERE NOT EXISTS (SELECT 1 FROM puzzle_daily_stats WHERE lichess_plays > 0)
+GROUP BY 1, 2
+ON CONFLICT (username, day) DO UPDATE SET lichess_plays = EXCLUDED.lichess_plays, lichess_wins = EXCLUDED.lichess_wins;
+
+CREATE TABLE IF NOT EXISTS line_history (
+    username TEXT NOT NULL CONSTRAINT line_history_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    repertoire_id TEXT NOT NULL,
+    line_id TEXT NOT NULL,
+    recent_bits INT NOT NULL DEFAULT 0,
+    recent_n INT NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (username, repertoire_id, line_id)
+);
+
+ALTER TABLE line_history ADD COLUMN IF NOT EXISTS estimated BOOLEAN NOT NULL DEFAULT false;
