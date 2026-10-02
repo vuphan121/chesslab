@@ -61,6 +61,25 @@ func TestPuzzleStatsAggregatesAndCleanup(t *testing.T) {
 	if ratings["fork"].Attempts != 2 || ratings["pin"].Attempts != 1 {
 		t.Fatalf("theme ratings = %+v", ratings)
 	}
+	checkThemeRange := func(from, to string, want map[string]ThemeRangeStat) {
+		t.Helper()
+		got, err := store.ThemeRangeStats(ctx, username, from, to)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(got) != len(want) {
+			t.Fatalf("theme range %s..%s = %+v, want %d themes", from, to, got, len(want))
+		}
+		for _, st := range got {
+			w, ok := want[st.Theme]
+			if !ok || st.Plays != w.Plays || st.Wins != w.Wins || (w.Rating != 0 && st.Rating != w.Rating) || st.Rating == 0 {
+				t.Fatalf("theme range %s..%s %s = %+v, want %+v", from, to, st.Theme, st, w)
+			}
+		}
+	}
+	checkThemeRange("2099-01-01", "2099-01-02", map[string]ThemeRangeStat{"fork": {Plays: 2, Wins: 2, Rating: ratings["fork"].Rating}, "pin": {Plays: 1, Wins: 0, Rating: ratings["pin"].Rating}})
+	checkThemeRange("2099-01-02", "2099-01-02", map[string]ThemeRangeStat{"fork": {Plays: 1, Wins: 1, Rating: ratings["fork"].Rating}})
+	checkThemeRange("2099-01-03", "2099-01-09", map[string]ThemeRangeStat{})
 	seenAt := time.Now().UTC().Format(time.RFC3339)
 	card := map[string]CardProgress{"A": {Box: 1, Seen: 1, Correct: 1, LastSeenISO: &seenAt}}
 	delta := map[string]CardProgressDelta{"A": {Seen: 1, Correct: 1}}
@@ -111,4 +130,5 @@ func TestPuzzleStatsAggregatesAndCleanup(t *testing.T) {
 	if err != nil || totals.Puzzles != 3 {
 		t.Fatalf("aggregates changed after cleanup: totals = %+v err = %v", totals, err)
 	}
+	checkThemeRange("2099-01-01", "2099-01-02", map[string]ThemeRangeStat{"fork": {Plays: 2, Wins: 2, Rating: ratings["fork"].Rating}, "pin": {Plays: 1, Wins: 0, Rating: ratings["pin"].Rating}})
 }

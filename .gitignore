@@ -29,3 +29,15 @@ tmp/book-board-parser/
 # Agent docs live in vuphan121/agent-files (chesslab/docs/), not in this repo.
 docs/changes-2026-09-28.md
 docs/eval-precompute.md
+
+# Local scratch: diff dumps, dev-server logs, other agents' working files
+*diffout*.txt
+*-server*.log
+AGENTS.md
+.agents/
+human-model/
+
+# More agent docs (they live in vuphan121/agent-files)
+docs/changes-2026-09-30-puzzles.md
+docs/changes-2026-09-30-statistics.md
+docs/changes-2026-09-30-turso.md
