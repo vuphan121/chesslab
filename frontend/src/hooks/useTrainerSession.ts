@@ -703,7 +703,7 @@ export function useTrainerSession() {
   }, [])
 
   const navBack = useCallback(() => {
-    setAnimateLastMove(false)
+    setAnimateLastMove(true)
     const last = runSnapshotsRef.current.length - 1
     const target = Math.max(0, (viewIndex ?? last) - 1)
     if (target !== (viewIndex ?? last)) playForIndex(target)
@@ -711,7 +711,7 @@ export function useTrainerSession() {
   }, [viewIndex, playForIndex])
 
   const navForward = useCallback(() => {
-    setAnimateLastMove(false)
+    setAnimateLastMove(true)
     if (viewIndex === null) return
     const last = runSnapshotsRef.current.length - 1
     const next = viewIndex + 1

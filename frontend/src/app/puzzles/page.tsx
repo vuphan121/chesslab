@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Board from '@/components/board/Board'
 import EvalBar from '@/components/analysis/EvalBar'
 import EngineSettingsButton from '@/components/analysis/EngineSettingsButton'
@@ -36,6 +36,8 @@ const EVAL_SLOT = 38
 const SIDE_GAP = 16
 const BUTTON_COLUMN_WIDTH = 150
 const RESULT_BOX_WIDTH = 176
+const PUZZLE_MAX_HASH_MB = 16
+const PUZZLE_ANALYSIS_DEPTH = 15
 const SOLUTION_ARROW_COLOR = 'rgba(0, 48, 136, 0.4)'
 
 export default function PuzzlesPage() {
@@ -51,12 +53,18 @@ export default function PuzzlesPage() {
 
   const finished = s.status === 'solved' || s.status === 'failed'
   const navigable = finished || s.status === 'playing'
-  const analysisActive = finished
+  const [analysisOn, setAnalysisOn] = useState(false)
+  if (!finished && analysisOn) setAnalysisOn(false)
+  const analysisActive = finished && analysisOn
+  const analysisSettings = useMemo(
+    () => ({ ...engineSettings, limit: 'depth' as const, depth: PUZZLE_ANALYSIS_DEPTH, hashMb: Math.min(engineSettings.hashMb, PUZZLE_MAX_HASH_MB) }),
+    [engineSettings],
+  )
   const { analysis, analysisFen } = useEngineAnalysis({
     fen: s.boardState?.fen ?? null,
     gameOver: s.boardState?.isGameOver ?? false,
     enabled: analysisActive,
-    settings: engineSettings,
+    settings: analysisSettings,
     immediate: true,
   })
 
@@ -77,6 +85,22 @@ export default function PuzzlesPage() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [navigable, navPrev, navNext])
+
+  const { next: nextPuzzle } = s
+  useEffect(() => {
+    if (!finished) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== ' ' || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return
+      const target = event.target as HTMLElement | null
+      const tag = target?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable) return
+      event.preventDefault()
+      if (tag === 'BUTTON') target?.blur()
+      nextPuzzle()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [finished, nextPuzzle])
 
   if (!s.mode) {
     return (
@@ -263,6 +287,16 @@ export default function PuzzlesPage() {
           >
             <RetryIcon />
           </button>
+          <button
+            onClick={() => setAnalysisOn((on) => !on)}
+            className="tap"
+            style={iconButton(analysisOn ? 'active' : 'plain')}
+            title={analysisOn ? 'Stop engine analysis' : 'Analyze with engine'}
+            aria-label={analysisOn ? 'Stop engine analysis' : 'Analyze with engine'}
+            aria-pressed={analysisOn}
+          >
+            <AnalysisIcon />
+          </button>
           <EngineSettingsButton size={40} settings={engineSettings} onChange={updateEngineSettings} onReset={resetEngineSettings} />
           {(stacked || isLandscape) && retryQueueButton}
         </div>
@@ -391,6 +425,16 @@ function BookmarkIcon({ filled, slashed }: { filled: boolean; slashed: boolean }
     <svg {...iconProps} fill={filled ? 'currentColor' : 'none'}>
       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
       {slashed && <line x1="3" y1="3" x2="21" y2="21" />}
+    </svg>
+  )
+}
+
+function AnalysisIcon() {
+  return (
+    <svg {...iconProps}>
+      <line x1="6" y1="20" x2="6" y2="14" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="18" y1="20" x2="18" y2="10" />
     </svg>
   )
 }

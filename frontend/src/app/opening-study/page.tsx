@@ -150,6 +150,21 @@ export default function OpeningStudyPage() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [navBack, navForward])
 
+  useEffect(() => {
+    if (phase !== 'line-complete' || busy) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== ' ' || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return
+      const target = event.target as HTMLElement | null
+      const tag = target?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable) return
+      event.preventDefault()
+      if (tag === 'BUTTON') target?.blur()
+      nextLine()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [phase, busy, nextLine])
+
   if (phase === 'setup') {
     return (
       <main className="min-h-screen pb-6 sm:pb-10" style={{ background: STUDY_BACKGROUND }}>
