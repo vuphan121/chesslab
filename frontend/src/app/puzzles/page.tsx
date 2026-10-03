@@ -291,8 +291,8 @@ export default function PuzzlesPage() {
             onClick={() => setAnalysisOn((on) => !on)}
             className="tap"
             style={iconButton(analysisOn ? 'active' : 'plain')}
-            title={analysisOn ? 'Stop engine analysis' : 'Analyze with engine'}
-            aria-label={analysisOn ? 'Stop engine analysis' : 'Analyze with engine'}
+            title="Analysis"
+            aria-label="Analysis"
             aria-pressed={analysisOn}
           >
             <AnalysisIcon />
