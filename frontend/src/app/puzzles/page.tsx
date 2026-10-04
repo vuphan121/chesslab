@@ -221,8 +221,9 @@ export default function PuzzlesPage() {
   const resultBox = s.puzzle ? (
     <div
       style={{
-        width: RESULT_BOX_WIDTH,
-        marginTop: 12,
+        width: stacked ? boardSize : isLandscape ? '100%' : RESULT_BOX_WIDTH,
+        boxSizing: 'border-box',
+        marginTop: stacked || isLandscape ? 0 : 12,
         padding: '10px 12px',
         background: '#fff',
         border: '1px solid #eae8e2',
@@ -351,6 +352,7 @@ export default function PuzzlesPage() {
               <FeedbackStrip feedback={s.feedback} />
             </div>
             {controls}
+            {finished && s.puzzle && resultBox}
             {moves}
             {s.error && <p role="alert" style={{ color: '#b34343', fontSize: 13 }}>{s.error}</p>}
           </div>
@@ -360,8 +362,31 @@ export default function PuzzlesPage() {
           <div style={{ width: boardSize }}>{backButton}</div>
           {boardBlock}
           {controls}
+          {finished && s.puzzle && resultBox}
           {isPhone && board ? (
-            <MoveStrip moveTree={board.moveTree} currentNodeId={board.currentNodeId} onGotoNode={s.gotoNode} width={boardSize} />
+            <div style={{ width: boardSize, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button
+                className="tap"
+                onClick={s.navPrev}
+                disabled={!s.canPrev}
+                title="Previous move"
+                aria-label="Previous move"
+                style={{ ...iconButton('plain'), height: 44, opacity: s.canPrev ? 1 : 0.4 }}
+              >
+                <ChevronIcon dir="left" />
+              </button>
+              <MoveStrip moveTree={board.moveTree} currentNodeId={board.currentNodeId} onGotoNode={s.gotoNode} width={boardSize - 2 * 40 - 2 * 6} />
+              <button
+                className="tap"
+                onClick={s.navNext}
+                disabled={!s.canNext}
+                title="Next move"
+                aria-label="Next move"
+                style={{ ...iconButton('plain'), height: 44, opacity: s.canNext ? 1 : 0.4 }}
+              >
+                <ChevronIcon dir="right" />
+              </button>
+            </div>
           ) : (
             <div style={{ width: boardSize }}>{moves}</div>
           )}
@@ -435,6 +460,14 @@ function AnalysisIcon() {
       <line x1="6" y1="20" x2="6" y2="14" />
       <line x1="12" y1="20" x2="12" y2="4" />
       <line x1="18" y1="20" x2="18" y2="10" />
+    </svg>
+  )
+}
+
+function ChevronIcon({ dir }: { dir: 'left' | 'right' }) {
+  return (
+    <svg {...iconProps}>
+      <polyline points={dir === 'left' ? '15 18 9 12 15 6' : '9 18 15 12 9 6'} />
     </svg>
   )
 }
