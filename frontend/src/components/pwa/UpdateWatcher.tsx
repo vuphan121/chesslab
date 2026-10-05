@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { refreshAppShell } from '@/lib/offline/refresh'
+import { getBackendBuild } from '@/lib/api/client'
+import { updateReady } from '@/lib/pwa/updateReady'
 
 const CHECK_EVERY_MS = 60000
 const RELOAD_GUARD_KEY = 'chesslab-update-reload'
@@ -31,8 +33,10 @@ export default function UpdateWatcher({ authed }: { authed: boolean }) {
       try {
         const res = await fetch('/api/build', { cache: 'no-store' })
         if (!res.ok) return
-        const latest = (await res.json())?.build
-        if (typeof latest !== 'string' || latest === 'unknown' || latest === current) return
+        const frontendLatest = (await res.json())?.build
+        if (typeof frontendLatest !== 'string' || frontendLatest === 'unknown' || frontendLatest === current) return
+        const latest = updateReady(current, frontendLatest, await getBackendBuild())
+        if (!latest) return
         if (await refreshAppShell()) {
           found = true
           setReadyBuild(latest)

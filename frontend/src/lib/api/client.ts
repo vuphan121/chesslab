@@ -17,6 +17,14 @@ export type { TodayTrainingEntry, TodayTrainingResponse, TodayTrainingSettings }
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
 
+export async function getBackendBuild(): Promise<string | null> {
+  const res = await fetch(`${API}/api/version`, { cache: 'no-store', signal: AbortSignal.timeout(15000) })
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error(`version check failed: ${res.status}`)
+  const build = (await res.json())?.build
+  return typeof build === 'string' ? build : null
+}
+
 function authHeader(): Record<string, string> {
   const token = getToken()
   const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}

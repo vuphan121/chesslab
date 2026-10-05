@@ -21,6 +21,8 @@ func NewRouter(h *Handler) http.Handler {
 		w.Write([]byte("ok"))
 	})
 
+	r.Get("/api/version", h.Version)
+
 	r.Post("/api/auth/login", h.Login)
 
 	r.Post("/api/cron/refresh-repertoires", h.RefreshAllRepertoires)
