@@ -14,6 +14,9 @@ import LinePanel from '@/components/trainer/LinePanel'
 import FeedbackStrip from '@/components/trainer/FeedbackStrip'
 import SessionSummary from '@/components/trainer/SessionSummary'
 import { useTrainerSession } from '@/hooks/useTrainerSession'
+import { useEngineAnalysis } from '@/hooks/useEngineAnalysis'
+import { useEngineSettings } from '@/lib/engine/settings'
+import { positionKey } from '@/lib/chess/positionKey'
 import { useViewportWidth, useViewportHeight, clamp } from '@/hooks/useViewportWidth'
 
 const DESKTOP_SQUARE_SIZE = 110
@@ -67,6 +70,7 @@ export default function OpeningStudyPage() {
     evalByFen,
     viewIndex,
     isViewingHistory,
+    branchActive,
     navBack,
     navForward,
     gotoPly,
@@ -84,6 +88,14 @@ export default function OpeningStudyPage() {
   } = useTrainerSession()
 
   const [evalDisplay, cycleEvalDisplay] = useEvalDisplay(EVAL_DISPLAY_STORAGE_KEY, 'off')
+  const [engineSettings] = useEngineSettings()
+  const { analysis: branchAnalysis, analysisFen: branchAnalysisFen } = useEngineAnalysis({
+    fen: boardState?.fen ?? null,
+    gameOver: boardState?.isGameOver ?? false,
+    enabled: branchActive,
+    settings: engineSettings,
+    immediate: true,
+  })
 
   const viewportWidth = useViewportWidth()
   const viewportHeight = useViewportHeight()
@@ -198,11 +210,30 @@ export default function OpeningStudyPage() {
   }
 
   const lineComplete = phase === 'line-complete'
-  const viewEval = boardState ? evalByFen[boardState.fen] : undefined
-  const showEvalBar = lineComplete && evalDisplay !== 'off'
-  const suggestionArrows =
-    lineComplete && evalDisplay === 'eval-moves' && viewEval?.bestMoves
-      ? arrowShapes(viewEval.bestMoves.map((m) => ({ uci: m.uci, score: m.score, mate: m.mate })), boardState.turn, 5)
+  const branchCurrent =
+    branchActive && !!branchAnalysis && (branchAnalysisFen === null || positionKey(branchAnalysisFen) === positionKey(boardState.fen))
+  const viewEval = branchActive
+    ? branchCurrent && branchAnalysis
+      ? { score: branchAnalysis.score, mate: branchAnalysis.mate }
+      : undefined
+    : boardState
+      ? evalByFen[boardState.fen]
+      : undefined
+  const showEvalBar = lineComplete && (evalDisplay !== 'off' || branchActive)
+  const suggestionArrows = branchActive
+    ? branchCurrent && branchAnalysis
+      ? arrowShapes(
+          branchAnalysis.lines.map((line) => ({ uci: line.uciMoves?.[0], score: line.score, mate: line.mate })),
+          boardState.turn,
+          5,
+        )
+      : []
+    : lineComplete && evalDisplay === 'eval-moves' && evalByFen[boardState.fen]?.bestMoves
+      ? arrowShapes(
+          evalByFen[boardState.fen].bestMoves!.map((m) => ({ uci: m.uci, score: m.score, mate: m.mate })),
+          boardState.turn,
+          5,
+        )
       : []
   const materialRows = computeMaterialRows(boardState.pieces, flipped)
   const exportChapter =

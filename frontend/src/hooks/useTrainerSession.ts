@@ -19,6 +19,7 @@ import type { Repertoire, RepCard, RepChapter, RepNode, SessionOptions, SessionS
 import { createSession, grade, isComplete, summarise } from '@/lib/trainer/scheduler'
 import { newRng } from '@/lib/trainer/rng'
 import { cardKey } from '@/lib/trainer/cardKey'
+import { positionKey } from '@/lib/chess/positionKey'
 import { mergeSessionCards, progressDeltas } from '@/lib/trainer/persistence'
 import { chooseOpponentReply } from '@/lib/trainer/replySelection'
 import { buildDrillLines, createLineQueue, nextQueuedLine, switchToLineThrough } from '@/lib/trainer/lineQueue'
@@ -136,6 +137,16 @@ function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState 
   }
 }
 
+interface Branch {
+  base: number
+  snaps: GameState[]
+  view: number
+}
+
+function isCapture(from: GameState | undefined, to: GameState | undefined): boolean {
+  return !!from && !!to && Object.keys(to.pieces).length < Object.keys(from.pieces).length
+}
+
 export type TrainerPhase = 'setup' | 'drilling' | 'line-complete' | 'summary'
 
 export interface Feedback {
@@ -187,6 +198,7 @@ export function useTrainerSession() {
   const [isTodayTraining, setIsTodayTraining] = useState(false)
 
   const [evalByFen, setEvalByFen] = useState<Record<string, PositionEval>>({})
+  const [branch, setBranch] = useState<Branch | null>(null)
 
   useEffect(() => {
     if (phase !== 'line-complete') return
@@ -231,11 +243,17 @@ export function useTrainerSession() {
   const liveIndex = runSnapshots.length - 1
   const isViewingHistory = viewIndex !== null && viewIndex !== liveIndex
   const liveGameState: GameState | null = liveIndex >= 0 ? runSnapshots[liveIndex] : null
-  const viewedGameState: GameState | null =
-    viewIndex !== null ? (runSnapshots[viewIndex] ?? liveGameState) : liveGameState
+  const exploring = phase === 'line-complete'
+  const activeBranch = exploring ? branch : null
+  const viewedGameState: GameState | null = activeBranch
+    ? activeBranch.snaps[activeBranch.view]
+    : viewIndex !== null
+      ? (runSnapshots[viewIndex] ?? liveGameState)
+      : liveGameState
+  const locked = isViewingHistory && !exploring
 
   const boardState: BoardState | null = viewedGameState
-    ? toBoardState(viewedGameState, isViewingHistory ? null : selected)
+    ? toBoardState(viewedGameState, locked ? null : selected)
     : null
 
   const cardById = useCallback(
@@ -278,6 +296,7 @@ export function useTrainerSession() {
   }
 
   const beginRun = useCallback((card: RepCard, chapterId: string | null, gs: GameState, leading: RunMove[] = []) => {
+    setBranch(null)
     runStartCardIdRef.current = card.id
     runChapterIdRef.current = chapterId
     setRunChapterId(chapterId)
@@ -589,8 +608,48 @@ export function useTrainerSession() {
     setRunChapterId(chapterId)
   }, [])
 
+  const exploreMove = useCallback(
+    (from: Square, to: Square, promotion?: string) => {
+      const source = viewedGameState
+      if (!source || busy) return
+      const piece = source.pieces[from]
+      const isPromo =
+        piece?.type === 'p' && ((piece.color === 'w' && to[1] === '8') || (piece.color === 'b' && to[1] === '1'))
+      let gs: GameState
+      try {
+        gs = applyLocalMove(source, from, to, promotion ?? (isPromo ? 'q' : undefined)).state
+      } catch {
+        return
+      }
+      setSelected(null)
+      setAnimateLastMove(false)
+      playMoveSound(isCapture(source, gs))
+      if (activeBranch) {
+        setBranch({
+          base: activeBranch.base,
+          snaps: [...activeBranch.snaps.slice(0, activeBranch.view + 1), gs],
+          view: activeBranch.view + 1,
+        })
+        return
+      }
+      const snaps = runSnapshotsRef.current
+      const base = viewIndex ?? snaps.length - 1
+      const following = snaps[base + 1]
+      if (following && positionKey(following.fen) === positionKey(gs.fen)) {
+        setViewIndex(base + 1 >= snaps.length - 1 ? null : base + 1)
+        return
+      }
+      setBranch({ base, snaps: [gs], view: 0 })
+    },
+    [viewedGameState, busy, activeBranch, viewIndex],
+  )
+
   const submitMove = useCallback(
     async (from: Square, to: Square, promotion?: string) => {
+      if (phase === 'line-complete') {
+        exploreMove(from, to, promotion)
+        return
+      }
       const card = currentCard
       if (!card || phase !== 'drilling' || busy || isViewingHistory || !liveGameState) return
 
@@ -660,12 +719,12 @@ export function useTrainerSession() {
         if (reqId === moveReqId.current) setBusy(false)
       }
     },
-    [currentCard, phase, busy, boardState, isViewingHistory, liveGameState, proceedAfterCorrect, followPlayedAnswer],
+    [currentCard, phase, busy, boardState, isViewingHistory, liveGameState, proceedAfterCorrect, followPlayedAnswer, exploreMove],
   )
 
   const selectSquare = useCallback(
     (square: Square) => {
-      if (!boardState || busy || isViewingHistory) return
+      if (!boardState || busy || locked) return
       if (selected === square) {
         setSelected(null)
         return
@@ -684,15 +743,15 @@ export function useTrainerSession() {
         setSelected(null)
       }
     },
-    [boardState, selected, busy, isViewingHistory, submitMove],
+    [boardState, selected, busy, locked, submitMove],
   )
 
   const legalMovesFor = useCallback(
     (square: Square): string[] => {
-      if (!liveGameState || isViewingHistory) return []
-      return liveGameState.legalMoves.filter((m) => m.from === square).map((m) => m.to)
+      if (!viewedGameState || locked) return []
+      return viewedGameState.legalMoves.filter((m) => m.from === square).map((m) => m.to)
     },
-    [liveGameState, isViewingHistory],
+    [viewedGameState, locked],
   )
 
   const playForIndex = useCallback((index: number) => {
@@ -705,22 +764,43 @@ export function useTrainerSession() {
   const navBack = useCallback(() => {
     setAnimateLastMove(true)
     const last = runSnapshotsRef.current.length - 1
+    if (activeBranch) {
+      const { base, snaps, view } = activeBranch
+      if (view > 0) {
+        playMoveSound(isCapture(snaps[view - 1], snaps[view]))
+        setBranch({ base, snaps, view: view - 1 })
+      } else {
+        playMoveSound(isCapture(runSnapshotsRef.current[base], snaps[0]))
+        setBranch(null)
+        setViewIndex(base >= last ? null : base)
+      }
+      return
+    }
     const target = Math.max(0, (viewIndex ?? last) - 1)
     if (target !== (viewIndex ?? last)) playForIndex(target)
     setViewIndex(target)
-  }, [viewIndex, playForIndex])
+  }, [viewIndex, playForIndex, activeBranch])
 
   const navForward = useCallback(() => {
     setAnimateLastMove(true)
+    if (activeBranch) {
+      const { base, snaps, view } = activeBranch
+      if (view < snaps.length - 1) {
+        playMoveSound(isCapture(snaps[view], snaps[view + 1]))
+        setBranch({ base, snaps, view: view + 1 })
+      }
+      return
+    }
     if (viewIndex === null) return
     const last = runSnapshotsRef.current.length - 1
     const next = viewIndex + 1
     playForIndex(Math.min(next, last))
     setViewIndex(next >= last ? null : next)
-  }, [viewIndex, playForIndex])
+  }, [viewIndex, playForIndex, activeBranch])
 
   const gotoPly = useCallback(
     (index: number) => {
+      setBranch(null)
       setAnimateLastMove(false)
       const last = runSnapshotsRef.current.length - 1
       const target = Math.min(last, Math.max(0, index))
@@ -855,7 +935,8 @@ export function useTrainerSession() {
     isTodayTraining,
     evalByFen,
     viewIndex,
-    isViewingHistory,
+    isViewingHistory: isViewingHistory || !!activeBranch,
+    branchActive: !!activeBranch,
     navBack,
     navForward,
     gotoPly,
