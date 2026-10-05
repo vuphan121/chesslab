@@ -22,7 +22,7 @@ vi.mock('./idb', () => ({
 }))
 
 import { ApiError } from './errors'
-import { cacheAgeMs, cacheFirst, claimOfflineStore, dropCachedRepertoiresExcept, networkFirst, readCache, writeCache } from './cache'
+import { cacheAgeMs, cacheFirst, claimOfflineStore, dropCachedRepertoiresExcept, enqueue, networkFirst, outboxCount, readCache, writeCache } from './cache'
 
 beforeEach(() => {
   store.clear()
@@ -210,6 +210,44 @@ describe('claimOfflineStore', () => {
     await expect(claimOfflineStore('bob')).resolves.toBe(true)
     expect(local.get('chesslab.offline.owner')).toBe('bob')
     expect(await readCache('progress:private')).toBeUndefined()
+  })
+
+  it('a different account on the same phone inherits no puzzle pool, themes or queued puzzle results', async () => {
+    const local = new Map<string, string>([['chesslab.offline.owner', 'alice']])
+    vi.stubGlobal('window', {
+      localStorage: {
+        getItem: (key: string) => local.get(key) ?? null,
+        setItem: (key: string, value: string) => local.set(key, value),
+      },
+    })
+    await writeCache('puzzle-pool', { puzzles: [{ id: 'p1' }], served: ['p0'], fetchedAt: 1 })
+    await writeCache('puzzle-themes', { startRating: 2000, themes: [{ key: 'fork', rating: 2150 }] })
+    await enqueue({ kind: 'puzzle-result', operationId: 'op', puzzleId: 'p1', theme: 'fork', solved: true, playedAt: new Date().toISOString() })
+    expect(await outboxCount()).toBe(1)
+
+    await expect(claimOfflineStore('bob')).resolves.toBe(true)
+
+    expect(await readCache('puzzle-pool')).toBeUndefined()
+    expect(await readCache('puzzle-themes')).toBeUndefined()
+    expect(await outboxCount()).toBe(0)
+    expect(local.get('chesslab.offline.owner')).toBe('bob')
+  })
+
+  it('the same account signing in again keeps its puzzle pool and queued results', async () => {
+    const local = new Map<string, string>([['chesslab.offline.owner', 'alice']])
+    vi.stubGlobal('window', {
+      localStorage: {
+        getItem: (key: string) => local.get(key) ?? null,
+        setItem: (key: string, value: string) => local.set(key, value),
+      },
+    })
+    await writeCache('puzzle-pool', { puzzles: [{ id: 'p1' }], served: [], fetchedAt: 1 })
+    await enqueue({ kind: 'puzzle-result', operationId: 'op', puzzleId: 'p1', theme: 'fork', solved: true, playedAt: new Date().toISOString() })
+
+    await expect(claimOfflineStore('alice')).resolves.toBe(true)
+
+    expect(await readCache('puzzle-pool')).toBeDefined()
+    expect(await outboxCount()).toBe(1)
   })
 
   it('does not reuse or restore an old account request after ownership changes', async () => {

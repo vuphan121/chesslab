@@ -219,7 +219,7 @@ func (h *Handler) GetStatistics(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	resp.PuzzleSync.Configured = puzzleSyncConfigured()
+	resp.PuzzleSync.Configured = puzzleSyncAvailableTo(username)
 	if st, err := h.db.GetPuzzleSyncState(ctx, username); err == nil && st != nil {
 		resp.PuzzleSync.LichessUsername = st.LichessUsername
 		resp.PuzzleSync.SyncedAt = &st.SyncedAt
@@ -310,6 +310,14 @@ func puzzleSyncConfigured() bool {
 	return os.Getenv("LICHESS_PUZZLE_TOKEN") != "" && os.Getenv("LICHESS_USERNAME") != ""
 }
 
+func puzzleSyncLinkedAccount() string {
+	return os.Getenv("AUTH_USERNAME")
+}
+
+func puzzleSyncAvailableTo(username string) bool {
+	return puzzleSyncConfigured() && username != "" && username == puzzleSyncLinkedAccount()
+}
+
 type PuzzleSyncResponse struct {
 	Added      int   `json:"added"`
 	DurationMS int64 `json:"durationMs"`
@@ -319,9 +327,14 @@ var puzzleSyncMu sync.Mutex
 
 var errPuzzleSyncNotConfigured = errors.New("puzzle sync is not configured (LICHESS_PUZZLE_TOKEN and LICHESS_USERNAME)")
 
+var errPuzzleSyncNotLinked = errors.New("puzzle sync is linked to a different account")
+
 func syncErrorStatus(err error) int {
 	if errors.Is(err, errPuzzleSyncNotConfigured) {
 		return http.StatusServiceUnavailable
+	}
+	if errors.Is(err, errPuzzleSyncNotLinked) {
+		return http.StatusForbidden
 	}
 	return http.StatusBadGateway
 }
@@ -331,6 +344,9 @@ func (h *Handler) syncPuzzles(ctx context.Context, username string) (int, error)
 	lichessUser := os.Getenv("LICHESS_USERNAME")
 	if token == "" || lichessUser == "" {
 		return 0, errPuzzleSyncNotConfigured
+	}
+	if username == "" || username != puzzleSyncLinkedAccount() {
+		return 0, errPuzzleSyncNotLinked
 	}
 	if !puzzleSyncMu.TryLock() {
 		return 0, fmt.Errorf("puzzle sync already running")
