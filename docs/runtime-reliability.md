@@ -76,7 +76,7 @@ Move navigation animation uses the browser animation API and preserves the optim
 
 Chess piece images load eagerly because the board is the page's primary visual content. Production
 dependency audits should remain at zero npm findings and zero reachable/imported-package Go
-findings (`npm audit` and `govulncheck ./...`). The current security baseline uses Next.js 16.3.5
+findings (`npm audit` and `govulncheck ./...`). The current security baseline uses Next.js 16.3.8
 or newer and chi 5.3.0 or newer. `x/crypto` currently carries a module-level advisory for its
 deprecated `openpgp` package; Chesslab imports only `bcrypt`, and the scanner reports no affected
 package or reachable symbol.
