@@ -30,16 +30,16 @@ func TestPuzzleStatsAggregatesAndCleanup(t *testing.T) {
 	}
 
 	themes := []string{"fork", "pin"}
-	if _, err := store.RecordPuzzlePlay(ctx, username, "op-1", "2099-01-01", "p1", "fork", true, 2000, themes); err != nil {
+	if _, err := store.RecordPuzzlePlay(ctx, username, "op-1", "2099-01-01", time.Now(), "p1", "fork", true, 2000, themes); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.RecordPuzzlePlay(ctx, username, "op-2", "2099-01-01", "p2", "pin", false, 2000, themes); err != nil {
+	if _, err := store.RecordPuzzlePlay(ctx, username, "op-2", "2099-01-01", time.Now(), "p2", "pin", false, 2000, themes); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.RecordPuzzlePlay(ctx, username, "op-3", "2099-01-02", "p3", "fork", true, 2000, themes); err != nil {
+	if _, err := store.RecordPuzzlePlay(ctx, username, "op-3", "2099-01-02", time.Now(), "p3", "fork", true, 2000, themes); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.RecordPuzzlePlay(ctx, username, "op-3", "2099-01-02", "p3", "fork", true, 2000, themes); err != nil {
+	if _, err := store.RecordPuzzlePlay(ctx, username, "op-3", "2099-01-02", time.Now(), "p3", "fork", true, 2000, themes); err != nil {
 		t.Fatal(err)
 	}
 

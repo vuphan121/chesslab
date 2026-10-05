@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/chesslab/backend/internal/puzzle"
 	"github.com/jackc/pgx/v5"
@@ -124,7 +125,7 @@ func (s *Store) ThemeRecentForm(ctx context.Context, username string, perTheme i
 	return out, rows.Err()
 }
 
-func (s *Store) RecordPuzzlePlay(ctx context.Context, username, operationID, day, puzzleID, theme string, solved bool, puzzleRating int, puzzleThemes []string) (*PuzzlePlayResult, error) {
+func (s *Store) RecordPuzzlePlay(ctx context.Context, username, operationID, day string, playedAt time.Time, puzzleID, theme string, solved bool, puzzleRating int, puzzleThemes []string) (*PuzzlePlayResult, error) {
 	hasTheme := false
 	for _, t := range puzzleThemes {
 		if t == theme {
@@ -180,9 +181,9 @@ func (s *Store) RecordPuzzlePlay(ctx context.Context, username, operationID, day
 		return nil, err
 	}
 	if _, err := tx.Exec(ctx, `
-		INSERT INTO puzzle_plays (username, operation_id, puzzle_id, theme, solved, puzzle_rating, rating_before, rating_after)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-		username, operationID, puzzleID, theme, solved, puzzleRating, before, after); err != nil {
+		INSERT INTO puzzle_plays (username, operation_id, puzzle_id, theme, solved, puzzle_rating, rating_before, rating_after, played_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+		username, operationID, puzzleID, theme, solved, puzzleRating, before, after, playedAt); err != nil {
 		return nil, err
 	}
 	win := 0

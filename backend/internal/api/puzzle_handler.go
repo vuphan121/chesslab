@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -67,6 +68,7 @@ type puzzleResultRequest struct {
 	PuzzleID    string `json:"puzzleId"`
 	Theme       string `json:"theme"`
 	Solved      bool   `json:"solved"`
+	PlayedAt    string `json:"playedAt"`
 }
 
 type puzzleResultResponse struct {
@@ -276,7 +278,8 @@ func (h *Handler) SubmitPuzzleResult(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to update the retry queue: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	res, err := h.db.RecordPuzzlePlay(r.Context(), username, req.OperationID, currentRequestClock(r).date, req.PuzzleID, req.Theme, req.Solved, found.Rating, found.Themes)
+	playedAt := resolvePlayedAt(req.PlayedAt, time.Now())
+	res, err := h.db.RecordPuzzlePlay(r.Context(), username, req.OperationID, localRequestClock(r, playedAt).date, playedAt, req.PuzzleID, req.Theme, req.Solved, found.Rating, found.Themes)
 	if errors.Is(err, db.ErrUnknownPuzzle) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -361,4 +364,20 @@ func (h *Handler) RemovePuzzleRetry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+const (
+	maxPlayedAtAge  = 14 * 24 * time.Hour
+	maxPlayedAtSkew = 5 * time.Minute
+)
+
+func resolvePlayedAt(raw string, now time.Time) time.Time {
+	if raw == "" {
+		return now
+	}
+	playedAt, err := time.Parse(time.RFC3339, raw)
+	if err != nil || playedAt.After(now.Add(maxPlayedAtSkew)) || playedAt.Before(now.Add(-maxPlayedAtAge)) {
+		return now
+	}
+	return playedAt
 }
