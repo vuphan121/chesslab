@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { getToken, onAuthChange } from '@/lib/auth/token'
 import { pingBackend } from '@/lib/api/client'
+import { prepareSound } from '@/lib/sound'
 import Login from './Login'
 import UserSettingsProvider from '@/components/settings/UserSettingsProvider'
 import OfflineSync from '@/components/pwa/OfflineSync'
@@ -14,6 +15,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     pingBackend()
+    prepareSound()
     const syncAuth = () => {
       const authenticated = !!getToken()
       setAuthed(authenticated)
