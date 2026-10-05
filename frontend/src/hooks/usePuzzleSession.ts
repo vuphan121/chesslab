@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   addPuzzleToRetryQueue,
+  checkBackendHealth,
+  flushPuzzleResultOutbox,
   getPuzzleThemes,
   nextPuzzles,
+  recordPuzzleResult,
   removePuzzleFromRetryQueue,
-  submitPuzzleResult,
   type GameState,
   type PuzzleJSON,
   type PuzzleResult,
@@ -18,12 +20,11 @@ import { activeLine, flatten } from '@/lib/chess/moveTree'
 import type { Feedback } from '@/hooks/useTrainerSession'
 import { playMoveSound } from '@/lib/sound'
 import { judgeMove, splitUci } from '@/lib/puzzle/judge'
+import { PuzzleFeed, type FeedSource } from '@/lib/puzzle/feed'
+import { getPuzzlePool } from '@/lib/puzzle/poolManager'
 
 const OPPONENT_MOVE_DELAY_MS = 450
 const OPPONENT_REPLY_DELAY_MS = 350
-const PREFETCH_BATCH = 5
-const PREFETCH_LOW_WATER = 2
-const SERVED_MEMORY = 40
 
 export type PuzzleStatus = 'idle' | 'loading' | 'opponent' | 'playing' | 'solved' | 'failed'
 const isFinished = (status: PuzzleStatus): boolean => status === 'solved' || status === 'failed'
@@ -57,6 +58,7 @@ function newOperationId(): string {
 
 export function usePuzzleSession() {
   const [game] = useState(() => new LocalGame())
+  const [source, setSource] = useState<FeedSource>('live')
 
   const [themes, setThemes] = useState<PuzzleTheme[] | null>(null)
   const [themesError, setThemesError] = useState<string | null>(null)
@@ -74,6 +76,22 @@ export function usePuzzleSession() {
   const [tipId, setTipId] = useState<string | null>(null)
   const [inRetryQueue, setInRetryQueue] = useState(false)
 
+  const [feed] = useState(
+    () =>
+      new PuzzleFeed({
+        fetchBatch: (theme, opts) => nextPuzzles(theme, opts),
+        pool: getPuzzlePool(),
+        flushResults: flushPuzzleResultOutbox,
+        refreshThemes: async () => {
+          const r = await getPuzzleThemes({ fresh: true })
+          setThemes(r.themes)
+        },
+        checkHealth: checkBackendHealth,
+        canPing: () => typeof document !== 'undefined' && document.visibilityState === 'visible' && navigator.onLine,
+        onSourceChange: setSource,
+      }),
+  )
+
   const puzzleRef = useRef<PuzzleJSON | null>(null)
   const movesRef = useRef<string[]>([])
   const indexRef = useRef(0)
@@ -82,9 +100,6 @@ export function usePuzzleSession() {
   const operationRef = useRef('')
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const generationRef = useRef(0)
-  const queueRef = useRef<PuzzleJSON[]>([])
-  const servedRef = useRef<string[]>([])
-  const fetchRef = useRef<Promise<void> | null>(null)
   const statusRef = useRef<PuzzleStatus>('idle')
   const currentIdRef = useRef<string | null>(null)
   const tipRef = useRef<string | null>(null)
@@ -103,6 +118,7 @@ export function usePuzzleSession() {
   }, [])
 
   useEffect(() => clearTimer, [clearTimer])
+  useEffect(() => () => feed.stop(), [feed])
 
   const loadThemes = useCallback(() => {
     setThemesError(null)
@@ -152,8 +168,15 @@ export function usePuzzleSession() {
     if (!p || submittedRef.current) return
     submittedRef.current = true
     setSession((s) => ({ solved: s.solved + (solved ? 1 : 0), failed: s.failed + (solved ? 0 : 1) }))
-    submitPuzzleResult({ operationId: operationRef.current, puzzleId: p.id, theme: p.theme, solved })
-      .then((r) => {
+    recordPuzzleResult(
+      { operationId: operationRef.current, puzzleId: p.id, theme: p.theme, solved, playedAt: new Date().toISOString() },
+      { offlineCapable: feed.offlineCapable, queueOnly: feed.source === 'pool' },
+    )
+      .then(({ result: r, queued }) => {
+        if (queued || !r) {
+          feed.markBackendUnreachable()
+          return
+        }
         setResult(r)
         setThemes((current) =>
           current
@@ -162,7 +185,7 @@ export function usePuzzleSession() {
         )
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Could not save that result.'))
-  }, [])
+  }, [feed])
 
   const scheduleOpponent = useCallback(
     (delay: number, onDone: () => void) => {
@@ -207,75 +230,38 @@ export function usePuzzleSession() {
     [clearTimer, commit, game, markTip, scheduleOpponent, setStatusBoth],
   )
 
-  const ensureFetch = useCallback((): Promise<void> => {
-    if (fetchRef.current) return fetchRef.current
-    const generation = generationRef.current
-    const current = modeRef.current
-    if (!current) return Promise.resolve()
-    const queue = queueRef.current
-    const exclude = [...servedRef.current, ...queue.map((p) => p.id), ...(puzzleRef.current ? [puzzleRef.current.id] : [])]
-    const avoidTheme = queue.length > 0 ? queue[queue.length - 1].theme : puzzleRef.current?.theme
-    const self: { promise?: Promise<void> } = {}
-    const promise = (async () => {
-      try {
-        const list = await nextPuzzles(current.kind === 'theme' ? current.theme : null, { count: PREFETCH_BATCH, exclude, avoidTheme })
-        if (generation === generationRef.current) queueRef.current.push(...list)
-      } finally {
-        if (fetchRef.current === self.promise) fetchRef.current = null
-      }
-    })()
-    self.promise = promise
-    fetchRef.current = promise
-    return promise
-  }, [])
-
-  const prefetch = useCallback(() => {
-    if (!modeRef.current || fetchRef.current || queueRef.current.length > PREFETCH_LOW_WATER) return
-    ensureFetch().catch(() => {})
-  }, [ensureFetch])
-
   const advance = useCallback(async () => {
     const generation = generationRef.current
     setError(null)
-    if (queueRef.current.length === 0) {
-      setStatusBoth('loading')
-      try {
-        await ensureFetch()
-      } catch (err) {
-        if (generation !== generationRef.current) return
-        void err
-        setError('Could not load a puzzle. Check your connection and try again.')
-        setStatusBoth('idle')
-        return
-      }
-      if (generation !== generationRef.current) return
+    if (feed.queued === 0) setStatusBoth('loading')
+    const outcome = await feed.next()
+    if (generation !== generationRef.current || outcome.kind === 'stale') return
+    if (outcome.kind === 'error') {
+      setError('Could not load a puzzle. Check your connection and try again.')
+      setStatusBoth('idle')
+      return
     }
-    const p = queueRef.current.shift()
-    if (!p) {
+    if (outcome.kind === 'none') {
       setError('No more puzzles for that theme yet.')
       setStatusBoth('idle')
       return
     }
-    servedRef.current = [...servedRef.current, p.id].slice(-SERVED_MEMORY)
-    startPuzzle(p)
-    prefetch()
-  }, [ensureFetch, prefetch, setStatusBoth, startPuzzle])
+    startPuzzle(outcome.puzzle)
+  }, [feed, setStatusBoth, startPuzzle])
 
   const start = useCallback(
     (nextMode: PuzzleMode) => {
       generationRef.current++
-      queueRef.current = []
-      servedRef.current = []
-      fetchRef.current = null
       puzzleRef.current = null
       modeRef.current = nextMode
+      feed.start(nextMode)
       setMode(nextMode)
       setSession({ solved: 0, failed: 0 })
       setPuzzle(null)
       setGameState(null)
       void advance()
     },
-    [advance],
+    [advance, feed],
   )
 
   const next = useCallback(() => {
@@ -300,6 +286,10 @@ export function usePuzzleSession() {
   const toggleRetryQueue = useCallback(() => {
     const p = puzzleRef.current
     if (!p || !isFinished(statusRef.current)) return
+    if (feed.source === 'pool') {
+      setError('Could not update the retry queue.')
+      return
+    }
     const adding = !inRetryQueueRef.current
     inRetryQueueRef.current = adding
     setInRetryQueue(adding)
@@ -312,12 +302,11 @@ export function usePuzzleSession() {
         setInRetryQueue(!adding)
         setError('Could not update the retry queue.')
       })
-  }, [])
+  }, [feed])
 
   const backToPicker = useCallback(() => {
     generationRef.current++
-    queueRef.current = []
-    fetchRef.current = null
+    feed.stop()
     clearTimer()
     modeRef.current = null
     setMode(null)
@@ -326,7 +315,7 @@ export function usePuzzleSession() {
     setResult(null)
     setStatusBoth('idle')
     loadThemes()
-  }, [clearTimer, loadThemes, setStatusBoth])
+  }, [clearTimer, feed, loadThemes, setStatusBoth])
 
   const attemptMove = useCallback(
     (from: string, to: string, promotion?: string) => {
@@ -457,7 +446,7 @@ export function usePuzzleSession() {
   const userColor: Color | null = puzzle ? (puzzle.fen.split(' ')[1] === 'w' ? 'b' : 'w') : null
 
   return {
-    themes, themesError, mode, puzzle, status, error, result, boardState, flipped, session, hintUci, userColor, themeRating,
+    themes, themesError, mode, source, puzzle, status, error, result, boardState, flipped, session, hintUci, userColor, themeRating,
     inRetryQueue, toggleRetryQueue, start, next, retry, giveUp, navPrev, navNext, gotoNode, moveNodes, currentNodeId, canPrev, canNext, feedback, backToPicker, selectSquare, move, legalMovesFor, loadThemes,
   }
 }

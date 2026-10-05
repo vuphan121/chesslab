@@ -5,6 +5,7 @@ import { getToken, setToken, clearToken } from '@/lib/auth/token'
 import { ApiError, isRetryable } from '@/lib/offline/errors'
 import { cacheFirst, deleteCache, dropCachedRepertoiresExcept, enqueue, listOutbox, networkFirst, readCache, refreshCache, removeOutboxItem, writeCache } from '@/lib/offline/cache'
 import { isMobileOfflineDevice } from '@/lib/offline/device'
+import { createPuzzleResultQueue, recordWithQueue, type PuzzleResultPayload } from '@/lib/puzzle/resultQueue'
 import {
   rotateTodayTraining,
   summarizeTodayTraining,
@@ -572,29 +573,70 @@ export interface PuzzleResult {
   puzzleRating: number
 }
 
-export const getPuzzleThemes = (): Promise<PuzzleThemesResponse> => request('/api/puzzles/themes')
+export const getPuzzleThemes = (opts: { fresh?: boolean } = {}): Promise<PuzzleThemesResponse> => {
+  const load = () => request<PuzzleThemesResponse>('/api/puzzles/themes')
+  if (!isMobileOfflineDevice()) return load()
+  return networkFirst('puzzle-themes', load, opts.fresh ? 15000 : 1500)
+}
 
 export const nextPuzzles = (
   theme: string | null,
-  opts: { count: number; exclude: string[]; avoidTheme?: string },
+  opts: { count: number; exclude: string[]; timeoutMs?: number },
 ): Promise<PuzzleJSON[]> =>
   request<{ puzzles: PuzzleJSON[] }>('/api/puzzles/next', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ theme: theme ?? '', avoidTheme: opts.avoidTheme ?? '', count: opts.count, exclude: opts.exclude }),
+    body: JSON.stringify({ theme: theme ?? '', count: opts.count, exclude: opts.exclude }),
+    ...(opts.timeoutMs ? { signal: AbortSignal.timeout(opts.timeoutMs) } : {}),
   }).then((r) => r.puzzles)
 
-export const submitPuzzleResult = (payload: {
-  operationId: string
-  puzzleId: string
-  theme: string
-  solved: boolean
-}): Promise<PuzzleResult> =>
+export const checkBackendHealth = async (): Promise<boolean> => {
+  try {
+    const res = await fetch(`${API}/healthz`, { cache: 'no-store', signal: AbortSignal.timeout(4000) })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
+export type { PuzzleResultPayload }
+
+export const submitPuzzleResult = (
+  payload: { operationId: string; puzzleId: string; theme: string; solved: boolean; playedAt?: string },
+  opts: { timeoutMs?: number } = {},
+): Promise<PuzzleResult> =>
   request('/api/puzzles/result', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
+    ...(opts.timeoutMs ? { signal: AbortSignal.timeout(opts.timeoutMs) } : {}),
   })
+
+const puzzleResultQueue = createPuzzleResultQueue({
+  enqueue: (payload) => enqueue(payload),
+  list: () => listOutbox<unknown>(),
+  remove: removeOutboxItem,
+  post: (payload) => submitPuzzleResult(payload, { timeoutMs: 15000 }),
+  shouldRetryLater: (err) =>
+    isRetryable(err) || (err instanceof ApiError && (err.status === 401 || err.status === 408 || err.status === 429)),
+})
+
+export const flushPuzzleResultOutbox = async (): Promise<number> => (await puzzleResultQueue.flush()).flushed
+
+export const recordPuzzleResult = (
+  payload: PuzzleResultPayload,
+  opts: { offlineCapable: boolean; queueOnly?: boolean },
+): Promise<{ result: PuzzleResult | null; queued: boolean }> =>
+  recordWithQueue<PuzzleResult>(
+    {
+      flush: puzzleResultQueue.flush,
+      queue: puzzleResultQueue.queue,
+      submit: (p, withTimeout) => submitPuzzleResult(p, withTimeout ? { timeoutMs: 8000 } : {}),
+      isRetryable,
+    },
+    payload,
+    opts,
+  )
 
 export const addPuzzleToRetryQueue = (puzzleId: string, theme: string): Promise<void> =>
   request('/api/puzzles/retry-queue', {

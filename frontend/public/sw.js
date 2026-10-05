@@ -4,7 +4,7 @@ const PAGE_CACHE = `chesslab-pages-${VERSION}`
 const REVALIDATE_MIN_GAP_MS = 60000
 const UNREFERENCED_STATIC_GRACE = 32
 
-const PRECACHE_PAGES = ['/opening-study']
+const PRECACHE_PAGES = ['/opening-study', '/puzzles']
 const PIECES = ['bb', 'bk', 'bn', 'bp', 'bq', 'br', 'wb', 'wk', 'wn', 'wp', 'wq', 'wr']
 const PRECACHE_ASSETS = [
   '/manifest.webmanifest',
