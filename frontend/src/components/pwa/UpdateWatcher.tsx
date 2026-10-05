@@ -22,17 +22,21 @@ export default function UpdateWatcher({ authed }: { authed: boolean }) {
     if (process.env.NODE_ENV !== 'production') return
     const current = process.env.NEXT_PUBLIC_BUILD_ID
     let busy = false
+    let found = false
     let stopped = false
 
     const check = async () => {
-      if (busy || stopped || document.visibilityState !== 'visible' || !navigator.onLine) return
+      if (busy || found || stopped || document.visibilityState !== 'visible' || !navigator.onLine) return
       busy = true
       try {
         const res = await fetch('/api/build', { cache: 'no-store' })
         if (!res.ok) return
         const latest = (await res.json())?.build
         if (typeof latest !== 'string' || latest === 'unknown' || latest === current) return
-        if (await refreshAppShell()) setReadyBuild(latest)
+        if (await refreshAppShell()) {
+          found = true
+          setReadyBuild(latest)
+        }
       } catch {
       } finally {
         busy = false
