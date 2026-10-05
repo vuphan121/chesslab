@@ -196,34 +196,27 @@ func PickMixedTheme(candidates []string, avoid string, intn func(int) int) strin
 		}
 		families[mixedFamily(key)] = append(families[mixedFamily(key)], key)
 	}
-	avoidFamily := mixedFamily(avoid)
-	pick := func(skip string) string {
-		total := 0
-		for family, keys := range families {
-			if family != skip && len(keys) > 0 {
-				total += mixedFamilyWeights[family]
-			}
+	total := 0
+	for family, keys := range families {
+		if len(keys) > 0 {
+			total += mixedFamilyWeights[family]
 		}
-		if total == 0 {
-			return ""
-		}
-		roll := intn(total)
-		for _, family := range mixedFamilyOrder {
-			keys := families[family]
-			if family == skip || len(keys) == 0 {
-				continue
-			}
-			if roll < mixedFamilyWeights[family] {
-				return keys[intn(len(keys))]
-			}
-			roll -= mixedFamilyWeights[family]
-		}
+	}
+	if total == 0 {
 		return ""
 	}
-	if key := pick(avoidFamily); key != "" {
-		return key
+	roll := intn(total)
+	for _, family := range mixedFamilyOrder {
+		keys := families[family]
+		if len(keys) == 0 {
+			continue
+		}
+		if roll < mixedFamilyWeights[family] {
+			return keys[intn(len(keys))]
+		}
+		roll -= mixedFamilyWeights[family]
 	}
-	return pick("")
+	return ""
 }
 
 var mixedFamilyOrder = []string{"motifs", "advanced", "mate", "phases", "specialMoves"}

@@ -80,7 +80,7 @@ func TestReadCSVAndSelectableThemes(t *testing.T) {
 	}
 }
 
-func TestPickMixedThemeSpreadsAcrossFamilies(t *testing.T) {
+func TestPickMixedThemeMatchesFamilyWeights(t *testing.T) {
 	var candidates []string
 	for _, c := range categories {
 		if c.InMixed {
@@ -89,32 +89,29 @@ func TestPickMixedThemeSpreadsAcrossFamilies(t *testing.T) {
 	}
 	rng := rand.New(rand.NewSource(1))
 	counts := map[string]int{}
-	avoid := ""
-	const draws = 20000
-	repeats := 0
+	const draws = 40000
 	for i := 0; i < draws; i++ {
-		key := PickMixedTheme(candidates, avoid, rng.Intn)
-		if key == "" || key == avoid {
-			t.Fatalf("bad pick %q after %q", key, avoid)
-		}
-		if avoid != "" && mixedFamily(key) == mixedFamily(avoid) {
-			repeats++
+		key := PickMixedTheme(candidates, "", rng.Intn)
+		if key == "" {
+			t.Fatal("empty pick")
 		}
 		counts[mixedFamily(key)]++
-		avoid = key
-	}
-	if repeats > 0 {
-		t.Errorf("same family back to back %d times with other families available", repeats)
 	}
 	for family, weight := range mixedFamilyWeights {
 		want := float64(weight) / 100 * draws
 		got := float64(counts[family])
-		if got < want*0.7 || got > want*1.3 {
+		if got < want*0.95 || got > want*1.05 {
 			t.Errorf("family %s drawn %v times, want about %v", family, got, want)
 		}
 	}
-	if counts["mate"] > draws/4 {
-		t.Errorf("mate share too high: %d of %d", counts["mate"], draws)
+}
+
+func TestPickMixedThemeNeverRepeatsTheAvoidedTheme(t *testing.T) {
+	rng := rand.New(rand.NewSource(3))
+	for i := 0; i < 2000; i++ {
+		if key := PickMixedTheme([]string{"fork", "pin", "mateIn1"}, "fork", rng.Intn); key == "fork" || key == "" {
+			t.Fatalf("got %q", key)
+		}
 	}
 }
 

@@ -193,7 +193,7 @@ func (h *Handler) NextPuzzle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	batch := puzzleNextBatch{Puzzles: []puzzleNextResponse{}}
-	avoid := req.AvoidTheme
+	avoid := ""
 	for attempts := 0; len(batch.Puzzles) < count && attempts < count*6; attempts++ {
 		if mixed && rand.Float64() < retryQueueChance {
 			rp, err := h.pickRetryPuzzle(r.Context(), username, exclude, themes)
@@ -243,7 +243,7 @@ func (h *Handler) NextPuzzle(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		exclude = append(exclude, p.ID)
-		avoid = chosen.Key
+		avoid = ""
 		batch.Puzzles = append(batch.Puzzles, puzzleNextResponse{Puzzle: *p, Theme: chosen.Key, ThemeRating: chosen.Rating, Mixed: mixed})
 	}
 	if len(batch.Puzzles) == 0 {
