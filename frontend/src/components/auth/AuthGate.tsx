@@ -7,6 +7,7 @@ import Login from './Login'
 import UserSettingsProvider from '@/components/settings/UserSettingsProvider'
 import OfflineSync from '@/components/pwa/OfflineSync'
 import OfflineBadge from '@/components/pwa/OfflineBadge'
+import UpdateWatcher from '@/components/pwa/UpdateWatcher'
 
 export default function AuthGate({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState<boolean | null>(null)
@@ -22,9 +23,17 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   }, [])
 
   if (authed === null) return null
-  if (!authed) return <Login />
+  if (!authed) {
+    return (
+      <>
+        <UpdateWatcher authed={false} />
+        <Login />
+      </>
+    )
+  }
   return (
     <UserSettingsProvider>
+      <UpdateWatcher authed />
       <OfflineSync />
       <OfflineBadge />
       {children}

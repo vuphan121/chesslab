@@ -20,6 +20,7 @@ export default function Piece({ piece, size }: Props) {
       width={size}
       height={size}
       loading="eager"
+      decoding="sync"
       draggable={false}
       className="pointer-events-none select-none drop-shadow-md"
       style={{ width: size, height: size }}

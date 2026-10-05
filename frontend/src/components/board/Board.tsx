@@ -8,6 +8,7 @@ import Piece from './Piece'
 import Arrow from './Arrow'
 import type { BoardState } from '@/lib/chess/types'
 
+let heldPieceImages: HTMLImageElement[] = []
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1']
 
@@ -176,13 +177,16 @@ export default function Board({
 
   const { settings: userSettings } = useUserSettings()
   useEffect(() => {
+    const held: HTMLImageElement[] = []
     for (const color of ['w', 'b']) {
       for (const type of ['p', 'n', 'b', 'r', 'q', 'k']) {
         const img = new window.Image()
         img.src = pieceImagePath(userSettings.pieceTheme, `${color}${type}.png`)
         img.decode?.().catch(() => {})
+        held.push(img)
       }
     }
+    heldPieceImages = held
   }, [userSettings.pieceTheme])
 
   useEffect(() => () => {

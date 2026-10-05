@@ -2,7 +2,7 @@ import { flushProgressOutbox, refreshAllCachedData } from '@/lib/api/client'
 
 const SHELL_REFRESH_TIMEOUT_MS = 90000
 
-function refreshAppShell(): Promise<boolean> {
+export function refreshAppShell(): Promise<boolean> {
   if (!('serviceWorker' in navigator)) return Promise.resolve(true)
   return navigator.serviceWorker.getRegistration().then(
     (reg) =>
