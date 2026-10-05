@@ -321,7 +321,7 @@ export default function OpeningStudyPage() {
 
           <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <MaterialRow justify="flex-start" cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
-                <FeedbackStrip feedback={feedback} />
+                <FeedbackStrip feedback={branchActive ? null : feedback} />
           </div>
 
           <div style={{ width: boardSize, height: 20, display: 'flex', alignItems: 'center' }}>
@@ -492,7 +492,7 @@ export default function OpeningStudyPage() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 22 }}>
                 <MaterialRow justify="flex-start" cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
-                <FeedbackStrip feedback={feedback} />
+                <FeedbackStrip feedback={branchActive ? null : feedback} />
               </div>
               <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                 <LinePanel
@@ -541,7 +541,7 @@ export default function OpeningStudyPage() {
 
               <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <MaterialRow justify="flex-start" cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
-                <FeedbackStrip feedback={feedback} />
+                <FeedbackStrip feedback={branchActive ? null : feedback} />
               </div>
 
               <div
@@ -684,7 +684,7 @@ export default function OpeningStudyPage() {
 
               <div style={{ width: boardSize, height: MATERIAL_STRIP_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <MaterialRow justify="flex-start" cornerColor={materialRows.bottom.color} surplus={materialRows.bottom.surplus} pointsAhead={materialRows.bottom.pointsAhead} />
-                <FeedbackStrip feedback={feedback} />
+                <FeedbackStrip feedback={branchActive ? null : feedback} />
               </div>
 
             </div>

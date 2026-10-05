@@ -25,9 +25,8 @@ export default function OfflineBadge() {
     }
   }, [])
 
-  if (online && pending === 0) return null
-  const waiting = `${pending} run${pending === 1 ? '' : 's'} to sync`
-  const label = online ? waiting : pending > 0 ? `Offline · ${waiting}` : 'Offline'
+  if (pending === 0) return null
+  const label = `${pending} run${pending === 1 ? '' : 's'} to sync`
   return (
     <span
       role="status"
