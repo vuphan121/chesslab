@@ -106,6 +106,57 @@ func TestPickMixedThemeMatchesFamilyWeights(t *testing.T) {
 	}
 }
 
+func TestPickMixedThemeSplitsPhasesEvenly(t *testing.T) {
+	var candidates []string
+	for _, c := range categories {
+		if c.InMixed {
+			candidates = append(candidates, c.Themes...)
+		}
+	}
+	rng := rand.New(rand.NewSource(5))
+	buckets := map[string]int{}
+	endgameTypes := map[string]int{}
+	phaseDraws := 0
+	for i := 0; i < 200000; i++ {
+		key := PickMixedTheme(candidates, "", rng.Intn)
+		if mixedFamily(key) != "phases" {
+			continue
+		}
+		phaseDraws++
+		bucket := phaseBucket(key)
+		buckets[bucket]++
+		if bucket == "endgame" {
+			endgameTypes[key]++
+		}
+	}
+	for _, bucket := range []string{"opening", "middlegame", "endgame"} {
+		want := float64(phaseDraws) / 3
+		got := float64(buckets[bucket])
+		if got < want*0.93 || got > want*1.07 {
+			t.Errorf("bucket %s drawn %v times, want about %v", bucket, got, want)
+		}
+	}
+	if len(endgameTypes) != 7 {
+		t.Fatalf("expected 7 endgame types, saw %d", len(endgameTypes))
+	}
+	want := float64(buckets["endgame"]) / 7
+	for key, n := range endgameTypes {
+		if float64(n) < want*0.9 || float64(n) > want*1.1 {
+			t.Errorf("endgame type %s drawn %d times, want about %v", key, n, want)
+		}
+	}
+}
+
+func TestPickMixedThemeSkipsEmptyPhaseBuckets(t *testing.T) {
+	rng := rand.New(rand.NewSource(6))
+	for i := 0; i < 500; i++ {
+		key := PickMixedTheme([]string{"rookEndgame", "pawnEndgame"}, "", rng.Intn)
+		if key != "rookEndgame" && key != "pawnEndgame" {
+			t.Fatalf("got %q", key)
+		}
+	}
+}
+
 func TestPickMixedThemeNeverRepeatsTheAvoidedTheme(t *testing.T) {
 	rng := rand.New(rand.NewSource(3))
 	for i := 0; i < 2000; i++ {

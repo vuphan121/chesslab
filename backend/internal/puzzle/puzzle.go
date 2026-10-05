@@ -212,6 +212,9 @@ func PickMixedTheme(candidates []string, avoid string, intn func(int) int) strin
 			continue
 		}
 		if roll < mixedFamilyWeights[family] {
+			if family == "phases" {
+				return pickPhaseTheme(keys, intn)
+			}
 			return keys[intn(len(keys))]
 		}
 		roll -= mixedFamilyWeights[family]
@@ -220,3 +223,26 @@ func PickMixedTheme(candidates []string, avoid string, intn func(int) int) strin
 }
 
 var mixedFamilyOrder = []string{"motifs", "advanced", "mate", "phases", "specialMoves"}
+
+func phaseBucket(key string) string {
+	switch key {
+	case "opening", "middlegame":
+		return key
+	}
+	return "endgame"
+}
+
+func pickPhaseTheme(keys []string, intn func(int) int) string {
+	buckets := map[string][]string{}
+	for _, key := range keys {
+		buckets[phaseBucket(key)] = append(buckets[phaseBucket(key)], key)
+	}
+	var present []string
+	for _, bucket := range []string{"opening", "middlegame", "endgame"} {
+		if len(buckets[bucket]) > 0 {
+			present = append(present, bucket)
+		}
+	}
+	chosen := buckets[present[intn(len(present))]]
+	return chosen[intn(len(chosen))]
+}
