@@ -11,6 +11,8 @@ import { MoveEvaluator } from '@/lib/engine/moveEval'
 import { lookupAnalysis, lookupEval } from '@/lib/lichess/lookup'
 import type { Book, BookItem } from '@/lib/books/types'
 
+const ANALYSIS_CACHE_LIMIT = 200
+
 function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
   const pieces: BoardState['pieces'] = {}
   for (const [sq, p] of Object.entries(gs.pieces)) {
@@ -157,7 +159,10 @@ export function useBookStudySession() {
     const lookup = new AbortController()
     let fallbackTimer: ReturnType<typeof setTimeout> | null = null
     const record = (result: Analysis) => {
-      analysisCacheRef.current.set(fen, result)
+      const cache = analysisCacheRef.current
+      cache.delete(fen)
+      cache.set(fen, result)
+      if (cache.size > ANALYSIS_CACHE_LIMIT) cache.delete(cache.keys().next().value as string)
       if (result.lines.length > 0 && !(fen in moveEvalsRef.current)) {
         const top = result.lines[0]
         setMoveEvals((prev) => ({ ...prev, [fen]: { score: top.score, mate: top.mate, depth: top.depth } }))

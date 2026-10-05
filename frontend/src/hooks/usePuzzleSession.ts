@@ -7,6 +7,7 @@ import {
   flushPuzzleResultOutbox,
   getPuzzleThemes,
   nextPuzzles,
+  pingBackend,
   recordPuzzleResult,
   removePuzzleFromRetryQueue,
   type GameState,
@@ -25,6 +26,7 @@ import { getPuzzlePool } from '@/lib/puzzle/poolManager'
 
 const OPPONENT_MOVE_DELAY_MS = 450
 const OPPONENT_REPLY_DELAY_MS = 350
+const KEEP_ALIVE_MS = 5 * 60 * 1000
 
 export type PuzzleStatus = 'idle' | 'loading' | 'opponent' | 'playing' | 'solved' | 'failed'
 const isFinished = (status: PuzzleStatus): boolean => status === 'solved' || status === 'failed'
@@ -119,6 +121,12 @@ export function usePuzzleSession() {
 
   useEffect(() => clearTimer, [clearTimer])
   useEffect(() => () => feed.stop(), [feed])
+
+  useEffect(() => {
+    if (!mode) return
+    const interval = setInterval(pingBackend, KEEP_ALIVE_MS)
+    return () => clearInterval(interval)
+  }, [mode])
 
   const loadThemes = useCallback(() => {
     setThemesError(null)
