@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -54,10 +55,10 @@ func main() {
 	if sfPath == "" {
 		sfPath = "stockfish"
 	}
-	precomputeEngine, err := engine.NewLowPriority(sfPath)
-	if err != nil {
+	stockfishAvailable := true
+	if _, err := exec.LookPath(sfPath); err != nil {
 		log.Printf("stockfish (precompute) unavailable (%v) — eval precompute will fall back to cloud-eval only, failing any position with no cached cloud result", err)
-		precomputeEngine = nil
+		stockfishAvailable = false
 	}
 
 
@@ -92,7 +93,10 @@ func main() {
 	if dbStore != nil {
 		api.SeedLineHistories(context.Background(), dbStore, repertoires)
 	}
-	handler := api.NewHandler(precomputeEngine, repertoires, books, dbStore, authCfg, bookSource, os.Getenv("B2_CHAPTER_PREFIX"))
+	handler := api.NewHandler(nil, repertoires, books, dbStore, authCfg, bookSource, os.Getenv("B2_CHAPTER_PREFIX"))
+	if stockfishAvailable {
+		handler.SetPrecomputeEngineFactory(func() (*engine.Engine, error) { return engine.NewLowPriority(sfPath) })
+	}
 	if puzzleURL := os.Getenv("PUZZLE_DB_URL"); puzzleURL != "" {
 		if puzzleStore, err := puzzledb.Open(puzzleURL, os.Getenv("PUZZLE_DB_TOKEN")); err != nil {
 			log.Printf("puzzle database: could not open (%v) — the puzzle endpoints will return 503", err)

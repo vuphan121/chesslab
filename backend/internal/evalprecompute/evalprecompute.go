@@ -50,6 +50,10 @@ func Compute(eng *engine.Engine, fenKey string) (db.PositionEval, error) {
 }
 
 func ComputeWithMoveTime(eng *engine.Engine, fenKey string, moveTime time.Duration) (db.PositionEval, error) {
+	return ComputeWithProvider(func() *engine.Engine { return eng }, fenKey, moveTime)
+}
+
+func ComputeWithProvider(engineFor func() *engine.Engine, fenKey string, moveTime time.Duration) (db.PositionEval, error) {
 	fen := fenKey
 	if len(strings.Fields(fenKey)) == 4 {
 		fen = fenKey + " 0 1"
@@ -67,6 +71,7 @@ func ComputeWithMoveTime(eng *engine.Engine, fenKey string, moveTime time.Durati
 		return fromCloud(fenKey, pos, cloud), nil
 	}
 
+	eng := engineFor()
 	if eng == nil {
 		return db.PositionEval{}, fmt.Errorf("no cloud eval cached and no local engine available for %q", fen)
 	}

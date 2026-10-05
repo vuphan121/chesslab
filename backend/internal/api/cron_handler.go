@@ -155,7 +155,7 @@ func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 	started := time.Now()
 	resp := PrecomputeEvalsResponse{}
 
-	runID, err := h.db.StartPrecomputeRun(ctx, precomputeBudget.Milliseconds(), h.precomputeEngine != nil)
+	runID, err := h.db.StartPrecomputeRun(ctx, precomputeBudget.Milliseconds(), h.precomputeAvailable())
 	if err != nil {
 		log.Printf("cron precompute: could not record run start (continuing unrecorded): %v", err)
 		runID = 0
@@ -212,6 +212,9 @@ func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 		}
 	}
 
+	engineFor, releaseEngine := h.lazyPrecomputeEngine()
+	defer releaseEngine()
+
 	deadline := started.Add(precomputeBudget)
 	consecutiveFailures := 0
 	abortErr := ""
@@ -221,7 +224,7 @@ func (h *Handler) runPrecompute(ctx context.Context) PrecomputeEvalsResponse {
 		}
 		stats.Attempted++
 		posStart := time.Now()
-		result, err := evalprecompute.ComputeWithMoveTime(h.precomputeEngine, key, evalprecompute.CronStockfishMoveTime)
+		result, err := evalprecompute.ComputeWithProvider(engineFor, key, evalprecompute.CronStockfishMoveTime)
 		if err != nil {
 			log.Printf("cron precompute: %s — %v", key, err)
 			resp.Failed = append(resp.Failed, precomputeFailureJSON{FENKey: key, Reason: err.Error()})
