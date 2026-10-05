@@ -209,18 +209,22 @@ func (h *Handler) NextPuzzle(w http.ResponseWriter, r *http.Request) {
 		}
 		chosen := only
 		if mixed {
-			var pool []*puzzleThemeJSON
+			var eligible []string
 			for i := range themes {
-				if themes[i].Available >= puzzle.MinMixedCount && puzzle.InMixed(themes[i].Key) && themes[i].Key != avoid {
-					pool = append(pool, &themes[i])
+				if themes[i].Available >= puzzle.MinMixedCount {
+					eligible = append(eligible, themes[i].Key)
 				}
 			}
-			if len(pool) == 0 {
-				for i := range themes {
-					pool = append(pool, &themes[i])
+			key := puzzle.PickMixedTheme(eligible, avoid, rand.Intn)
+			chosen = nil
+			for i := range themes {
+				if themes[i].Key == key {
+					chosen = &themes[i]
 				}
 			}
-			chosen = pool[rand.Intn(len(pool))]
+			if chosen == nil {
+				chosen = &themes[rand.Intn(len(themes))]
+			}
 		}
 		strict := append(append([]string(nil), exclude...), recent...)
 		p, err := h.puzzles.Next(r.Context(), chosen.Key, chosen.exact, strict)

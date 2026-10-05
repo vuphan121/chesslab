@@ -2,6 +2,7 @@ package puzzle
 
 import (
 	"math"
+	"math/rand"
 	"strings"
 	"testing"
 )
@@ -76,5 +77,54 @@ func TestReadCSVAndSelectableThemes(t *testing.T) {
 	got := rows[0].SelectableThemes()
 	if len(got) != 2 || got[0] != "fork" || got[1] != "short" {
 		t.Fatalf("selectable themes: %v", got)
+	}
+}
+
+func TestPickMixedThemeSpreadsAcrossFamilies(t *testing.T) {
+	var candidates []string
+	for _, c := range categories {
+		if c.InMixed {
+			candidates = append(candidates, c.Themes...)
+		}
+	}
+	rng := rand.New(rand.NewSource(1))
+	counts := map[string]int{}
+	avoid := ""
+	const draws = 20000
+	repeats := 0
+	for i := 0; i < draws; i++ {
+		key := PickMixedTheme(candidates, avoid, rng.Intn)
+		if key == "" || key == avoid {
+			t.Fatalf("bad pick %q after %q", key, avoid)
+		}
+		if avoid != "" && mixedFamily(key) == mixedFamily(avoid) {
+			repeats++
+		}
+		counts[mixedFamily(key)]++
+		avoid = key
+	}
+	if repeats > 0 {
+		t.Errorf("same family back to back %d times with other families available", repeats)
+	}
+	for family, weight := range mixedFamilyWeights {
+		want := float64(weight) / 100 * draws
+		got := float64(counts[family])
+		if got < want*0.7 || got > want*1.3 {
+			t.Errorf("family %s drawn %v times, want about %v", family, got, want)
+		}
+	}
+	if counts["mate"] > draws/4 {
+		t.Errorf("mate share too high: %d of %d", counts["mate"], draws)
+	}
+}
+
+func TestPickMixedThemeFallsBackToSameFamily(t *testing.T) {
+	rng := rand.New(rand.NewSource(2))
+	key := PickMixedTheme([]string{"mateIn1", "mateIn2"}, "mateIn1", rng.Intn)
+	if key != "mateIn2" {
+		t.Errorf("got %q, want mateIn2", key)
+	}
+	if got := PickMixedTheme([]string{"mateIn1"}, "mateIn1", rng.Intn); got != "" {
+		t.Errorf("got %q, want empty", got)
 	}
 }

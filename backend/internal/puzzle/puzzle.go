@@ -171,3 +171,59 @@ func ReadCSV(r io.Reader, each func(Row)) (bad int, err error) {
 		each(row)
 	}
 }
+
+var mixedFamilyWeights = map[string]int{
+	"motifs":       30,
+	"advanced":     20,
+	"mate":         20,
+	"phases":       20,
+	"specialMoves": 10,
+}
+
+func mixedFamily(key string) string {
+	switch themeCategory[key] {
+	case "mates", "mateThemes":
+		return "mate"
+	}
+	return themeCategory[key]
+}
+
+func PickMixedTheme(candidates []string, avoid string, intn func(int) int) string {
+	families := map[string][]string{}
+	for _, key := range candidates {
+		if key == avoid || !themeInMixed[key] {
+			continue
+		}
+		families[mixedFamily(key)] = append(families[mixedFamily(key)], key)
+	}
+	avoidFamily := mixedFamily(avoid)
+	pick := func(skip string) string {
+		total := 0
+		for family, keys := range families {
+			if family != skip && len(keys) > 0 {
+				total += mixedFamilyWeights[family]
+			}
+		}
+		if total == 0 {
+			return ""
+		}
+		roll := intn(total)
+		for _, family := range mixedFamilyOrder {
+			keys := families[family]
+			if family == skip || len(keys) == 0 {
+				continue
+			}
+			if roll < mixedFamilyWeights[family] {
+				return keys[intn(len(keys))]
+			}
+			roll -= mixedFamilyWeights[family]
+		}
+		return ""
+	}
+	if key := pick(avoidFamily); key != "" {
+		return key
+	}
+	return pick("")
+}
+
+var mixedFamilyOrder = []string{"motifs", "advanced", "mate", "phases", "specialMoves"}
