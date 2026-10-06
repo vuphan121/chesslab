@@ -6,6 +6,7 @@ export interface EndgamePosition {
   group: string
   fens: string[]
   goal: EndgameGoal
+  endsOnPromotion?: boolean
 }
 
 export const ENDGAME_GROUPS: { key: string; label: string }[] = [
@@ -21,6 +22,7 @@ export const ENDGAME_POSITIONS: EndgamePosition[] = [
     name: 'Key squares',
     group: 'pawn',
     goal: 'win',
+    endsOnPromotion: true,
     fens: [
       '8/8/4k3/8/3K4/4P3/8/8 w - - 0 1',
       '8/8/3k4/8/4K3/3P4/8/8 w - - 0 1',
@@ -33,6 +35,7 @@ export const ENDGAME_POSITIONS: EndgamePosition[] = [
     name: 'King and pawn',
     group: 'pawn',
     goal: 'win',
+    endsOnPromotion: true,
     fens: [
       '8/8/k7/8/1K6/1P6/8/8 w - - 0 1',
       '8/8/8/k7/8/1KP5/8/8 w - - 0 1',
@@ -68,6 +71,7 @@ export const ENDGAME_POSITIONS: EndgamePosition[] = [
     name: 'Lucena',
     group: 'rook',
     goal: 'win',
+    endsOnPromotion: true,
     fens: [
       '1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1',
       '3K1k2/3P4/8/8/8/8/r7/1R6 w - - 0 1',

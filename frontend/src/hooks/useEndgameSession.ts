@@ -259,6 +259,10 @@ export function useEndgameSession() {
       setMovesLeft(Math.max(0, movesLeftRef.current))
       setMovesUsed(movesUsedRef.current)
       setFeedback({ tone: 'good', text: p.goal === 'win' ? 'Winning move. Keep going.' : 'Holds the draw. Keep going.' })
+      if (p.endsOnPromotion && uci.length > 4) {
+        finish('success', 'Promoted. Converted.')
+        return
+      }
       if (settleIfOver(snapshot, userColor)) return
       if (movesLeftRef.current <= 0) {
         if (p.goal === 'draw') finish('success', 'Held the draw.')

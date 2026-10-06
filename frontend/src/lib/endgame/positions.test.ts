@@ -27,6 +27,15 @@ describe('endgame positions', () => {
     }
   })
 
+  it('only win positions with a pawn end on promotion', () => {
+    const ending = ENDGAME_POSITIONS.filter((p) => p.endsOnPromotion)
+    expect(ending.map((p) => p.id)).toEqual(['key-squares', 'king-and-pawn', 'lucena'])
+    for (const p of ending) {
+      expect(p.goal, p.id).toBe('win')
+      for (const fen of p.fens) expect(fen.split(' ')[0].toLowerCase().includes('p'), fen).toBe(true)
+    }
+  })
+
   it('reads the side to play from the FEN', () => {
     expect(userColorOf(ENDGAME_POSITIONS.find((p) => p.id === 'rook-pawn')!.fens[0])).toBe('b')
     expect(userColorOf(ENDGAME_POSITIONS.find((p) => p.id === 'lucena')!.fens[0])).toBe('w')
