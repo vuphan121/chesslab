@@ -7,7 +7,6 @@ import EndgameFeedbackLine from '@/components/endgames/EndgameFeedback'
 import PuzzleMoves from '@/components/puzzles/PuzzleMoves'
 import { useEndgameSession } from '@/hooks/useEndgameSession'
 import { useViewportWidth, useViewportHeight, clamp } from '@/hooks/useViewportWidth'
-import { userColorOf } from '@/lib/endgame/positions'
 
 const MAX_SQUARE_SIZE = 112
 const TOP_BAR_HEIGHT = 58
@@ -54,7 +53,7 @@ export default function EndgamesPage() {
 
   const board = s.boardState
   const arrows = s.hintMoves.map((uci) => ({ uci, scale: 1, color: HINT_ARROW_COLOR }))
-  const side = userColorOf(s.position) === 'w' ? 'White' : 'Black'
+  const side = s.userColor === 'w' ? 'White' : 'Black'
   const goalText = s.position.goal === 'win' ? `Win as ${side}` : `Hold the draw as ${side}`
 
   const backButton = (

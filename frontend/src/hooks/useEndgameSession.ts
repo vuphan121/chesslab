@@ -7,7 +7,7 @@ import { activeLine, flatten } from '@/lib/chess/moveTree'
 import type { Square } from '@/lib/chess/types'
 import { playMoveSound } from '@/lib/sound'
 import { toBoardState } from '@/hooks/usePuzzleSession'
-import { ENDGAME_POSITIONS, pickNextPosition, userColorOf, type EndgamePosition } from '@/lib/endgame/positions'
+import { ENDGAME_POSITIONS, pickNextPosition, pickStartFen, userColorOf, type EndgamePosition } from '@/lib/endgame/positions'
 import { chooseReply, keepsGoal, keptMoves, moveLimit, uciFor, userOutcomeAfterMove } from '@/lib/endgame/judge'
 import { fetchTablebase } from '@/lib/endgame/tablebase'
 
@@ -49,6 +49,7 @@ export function useEndgameSession() {
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [selected, setSelected] = useState<Square | null>(null)
   const [flipped, setFlipped] = useState(false)
+  const [userColor, setUserColor] = useState<'w' | 'b'>('w')
   const [tipId, setTipId] = useState<string | null>(null)
   const [movesLeft, setMovesLeft] = useState<number | null>(null)
   const [movesUsed, setMovesUsed] = useState(0)
@@ -58,6 +59,7 @@ export function useEndgameSession() {
   const [done, setDone] = useState<Set<string>>(() => (typeof window === 'undefined' ? new Set() : readDone()))
 
   const positionRef = useRef<EndgamePosition | null>(null)
+  const startFenRef = useRef('')
   const statusRef = useRef<EndgameStatus>('idle')
   const generationRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -132,8 +134,10 @@ export function useEndgameSession() {
   }, [])
 
   const startPosition = useCallback(
-    async (p: EndgamePosition) => {
+    async (p: EndgamePosition, fen?: string) => {
       const generation = ++generationRef.current
+      const startFen = fen ?? pickStartFen(p)
+      startFenRef.current = startFen
       clearTimer()
       positionRef.current = p
       recentRef.current = [p.id, ...recentRef.current.filter((id) => id !== p.id)].slice(0, RECENT_MEMORY)
@@ -146,13 +150,14 @@ export function useEndgameSession() {
       setFeedback(null)
       setHintMoves([])
       setSelected(null)
-      game.resetTo(p.fen)
-      setFlipped(userColorOf(p) === 'b')
+      game.resetTo(startFen)
+      setUserColor(userColorOf(startFen))
+      setFlipped(userColorOf(startFen) === 'b')
       commit()
       markTip()
       setStatusBoth('loading')
       try {
-        const tb = await fetchTablebase(p.fen)
+        const tb = await fetchTablebase(startFen)
         if (generation !== generationRef.current) return
         const limit = moveLimit(p.goal, tb.dtz)
         movesLeftRef.current = limit
@@ -215,7 +220,7 @@ export function useEndgameSession() {
         return
       }
       const generation = generationRef.current
-      const userColor = userColorOf(p)
+      const userColor = userColorOf(startFenRef.current)
       const fen = game.currentFen
       const uci = uciFor(fen, from, to, promotion)
       if (!uci) return
@@ -316,7 +321,7 @@ export function useEndgameSession() {
 
   const restart = useCallback(() => {
     const p = positionRef.current
-    if (p) void startPosition(p)
+    if (p) void startPosition(p, startFenRef.current)
   }, [startPosition])
 
   const next = useCallback(() => {
@@ -371,7 +376,7 @@ export function useEndgameSession() {
   const boardState = gameState ? toBoardState(gameState, selected) : null
 
   return {
-    position, status, boardState, flipped, movesLeft, movesUsed, mistakes, feedback, hintMoves, done,
+    position, status, boardState, flipped, userColor, movesLeft, movesUsed, mistakes, feedback, hintMoves, done,
     moveNodes, currentNodeId, canPrev, canNext,
     start: startPosition, next, restart, showHint, backToPicker,
     navPrev, navNext, gotoNode, selectSquare, move, legalMovesFor,
