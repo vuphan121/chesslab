@@ -28,6 +28,13 @@ const ICONS: Record<string, ReactNode> = {
   puzzle: (
     <path d="M4 7h3a1 1 0 0 0 1-1v-1a2 2 0 0 1 4 0v1a1 1 0 0 0 1 1h3a1 1 0 0 1 1 1v3a1 1 0 0 0 1 1h1a2 2 0 0 1 0 4h-1a1 1 0 0 0-1 1v3a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-1a2 2 0 0 0-4 0v1a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a2 2 0 0 0 0-4h-1a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1" />
   ),
+  endgames: (
+    <>
+      <path d="M12 3v4M10 5h4" />
+      <path d="M8 21l1-9h6l1 9z" />
+      <path d="M9 12c0-3 1.5-5 3-5s3 2 3 5" />
+    </>
+  ),
   statistics: (
     <>
       <rect x="4" y="12" width="4" height="8" rx="1" />
@@ -50,6 +57,7 @@ const PAGES = [
   { href: '/opening-study', label: 'Opening Study', icon: 'openings' },
   { href: '/book-study', label: 'Study from Book', icon: 'book' },
   { href: '/puzzles', label: 'Puzzles', icon: 'puzzle' },
+  { href: '/endgames', label: 'Endgames', icon: 'endgames' },
   { href: '/statistics', label: 'Statistics', icon: 'statistics' },
   { href: '/settings', label: 'Settings', icon: 'settings' },
 ]

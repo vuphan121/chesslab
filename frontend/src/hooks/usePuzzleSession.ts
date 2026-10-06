@@ -33,7 +33,7 @@ const isFinished = (status: PuzzleStatus): boolean => status === 'solved' || sta
 
 export type PuzzleMode = { kind: 'mixed' } | { kind: 'theme'; theme: string }
 
-function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
+export function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
   const pieces: BoardState['pieces'] = {}
   for (const [sq, p] of Object.entries(gs.pieces)) pieces[sq] = { type: p.type as PieceType, color: p.color as Color }
   return {
