@@ -52,19 +52,25 @@ export function prepareSound(): void {
   }
 }
 
-export function playMoveSound(capture = false): void {
+function startSound(kind: Kind): void {
   const ctx = getContext()
-  if (!ctx) return
-  prepareSound()
-  const kind: Kind = capture ? 'capture' : 'move'
   const buffer = buffers[kind]
-  if (!buffer) {
-    void load(kind)
-    return
-  }
+  if (!ctx || !buffer) return
   if (ctx.state !== 'running') void ctx.resume().catch(() => {})
   const source = ctx.createBufferSource()
   source.buffer = buffer
   source.connect(ctx.destination)
   source.start(0)
+}
+
+export function playMoveSound(capture = false): void {
+  const ctx = getContext()
+  if (!ctx) return
+  prepareSound()
+  const kind: Kind = capture ? 'capture' : 'move'
+  if (!buffers[kind]) {
+    void load(kind)
+    return
+  }
+  window.requestAnimationFrame(() => window.setTimeout(() => startSound(kind), 0))
 }

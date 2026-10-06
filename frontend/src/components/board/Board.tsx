@@ -1,10 +1,11 @@
 'use client'
 
 import { pieceImagePath, useUserSettings } from '@/components/settings/UserSettingsProvider'
-import { useState, useRef, useMemo, useEffect, useLayoutEffect, useCallback, useReducer } from 'react'
+import { useState, useRef, useMemo, useEffect, useLayoutEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Square from './Square'
 import Piece from './Piece'
+import PieceSprite from './PieceSprite'
 import Arrow from './Arrow'
 import type { BoardState } from '@/lib/chess/types'
 
@@ -31,24 +32,65 @@ interface InteractionState {
   promo: { from: string; to: string; color: 'w' | 'b' } | null
 }
 
-interface MoveAnimation {
-  from: string
-  to: string
+interface TrackedPiece {
+  id: number
+  square: string
   piece: NonNullable<BoardState['pieces'][string]>
 }
 
-interface PositionState {
-  fen: string
-  pieces: BoardState['pieces']
-  lastMove?: BoardState['lastMove']
-  animation: MoveAnimation | null
-  skipNextAnimation: boolean
+interface TrackedPieces {
+  key: string
+  items: TrackedPiece[]
+  nextId: number
+  animate: boolean
 }
 
-type PositionAction =
-  | { type: 'sync'; boardState: BoardState; animate: boolean }
-  | { type: 'skip-next-animation' }
-  | { type: 'finish-animation'; fen: string }
+function squareDistance(a: string, b: string): number {
+  return Math.max(Math.abs(FILES.indexOf(a[0]) - FILES.indexOf(b[0])), Math.abs(Number(a[1]) - Number(b[1])))
+}
+
+function piecesKey(pieces: BoardState['pieces']): string {
+  return Object.entries(pieces)
+    .map(([square, piece]) => `${square}${piece!.color}${piece!.type}`)
+    .sort()
+    .join(',')
+}
+
+function trackPieces(previous: TrackedPieces, pieces: BoardState['pieces'], key: string, animate: boolean): TrackedPieces {
+  const used = new Set<number>()
+  const bySquare = new Map(previous.items.map((item) => [item.square, item]))
+  const next: TrackedPiece[] = []
+  const unmatched: [string, NonNullable<BoardState['pieces'][string]>][] = []
+  for (const [square, piece] of Object.entries(pieces)) {
+    if (!piece) continue
+    const old = bySquare.get(square)
+    if (old && old.piece.type === piece.type && old.piece.color === piece.color) {
+      used.add(old.id)
+      next.push(old.piece === piece ? old : { ...old, piece })
+    } else {
+      unmatched.push([square, piece])
+    }
+  }
+  const leftover = previous.items.filter((item) => !used.has(item.id))
+  let nextId = previous.nextId
+  let moved = 0
+  for (const [square, piece] of unmatched) {
+    let best = -1
+    for (let i = 0; i < leftover.length; i++) {
+      const candidate = leftover[i]
+      if (candidate.piece.type !== piece.type || candidate.piece.color !== piece.color) continue
+      if (best < 0 || squareDistance(candidate.square, square) < squareDistance(leftover[best].square, square)) best = i
+    }
+    if (best >= 0) {
+      const [match] = leftover.splice(best, 1)
+      moved++
+      next.push({ id: match.id, square, piece })
+    } else {
+      next.push({ id: nextId++, square, piece })
+    }
+  }
+  return { key, items: next, nextId, animate: animate && moved > 0 && moved <= 2 }
+}
 
 function emptyInteraction(fen: string): InteractionState {
   return {
@@ -62,40 +104,6 @@ function emptyInteraction(fen: string): InteractionState {
     arrows: [],
     circles: new Set(),
     promo: null,
-  }
-}
-
-function inferMoveAnimation(previous: PositionState, current: BoardState): MoveAnimation | null {
-  const samePiece = (a?: { type: string; color: string } | null, b?: { type: string; color: string } | null) =>
-    !!a && !!b && a.type === b.type && a.color === b.color
-  const lastMove = current.lastMove
-  if (lastMove && samePiece(previous.pieces[lastMove.from], current.pieces[lastMove.to])) {
-    return { from: lastMove.from, to: lastMove.to, piece: previous.pieces[lastMove.from]! }
-  }
-  if (previous.lastMove && samePiece(previous.pieces[previous.lastMove.to], current.pieces[previous.lastMove.from])) {
-    return {
-      from: previous.lastMove.to,
-      to: previous.lastMove.from,
-      piece: previous.pieces[previous.lastMove.to]!,
-    }
-  }
-  return null
-}
-
-function positionReducer(state: PositionState, action: PositionAction): PositionState {
-  if (action.type === 'skip-next-animation') return { ...state, skipNextAnimation: true }
-  if (action.type === 'finish-animation') {
-    return state.fen === action.fen ? { ...state, animation: null } : state
-  }
-  if (state.fen === action.boardState.fen) return state
-  return {
-    fen: action.boardState.fen,
-    pieces: action.boardState.pieces,
-    lastMove: action.boardState.lastMove,
-    animation: action.animate && !state.skipNextAnimation
-      ? inferMoveAnimation(state, action.boardState)
-      : null,
-    skipNextAnimation: false,
   }
 }
 
@@ -151,29 +159,15 @@ export default function Board({
     to: string
     piece: NonNullable<BoardState['pieces'][string]>
     slide: boolean
-    started: boolean
     rook?: { from: string; to: string; piece: NonNullable<BoardState['pieces'][string]> }
     ep?: string
   } | null>(null)
-  const [positionState, dispatchPosition] = useReducer(positionReducer, null, () => ({
-    fen: boardState.fen,
-    pieces: boardState.pieces,
-    lastMove: boardState.lastMove,
-    animation: null,
-    skipNextAnimation: false,
-  }))
-  const moveAnimation = positionState.fen === boardState.fen ? positionState.animation : null
-
   const rightDownSquare = useRef<string | null>(null)
 
   useLayoutEffect(() => {
     rightDownSquare.current = null
     dragMovedRef.current = false
   }, [boardState.fen])
-
-  useLayoutEffect(() => {
-    dispatchPosition({ type: 'sync', boardState, animate: animateLastMove })
-  }, [animateLastMove, boardState])
 
   const { settings: userSettings } = useUserSettings()
   useEffect(() => {
@@ -216,14 +210,12 @@ export default function Board({
       return
     }
     const id = ++pendingSequence.current
-    dispatchPosition({ type: 'skip-next-animation' })
     const next: NonNullable<typeof pending> = {
       id,
       from,
       to,
       piece: promotion ? { ...piece, type: promotion } : piece,
       slide,
-      started: false,
     }
     const fileDelta = FILES.indexOf(to[0]) - FILES.indexOf(from[0])
     if (piece.type === 'k' && Math.abs(fileDelta) === 2) {
@@ -234,13 +226,6 @@ export default function Board({
     if (piece.type === 'p' && from[0] !== to[0] && !boardState.pieces[to]) next.ep = `${to[0]}${from[1]}`
     const startedAt = performance.now()
     setPending(next)
-    if (slide) {
-      window.requestAnimationFrame(() =>
-        window.requestAnimationFrame(() =>
-          setPending((cur) => (cur?.id === id ? { ...cur, started: true } : cur)),
-        ),
-      )
-    }
     const scheduleClear = (wait: number) => {
       const timer = window.setTimeout(() => {
         pendingTimers.current.delete(timer)
@@ -273,6 +258,15 @@ export default function Board({
     if (pending.ep) delete out[pending.ep]
     return out
   }, [pending, boardState.pieces])
+
+  const displayKey = piecesKey(displayPieces)
+  const [tracked, setTracked] = useState<TrackedPieces>(() =>
+    trackPieces({ key: '', items: [], nextId: 1, animate: false }, displayPieces, displayKey, false),
+  )
+  const trackedNow = tracked.key === displayKey
+    ? tracked
+    : trackPieces(tracked, displayPieces, displayKey, animateLastMove && !(pending && !pending.slide))
+  if (trackedNow !== tracked) setTracked(trackedNow)
 
   const isPromotionMove = (from: string, to: string): 'w' | 'b' | null => {
     const piece = boardState.pieces[from]
@@ -421,22 +415,6 @@ export default function Board({
 
   const dragPiece = dragFrom ? (boardState.pieces[dragFrom] ?? null) : null
   const boardSize = squareSize * 8
-  const slideFor = (square: string) => {
-    let from: string | null = null
-    let key = ''
-    if (pending?.slide && pending.to === square) {
-      from = pending.from
-      key = `p${pending.id}`
-    } else if (moveAnimation && moveAnimation.to === square) {
-      from = moveAnimation.from
-      key = `a${boardState.fen}`
-    }
-    if (!from) return null
-    const dx = (files.indexOf(from[0]) - files.indexOf(square[0])) * squareSize
-    const dy = (ranks.indexOf(from[1]) - ranks.indexOf(square[1])) * squareSize
-    return { key, dx, dy }
-  }
-
   const handlePromotionPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
@@ -455,6 +433,7 @@ export default function Board({
           ref={boardRef}
           className="inline-flex flex-col"
           style={{
+            position: 'relative',
             userSelect: 'none',
             touchAction: 'none',
             borderRadius: 4,
@@ -468,6 +447,20 @@ export default function Board({
           onPointerCancel={handlePointerCancel}
           onContextMenu={(e) => e.preventDefault()}
         >
+          <div style={{ position: 'absolute', inset: 0, zIndex: 10, pointerEvents: 'none' }}>
+            {trackedNow.items.map((item) => (
+              <PieceSprite
+                key={item.id}
+                square={item.square}
+                piece={item.piece}
+                left={files.indexOf(item.square[0]) * squareSize}
+                top={ranks.indexOf(item.square[1]) * squareSize}
+                size={squareSize}
+                animate={trackedNow.animate}
+                hidden={isDragging && dragFrom === item.square}
+              />
+            ))}
+          </div>
           {ranks.map((rank) => (
             <div key={rank} className="flex">
               {files.map((file) => {
@@ -502,8 +495,6 @@ export default function Board({
                       piece.color === boardState.turn
                     }
                     isDragHighlight={isDragging && dragOver === square && dragTargets.has(square)}
-                    hidePiece={isDragSource}
-                    slide={slideFor(square)}
                     rankLabel={file === firstFile ? rank : undefined}
                     fileLabel={rank === lastRank ? file : undefined}
                   />
