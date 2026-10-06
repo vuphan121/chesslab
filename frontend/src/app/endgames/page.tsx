@@ -47,9 +47,10 @@ export default function EndgamesPage() {
             key={editing?.id ?? 'new'}
             initial={editing}
             positions={s.positions}
-            onSave={(position) => {
+            onSave={(position, play) => {
               s.saveCustom(position)
               setScreen('manage')
+              if (play) s.start(position)
             }}
             onCancel={() => setScreen('manage')}
           />

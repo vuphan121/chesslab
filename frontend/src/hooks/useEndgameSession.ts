@@ -9,14 +9,13 @@ import { playMoveSound } from '@/lib/sound'
 import { toBoardState } from '@/hooks/usePuzzleSession'
 import { ENDGAME_POSITIONS, pickNextPosition, pickStartFen, userColorOf, type EndgamePosition } from '@/lib/endgame/positions'
 import { chooseReply, keepsGoal, keptMoves, moveLimit, uciFor, userOutcomeAfterMove } from '@/lib/endgame/judge'
-import { fetchTablebase } from '@/lib/endgame/tablebase'
+import { fetchTablebase, tablebaseMessage } from '@/lib/endgame/tablebase'
 import { CUSTOM_KEY, parseCustomPositions, serializeCustomPositions } from '@/lib/endgame/custom'
 
 const REPLY_DELAY_MS = 350
 const DONE_KEY = 'chesslab:endgames:done'
 const RECENT_MEMORY = 3
 const HINT_ARROWS = 3
-const OFFLINE_TEXT = "Couldn't reach the tablebase. Check your connection."
 
 export type EndgameStatus = 'idle' | 'loading' | 'playing' | 'judging' | 'opponent' | 'success' | 'failed'
 export type FeedbackTone = 'good' | 'bad' | 'info'
@@ -78,7 +77,6 @@ export function useEndgameSession() {
   const startFenRef = useRef('')
   const statusRef = useRef<EndgameStatus>('idle')
   const generationRef = useRef(0)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const currentIdRef = useRef<string | null>(null)
   const tipRef = useRef<string | null>(null)
   const movesLeftRef = useRef(0)
@@ -91,12 +89,12 @@ export function useEndgameSession() {
     setStatus(next)
   }, [])
 
-  const clearTimer = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = null
-  }, [])
-
-  useEffect(() => clearTimer, [clearTimer])
+  useEffect(
+    () => () => {
+      generationRef.current++
+    },
+    [],
+  )
 
   const commit = useCallback(() => {
     const snapshot = game.snapshot()
@@ -112,7 +110,6 @@ export function useEndgameSession() {
 
   const finish = useCallback(
     (result: 'success' | 'failed', text: string) => {
-      clearTimer()
       setHintMoves([])
       setFeedback({ tone: result === 'success' ? 'good' : 'bad', text })
       setStatusBoth(result)
@@ -125,7 +122,7 @@ export function useEndgameSession() {
         })
       }
     },
-    [clearTimer, setStatusBoth],
+    [setStatusBoth],
   )
 
   const settleIfOver = useCallback(
@@ -154,7 +151,6 @@ export function useEndgameSession() {
       const generation = ++generationRef.current
       const startFen = fen ?? pickStartFen(p)
       startFenRef.current = startFen
-      clearTimer()
       positionRef.current = p
       recentRef.current = [p.id, ...recentRef.current.filter((id) => id !== p.id)].slice(0, RECENT_MEMORY)
       mistakesRef.current = 0
@@ -180,13 +176,13 @@ export function useEndgameSession() {
         setMovesLeft(limit)
         setFeedback(null)
         setStatusBoth('playing')
-      } catch {
+      } catch (err) {
         if (generation !== generationRef.current) return
-        setFeedback({ tone: 'bad', text: OFFLINE_TEXT })
+        setFeedback({ tone: 'bad', text: tablebaseMessage(err) })
         setStatusBoth('idle')
       }
     },
-    [clearTimer, commit, game, markTip, setStatusBoth],
+    [commit, game, markTip, setStatusBoth],
   )
 
   const playReply = useCallback(
@@ -194,27 +190,28 @@ export function useEndgameSession() {
       setStatusBoth('opponent')
       let reply
       try {
-        reply = chooseReply(await fetchTablebase(game.currentFen))
-      } catch {
+        const [tb] = await Promise.all([fetchTablebase(game.currentFen), new Promise((resolve) => setTimeout(resolve, REPLY_DELAY_MS))])
+        reply = chooseReply(tb)
+      } catch (err) {
         if (generation !== generationRef.current) return
-        setFeedback({ tone: 'bad', text: OFFLINE_TEXT })
+        setFeedback({ tone: 'bad', text: tablebaseMessage(err) })
         setStatusBoth('idle')
         return
       }
-      if (generation !== generationRef.current || !reply) return
-      clearTimer()
-      timerRef.current = setTimeout(() => {
-        if (generation !== generationRef.current) return
-        game.applyMove(reply.uci.slice(0, 2), reply.uci.slice(2, 4), reply.uci.length > 4 ? reply.uci[4] : undefined)
-        playMoveSound(game.currentSan.includes('x'))
-        const snapshot = commit()
-        markTip()
-        if (settleIfOver(snapshot, userColor)) return
+      if (generation !== generationRef.current) return
+      if (!reply) {
         setStatusBoth('playing')
-        prefetch(game.currentFen)
-      }, REPLY_DELAY_MS)
+        return
+      }
+      game.applyMove(reply.uci.slice(0, 2), reply.uci.slice(2, 4), reply.uci.length > 4 ? reply.uci[4] : undefined)
+      playMoveSound(game.currentSan.includes('x'))
+      const snapshot = commit()
+      markTip()
+      if (settleIfOver(snapshot, userColor)) return
+      setStatusBoth('playing')
+      prefetch(game.currentFen)
     },
-    [clearTimer, commit, game, markTip, prefetch, setStatusBoth, settleIfOver],
+    [commit, game, markTip, prefetch, setStatusBoth, settleIfOver],
   )
 
   const attemptMove = useCallback(
@@ -245,9 +242,9 @@ export function useEndgameSession() {
       let tb
       try {
         tb = await fetchTablebase(fen)
-      } catch {
+      } catch (err) {
         if (generation !== generationRef.current) return
-        setFeedback({ tone: 'bad', text: OFFLINE_TEXT })
+        setFeedback({ tone: 'bad', text: tablebaseMessage(err) })
         setStatusBoth('playing')
         return
       }
@@ -334,8 +331,8 @@ export function useEndgameSession() {
     try {
       const tb = await fetchTablebase(game.currentFen)
       setHintMoves(keptMoves(p.goal, tb).slice(0, HINT_ARROWS).map((m) => m.uci))
-    } catch {
-      setFeedback({ tone: 'bad', text: OFFLINE_TEXT })
+    } catch (err) {
+      setFeedback({ tone: 'bad', text: tablebaseMessage(err) })
     }
   }, [game])
 
@@ -351,6 +348,13 @@ export function useEndgameSession() {
   }, [positions, startPosition])
 
   const saveCustom = useCallback((position: EndgamePosition) => {
+    setDone((current) => {
+      if (!current.has(position.id)) return current
+      const updated = new Set(current)
+      updated.delete(position.id)
+      writeDone(updated)
+      return updated
+    })
     setCustoms((current) => {
       const exists = current.some((p) => p.id === position.id)
       const updated = exists ? current.map((p) => (p.id === position.id ? position : p)) : [...current, position]
@@ -376,14 +380,13 @@ export function useEndgameSession() {
 
   const backToPicker = useCallback(() => {
     generationRef.current++
-    clearTimer()
     positionRef.current = null
     setPosition(null)
     setGameState(null)
     setFeedback(null)
     setHintMoves([])
     setStatusBoth('idle')
-  }, [clearTimer, setStatusBoth])
+  }, [setStatusBoth])
 
   const navigable = useCallback((): boolean => statusRef.current === 'playing' || isFinished(statusRef.current), [])
 

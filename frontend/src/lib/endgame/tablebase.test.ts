@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearTablebaseCache, fetchTablebase } from './tablebase'
+import { TablebaseError, clearTablebaseCache, fetchTablebase, tablebaseMessage } from './tablebase'
 
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body })
 
@@ -22,10 +22,29 @@ describe('fetchTablebase', () => {
   })
 
   it('rejects on a failed status and does not cache it', async () => {
-    const fetcher = vi.fn().mockResolvedValue({ ok: false, status: 429, json: async () => ({}) })
-    await expect(fetchTablebase('fen-b', fetcher)).rejects.toThrow('429')
+    const fetcher = vi.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) })
+    await expect(fetchTablebase('fen-b', fetcher, 0)).rejects.toThrow('404')
+    expect(fetcher).toHaveBeenCalledTimes(1)
     fetcher.mockResolvedValue(ok({ category: 'draw', moves: [] }))
-    await expect(fetchTablebase('fen-b', fetcher)).resolves.toMatchObject({ category: 'draw' })
+    await expect(fetchTablebase('fen-b', fetcher, 0)).resolves.toMatchObject({ category: 'draw' })
+  })
+
+  it('retries once when the tablebase is rate limited', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 429, json: async () => ({}) })
+      .mockResolvedValueOnce(ok({ category: 'win', moves: [] }))
+    await expect(fetchTablebase('fen-d', fetcher, 0)).resolves.toMatchObject({ category: 'win' })
+    expect(fetcher).toHaveBeenCalledTimes(2)
+  })
+
+  it('gives up after the retry and reports a busy tablebase', async () => {
+    const fetcher = vi.fn().mockResolvedValue({ ok: false, status: 429, json: async () => ({}) })
+    const error = await fetchTablebase('fen-e', fetcher, 0).catch((e: unknown) => e)
+    expect(fetcher).toHaveBeenCalledTimes(2)
+    expect(error).toBeInstanceOf(TablebaseError)
+    expect(tablebaseMessage(error)).toMatch(/busy/)
+    expect(tablebaseMessage(new Error('offline'))).toMatch(/Couldn't reach/)
   })
 
   it('rejects when the response has no category', async () => {

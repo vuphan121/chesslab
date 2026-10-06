@@ -14,6 +14,7 @@ import {
   buildCustomPosition,
   fenToBoard,
   newCustomId,
+  parseBoardFen,
   validateSetup,
   verdictFor,
   type SetupPieces,
@@ -22,7 +23,7 @@ import {
 interface Props {
   initial: EndgamePosition | null
   positions: EndgamePosition[]
-  onSave: (position: EndgamePosition) => void
+  onSave: (position: EndgamePosition, play: boolean) => void
   onCancel: () => void
 }
 
@@ -31,6 +32,7 @@ type Tool = { kind: 'move' } | { kind: 'erase' } | { kind: 'piece'; color: Color
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1']
 const PIECE_ORDER: PieceType[] = ['k', 'q', 'r', 'b', 'n', 'p']
+const PIECE_NAMES: Record<PieceType, string> = { k: 'king', q: 'queen', r: 'rook', b: 'bishop', n: 'knight', p: 'pawn' }
 const NEW_CATEGORY = '__new__'
 const CHECK_DELAY_MS = 500
 const DEFAULT_PIECES: SetupPieces = { e1: { type: 'k', color: 'w' }, e8: { type: 'k', color: 'b' } }
@@ -52,6 +54,7 @@ export default function EndgameEditor({ initial, positions, onSave, onCancel }: 
   const [newGroup, setNewGroup] = useState('')
   const [objective, setObjective] = useState<EndgameObjective>(initial?.objective ?? 'checkmate')
   const [randomize, setRandomize] = useState(initial?.randomize ?? false)
+  const [fenDraft, setFenDraft] = useState<string | null>(null)
   const [checked, setChecked] = useState<{ fen: string; tb: TbResult | null } | null>(null)
 
   const fen = boardToFen(pieces, turn)
@@ -89,6 +92,7 @@ export default function EndgameEditor({ initial, positions, onSave, onCancel }: 
   const ranks = flipped ? [...RANKS].reverse() : RANKS
 
   const clickSquare = (square: string) => {
+    setFenDraft(null)
     if (tool.kind === 'erase') {
       setPieces((current) => {
         const next = { ...current }
@@ -126,7 +130,7 @@ export default function EndgameEditor({ initial, positions, onSave, onCancel }: 
     setSelected(null)
   }
 
-  const save = () => {
+  const save = (play: boolean) => {
     if (!canSave) return
     onSave(
       buildCustomPosition({
@@ -137,7 +141,20 @@ export default function EndgameEditor({ initial, positions, onSave, onCancel }: 
         objective,
         randomize,
       }),
+      play,
     )
+  }
+
+  const changeFen = (text: string) => {
+    const parsed = parseBoardFen(text)
+    if (!parsed) {
+      setFenDraft(text)
+      return
+    }
+    setFenDraft(null)
+    setPieces(parsed.pieces)
+    setTurn(parsed.turn)
+    setSelected(null)
   }
 
   const paletteRow = (color: Color) => (
@@ -186,6 +203,8 @@ export default function EndgameEditor({ initial, positions, onSave, onCancel }: 
                       key={square}
                       onClick={() => clickSquare(square)}
                       data-square={square}
+                      role="button"
+                      aria-label={piece ? `${square} ${piece.color === 'w' ? 'white' : 'black'} ${PIECE_NAMES[piece.type]}` : `${square} empty`}
                       style={{ position: 'relative', width: squareSize, height: squareSize, cursor: 'pointer' }}
                     >
                       <Square
@@ -289,6 +308,18 @@ export default function EndgameEditor({ initial, positions, onSave, onCancel }: 
             Randomly mirror and swap colours each time
           </label>
 
+          <label style={fieldLabel}>
+            FEN
+            <input
+              value={fenDraft ?? fen}
+              onChange={(e) => changeFen(e.target.value)}
+              spellCheck={false}
+              aria-label="FEN"
+              aria-invalid={fenDraft !== null}
+              style={{ ...inputStyle, fontFamily: 'var(--font-mono, monospace)', fontSize: 12, ...(fenDraft !== null ? { borderColor: '#b34343' } : null) }}
+            />
+          </label>
+
           <div aria-live="polite" style={{ minHeight: 40, fontSize: 13 }}>
             {errors.map((e) => (
               <div key={e} style={{ color: '#b34343', fontWeight: 600 }}>{e}</div>
@@ -301,11 +332,14 @@ export default function EndgameEditor({ initial, positions, onSave, onCancel }: 
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               className="tap"
-              onClick={save}
+              onClick={() => save(false)}
               disabled={!canSave}
               style={{ ...primaryButton, opacity: canSave ? 1 : 0.45, cursor: canSave ? 'pointer' : 'default' }}
             >
               Save position
+            </button>
+            <button className="tap" onClick={() => save(true)} disabled={!canSave} style={{ ...smallButton, opacity: canSave ? 1 : 0.45, cursor: canSave ? 'pointer' : 'default' }}>
+              Save and play
             </button>
             <button className="tap" onClick={onCancel} style={smallButton}>Cancel</button>
           </div>

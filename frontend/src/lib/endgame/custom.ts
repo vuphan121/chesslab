@@ -58,6 +58,21 @@ export function fenToBoard(fen: string): { pieces: SetupPieces; turn: Color } {
   return { pieces, turn: turn === 'b' ? 'b' : 'w' }
 }
 
+export function parseBoardFen(text: string): { pieces: SetupPieces; turn: Color } | null {
+  const parts = text.trim().split(/\s+/)
+  if (parts.length === 0 || parts.length > 6) return null
+  const rows = parts[0].split('/')
+  if (rows.length !== 8) return null
+  for (const row of rows) {
+    if (!/^[pnbrqkPNBRQK1-8]+$/.test(row)) return null
+    let width = 0
+    for (const ch of row) width += /\d/.test(ch) ? Number(ch) : 1
+    if (width !== 8) return null
+  }
+  if (parts[1] !== undefined && parts[1] !== 'w' && parts[1] !== 'b') return null
+  return fenToBoard(`${parts[0]} ${parts[1] ?? 'w'}`)
+}
+
 function kingSquare(pieces: SetupPieces, color: Color): string | null {
   return Object.entries(pieces).find(([, p]) => p.type === 'k' && p.color === color)?.[0] ?? null
 }

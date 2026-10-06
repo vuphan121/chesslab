@@ -52,10 +52,11 @@ export const ENDGAME_POSITIONS: EndgamePosition[] = [
     group: 'pawn',
     goal: 'draw',
     fens: [
-      '7k/8/5K1P/8/8/8/8/8 b - - 0 1',
-      '7k/8/6KP/8/8/8/8/8 b - - 0 1',
       '6k1/8/5K1P/8/8/8/8/8 b - - 0 1',
-      '7k/8/4K2P/8/8/8/8/8 b - - 0 1'
+      '5k2/8/6KP/8/8/8/8/8 b - - 0 1',
+      '5k2/8/7P/5K2/8/8/8/8 b - - 0 1',
+      '8/4k3/8/5K1P/8/8/8/8 b - - 0 1',
+      '8/8/4k3/7P/4K3/8/8/8 b - - 0 1',
     ],
   },
   {
@@ -113,7 +114,6 @@ export const ENDGAME_POSITIONS: EndgamePosition[] = [
       '8/8/8/8/3n4/4k3/8/R3K3 b - - 0 1',
       '8/8/8/8/2n5/3k4/8/R3K3 b - - 0 1',
       '8/8/8/8/4n3/3k4/8/R3K3 b - - 0 1',
-      '8/8/8/8/3n4/3k4/8/R3K3 b - - 0 1',
       '8/8/8/8/5n2/4k3/8/R3K3 b - - 0 1'
     ],
   },
@@ -124,7 +124,6 @@ export const ENDGAME_POSITIONS: EndgamePosition[] = [
     goal: 'win',
     fens: [
       '8/8/8/4k3/8/8/8/1BB1K3 w - - 0 1',
-      '8/8/8/3k4/8/8/8/2BBK3 w - - 0 1',
       '8/8/8/8/4k3/8/8/2B1KB2 w - - 0 1'
     ],
   },

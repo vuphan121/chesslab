@@ -3,6 +3,7 @@ import {
   boardToFen,
   buildCustomPosition,
   fenToBoard,
+  parseBoardFen,
   newCustomId,
   parseCustomPositions,
   serializeCustomPositions,
@@ -23,6 +24,22 @@ describe('boardToFen and fenToBoard', () => {
   })
   it('writes an empty rank as 8', () => {
     expect(boardToFen({ e1: { type: 'k', color: 'w' }, e8: { type: 'k', color: 'b' } }, 'w')).toBe('4k3/8/8/8/8/8/8/4K3 w - - 0 1')
+  })
+})
+
+describe('parseBoardFen', () => {
+  it('reads a full FEN and a bare board', () => {
+    expect(parseBoardFen(LUCENA)?.turn).toBe('w')
+    expect(parseBoardFen('4k3/8/8/8/8/8/8/4K3 b')?.turn).toBe('b')
+    expect(Object.keys(parseBoardFen('4k3/8/8/8/8/8/8/4K3')!.pieces).sort()).toEqual(['e1', 'e8'])
+  })
+  it('rejects text that is not a board', () => {
+    expect(parseBoardFen('')).toBeNull()
+    expect(parseBoardFen('hello')).toBeNull()
+    expect(parseBoardFen('4k3/8/8/8/8/8/8')).toBeNull()
+    expect(parseBoardFen('4k3/8/8/8/8/8/8/4K4')).toBeNull()
+    expect(parseBoardFen('4k3/8/8/8/8/8/8/4X3')).toBeNull()
+    expect(parseBoardFen('4k3/8/8/8/8/8/8/4K3 x')).toBeNull()
   })
 })
 
