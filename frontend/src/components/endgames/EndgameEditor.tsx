@@ -316,7 +316,7 @@ export default function EndgameEditor({ initial, positions, onSave, onCancel }: 
               spellCheck={false}
               aria-label="FEN"
               aria-invalid={fenDraft !== null}
-              style={{ ...inputStyle, fontFamily: 'var(--font-mono, monospace)', fontSize: 12, ...(fenDraft !== null ? { borderColor: '#b34343' } : null) }}
+              style={{ ...inputStyle, fontFamily: 'var(--font-mono, monospace)', fontSize: 16, ...(fenDraft !== null ? { borderColor: '#b34343' } : null) }}
             />
           </label>
 
@@ -409,8 +409,8 @@ const fieldLabel: React.CSSProperties = { display: 'flex', flexDirection: 'colum
 const inputStyle: React.CSSProperties = {
   border: '1px solid #d9d6cf',
   borderRadius: 8,
-  padding: '8px 10px',
-  fontSize: 14,
+  padding: '10px 12px',
+  fontSize: 16,
   background: '#fbfaf7',
   color: '#37352f',
   outlineColor: '#4a90d9',

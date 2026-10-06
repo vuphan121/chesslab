@@ -40,7 +40,7 @@ export default function EndgamesPage() {
 
   if (!s.position) {
     return (
-      <main className="min-h-screen pb-6 sm:pb-10" style={{ background: '#e8e8e6' }}>
+      <main className="safe-bottom" style={{ background: '#e8e8e6', minHeight: '100dvh' }}>
         <TopBar right={<span />} />
         {screen === 'edit' ? (
           <EndgameEditor

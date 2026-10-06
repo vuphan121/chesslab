@@ -106,9 +106,10 @@ const row: React.CSSProperties = {
 }
 
 const smallButton: React.CSSProperties = {
-  fontSize: 12,
+  fontSize: 13,
   fontWeight: 600,
-  padding: '6px 12px',
+  minHeight: 40,
+  padding: '0 14px',
   borderRadius: 8,
   border: '1px solid #d9d6cf',
   background: '#fff',
