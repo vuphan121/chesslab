@@ -1,4 +1,5 @@
 export type EndgameGoal = 'win' | 'draw'
+export type EndgameObjective = 'checkmate' | 'promotion' | 'draw'
 
 export interface EndgamePosition {
   id: string
@@ -7,6 +8,9 @@ export interface EndgamePosition {
   fens: string[]
   goal: EndgameGoal
   endsOnPromotion?: boolean
+  custom?: boolean
+  objective?: EndgameObjective
+  randomize?: boolean
 }
 
 export const ENDGAME_GROUPS: { key: string; label: string }[] = [
@@ -190,7 +194,19 @@ export function swapColorsFen(fen: string): string {
 
 export function pickStartFen(position: EndgamePosition, rng: () => number = Math.random): string {
   let fen = position.fens[Math.floor(rng() * position.fens.length) % position.fens.length]
+  if (position.randomize === false) return fen
   if (rng() < 0.5) fen = mirrorFen(fen)
   if (rng() < 0.5) fen = swapColorsFen(fen)
   return fen
+}
+
+export function groupsFor(positions: EndgamePosition[]): { key: string; label: string }[] {
+  const known = new Set(ENDGAME_GROUPS.map((g) => g.key))
+  const extra: { key: string; label: string }[] = []
+  for (const p of positions) {
+    if (known.has(p.group)) continue
+    known.add(p.group)
+    extra.push({ key: p.group, label: p.group })
+  }
+  return [...ENDGAME_GROUPS, ...extra]
 }

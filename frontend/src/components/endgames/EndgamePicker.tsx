@@ -1,24 +1,34 @@
 'use client'
 
-import { ENDGAME_GROUPS, ENDGAME_POSITIONS, type EndgamePosition } from '@/lib/endgame/positions'
+import { groupsFor, type EndgamePosition } from '@/lib/endgame/positions'
 
 interface Props {
+  positions: EndgamePosition[]
   done: Set<string>
+  onManage: () => void
   onRandom: () => void
   onPick: (position: EndgamePosition) => void
 }
 
-export default function EndgamePicker({ done, onRandom, onPick }: Props) {
+export default function EndgamePicker({ positions: all, done, onManage, onRandom, onPick }: Props) {
   return (
     <div style={{ width: '100%', maxWidth: 980, margin: '24px auto 0', padding: '0 clamp(12px, 4vw, 24px)' }}>
-      <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 14 }}>Endgames</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, margin: 0 }}>Endgames</h1>
+        <button onClick={onManage} className="tap" title="Your positions" aria-label="Your positions" style={gearButton}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+          </svg>
+        </button>
+      </div>
 
       <button onClick={onRandom} className="tap" style={randomButton}>
         <span className="serif" style={{ fontSize: 20 }}>Random position</span>
       </button>
 
-      {ENDGAME_GROUPS.map((group) => {
-        const positions = ENDGAME_POSITIONS.filter((p) => p.group === group.key)
+      {groupsFor(all).map((group) => {
+        const positions = all.filter((p) => p.group === group.key)
         if (positions.length === 0) return null
         return (
           <section key={group.key} style={{ margin: '22px 0 0' }}>
@@ -78,5 +88,18 @@ const tile: React.CSSProperties = {
   background: '#fbfaf7',
   border: '1px solid #eae8e2',
   borderRadius: 10,
+  cursor: 'pointer',
+}
+
+const gearButton: React.CSSProperties = {
+  width: 36,
+  height: 36,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: 8,
+  border: '1px solid #d9d6cf',
+  background: '#fbfaf7',
+  color: '#6a675f',
   cursor: 'pointer',
 }

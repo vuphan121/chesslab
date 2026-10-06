@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { GameState } from '@/lib/api/client'
 import { LocalGame } from '@/lib/chess/localGame'
 import { activeLine, flatten } from '@/lib/chess/moveTree'
@@ -10,6 +10,7 @@ import { toBoardState } from '@/hooks/usePuzzleSession'
 import { ENDGAME_POSITIONS, pickNextPosition, pickStartFen, userColorOf, type EndgamePosition } from '@/lib/endgame/positions'
 import { chooseReply, keepsGoal, keptMoves, moveLimit, uciFor, userOutcomeAfterMove } from '@/lib/endgame/judge'
 import { fetchTablebase } from '@/lib/endgame/tablebase'
+import { CUSTOM_KEY, parseCustomPositions, serializeCustomPositions } from '@/lib/endgame/custom'
 
 const REPLY_DELAY_MS = 350
 const DONE_KEY = 'chesslab:endgames:done'
@@ -36,6 +37,20 @@ function readDone(): Set<string> {
   }
 }
 
+function readCustom(): EndgamePosition[] {
+  try {
+    return parseCustomPositions(window.localStorage.getItem(CUSTOM_KEY))
+  } catch {
+    return []
+  }
+}
+
+function writeCustom(positions: EndgamePosition[]): void {
+  try {
+    window.localStorage.setItem(CUSTOM_KEY, serializeCustomPositions(positions))
+  } catch {}
+}
+
 function writeDone(done: Set<string>): void {
   try {
     window.localStorage.setItem(DONE_KEY, JSON.stringify([...done]))
@@ -56,6 +71,7 @@ export function useEndgameSession() {
   const [mistakes, setMistakes] = useState(0)
   const [feedback, setFeedback] = useState<EndgameFeedback | null>(null)
   const [hintMoves, setHintMoves] = useState<string[]>([])
+  const [customs, setCustoms] = useState<EndgamePosition[]>(() => (typeof window === 'undefined' ? [] : readCustom()))
   const [done, setDone] = useState<Set<string>>(() => (typeof window === 'undefined' ? new Set() : readDone()))
 
   const positionRef = useRef<EndgamePosition | null>(null)
@@ -328,9 +344,35 @@ export function useEndgameSession() {
     if (p) void startPosition(p, startFenRef.current)
   }, [startPosition])
 
+  const positions = useMemo(() => [...ENDGAME_POSITIONS, ...customs], [customs])
+
   const next = useCallback(() => {
-    void startPosition(pickNextPosition(ENDGAME_POSITIONS, recentRef.current))
-  }, [startPosition])
+    void startPosition(pickNextPosition(positions, recentRef.current))
+  }, [positions, startPosition])
+
+  const saveCustom = useCallback((position: EndgamePosition) => {
+    setCustoms((current) => {
+      const exists = current.some((p) => p.id === position.id)
+      const updated = exists ? current.map((p) => (p.id === position.id ? position : p)) : [...current, position]
+      writeCustom(updated)
+      return updated
+    })
+  }, [])
+
+  const removeCustom = useCallback((id: string) => {
+    setCustoms((current) => {
+      const updated = current.filter((p) => p.id !== id)
+      writeCustom(updated)
+      return updated
+    })
+    setDone((current) => {
+      if (!current.has(id)) return current
+      const updated = new Set(current)
+      updated.delete(id)
+      writeDone(updated)
+      return updated
+    })
+  }, [])
 
   const backToPicker = useCallback(() => {
     generationRef.current++
@@ -380,7 +422,7 @@ export function useEndgameSession() {
   const boardState = gameState ? toBoardState(gameState, selected) : null
 
   return {
-    position, status, boardState, flipped, userColor, movesLeft, movesUsed, mistakes, feedback, hintMoves, done,
+    positions, customs, saveCustom, removeCustom, position, status, boardState, flipped, userColor, movesLeft, movesUsed, mistakes, feedback, hintMoves, done,
     moveNodes, currentNodeId, canPrev, canNext,
     start: startPosition, next, restart, showHint, backToPicker,
     navPrev, navNext, gotoNode, selectSquare, move, legalMovesFor,

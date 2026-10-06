@@ -1,9 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import Board from '@/components/board/Board'
 import TopBar from '@/components/layout/TopBar'
 import EndgamePicker from '@/components/endgames/EndgamePicker'
 import EndgameFeedbackLine from '@/components/endgames/EndgameFeedback'
+import EndgameEditor from '@/components/endgames/EndgameEditor'
+import EndgameManager from '@/components/endgames/EndgameManager'
+import type { EndgamePosition } from '@/lib/endgame/positions'
 import PuzzleMoves from '@/components/puzzles/PuzzleMoves'
 import { useEndgameSession } from '@/hooks/useEndgameSession'
 import { useViewportWidth, useViewportHeight, clamp } from '@/hooks/useViewportWidth'
@@ -25,6 +29,8 @@ const HINT_ARROW_COLOR = 'rgba(0, 48, 136, 0.4)'
 
 export default function EndgamesPage() {
   const s = useEndgameSession()
+  const [screen, setScreen] = useState<'picker' | 'manage' | 'edit'>('picker')
+  const [editing, setEditing] = useState<EndgamePosition | null>(null)
   const viewportWidth = useViewportWidth()
   const viewportHeight = useViewportHeight()
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
@@ -36,7 +42,35 @@ export default function EndgamesPage() {
     return (
       <main className="min-h-screen pb-6 sm:pb-10" style={{ background: '#e8e8e6' }}>
         <TopBar right={<span />} />
-        <EndgamePicker done={s.done} onRandom={s.next} onPick={s.start} />
+        {screen === 'edit' ? (
+          <EndgameEditor
+            key={editing?.id ?? 'new'}
+            initial={editing}
+            positions={s.positions}
+            onSave={(position) => {
+              s.saveCustom(position)
+              setScreen('manage')
+            }}
+            onCancel={() => setScreen('manage')}
+          />
+        ) : screen === 'manage' ? (
+          <EndgameManager
+            customs={s.customs}
+            onNew={() => {
+              setEditing(null)
+              setScreen('edit')
+            }}
+            onEdit={(position) => {
+              setEditing(position)
+              setScreen('edit')
+            }}
+            onDelete={s.removeCustom}
+            onTry={s.start}
+            onBack={() => setScreen('picker')}
+          />
+        ) : (
+          <EndgamePicker positions={s.positions} done={s.done} onManage={() => setScreen('manage')} onRandom={s.next} onPick={s.start} />
+        )}
       </main>
     )
   }
