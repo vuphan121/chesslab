@@ -47,6 +47,33 @@ export const ENDGAME_POSITIONS: EndgamePosition[] = [
     ],
   },
   {
+    id: 'opposition',
+    name: 'Opposition',
+    group: 'pawn',
+    goal: 'win',
+    endsOnPromotion: true,
+    fens: [
+      '8/3k4/8/8/3KP3/8/8/8 w - - 0 1',
+      '8/5k2/8/8/4PK2/8/8/8 w - - 0 1',
+      '8/2k5/8/8/2KP4/8/8/8 w - - 0 1',
+      '8/4k3/8/3K4/4P3/8/8/8 w - - 0 1',
+      '4k3/8/3K4/4P3/8/8/8/8 w - - 0 1',
+    ],
+  },
+  {
+    id: 'rule-of-the-square',
+    name: 'Rule of the square',
+    group: 'pawn',
+    goal: 'draw',
+    fens: [
+      '8/8/8/2P5/6k1/8/8/K7 b - - 0 1',
+      '8/8/8/3P4/7k/8/8/K7 b - - 0 1',
+      '8/8/8/4P3/k7/8/8/K7 b - - 0 1',
+      '8/8/8/5P2/1k6/8/8/K7 b - - 0 1',
+      '8/8/8/6P1/2k5/8/8/K7 b - - 0 1',
+    ],
+  },
+  {
     id: 'rook-pawn',
     name: 'Rook pawn',
     group: 'pawn',
@@ -90,7 +117,37 @@ export const ENDGAME_POSITIONS: EndgamePosition[] = [
     group: 'rook',
     goal: 'draw',
     fens: [
-      '4k3/8/r7/3KP3/8/8/8/4R3 b - - 0 1'
+      '4k3/8/r7/3KP3/8/8/8/4R3 b - - 0 1',
+      '3k4/8/r7/1KP5/8/8/7R/8 b - - 0 1',
+      '4k3/8/3r4/3PK3/8/8/8/6R1 b - - 0 1',
+      '8/2k5/2r5/4P3/4K3/8/8/1R6 b - - 0 1',
+      '8/4k3/r7/2PK4/8/8/8/5R2 b - - 0 1',
+    ],
+  },
+  {
+    id: 'rook-and-a-pawn-vs-rook',
+    name: 'Rook and a-pawn vs rook',
+    group: 'rook',
+    goal: 'draw',
+    fens: [
+      '8/K7/P3k3/8/8/2r5/8/R7 b - - 0 1',
+      '4k3/8/P7/8/3K4/8/2r5/1R6 b - - 0 1',
+      '8/8/2K1k3/P7/6r1/8/8/6R1 b - - 0 1',
+      'r7/8/3K1k2/P7/8/6R1/8/8 b - - 0 1',
+      '8/5k2/P2r4/8/8/7R/1K6/8 b - - 0 1',
+    ],
+  },
+  {
+    id: 'rook-vs-pawn',
+    name: 'Rook vs pawn',
+    group: 'rook',
+    goal: 'win',
+    fens: [
+      '8/8/8/4R3/1k1K4/8/1p6/8 w - - 0 1',
+      '8/8/8/4K3/8/5k1p/3R4/8 w - - 0 1',
+      '8/8/8/8/5k2/3KR1p1/8/8 w - - 0 1',
+      '8/8/8/8/7R/pk6/8/3K4 w - - 0 1',
+      '8/6R1/8/8/2K4k/7p/8/8 w - - 0 1',
     ],
   },
   {
@@ -140,6 +197,32 @@ export const ENDGAME_POSITIONS: EndgamePosition[] = [
     ],
   },
   {
+    id: 'wrong-bishop',
+    name: 'Wrong bishop',
+    group: 'minor',
+    goal: 'draw',
+    fens: [
+      '8/8/4k3/6KP/8/8/8/3B4 b - - 0 1',
+      '5k2/8/6K1/7P/8/8/8/3B4 b - - 0 1',
+      '8/5k2/7P/6K1/8/8/8/3B4 b - - 0 1',
+      '5k2/8/7P/5K2/8/8/8/3B4 b - - 0 1',
+      '8/4k3/8/5K1P/8/8/8/3B4 b - - 0 1',
+    ],
+  },
+  {
+    id: 'opposite-bishops',
+    name: 'Opposite bishops',
+    group: 'minor',
+    goal: 'draw',
+    fens: [
+      '8/5k2/1K1P4/8/3B4/8/6b1/8 b - - 0 1',
+      '8/1k2K1B1/3P4/8/8/3b4/8/8 b - - 0 1',
+      '3k4/8/3PK3/8/8/5b2/8/4B3 b - - 0 1',
+      '1k6/3K4/1BP5/7b/8/8/8/8 b - - 0 1',
+      '8/4K2k/5P2/8/7B/8/8/1b6 b - - 0 1',
+    ],
+  },
+  {
     id: 'king-and-queen',
     name: 'King and queen',
     group: 'queen',
@@ -157,6 +240,19 @@ export const ENDGAME_POSITIONS: EndgamePosition[] = [
     goal: 'win',
     fens: [
       '8/8/8/8/8/1k6/6r1/Q3K3 w - - 0 1'
+    ],
+  },
+  {
+    id: 'queen-vs-pawn',
+    name: 'Queen vs pawn',
+    group: 'queen',
+    goal: 'draw',
+    fens: [
+      '8/8/8/K2Q4/8/k7/p7/8 b - - 0 1',
+      '8/8/8/3Q4/K7/8/p7/1k6 b - - 0 1',
+      '8/8/8/3Q4/K7/8/pk6/8 b - - 0 1',
+      '8/8/8/3Q4/2K5/8/2p5/1k6 b - - 0 1',
+      '8/8/8/2Q5/1K6/8/2p5/1k6 b - - 0 1',
     ],
   },
 ]

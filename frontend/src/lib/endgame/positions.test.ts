@@ -29,7 +29,7 @@ describe('endgame positions', () => {
 
   it('only win positions with a pawn end on promotion', () => {
     const ending = ENDGAME_POSITIONS.filter((p) => p.endsOnPromotion)
-    expect(ending.map((p) => p.id)).toEqual(['key-squares', 'king-and-pawn', 'lucena'])
+    expect(ending.map((p) => p.id)).toEqual(['key-squares', 'king-and-pawn', 'opposition', 'lucena'])
     for (const p of ending) {
       expect(p.goal, p.id).toBe('win')
       for (const fen of p.fens) expect(fen.split(' ')[0].toLowerCase().includes('p'), fen).toBe(true)

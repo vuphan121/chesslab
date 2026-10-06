@@ -8,7 +8,7 @@ import type { Square } from '@/lib/chess/types'
 import { playMoveSound } from '@/lib/sound'
 import { toBoardState } from '@/hooks/usePuzzleSession'
 import { ENDGAME_POSITIONS, pickNextPosition, pickStartFen, userColorOf, type EndgamePosition } from '@/lib/endgame/positions'
-import { chooseReply, keepsGoal, keptMoves, moveLimit, uciFor, userOutcomeAfterMove } from '@/lib/endgame/judge'
+import { chooseReply, endsGame, keepsGoal, keptMoves, moveLimit, uciFor, userOutcomeAfterMove } from '@/lib/endgame/judge'
 import { fetchTablebase, tablebaseMessage } from '@/lib/endgame/tablebase'
 import { CUSTOM_KEY, parseCustomPositions, serializeCustomPositions } from '@/lib/endgame/custom'
 
@@ -191,7 +191,8 @@ export function useEndgameSession() {
       let reply
       try {
         const [tb] = await Promise.all([fetchTablebase(game.currentFen), new Promise((resolve) => setTimeout(resolve, REPLY_DELAY_MS))])
-        reply = chooseReply(tb)
+        const fen = game.currentFen
+        reply = chooseReply(tb, Math.random, (uci) => endsGame(fen, uci))
       } catch (err) {
         if (generation !== generationRef.current) return
         setFeedback({ tone: 'bad', text: tablebaseMessage(err) })

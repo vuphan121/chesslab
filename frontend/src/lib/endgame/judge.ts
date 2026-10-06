@@ -39,11 +39,23 @@ export function keptMoves(goal: EndgameGoal, tb: TbResult): TbMove[] {
 
 const OPPONENT_RANK: Record<Outcome, number> = { loss: 0, draw: 1, win: 2 }
 
-export function chooseReply(tb: TbResult, rng: () => number = Math.random): TbMove | null {
+export function endsGame(fen: string, uci: string): boolean {
+  const game = new Chess(fen)
+  game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci[4] : undefined })
+  return game.isGameOver()
+}
+
+export function chooseReply(
+  tb: TbResult,
+  rng: () => number = Math.random,
+  endsTheGame: (uci: string) => boolean = () => false,
+): TbMove | null {
   if (tb.moves.length === 0) return null
   const rank = (m: TbMove) => OPPONENT_RANK[outcomeOf(m.category) ?? 'draw']
   const best = Math.min(...tb.moves.map(rank))
-  const tied = tb.moves.filter((m) => rank(m) === best)
+  const equal = tb.moves.filter((m) => rank(m) === best)
+  const open = equal.filter((m) => !endsTheGame(m.uci))
+  const tied = open.length > 0 ? open : equal
   if (best === OPPONENT_RANK.win) {
     const longest = Math.max(...tied.map((m) => Math.abs(m.dtz ?? 0)))
     const slowest = tied.filter((m) => Math.abs(m.dtz ?? 0) === longest)

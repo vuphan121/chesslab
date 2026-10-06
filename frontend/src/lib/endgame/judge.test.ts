@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chooseReply, keepsGoal, keptMoves, moveLimit, outcomeOf, uciFor, userOutcomeAfterMove } from './judge'
+import { chooseReply, endsGame, keepsGoal, keptMoves, moveLimit, outcomeOf, uciFor, userOutcomeAfterMove } from './judge'
 import type { TbResult } from './tablebase'
 
 const tb = (moves: { uci: string; category: string; dtz?: number }[]): TbResult => ({ category: 'win', dtz: 10, moves })
@@ -83,6 +83,34 @@ describe('chooseReply', () => {
       { uci: 'e8d8', category: 'draw' },
     ])
     expect(chooseReply(result, () => 0.99)?.uci).toBe('e8d8')
+  })
+})
+
+describe('chooseReply and game-ending moves', () => {
+  const result = tb([
+    { uci: 'a1a2', category: 'draw' },
+    { uci: 'a1b1', category: 'draw' },
+  ])
+  it('avoids a reply that ends the game when another equal move exists', () => {
+    expect(chooseReply(result, () => 0, (uci) => uci === 'a1a2')?.uci).toBe('a1b1')
+  })
+  it('still plays an ending move when every equal move ends the game', () => {
+    expect(chooseReply(result, () => 0, () => true)?.uci).toBe('a1a2')
+  })
+  it('never trades a better outcome for staying open', () => {
+    const mixed = tb([
+      { uci: 'e8e7', category: 'win' },
+      { uci: 'e8d8', category: 'loss' },
+    ])
+    expect(chooseReply(mixed, () => 0, (uci) => uci === 'e8d8')?.uci).toBe('e8d8')
+  })
+})
+
+describe('endsGame', () => {
+  it('detects stalemate and checkmate', () => {
+    expect(endsGame('7k/5Q2/8/8/8/8/8/K7 w - - 0 1', 'f7g6')).toBe(true)
+    expect(endsGame('k7/8/1K6/8/8/8/8/7Q w - - 0 1', 'h1h8')).toBe(true)
+    expect(endsGame('k7/8/1K6/8/8/8/8/7Q w - - 0 1', 'h1h3')).toBe(false)
   })
 })
 
