@@ -36,6 +36,12 @@ interface TrackedPiece {
   id: number
   square: string
   piece: NonNullable<BoardState['pieces'][string]>
+  still: boolean
+}
+
+interface StillMove {
+  from: string
+  to: string
 }
 
 interface TrackedPieces {
@@ -56,7 +62,13 @@ function piecesKey(pieces: BoardState['pieces']): string {
     .join(',')
 }
 
-function trackPieces(previous: TrackedPieces, pieces: BoardState['pieces'], key: string, animate: boolean): TrackedPieces {
+function trackPieces(
+  previous: TrackedPieces,
+  pieces: BoardState['pieces'],
+  key: string,
+  animate: boolean,
+  still: StillMove[],
+): TrackedPieces {
   const used = new Set<number>()
   const bySquare = new Map(previous.items.map((item) => [item.square, item]))
   const next: TrackedPiece[] = []
@@ -66,7 +78,7 @@ function trackPieces(previous: TrackedPieces, pieces: BoardState['pieces'], key:
     const old = bySquare.get(square)
     if (old && old.piece.type === piece.type && old.piece.color === piece.color) {
       used.add(old.id)
-      next.push(old.piece === piece ? old : { ...old, piece })
+      next.push({ ...old, piece, still: false })
     } else {
       unmatched.push([square, piece])
     }
@@ -84,9 +96,9 @@ function trackPieces(previous: TrackedPieces, pieces: BoardState['pieces'], key:
     if (best >= 0) {
       const [match] = leftover.splice(best, 1)
       moved++
-      next.push({ id: match.id, square, piece })
+      next.push({ id: match.id, square, piece, still: still.some((m) => m.from === match.square && m.to === square) })
     } else {
-      next.push({ id: nextId++, square, piece })
+      next.push({ id: nextId++, square, piece, still: false })
     }
   }
   return { key, items: next, nextId, animate: animate && moved > 0 && moved <= 2 }
@@ -260,12 +272,17 @@ export default function Board({
   }, [pending, boardState.pieces])
 
   const displayKey = piecesKey(displayPieces)
+  const stillMoves: StillMove[] = []
+  if (pending && !pending.slide) {
+    stillMoves.push({ from: pending.from, to: pending.to })
+    if (pending.rook) stillMoves.push({ from: pending.rook.from, to: pending.rook.to })
+  }
   const [tracked, setTracked] = useState<TrackedPieces>(() =>
-    trackPieces({ key: '', items: [], nextId: 1, animate: false }, displayPieces, displayKey, false),
+    trackPieces({ key: '', items: [], nextId: 1, animate: false }, displayPieces, displayKey, false, []),
   )
   const trackedNow = tracked.key === displayKey
     ? tracked
-    : trackPieces(tracked, displayPieces, displayKey, animateLastMove && !(pending && !pending.slide))
+    : trackPieces(tracked, displayPieces, displayKey, animateLastMove, stillMoves)
   if (trackedNow !== tracked) setTracked(trackedNow)
 
   const isPromotionMove = (from: string, to: string): 'w' | 'b' | null => {
@@ -456,7 +473,7 @@ export default function Board({
                 left={files.indexOf(item.square[0]) * squareSize}
                 top={ranks.indexOf(item.square[1]) * squareSize}
                 size={squareSize}
-                animate={trackedNow.animate}
+                animate={trackedNow.animate && !item.still}
                 hidden={isDragging && dragFrom === item.square}
               />
             ))}
