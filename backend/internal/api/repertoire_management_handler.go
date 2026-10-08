@@ -177,6 +177,9 @@ func (h *Handler) pruneOrphanEvalsOnce() {
 		byID[rep.ID] = rep
 	}
 	for _, source := range sources {
+		if source.PGN == "" {
+			continue
+		}
 		var cfg repertoire.Config
 		if err := json.Unmarshal(source.Config, &cfg); err != nil {
 			log.Printf("eval prune: skipped, invalid config for %q: %v", source.ID, err)

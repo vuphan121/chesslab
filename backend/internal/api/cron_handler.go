@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"crypto/subtle"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/chesslab/backend/internal/db"
 	"github.com/chesslab/backend/internal/evalprecompute"
+	"github.com/chesslab/backend/internal/repertoire"
 )
 
 type refreshResultJSON struct {
@@ -57,7 +59,28 @@ func (h *Handler) RefreshAllRepertoires(w http.ResponseWriter, r *http.Request) 
 		Failed:    []refreshResultJSON{},
 	}
 
-	all := h.repertoires.List()
+	type refreshTarget struct{ ID, Name string }
+	var all []refreshTarget
+	loaded := map[string]bool{}
+	for _, rep := range h.repertoires.List() {
+		all = append(all, refreshTarget{ID: rep.ID, Name: rep.Name})
+		loaded[rep.ID] = true
+	}
+	sources, err := h.db.LoadRepertoireSources(ctx)
+	if err != nil {
+		log.Printf("cron: could not list pending repertoires: %v", err)
+	}
+	for _, source := range sources {
+		if loaded[source.ID] || source.PGN != "" {
+			continue
+		}
+		var cfg repertoire.Config
+		if err := json.Unmarshal(source.Config, &cfg); err != nil {
+			resp.Failed = append(resp.Failed, refreshResultJSON{ID: source.ID, Reason: "invalid saved configuration: " + err.Error()})
+			continue
+		}
+		all = append(all, refreshTarget{ID: source.ID, Name: cfg.Name})
+	}
 	log.Printf("cron: refreshing %d repertoire(s)", len(all))
 	for i, rep := range all {
 		if i > 0 {

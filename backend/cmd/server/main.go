@@ -176,6 +176,10 @@ func loadManagedRepertoires(dbStore *db.Store, store *repertoire.Store) {
 		return
 	}
 	for _, source := range sources {
+		if source.PGN == "" {
+			log.Printf("repertoire: managed %q is pending its first refresh", source.ID)
+			continue
+		}
 		var cfg repertoire.Config
 		if err := json.Unmarshal(source.Config, &cfg); err != nil {
 			log.Printf("repertoire: skipping managed %q due to invalid config (%v)", source.ID, err)
