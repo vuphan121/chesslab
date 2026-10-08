@@ -778,7 +778,7 @@ export function useTrainerSession() {
     }
     const target = Math.max(0, (viewIndex ?? last) - 1)
     if (target !== (viewIndex ?? last)) playForIndex(target)
-    setViewIndex(target)
+    setViewIndex(target >= last ? null : target)
   }, [viewIndex, playForIndex, activeBranch])
 
   const navForward = useCallback(() => {
@@ -793,8 +793,12 @@ export function useTrainerSession() {
     }
     if (viewIndex === null) return
     const last = runSnapshotsRef.current.length - 1
+    if (viewIndex >= last) {
+      setViewIndex(null)
+      return
+    }
     const next = viewIndex + 1
-    playForIndex(Math.min(next, last))
+    playForIndex(next)
     setViewIndex(next >= last ? null : next)
   }, [viewIndex, playForIndex, activeBranch])
 
