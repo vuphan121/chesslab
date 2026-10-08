@@ -16,7 +16,9 @@ function label(score: number, mate: number): string {
 export default function EvalBar({ score, mate, height, flipped = false, hasEval = true, horizontal = false }: Props) {
   let whitePct: number
   if (mate !== 0) {
-    whitePct = mate > 0 ? 97 : 3
+    whitePct = mate > 0 ? 100 : 0
+  } else if (Math.abs(score) >= 10000) {
+    whitePct = score > 0 ? 100 : 0
   } else {
     whitePct = Math.min(97, Math.max(3, 50 + 50 * Math.tanh(score / 400)))
   }
