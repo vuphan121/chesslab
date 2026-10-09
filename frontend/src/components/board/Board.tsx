@@ -13,7 +13,7 @@ const heldPieceImages: HTMLImageElement[] = []
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1']
 
-const ANNOTATION_COLOR = 'rgba(255, 152, 0, 0.8)'
+const ANNOTATION_COLOR = 'rgba(255, 170, 0, 0.8)'
 const USER_MOVE_SLIDE_MS = 140
 const PENDING_MAX_MS = 3000
 
