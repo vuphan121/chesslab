@@ -19,7 +19,6 @@ import { playMoveSound } from '@/lib/sound'
 import { judgeMove, splitUci } from '@/lib/puzzle/judge'
 import { toBoardState, type PuzzleStatus } from '@/hooks/usePuzzleSession'
 
-const OPPONENT_MOVE_DELAY_MS = 450
 const OPPONENT_REPLY_DELAY_MS = 350
 
 const isFinished = (status: PuzzleStatus): boolean => status === 'solved' || status === 'failed'
@@ -186,7 +185,7 @@ export function useWoodpeckerSession() {
       pausedRef.current = false
       setPaused(false)
       game.resetTo(p.fen)
-      setFlipped(p.fen.split(' ')[1] === 'w')
+      setFlipped(p.fen.split(' ')[1] === 'b')
       setPuzzle(p)
       setError(null)
       setSelected(null)
@@ -194,16 +193,13 @@ export function useWoodpeckerSession() {
       setFeedback(null)
       commit()
       markTip()
-      setStatusBoth('opponent')
-      scheduleOpponent(OPPONENT_MOVE_DELAY_MS, () => {
-        setStatusBoth('playing')
-        if (record) {
-          clockStartedRef.current = true
-          resumeClock()
-        }
-      })
+      setStatusBoth('playing')
+      if (record) {
+        clockStartedRef.current = true
+        resumeClock()
+      }
     },
-    [clearTimer, commit, game, markTip, resumeClock, scheduleOpponent, setStatusBoth],
+    [clearTimer, commit, game, markTip, resumeClock, setStatusBoth],
   )
 
   const advance = useCallback(async () => {
@@ -279,10 +275,19 @@ export function useWoodpeckerSession() {
         finish('solved')
         return
       }
+      if (indexRef.current === movesRef.current.length - 1) {
+        stopClock()
+        setStatusBoth('opponent')
+        scheduleOpponent(OPPONENT_REPLY_DELAY_MS, () => {
+          setStatusBoth('solved')
+          finish('solved')
+        })
+        return
+      }
       setStatusBoth('opponent')
       scheduleOpponent(OPPONENT_REPLY_DELAY_MS, () => setStatusBoth('playing'))
     },
-    [game, commit, finish, playUci, scheduleOpponent, setStatusBoth],
+    [game, commit, finish, stopClock, playUci, scheduleOpponent, setStatusBoth],
   )
 
   const giveUp = useCallback(() => {
@@ -366,7 +371,7 @@ export function useWoodpeckerSession() {
     !!gameState && live && !!currentNodeId && (flatten(gameState.moveTree).get(currentNodeId)?.node.children?.length ?? 0) > 0
 
   const boardState = gameState ? toBoardState(gameState, selected) : null
-  const userColor: Color | null = puzzle ? (puzzle.fen.split(' ')[1] === 'w' ? 'b' : 'w') : null
+  const userColor: Color | null = puzzle ? (puzzle.fen.split(' ')[1] === 'w' ? 'w' : 'b') : null
 
   return {
     progress, puzzle, status, error, boardState, flipped, hintUci, userColor, feedback, paused,
