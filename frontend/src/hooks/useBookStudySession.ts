@@ -706,6 +706,8 @@ export function useBookStudySession() {
     toggleFlipped,
     analysisEnabled,
     analysis: analysisFen === currentFen ? analysis : null,
+    barAnalysis: analysis,
+    analysisIsCurrent: analysisFen === currentFen,
     analysisLoading,
     analysisError,
     toggleAnalysis,

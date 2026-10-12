@@ -26,7 +26,7 @@ const MATERIAL_GAP = 8
 export default function BookStudyPage() {
   const {
     phase, book, loadError, loading, flatItems, current, boardState,
-    busy, moveError, flipped, toggleFlipped, analysisEnabled, analysis, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
+    busy, moveError, flipped, toggleFlipped, analysisEnabled, analysis, barAnalysis, analysisIsCurrent, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
     stepBack, stepForward, loadStart, goToIndex, goToMove, selectSquare,
     move, legalMovesFor, restart,
     moveEvals, savedLine, savingLine, saveNote, deleteMove, saveCurrentLine, restoreSavedLine,
@@ -116,8 +116,8 @@ export default function BookStudyPage() {
             <div style={{ display: 'flex', gap: MATERIAL_GAP, alignItems: 'flex-start' }}>
               <Board boardState={boardState} onSquareClick={selectSquare} onMove={move} legalMovesFor={legalMovesFor} squareSize={squareSize} flipped={flipped} analysisMoves={analysisEnabled ? analysisMoves : []} />
               <MaterialCorners pieces={boardState.pieces} flipped={flipped} height={boardSize} />
-              <div style={{ width: 22, opacity: analysisEnabled ? 1 : 0, transition: 'opacity 160ms ease', pointerEvents: 'none' }}>
-                <EvalBar score={analysis?.score ?? 0} mate={analysis?.mate ?? 0} height={boardSize} flipped={flipped} hasEval={analysisEnabled && (!!analysis?.depth || !!analysis?.tablebaseCategory)} />
+              <div style={{ width: 22, opacity: analysisEnabled ? (analysisIsCurrent ? 1 : 0.45) : 0, transition: 'opacity 160ms ease', pointerEvents: 'none' }}>
+                <EvalBar score={barAnalysis?.score ?? 0} mate={barAnalysis?.mate ?? 0} height={boardSize} flipped={flipped} hasEval={analysisEnabled && (!!barAnalysis?.depth || !!barAnalysis?.tablebaseCategory)} />
               </div>
             </div>
             <div style={{ width: boardSize, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
