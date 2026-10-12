@@ -265,7 +265,6 @@ export function useWoodpeckerSession() {
         setFeedback({ kind: 'incorrect' })
         setHintUci(expected)
         missedRef.current = true
-        finish('mistake')
         return
       }
       playUci(verdict.uci)
@@ -276,6 +275,7 @@ export function useWoodpeckerSession() {
         if (missedRef.current) {
           setFeedback(null)
           setStatusBoth('failed')
+          finish('mistake')
         } else {
           setStatusBoth('solved')
           finish('solved')
@@ -302,7 +302,7 @@ export function useWoodpeckerSession() {
     setStatusBoth('failed')
     setSelected(null)
     setHintUci(movesRef.current[indexRef.current] ?? null)
-    finish('gave_up')
+    finish(missedRef.current ? 'mistake' : 'gave_up')
   }, [finish, setStatusBoth])
 
   const selectSquare = useCallback(
