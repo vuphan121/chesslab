@@ -75,6 +75,10 @@ func NewRouter(h *Handler) http.Handler {
 		r.Post("/api/puzzles/retry-queue", h.AddPuzzleRetry)
 		r.Delete("/api/puzzles/retry-queue/{puzzleId}", h.RemovePuzzleRetry)
 
+		r.Get("/api/woodpecker/state", h.GetWoodpeckerState)
+		r.Get("/api/woodpecker/puzzles/{number}", h.GetWoodpeckerPuzzle)
+		r.Post("/api/woodpecker/attempts", h.SubmitWoodpeckerAttempt)
+
 		r.Get("/api/user-settings", h.GetUserSettings)
 		r.Put("/api/user-settings", h.SaveUserSettings)
 

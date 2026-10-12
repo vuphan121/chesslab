@@ -393,3 +393,22 @@ CREATE TABLE IF NOT EXISTS line_history (
 );
 
 ALTER TABLE line_history ADD COLUMN IF NOT EXISTS estimated BOOLEAN NOT NULL DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS woodpecker_attempts (
+    id BIGSERIAL PRIMARY KEY,
+    username TEXT NOT NULL CONSTRAINT woodpecker_attempts_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    operation_id TEXT NOT NULL,
+    cycle INT NOT NULL,
+    puzzle_number INT NOT NULL,
+    solved BOOLEAN NOT NULL,
+    outcome TEXT NOT NULL DEFAULT '',
+    duration_ms INT NOT NULL,
+    played_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (username, operation_id)
+);
+
+ALTER TABLE woodpecker_attempts ADD COLUMN IF NOT EXISTS outcome TEXT NOT NULL DEFAULT '';
+
+CREATE INDEX IF NOT EXISTS woodpecker_attempts_cycle_idx
+    ON woodpecker_attempts (username, cycle, puzzle_number);

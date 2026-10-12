@@ -744,3 +744,39 @@ export const saveUserSettings = async (settings: UserSettings): Promise<UserSett
   await writeCache('user-settings', saved)
   return saved
 }
+
+export interface WoodpeckerState {
+  cycle: number
+  next: number
+  done: number
+  solved: number
+  total: number
+}
+
+export interface WoodpeckerPuzzle {
+  number: number
+  fen: string
+  moves: string
+}
+
+export type WoodpeckerOutcome = 'solved' | 'mistake' | 'gave_up'
+
+export interface WoodpeckerAttempt {
+  operationId: string
+  cycle: number
+  puzzleNumber: number
+  solved: boolean
+  outcome: WoodpeckerOutcome
+  durationMs: number
+}
+
+export const getWoodpeckerState = (): Promise<WoodpeckerState> => request('/api/woodpecker/state')
+
+export const getWoodpeckerPuzzle = (number: number): Promise<WoodpeckerPuzzle> => request(`/api/woodpecker/puzzles/${number}`)
+
+export const recordWoodpeckerAttempt = (attempt: WoodpeckerAttempt): Promise<{ ok: boolean }> =>
+  request('/api/woodpecker/attempts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(attempt),
+  })
