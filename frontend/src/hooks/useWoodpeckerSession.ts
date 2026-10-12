@@ -48,6 +48,7 @@ export function useWoodpeckerSession() {
   const movesRef = useRef<string[]>([])
   const indexRef = useRef(0)
   const submittedRef = useRef(false)
+  const missedRef = useRef(false)
   const operationRef = useRef('')
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const statusRef = useRef<PuzzleStatus>('loading')
@@ -178,6 +179,7 @@ export function useWoodpeckerSession() {
       movesRef.current = p.moves.split(' ').filter(Boolean)
       indexRef.current = 0
       submittedRef.current = !record
+      missedRef.current = false
       operationRef.current = newOperationId()
       elapsedRef.current = 0
       runningSinceRef.current = null
@@ -262,7 +264,7 @@ export function useWoodpeckerSession() {
       if (verdict.kind === 'wrong') {
         setFeedback({ kind: 'incorrect' })
         setHintUci(expected)
-        setStatusBoth('failed')
+        missedRef.current = true
         finish('mistake')
         return
       }
@@ -270,18 +272,23 @@ export function useWoodpeckerSession() {
       setFeedback({ kind: 'correct' })
       setHintUci(null)
       indexRef.current += 1
+      const complete = () => {
+        if (missedRef.current) {
+          setFeedback(null)
+          setStatusBoth('failed')
+        } else {
+          setStatusBoth('solved')
+          finish('solved')
+        }
+      }
       if (verdict.mate || indexRef.current >= movesRef.current.length) {
-        setStatusBoth('solved')
-        finish('solved')
+        complete()
         return
       }
       if (indexRef.current === movesRef.current.length - 1) {
         stopClock()
         setStatusBoth('opponent')
-        scheduleOpponent(OPPONENT_REPLY_DELAY_MS, () => {
-          setStatusBoth('solved')
-          finish('solved')
-        })
+        scheduleOpponent(OPPONENT_REPLY_DELAY_MS, complete)
         return
       }
       setStatusBoth('opponent')
