@@ -87,6 +87,13 @@ func main() {
 		} else {
 			log.Printf("db: user %q seeded/updated from AUTH_USERNAME/AUTH_PASSWORD", authCfg.Username)
 		}
+		for _, u := range extraUsers() {
+			if err := dbStore.SeedUser(ctx, u[0], u[1]); err != nil {
+				log.Printf("db: failed to seed extra user %q (%v)", u[0], err)
+			} else {
+				log.Printf("db: extra user %q seeded/updated from EXTRA_USERS", u[0])
+			}
+		}
 		cancel()
 	}
 
@@ -247,4 +254,15 @@ func newAuthConfig() auth.Config {
 	}
 
 	return auth.Config{Username: username, Password: password, JWTSecret: []byte(secret)}
+}
+
+func extraUsers() [][2]string {
+	var users [][2]string
+	for _, entry := range strings.Split(os.Getenv("EXTRA_USERS"), ",") {
+		name, pass, ok := strings.Cut(strings.TrimSpace(entry), ":")
+		if ok && name != "" && pass != "" {
+			users = append(users, [2]string{name, pass})
+		}
+	}
+	return users
 }
