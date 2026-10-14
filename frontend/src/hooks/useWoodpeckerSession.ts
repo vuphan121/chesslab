@@ -49,6 +49,7 @@ export function useWoodpeckerSession() {
   const indexRef = useRef(0)
   const submittedRef = useRef(false)
   const missedRef = useRef(false)
+  const branchedRef = useRef(false)
   const operationRef = useRef('')
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const statusRef = useRef<PuzzleStatus>('loading')
@@ -186,6 +187,7 @@ export function useWoodpeckerSession() {
       indexRef.current = 0
       submittedRef.current = !record
       missedRef.current = false
+      branchedRef.current = false
       operationRef.current = newOperationId()
       elapsedRef.current = 0
       runningSinceRef.current = null
@@ -267,13 +269,14 @@ export function useWoodpeckerSession() {
       let verdict = judgeMove(game.currentFen, expected, from, to, promotion)
       setSelected(null)
       if (verdict.kind === 'illegal') return
-      if (verdict.kind === 'wrong') {
+      if (verdict.kind === 'wrong' && !branchedRef.current) {
         const played = verdict.uci
         const alt = puzzleRef.current?.alternatives?.find(
           (a) => a.at === indexRef.current && a.moves.split(' ')[0] === played,
         )
         if (alt) {
           movesRef.current = [...movesRef.current.slice(0, alt.at), ...alt.moves.split(' ').filter(Boolean)]
+          branchedRef.current = true
           verdict = { kind: 'correct', uci: played, mate: false }
         }
       }
