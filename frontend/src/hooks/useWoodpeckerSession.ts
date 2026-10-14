@@ -81,17 +81,23 @@ export function useWoodpeckerSession() {
 
   const resumeClock = useCallback(() => {
     if (!clockStartedRef.current || pausedRef.current || submittedRef.current) return
-    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+    if (typeof document !== 'undefined' && (document.visibilityState !== 'visible' || !document.hasFocus())) return
     if (runningSinceRef.current === null) runningSinceRef.current = Date.now()
   }, [])
 
   useEffect(() => {
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible') resumeClock()
+    const sync = () => {
+      if (document.visibilityState === 'visible' && document.hasFocus()) resumeClock()
       else stopClock()
     }
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => document.removeEventListener('visibilitychange', onVisibility)
+    document.addEventListener('visibilitychange', sync)
+    window.addEventListener('focus', sync)
+    window.addEventListener('blur', sync)
+    return () => {
+      document.removeEventListener('visibilitychange', sync)
+      window.removeEventListener('focus', sync)
+      window.removeEventListener('blur', sync)
+    }
   }, [resumeClock, stopClock])
 
   const togglePause = useCallback(() => {
