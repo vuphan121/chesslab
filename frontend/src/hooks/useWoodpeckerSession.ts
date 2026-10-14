@@ -264,9 +264,19 @@ export function useWoodpeckerSession() {
       }
       const expected = movesRef.current[indexRef.current]
       if (!expected) return
-      const verdict = judgeMove(game.currentFen, expected, from, to, promotion)
+      let verdict = judgeMove(game.currentFen, expected, from, to, promotion)
       setSelected(null)
       if (verdict.kind === 'illegal') return
+      if (verdict.kind === 'wrong') {
+        const played = verdict.uci
+        const alt = puzzleRef.current?.alternatives?.find(
+          (a) => a.at === indexRef.current && a.moves.split(' ')[0] === played,
+        )
+        if (alt) {
+          movesRef.current = [...movesRef.current.slice(0, alt.at), ...alt.moves.split(' ').filter(Boolean)]
+          verdict = { kind: 'correct', uci: played, mate: false }
+        }
+      }
       if (verdict.kind === 'wrong') {
         setFeedback({ kind: 'incorrect' })
         setHintUci(expected)

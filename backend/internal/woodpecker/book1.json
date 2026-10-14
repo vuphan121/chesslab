@@ -1169,7 +1169,22 @@
    "g1f1",
    "h2f2"
   ],
-  "source": "https://lichess.org/study/4xLfA0En/fqN0SDLZ"
+  "source": "https://lichess.org/study/4xLfA0En/fqN0SDLZ",
+  "alternatives": [
+   {
+    "at": 8,
+    "uci": [
+     "b2f2",
+     "g1h1",
+     "f2h2"
+    ],
+    "san": [
+     "Qf2+",
+     "Kh1",
+     "Qh2#"
+    ]
+   }
+  ]
  },
  {
   "n": 63,
@@ -1233,7 +1248,22 @@
    "b8d8",
    "c6b7"
   ],
-  "source": "https://lichess.org/study/KicQp8vU/8T4S32Tw"
+  "source": "https://lichess.org/study/KicQp8vU/8T4S32Tw",
+  "alternatives": [
+   {
+    "at": 0,
+    "uci": [
+     "c6b7",
+     "b8b7",
+     "b2e5"
+    ],
+    "san": [
+     "Qxb7",
+     "Rxb7",
+     "Bxe5"
+    ]
+   }
+  ]
  },
  {
   "n": 67,
@@ -1473,7 +1503,26 @@
    "f1e2",
    "c4d3"
   ],
-  "source": "https://lichess.org/study/KicQp8vU/jYXk5NiR"
+  "source": "https://lichess.org/study/KicQp8vU/jYXk5NiR",
+  "alternatives": [
+   {
+    "at": 2,
+    "uci": [
+     "d8d3",
+     "e3d3",
+     "e6c4",
+     "f1e2",
+     "c4d3"
+    ],
+    "san": [
+     "Rxd3",
+     "Rxd3",
+     "Bxc4",
+     "Ke2",
+     "Bxd3+"
+    ]
+   }
+  ]
  },
  {
   "n": 80,

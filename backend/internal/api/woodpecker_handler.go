@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -25,6 +26,13 @@ type woodpeckerPuzzleResponse struct {
 	Number int    `json:"number"`
 	FEN    string `json:"fen"`
 	Moves  string `json:"moves"`
+
+	Alternatives []woodpeckerAlternative `json:"alternatives,omitempty"`
+}
+
+type woodpeckerAlternative struct {
+	At    int    `json:"at"`
+	Moves string `json:"moves"`
 }
 
 type woodpeckerAttemptRequest struct {
@@ -83,7 +91,11 @@ func (h *Handler) GetWoodpeckerPuzzle(w http.ResponseWriter, r *http.Request) {
 		}
 		moves += m
 	}
-	respondJSON(w, http.StatusOK, woodpeckerPuzzleResponse{Number: p.Number, FEN: p.FEN, Moves: moves})
+	resp := woodpeckerPuzzleResponse{Number: p.Number, FEN: p.FEN, Moves: moves}
+	for _, a := range p.Alternatives {
+		resp.Alternatives = append(resp.Alternatives, woodpeckerAlternative{At: a.At, Moves: strings.Join(a.UCI, " ")})
+	}
+	respondJSON(w, http.StatusOK, resp)
 }
 
 func (h *Handler) SubmitWoodpeckerAttempt(w http.ResponseWriter, r *http.Request) {

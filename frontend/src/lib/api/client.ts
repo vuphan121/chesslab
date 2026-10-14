@@ -757,6 +757,7 @@ export interface WoodpeckerPuzzle {
   number: number
   fen: string
   moves: string
+  alternatives?: { at: number; moves: string }[]
 }
 
 export type WoodpeckerOutcome = 'solved' | 'mistake' | 'gave_up'

@@ -9,13 +9,19 @@ import (
 //go:embed book1.json
 var book1JSON []byte
 
+type Alternative struct {
+	At  int      `json:"at"`
+	UCI []string `json:"uci"`
+}
+
 type Puzzle struct {
-	Number       int      `json:"n"`
-	FEN          string   `json:"fen"`
-	SolutionUCI  []string `json:"solutionUci"`
-	SolutionSAN  []string `json:"solutionSan"`
-	Source       string   `json:"source"`
-	SolutionFrom string   `json:"solutionSource,omitempty"`
+	Number       int           `json:"n"`
+	FEN          string        `json:"fen"`
+	SolutionUCI  []string      `json:"solutionUci"`
+	SolutionSAN  []string      `json:"solutionSan"`
+	Source       string        `json:"source"`
+	SolutionFrom string        `json:"solutionSource,omitempty"`
+	Alternatives []Alternative `json:"alternatives,omitempty"`
 }
 
 var puzzles = mustLoad()
