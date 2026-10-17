@@ -272,7 +272,7 @@ export function useWoodpeckerSession() {
       if (game.repetitionsAfter(from, to, promotion) >= 3) {
         verdict = { kind: 'wrong', uci: verdict.uci }
       }
-      if (verdict.kind === 'wrong' && !branchedRef.current && game.repetitionsAfter(from, to, promotion) < 3) {
+      if (verdict.kind === 'wrong' && !branchedRef.current && !missedRef.current && game.repetitionsAfter(from, to, promotion) < 3) {
         const played = verdict.uci
         const alt = puzzleRef.current?.alternatives?.find(
           (a) => a.at === indexRef.current && a.moves.split(' ')[0] === played,
