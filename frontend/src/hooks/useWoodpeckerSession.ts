@@ -30,7 +30,7 @@ function newOperationId(): string {
 }
 
 export function useWoodpeckerSession() {
-  const [game] = useState(() => new LocalGame())
+  const [game] = useState(() => new LocalGame(undefined, false))
   const [progress, setProgress] = useState<WoodpeckerState | null>(null)
   const [puzzle, setPuzzle] = useState<WoodpeckerPuzzle | null>(null)
   const [status, setStatus] = useState<PuzzleStatus>('loading')
@@ -269,7 +269,10 @@ export function useWoodpeckerSession() {
       let verdict = judgeMove(game.currentFen, expected, from, to, promotion)
       setSelected(null)
       if (verdict.kind === 'illegal') return
-      if (verdict.kind === 'wrong' && !branchedRef.current) {
+      if (game.repetitionsAfter(from, to, promotion) >= 3) {
+        verdict = { kind: 'wrong', uci: verdict.uci }
+      }
+      if (verdict.kind === 'wrong' && !branchedRef.current && game.repetitionsAfter(from, to, promotion) < 3) {
         const played = verdict.uci
         const alt = puzzleRef.current?.alternatives?.find(
           (a) => a.at === indexRef.current && a.moves.split(' ')[0] === played,

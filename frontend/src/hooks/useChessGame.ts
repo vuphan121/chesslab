@@ -41,7 +41,7 @@ function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState 
 }
 
 export function useChessGame() {
-  const [game] = useState(() => new LocalGame())
+  const [game] = useState(() => new LocalGame(undefined, false))
   const [gs, setGs] = useState<GameState>(() => game.snapshot())
   const [selected, setSelected] = useState<Square | null>(null)
   const [explorer, setExplorer] = useState<Explorer | null>(null)

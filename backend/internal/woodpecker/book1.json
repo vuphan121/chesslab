@@ -40,13 +40,23 @@
     "uci": [
      "d1g4",
      "f8g7",
-     "d5d6"
+     "d5d6",
+     "g2d5",
+     "c4d5",
+     "c8e6",
+     "g4e6",
+     "g8f8",
+     "e6e7"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "d1g4"
+     "d1g4",
+     "f8g7",
+     "g4e6",
+     "g8f8",
+     "e6e7"
     ]
    }
   ]
@@ -90,7 +100,11 @@
    {
     "at": 2,
     "uci": [
-     "d2d1"
+     "d2d1",
+     "b1d1",
+     "e4h1",
+     "e1e2",
+     "h1d1"
     ]
    }
   ]
@@ -334,19 +348,9 @@
      "c6e5",
      "d4e5",
      "d6c6",
-     "f7d5"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
      "f7d5",
-     "d6e7",
-     "d5f7",
-     "e7d6",
-     "e4e5",
-     "c6e5",
-     "d4e5"
+     "c6b6",
+     "d5b5"
     ]
    },
    {
@@ -358,19 +362,13 @@
      "d6e7",
      "a3b4",
      "a5b4",
-     "d5f7"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "f7f5",
-     "d6e7",
-     "f5f7",
+     "d5f7",
      "e7d6",
      "e4e5",
-     "c6e5",
-     "d4e5"
+     "d6c6",
+     "f7d5",
+     "c6b6",
+     "d5b5"
     ]
    },
    {
@@ -378,31 +376,9 @@
     "uci": [
      "c1f4",
      "g5f4",
-     "f7d5"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "d5f7"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "h4g5"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "e1d1"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "c1e3"
+     "f7d5",
+     "e5f6",
+     "d5g5"
     ]
    }
   ]
@@ -453,17 +429,7 @@
    "b3e3",
    "f5c2"
   ],
-  "source": "https://lichess.org/study/4xLfA0En/INBryy4v",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "f5c5",
-     "c1b1",
-     "c5f5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/4xLfA0En/INBryy4v"
  },
  {
   "n": 20,
@@ -504,17 +470,9 @@
      "g5f4",
      "e4e5",
      "c6e5",
-     "f7d5"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
      "f7d5",
      "d6e7",
-     "d5f7",
-     "e7d6",
-     "e4e5"
+     "d5e5"
     ]
    }
   ]
@@ -589,21 +547,7 @@
    "e7f8",
    "c8f8"
   ],
-  "source": "https://lichess.org/study/4xLfA0En/BunLRTy2",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "e2g4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "e2a6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/4xLfA0En/BunLRTy2"
  },
  {
   "n": 24,
@@ -670,12 +614,6 @@
     "uci": [
      "g5e6"
     ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c2d1"
-    ]
    }
   ]
  },
@@ -736,7 +674,11 @@
      "g2h2",
      "g6h6",
      "e2h5",
-     "h6h5"
+     "h6h5",
+     "h2g3",
+     "h5g4",
+     "g3h2",
+     "a8h8"
     ]
    }
   ]
@@ -857,7 +799,7 @@
      "g4g8",
      "h8g8",
      "h5f6",
-     "g8f7",
+     "g8g7",
      "f6d7"
     ]
    }
@@ -881,19 +823,7 @@
    "f7f8",
    "e8f8"
   ],
-  "source": "https://lichess.org/study/4xLfA0En/YhbETkA1",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "e1e2",
-     "g7g6",
-     "a1e1",
-     "g8g7",
-     "h2h4"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/4xLfA0En/YhbETkA1"
  },
  {
   "n": 35,
@@ -969,25 +899,7 @@
    "e1d2",
    "e5a1"
   ],
-  "source": "https://lichess.org/study/4xLfA0En/JACp56zS",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "d8d5",
-     "e1d2",
-     "h5f3",
-     "c6c4",
-     "f3f2"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "e5b2"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/4xLfA0En/JACp56zS"
  },
  {
   "n": 39,
@@ -1045,8 +957,8 @@
     "at": 0,
     "uci": [
      "e3f4",
-     "f7f6",
-     "g5f6"
+     "c7c6",
+     "d5d6"
     ]
    },
    {
@@ -1120,13 +1032,15 @@
    {
     "at": 4,
     "uci": [
-     "d5c7"
+     "d5c7",
+     "e8e7"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "b3c3"
+     "b3c3",
+     "e8d7"
     ]
    }
   ]
@@ -1151,12 +1065,6 @@
   ],
   "source": "https://lichess.org/study/4xLfA0En/uGSRkCY4",
   "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "f4f5"
-    ]
-   },
    {
     "at": 4,
     "uci": [
@@ -1206,7 +1114,8 @@
    {
     "at": 0,
     "uci": [
-     "c3b5"
+     "c3b5",
+     "a6b5"
     ]
    }
   ]
@@ -1245,19 +1154,7 @@
    "g7f8",
    "h7h8"
   ],
-  "source": "https://lichess.org/study/4xLfA0En/G3V0A8Lq",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "h5g4",
-     "g7h8",
-     "g4h5",
-     "h8g7",
-     "h6f7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/4xLfA0En/G3V0A8Lq"
  },
  {
   "n": 49,
@@ -1516,12 +1413,7 @@
     "uci": [
      "b2f2",
      "g1h1",
-     "f2h2"
-    ],
-    "san": [
-     "Qf2+",
-     "Kh1",
-     "Qh2#"
+     "f2f1"
     ]
    },
    {
@@ -1529,7 +1421,9 @@
     "uci": [
      "b2c2",
      "a3a4",
-     "c2h2"
+     "c2f2",
+     "g1h1",
+     "f2f1"
     ]
    },
    {
@@ -1537,7 +1431,9 @@
     "uci": [
      "b2a2",
      "a3a4",
-     "a2h2"
+     "a2f2",
+     "g1h1",
+     "f2f1"
     ]
    },
    {
@@ -1545,7 +1441,9 @@
     "uci": [
      "b2d2",
      "a3a4",
-     "d2h2"
+     "d2f2",
+     "g1h1",
+     "f2f1"
     ]
    },
    {
@@ -1553,37 +1451,49 @@
     "uci": [
      "b2e2",
      "a3a4",
-     "e2h2"
+     "e2f2",
+     "g1h1",
+     "f2f1"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "g6g5"
+     "g6g5",
+     "a3a4",
+     "h2f2"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "h7h6"
+     "h7h6",
+     "a3a4",
+     "h2f2"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "f7f6"
+     "f7f6",
+     "a3a4",
+     "h2f2"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "a7a5"
+     "a7a5",
+     "a3a4",
+     "h2f2"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "f7f5"
+     "f7f5",
+     "a3a4",
+     "h2f2"
     ]
    }
   ]
@@ -1650,22 +1560,7 @@
    "b8d8",
    "c6b7"
   ],
-  "source": "https://lichess.org/study/KicQp8vU/8T4S32Tw",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "c6b7",
-     "b8b7",
-     "b2e5"
-    ],
-    "san": [
-     "Qxb7",
-     "Rxb7",
-     "Bxe5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KicQp8vU/8T4S32Tw"
  },
  {
   "n": 67,
@@ -1690,13 +1585,17 @@
    {
     "at": 4,
     "uci": [
-     "g3f5"
+     "g3f5",
+     "g6f5",
+     "e6f7"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "g3h5"
+     "g3h5",
+     "g6h5",
+     "e6f7"
     ]
    }
   ]
@@ -1796,31 +1695,41 @@
    {
     "at": 8,
     "uci": [
-     "a2a3"
+     "a2a3",
+     "c5c4",
+     "g4g7"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "b2b3"
+     "b2b3",
+     "c5c4",
+     "g4g7"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "f2f3"
+     "f2f3",
+     "c5c4",
+     "g4g7"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "g2g3"
+     "g2g3",
+     "c5c4",
+     "g4g7"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "h2h3"
+     "h2h3",
+     "c5c4",
+     "g4g7"
     ]
    }
   ]
@@ -1954,50 +1863,9 @@
   "source": "https://lichess.org/study/KicQp8vU/jYXk5NiR",
   "alternatives": [
    {
-    "at": 2,
-    "uci": [
-     "d8d3",
-     "e3d3",
-     "e6c4",
-     "f1e2",
-     "c4d3"
-    ],
-    "san": [
-     "Rxd3",
-     "Rxd3",
-     "Bxc4",
-     "Ke2",
-     "Bxd3+"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c8b7"
-    ]
-   },
-   {
     "at": 4,
     "uci": [
      "d8d3"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "d8d6"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "d8d4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "d8d5"
     ]
    }
   ]
@@ -2020,15 +1888,7 @@
    "h1g1",
    "h3g2"
   ],
-  "source": "https://lichess.org/study/KicQp8vU/p8ZdwbY3",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "a2g2"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KicQp8vU/p8ZdwbY3"
  },
  {
   "n": 81,
@@ -2208,66 +2068,20 @@
     "at": 0,
     "uci": [
      "d7c7",
-     "a5b3",
-     "a8a3",
-     "a1a3",
-     "b4a3",
-     "f2e1",
-     "d3c4",
-     "b3a1",
-     "e4f3"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "d7c6",
-     "a1h1",
-     "b3b2",
-     "f2g3",
-     "b2b1q"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "d7c7",
-     "a1h1",
-     "b3b2",
      "f3e4",
-     "d3e4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "h7h6",
-     "c5c6",
-     "d7c6",
-     "a1c1",
-     "c6b5"
+     "d3e4",
+     "f2e2",
+     "e4g2",
+     "e2d3",
+     "g2d5",
+     "d3d4",
+     "d5f7"
     ]
    },
    {
     "at": 6,
     "uci": [
      "d7c7",
-     "f3e4",
-     "f5e4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d7c6",
-     "g2g4",
-     "f5g4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d7e6",
      "c5c6",
      "b2b1q"
     ]
@@ -2277,15 +2091,15 @@
     "uci": [
      "b2b1r",
      "d1d2",
-     "b1c1"
+     "d7c6"
     ]
    },
    {
     "at": 6,
     "uci": [
      "d7e7",
-     "f2g3",
-     "b2b1q"
+     "d1e1",
+     "b2b1r"
     ]
    }
   ]
@@ -2330,26 +2144,6 @@
   ],
   "source": "https://lichess.org/study/KicQp8vU/GPjVkaib",
   "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "f4f5",
-     "g6g5",
-     "h4g5",
-     "f6g5",
-     "f5f6"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "d2b2",
-     "g8g7",
-     "d5c6",
-     "c7c6",
-     "g4g5"
-    ]
-   },
    {
     "at": 4,
     "uci": [
@@ -2424,39 +2218,7 @@
    "d1g1",
    "f4e3"
   ],
-  "source": "https://lichess.org/study/KicQp8vU/oBC8kDRi",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "f6d4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "g7g6"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "f6h6"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "a8d8"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "g8f8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KicQp8vU/oBC8kDRi"
  },
  {
   "n": 94,
@@ -2496,19 +2258,7 @@
    "c7c8",
    "a8c8"
   ],
-  "source": "https://lichess.org/study/KicQp8vU/RdejpQR3",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "e4e5",
-     "b2d2",
-     "f4f5",
-     "g7g6",
-     "f5f6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KicQp8vU/RdejpQR3"
  },
  {
   "n": 96,
@@ -2588,15 +2338,7 @@
    "f1e1",
    "d6g3"
   ],
-  "source": "https://lichess.org/study/KicQp8vU/cXXbtMyr",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "h4f3"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KicQp8vU/cXXbtMyr"
  },
  {
   "n": 100,
@@ -2674,20 +2416,8 @@
      "b2g2",
      "g1h1",
      "d5e3",
-     "d1d8",
-     "g8h7"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "f7f6",
-     "g5g6",
-     "h2g2",
-     "g6g2",
-     "b2g2",
-     "g1h1",
-     "g2b2"
+     "d1d3",
+     "g2e2"
     ]
    }
   ]
@@ -2854,15 +2584,7 @@
    "g8h7",
    "e8h8"
   ],
-  "source": "https://lichess.org/study/fIfq3LZR/q0D6NyZW",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "a1h8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/fIfq3LZR/q0D6NyZW"
  },
  {
   "n": 111,
@@ -2944,7 +2666,7 @@
     "at": 0,
     "uci": [
      "d7c7",
-     "c3d4",
+     "c3g3",
      "c7d7"
     ]
    },
@@ -3009,7 +2731,7 @@
     "uci": [
      "a4b5",
      "a6b5",
-     "g5e6"
+     "f4e6"
     ]
    },
    {
@@ -3123,13 +2845,9 @@
    {
     "at": 4,
     "uci": [
-     "f2f3"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "h2h4"
+     "h2h4",
+     "c5c4",
+     "e5g5"
     ]
    }
   ]
@@ -3315,25 +3033,11 @@
   "source": "https://lichess.org/study/fIfq3LZR/gHSFx5p9",
   "alternatives": [
    {
-    "at": 6,
-    "uci": [
-     "h2g2",
-     "g1h1",
-     "g2h2",
-     "h1g1",
-     "c2g2"
-    ]
-   },
-   {
     "at": 10,
     "uci": [
+     "g2e2",
+     "e1d1",
      "h2h1"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "g2e2"
     ]
    }
   ]
@@ -3356,59 +3060,7 @@
    "d7c6",
    "b1f5"
   ],
-  "source": "https://lichess.org/study/fIfq3LZR/XwvoDdUu",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "a2a3",
-     "e6g4",
-     "f4f5",
-     "f8h7",
-     "e3e7"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "e3c3",
-     "c8c3",
-     "d2c3",
-     "e6h3",
-     "c3f3"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "e3e5",
-     "e6g4",
-     "b1d3",
-     "d7a4",
-     "e5d5"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "b1c2",
-     "e6h3",
-     "e3e7",
-     "d7c6",
-     "c2b1"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "d2b4",
-     "c8c4",
-     "b4d2",
-     "d7d6",
-     "b1d3"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/fIfq3LZR/XwvoDdUu"
  },
  {
   "n": 130,
@@ -3445,31 +3097,27 @@
    {
     "at": 6,
     "uci": [
-     "g6h7"
+     "g6f6",
+     "h8g8",
+     "f6g7"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "e7h7"
+     "g6h6",
+     "h8g8",
+     "h6g7"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "g6f6"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g6h6"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g6h5"
+     "g6h5",
+     "h8g8",
+     "h5f7",
+     "g8h8",
+     "f7g7"
     ]
    }
   ]
@@ -3618,15 +3266,7 @@
    "g1h2",
    "d8d3"
   ],
-  "source": "https://lichess.org/study/fIfq3LZR/0IMDg4Li",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "f6g4"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/fIfq3LZR/0IMDg4Li"
  },
  {
   "n": 137,
@@ -3680,7 +3320,7 @@
     "at": 6,
     "uci": [
      "b2a1",
-     "c4e5",
+     "d3d2",
      "h1h8"
     ]
    },
@@ -3689,45 +3329,75 @@
     "uci": [
      "b2c1",
      "d3d2",
-     "d1d2"
+     "d1d2",
+     "c4d2",
+     "h1h8"
     ]
    },
    {
     "at": 6,
     "uci": [
      "b2b1",
-     "d3c2",
-     "b3c2"
+     "c4a3",
+     "b1c1",
+     "d3d2",
+     "d1d2",
+     "a3c2",
+     "h1h8"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "b2a1"
+     "b2a1",
+     "d3d2",
+     "h1h8"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "b2c1"
+     "b2c1",
+     "d3d2",
+     "d1d2",
+     "c4c3",
+     "h1h8"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "c2d3"
+     "c2d3",
+     "c4b4",
+     "b2a1",
+     "b4b1",
+     "a1b1",
+     "d6d5",
+     "h1h8"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "d1d3"
+     "d1d3",
+     "c4b4",
+     "b2a1",
+     "b4b1",
+     "a1b1",
+     "d6d5",
+     "h1h8"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "d1c1"
+     "d1c1",
+     "c4b4",
+     "b2a1",
+     "b4b1",
+     "c1b1",
+     "d3d2",
+     "h1h8"
     ]
    }
   ]
@@ -3937,13 +3607,9 @@
    {
     "at": 6,
     "uci": [
-     "f4h2"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "f4g4"
+     "f4h2",
+     "e2e1",
+     "h2f2"
     ]
    }
   ]
@@ -4085,21 +3751,9 @@
     "uci": [
      "c3b5",
      "h6h5",
-     "b5c7",
+     "b2f6",
      "h5g4",
-     "b2f6"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c4d5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "e4d5"
+     "b5c7"
     ]
    }
   ]
@@ -4179,7 +3833,11 @@
    {
     "at": 4,
     "uci": [
-     "c3e4"
+     "c3e4",
+     "c8f5",
+     "e4g5",
+     "e8e2",
+     "h4h8"
     ]
    }
   ]
@@ -4420,17 +4078,7 @@
    "c6d5",
    "g3c7"
   ],
-  "source": "https://lichess.org/study/z5vB3TII/xplMGr4g",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "f7h6",
-     "g8h8",
-     "h6f7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/z5vB3TII/xplMGr4g"
  },
  {
   "n": 173,
@@ -4502,7 +4150,7 @@
      "b2b1",
      "c2c1",
      "b1c1",
-     "d7a4",
+     "d7b5",
      "g1g5"
     ]
    },
@@ -4512,15 +4160,19 @@
      "b2a3",
      "c2c3",
      "a3b2",
-     "c3c2",
-     "b2c2"
+     "c3b3",
+     "b2b3",
+     "d7a4",
+     "b3c3",
+     "a4d1",
+     "g1g5"
     ]
    },
    {
     "at": 4,
     "uci": [
      "c2c3",
-     "a4c6",
+     "a7a6",
      "g1g5"
     ]
    },
@@ -4528,7 +4180,7 @@
     "at": 4,
     "uci": [
      "c2d2",
-     "a4d1",
+     "a7a6",
      "g1g5"
     ]
    },
@@ -4536,7 +4188,7 @@
     "at": 4,
     "uci": [
      "c2b2",
-     "a4b3",
+     "a7a6",
      "g1g5"
     ]
    },
@@ -4544,7 +4196,7 @@
     "at": 4,
     "uci": [
      "c2c1",
-     "a4d1",
+     "a7a6",
      "g1g5"
     ]
    },
@@ -4553,37 +4205,57 @@
     "uci": [
      "c2b1",
      "a4c2",
-     "b1c2"
+     "b1c2",
+     "b7b6",
+     "g1g5"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "a4d4"
+     "a4d4",
+     "a6a5",
+     "g1g5"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "g1g8"
+     "g1g8",
+     "d5d4",
+     "a4d4",
+     "a6a5",
+     "g8g5"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "c2d3"
+     "c2d3",
+     "d5d4",
+     "a4d4",
+     "a6a5",
+     "g1g5"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "c2d2"
+     "c2d2",
+     "d5d4",
+     "a4d4",
+     "a6a5",
+     "g1g5"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "c2c3"
+     "c2c3",
+     "d5d4",
+     "a4d4",
+     "a6a5",
+     "g1g5"
     ]
    }
   ]
@@ -4651,13 +4323,9 @@
    {
     "at": 6,
     "uci": [
-     "e1e8"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "c8f5"
+     "e1e8",
+     "f8f7",
+     "c8e6"
     ]
    }
   ]
@@ -4716,39 +4384,7 @@
    "e7g7",
    "h3h7"
   ],
-  "source": "https://lichess.org/study/z5vB3TII/Gn8Ie9AG",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "a1h1"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "d2c1"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "d2d1"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "a1c1"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "a1e1"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/z5vB3TII/Gn8Ie9AG"
  },
  {
   "n": 182,
@@ -4804,15 +4440,7 @@
    "c8c7",
    "f8d8"
   ],
-  "source": "https://lichess.org/study/z5vB3TII/i2M8cv2u",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "f8e7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/z5vB3TII/i2M8cv2u"
  },
  {
   "n": 185,
@@ -4852,59 +4480,7 @@
    "c7c8",
    "a7a8q"
   ],
-  "source": "https://lichess.org/study/z5vB3TII/N0Lmg5sQ",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "h2h4",
-     "f5f4",
-     "g3f4",
-     "c5a6",
-     "a8a6"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "f3g2",
-     "c5a6",
-     "a8a6",
-     "b8b7",
-     "a6a5"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "h2h3",
-     "d6d5",
-     "a6a7",
-     "b8b7",
-     "a8c8"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "f3f4",
-     "c5d3",
-     "f4f3",
-     "d3e5",
-     "f3g2"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "f3e2",
-     "c5a6",
-     "a8a6",
-     "b8b7",
-     "a6a5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/z5vB3TII/N0Lmg5sQ"
  },
  {
   "n": 187,
@@ -5066,15 +4642,7 @@
    "h8g8",
    "e5c5"
   ],
-  "source": "https://lichess.org/study/z5vB3TII/JDGBRWxY",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "e5d5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/z5vB3TII/JDGBRWxY"
  },
  {
   "n": 195,
@@ -5094,15 +4662,7 @@
    "b8b7",
    "c6a6"
   ],
-  "source": "https://lichess.org/study/z5vB3TII/8km4YSkK",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "e5e7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/z5vB3TII/8km4YSkK"
  },
  {
   "n": 196,
@@ -5140,12 +4700,6 @@
     "at": 2,
     "uci": [
      "e6f7"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "h3h4"
     ]
    }
   ]
@@ -5242,15 +4796,7 @@
    "g8g7",
    "f6h7"
   ],
-  "source": "https://lichess.org/study/k6kRDIK1/nsuNLgAl",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "h3h7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/k6kRDIK1/nsuNLgAl"
  },
  {
   "n": 202,
@@ -5276,8 +4822,8 @@
     "at": 2,
     "uci": [
      "g6d3",
-     "e1a1",
-     "c6d5"
+     "h2h3",
+     "e5e1"
     ]
    }
   ]
@@ -5428,21 +4974,7 @@
    "h8h7",
    "g6f8"
   ],
-  "source": "https://lichess.org/study/k6kRDIK1/X1469bb9",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "e4e5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "f5e6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/k6kRDIK1/X1469bb9"
  },
  {
   "n": 209,
@@ -5543,21 +5075,11 @@
    {
     "at": 0,
     "uci": [
-     "b1a1",
-     "f6d5",
-     "b4c6",
-     "c8c6",
-     "a1a8"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
      "g3d6",
      "d8a5",
      "b4a6",
-     "f6d7",
-     "b1b7"
+     "f6d5",
+     "a6b8"
     ]
    }
   ]
@@ -5655,7 +5177,7 @@
      "e1f1",
      "f6g5",
      "g1f2",
-     "c8c3"
+     "h5h4"
     ]
    },
    {
@@ -5666,26 +5188,6 @@
      "g4f4",
      "f2e2",
      "f4f6"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g3h3",
-     "h1g1",
-     "h3g3"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "f3g3"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "f3g4"
     ]
    }
   ]
@@ -5712,21 +5214,7 @@
    "f5f8",
    "e8f8"
   ],
-  "source": "https://lichess.org/study/k6kRDIK1/UegSFtJZ",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "d3d2",
-     "f4f8",
-     "b5b8",
-     "f8b8",
-     "a2a3",
-     "b4a6",
-     "d2a5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/k6kRDIK1/UegSFtJZ"
  },
  {
   "n": 219,
@@ -5894,10 +5382,10 @@
     "at": 0,
     "uci": [
      "d8e8",
+     "c6e8",
+     "h8e8",
      "e1f2",
-     "c1e3",
-     "f2f1",
-     "g4f3"
+     "c1e3"
     ]
    }
   ]
@@ -5944,21 +5432,7 @@
    "e7d8",
    "d1d2"
   ],
-  "source": "https://lichess.org/study/k6kRDIK1/7hwDHABY",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "c5b6"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "c6b7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/k6kRDIK1/7hwDHABY"
  },
  {
   "n": 229,
@@ -6022,16 +5496,10 @@
     "at": 2,
     "uci": [
      "c3e4",
+     "d6e7",
+     "a2e6",
      "f5f3",
-     "g2f3",
-     "c6c5",
-     "a2e6"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "c3e4"
+     "g2f3"
     ]
    }
   ]
@@ -6174,49 +5642,7 @@
    "g8h8",
    "f6e8"
   ],
-  "source": "https://lichess.org/study/k6kRDIK1/3dwR9oM2",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "g4e3",
-     "g6e7",
-     "d5f3",
-     "c7c6",
-     "e3c4"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "g2g3",
-     "g6e7",
-     "d5a2",
-     "e7c8",
-     "c1h6"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "d5f3",
-     "c7c6",
-     "b5c6",
-     "d8c6",
-     "f3d5"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "b2b4",
-     "g6e7",
-     "d5b3",
-     "e7c8",
-     "c1h6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/k6kRDIK1/3dwR9oM2"
  },
  {
   "n": 238,
@@ -6236,19 +5662,7 @@
    "g7h6",
    "h3d7"
   ],
-  "source": "https://lichess.org/study/k6kRDIK1/G1UApIje",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "a1a7",
-     "g6e7",
-     "f5h6",
-     "g7h6",
-     "d1d7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/k6kRDIK1/G1UApIje"
  },
  {
   "n": 239,
@@ -6299,19 +5713,19 @@
     "uci": [
      "h3h2",
      "f2f1",
-     "h2h1"
+     "h2h1",
+     "f1f2",
+     "h1g2",
+     "f2e3",
+     "g2f3"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "g2g3"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "g2e4"
+     "g2g3",
+     "e3e2",
+     "g3f3"
     ]
    }
   ]
@@ -6330,15 +5744,7 @@
    "f8f7",
    "g4e6"
   ],
-  "source": "https://lichess.org/study/k6kRDIK1/YYU0i5ME",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "d3d8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/k6kRDIK1/YYU0i5ME"
  },
  {
   "n": 242,
@@ -6606,7 +6012,7 @@
      "b3c5",
      "d7c7",
      "g5e7",
-     "f8h7",
+     "f8d7",
      "c5a6"
     ]
    }
@@ -6700,15 +6106,7 @@
    "e8e7",
    "c3d5"
   ],
-  "source": "https://lichess.org/study/L1eiMWmn/Vk86aBHI",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "c1g5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/L1eiMWmn/Vk86aBHI"
  },
  {
   "n": 257,
@@ -6768,15 +6166,7 @@
    "h8g8",
    "h6f4"
   ],
-  "source": "https://lichess.org/study/L1eiMWmn/UG3CWz2w",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "h6g6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/L1eiMWmn/UG3CWz2w"
  },
  {
   "n": 260,
@@ -6888,20 +6278,10 @@
     "at": 0,
     "uci": [
      "g6h5",
-     "d2f4",
-     "d4e5",
-     "f4e5",
-     "e8e5"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "f3d2",
-     "c2d2",
-     "e8e4",
-     "e2e4",
-     "g6e4"
+     "h2h3",
+     "f3g1",
+     "e2e3",
+     "d4e3"
     ]
    }
   ]
@@ -6932,27 +6312,7 @@
    "e6b6",
    "d8b6"
   ],
-  "source": "https://lichess.org/study/L1eiMWmn/UWwjvOXq",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "c3c4",
-     "a4a3",
-     "c4c3",
-     "a3a4",
-     "b7b5",
-     "a4b5",
-     "c3c4"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "a7b6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/L1eiMWmn/UWwjvOXq"
  },
  {
   "n": 266,
@@ -7110,31 +6470,7 @@
    "h1g1",
    "d2f1"
   ],
-  "source": "https://lichess.org/study/L1eiMWmn/uZk52dyL",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "f3h4",
-     "h1g1",
-     "h4f3"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "f3e1",
-     "h1g1",
-     "e1f3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d2f3"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/L1eiMWmn/uZk52dyL"
  },
  {
   "n": 273,
@@ -7174,28 +6510,6 @@
      "h3g5",
      "h1g1",
      "g5f3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "h3f4",
-     "h2g1",
-     "f4h3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "h3f2",
-     "h2g1",
-     "f2h3"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "g5h3"
     ]
    }
   ]
@@ -7316,14 +6630,6 @@
      "d4d5",
      "e6d7",
      "a6c4"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "c5c6",
-     "d5c4",
-     "b6b7"
     ]
    }
   ]
@@ -7554,47 +6860,9 @@
    {
     "at": 4,
     "uci": [
-     "e7e5",
-     "e1d1",
-     "e5d5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "a8b8",
-     "e5e6",
-     "b7g2"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "e7b4",
-     "c1d2",
-     "f7f1"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
      "d4d3",
-     "h6h3",
+     "h1g1",
      "b7g2"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "a8e8",
-     "h6h5",
-     "d4d3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "a8b8"
     ]
    }
   ]
@@ -7654,12 +6922,6 @@
      "c7c6",
      "c4d4"
     ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g4g5"
-    ]
    }
   ]
  },
@@ -7683,8 +6945,8 @@
     "at": 0,
     "uci": [
      "c7d8",
-     "f7e6",
-     "e7e8q"
+     "e4c6",
+     "d8c7"
     ]
    },
    {
@@ -7807,15 +7069,7 @@
    "e7e8",
    "d3g6"
   ],
-  "source": "https://lichess.org/study/L1eiMWmn/H3QgsY81",
-  "alternatives": [
-   {
-    "at": 14,
-    "uci": [
-     "f6h8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/L1eiMWmn/H3QgsY81"
  },
  {
   "n": 296,
@@ -7847,9 +7101,9 @@
     "uci": [
      "g2g4",
      "c5c4",
-     "d3c4",
-     "d4d3",
-     "d2h6"
+     "d2h6",
+     "g7h6",
+     "h3h6"
     ]
    },
    {
@@ -7970,15 +7224,7 @@
    "g1g2",
    "e7f6"
   ],
-  "source": "https://lichess.org/study/L1eiMWmn/NK7U5e8j",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "e6d5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/L1eiMWmn/NK7U5e8j"
  },
  {
   "n": 301,
@@ -8030,9 +7276,9 @@
     "at": 0,
     "uci": [
      "h8h7",
-     "g2f3",
+     "g3g4",
      "c3b4",
-     "a3b4",
+     "g2f3",
      "e1d1"
     ]
    },
@@ -8040,10 +7286,10 @@
     "at": 0,
     "uci": [
      "c3a5",
-     "g2f3",
-     "a5b4",
-     "a3b4",
-     "e1d1"
+     "g3g4",
+     "e1d1",
+     "e3d1",
+     "a5b4"
     ]
    },
    {
@@ -8051,9 +7297,9 @@
     "uci": [
      "h8g8",
      "g2f3",
-     "c3b4",
-     "a3b4",
-     "e1d1"
+     "f7f5",
+     "f3f4",
+     "c3b4"
     ]
    },
    {
@@ -8061,9 +7307,9 @@
     "uci": [
      "f7f5",
      "g2f3",
-     "c3b4",
-     "a3b4",
-     "e1d1"
+     "h8g8",
+     "f3g2",
+     "c3b4"
     ]
    },
    {
@@ -8096,15 +7342,7 @@
    "h1g2",
    "e1c1"
   ],
-  "source": "https://lichess.org/study/PpL7KEKy/qkOXjj0L",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "e1g1"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/PpL7KEKy/qkOXjj0L"
  },
  {
   "n": 304,
@@ -8172,51 +7410,7 @@
    "h7e7",
    "e5e7"
   ],
-  "source": "https://lichess.org/study/PpL7KEKy/pyLUL6Ec",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "d6b7",
-     "d8e8",
-     "b7d6",
-     "e8d8",
-     "d6f7",
-     "d8e8",
-     "f1e1",
-     "c6e5",
-     "f7e5"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "f7d6",
-     "e8d8",
-     "d6b7",
-     "d8e8",
-     "b7d6",
-     "e8d8",
-     "d6f7"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "f7d6",
-     "e8d8",
-     "d6f7",
-     "d8e8",
-     "f7e5"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "d5g8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/PpL7KEKy/pyLUL6Ec"
  },
  {
   "n": 306,
@@ -8285,14 +7479,8 @@
     "uci": [
      "c4d5",
      "g8h8",
-     "f3e5",
-     "d8d5",
-     "e5f7"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
+     "d5a8",
+     "d8a8",
      "f3e5"
     ]
    },
@@ -8326,21 +7514,7 @@
    "h8h7",
    "d1h5"
   ],
-  "source": "https://lichess.org/study/PpL7KEKy/yzw95wWP",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "d1f3",
-     "g8g5",
-     "h4h5",
-     "g5h5",
-     "f3h5",
-     "f5e4",
-     "h5h6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/PpL7KEKy/yzw95wWP"
  },
  {
   "n": 309,
@@ -8371,9 +7545,9 @@
     "uci": [
      "h6h5",
      "e2h5",
-     "f8f2",
-     "e1f2",
-     "g5g3"
+     "h3h5",
+     "d1d2",
+     "f8f6"
     ]
    }
   ]
@@ -8400,17 +7574,7 @@
    "a1g1",
    "e2d2"
   ],
-  "source": "https://lichess.org/study/PpL7KEKy/N90dlR7U",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "e2d2",
-     "b2b4",
-     "c5g1"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/PpL7KEKy/N90dlR7U"
  },
  {
   "n": 311,
@@ -8525,7 +7689,11 @@
     "uci": [
      "h1g1",
      "g8h8",
-     "h6g7"
+     "h6g7",
+     "h8g8",
+     "g7f6",
+     "g8f8",
+     "d2h6"
     ]
    },
    {
@@ -8533,25 +7701,43 @@
     "uci": [
      "d2f4",
      "f6h5",
-     "h1g1"
+     "h1g1",
+     "h5g7",
+     "g1g7",
+     "g8h8",
+     "f4f7",
+     "b8d7",
+     "g7h7"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "g5f6"
+     "g5f6",
+     "h8g8",
+     "f6g7"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "h6g7"
+     "h6g7",
+     "h8g8",
+     "g7f6",
+     "g8f8",
+     "g5g7"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "h1g1"
+     "h1g1",
+     "f6h5",
+     "h6g7",
+     "h8g8",
+     "g7f6",
+     "g8f8",
+     "g5g8"
     ]
    }
   ]
@@ -8580,12 +7766,6 @@
     "at": 4,
     "uci": [
      "e8e7"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "d8a5"
     ]
    }
   ]
@@ -8697,25 +7877,23 @@
    {
     "at": 4,
     "uci": [
-     "a1e1"
+     "a1e1",
+     "f8a8",
+     "f5h7",
+     "g8f8",
+     "h7f7"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "f2f4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "g2g3"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "h3h4"
+     "f2f4",
+     "c7c1",
+     "a1c1",
+     "g8g7",
+     "f5h7",
+     "g7f6",
+     "h7h6"
     ]
    }
   ]
@@ -8796,10 +7974,12 @@
     "at": 6,
     "uci": [
      "f7e6",
-     "c8e6",
+     "f8e6",
      "a1e1",
      "e4d4",
-     "c2c3"
+     "c2c3",
+     "d4d3",
+     "f5d5"
     ]
    },
    {
@@ -8807,15 +7987,19 @@
     "uci": [
      "f7d7",
      "f8d7",
-     "c2c3"
+     "c2c3",
+     "d4d3",
+     "f5d5"
     ]
    },
    {
     "at": 8,
     "uci": [
      "f7e6",
-     "c8e6",
-     "c2c3"
+     "f8e6",
+     "c2c3",
+     "d4d3",
+     "f5d5"
     ]
    },
    {
@@ -8823,27 +8007,41 @@
     "uci": [
      "f7f6",
      "g7f6",
-     "c2c3"
+     "c2c3",
+     "d4d3",
+     "f5d5"
     ]
    },
    {
     "at": 8,
     "uci": [
      "f7e7",
+     "f6e7",
+     "c2c3",
+     "d4d3",
+     "f5d5"
+    ]
+   },
+   {
+    "at": 10,
+    "uci": [
+     "f7h5",
+     "d8b6",
+     "f5c5",
+     "h8h7",
+     "h5e2"
+    ]
+   },
+   {
+    "at": 10,
+    "uci": [
+     "f7e6",
+     "f6e5",
      "e6e5",
-     "f5e5"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "f7h5"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "f7e6"
+     "d8b6",
+     "f5f2",
+     "f8h7",
+     "e5e2"
     ]
    }
   ]
@@ -8874,17 +8072,7 @@
    "f8e8",
    "g7h8"
   ],
-  "source": "https://lichess.org/study/PpL7KEKy/7UoIdLmF",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "e5e6",
-     "b8d6",
-     "g6g7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/PpL7KEKy/7UoIdLmF"
  },
  {
   "n": 325,
@@ -8933,7 +8121,11 @@
    {
     "at": 6,
     "uci": [
-     "e2c2"
+     "e2c2",
+     "c1d1",
+     "c2b2",
+     "d1c1",
+     "a4c2"
     ]
    }
   ]
@@ -8968,33 +8160,7 @@
    "g6f6",
    "d5f5"
   ],
-  "source": "https://lichess.org/study/PpL7KEKy/cwopo7oj",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "c6c7",
-     "e5f6",
-     "d7f7",
-     "f6g5",
-     "c7g3",
-     "f5g4",
-     "g3e5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c6c5",
-     "e5f4",
-     "c5e3",
-     "f4g4",
-     "a4d1",
-     "g4h4",
-     "d7d4"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/PpL7KEKy/cwopo7oj"
  },
  {
   "n": 328,
@@ -9232,10 +8398,10 @@
     "at": 0,
     "uci": [
      "f3e5",
-     "e7d6",
-     "g5f7",
-     "d8e7",
-     "f7d6"
+     "d7f8",
+     "c2c3",
+     "c7c5",
+     "d4c5"
     ]
    },
    {
@@ -9334,21 +8500,7 @@
    "g1f1",
    "c4c1"
   ],
-  "source": "https://lichess.org/study/PpL7KEKy/02ElX7JQ",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "c8c5",
-     "d4c5",
-     "a7c5",
-     "g1f1",
-     "c5c8",
-     "g2g4",
-     "h7h6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/PpL7KEKy/02ElX7JQ"
  },
  {
   "n": 342,
@@ -9396,25 +8548,7 @@
    "e3d4",
    "h4f4"
   ],
-  "source": "https://lichess.org/study/PpL7KEKy/m3w4lpXP",
-  "alternatives": [
-   {
-    "at": 8,
-    "uci": [
-     "h4g4",
-     "f3f2",
-     "g4h4"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "h4h3",
-     "f3f2",
-     "h3h4"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/PpL7KEKy/m3w4lpXP"
  },
  {
   "n": 344,
@@ -9490,21 +8624,7 @@
    "f7g7",
    "c6d7"
   ],
-  "source": "https://lichess.org/study/PpL7KEKy/2qyetP7v",
-  "alternatives": [
-   {
-    "at": 8,
-    "uci": [
-     "c6b7"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "f3h4"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/PpL7KEKy/2qyetP7v"
  },
  {
   "n": 347,
@@ -9520,17 +8640,7 @@
    "b5c4",
    "d8d2"
   ],
-  "source": "https://lichess.org/study/PpL7KEKy/7quQ3I5v",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "d8d2",
-     "d1d2",
-     "c7a5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/PpL7KEKy/7quQ3I5v"
  },
  {
   "n": 348,
@@ -9621,37 +8731,41 @@
     "uci": [
      "e4g6",
      "f7g6",
-     "h6g6"
+     "h6g6",
+     "g8h8",
+     "d1h1"
     ]
    },
    {
     "at": 8,
     "uci": [
+     "e4g6",
+     "b5b4",
+     "h6h7"
+    ]
+   },
+   {
+    "at": 8,
+    "uci": [
+     "g2g4",
+     "b5b4",
+     "h6h7"
+    ]
+   },
+   {
+    "at": 8,
+    "uci": [
+     "g2g3",
+     "b5b4",
      "h6h8"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "e4g6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "g2g4"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "g2g3"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "a2a3"
+     "a2a3",
+     "b5b4",
+     "h6h8"
     ]
    }
   ]
@@ -9683,7 +8797,11 @@
    {
     "at": 6,
     "uci": [
-     "e8e1"
+     "e8e1",
+     "d1e1",
+     "d4d3",
+     "a3b4",
+     "d3d2"
     ]
    }
   ]
@@ -9762,33 +8880,7 @@
    "h7h6",
    "c7b8"
   ],
-  "source": "https://lichess.org/study/y5VebmDO/UaAj8Chz",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "g5h7",
-     "e7h7",
-     "h4h7",
-     "h8h7",
-     "c3c7",
-     "h7h6",
-     "d1d8"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d1d8"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "h2h4"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/y5VebmDO/UaAj8Chz"
  },
  {
   "n": 356,
@@ -9857,31 +8949,7 @@
    {
     "at": 4,
     "uci": [
-     "f8f2"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "h6h5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
      "d6e5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "f1f2"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "f8f6"
     ]
    }
   ]
@@ -10012,59 +9080,7 @@
    "c8c7",
    "e2a6"
   ],
-  "source": "https://lichess.org/study/y5VebmDO/arBmmkH0",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "e3e4",
-     "e8f8",
-     "e4e5",
-     "f6e8",
-     "f4f5"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "f4f5",
-     "e8d8",
-     "e3e4",
-     "c5d4",
-     "e4e5"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "a1c1",
-     "e8f8",
-     "e3e4",
-     "c5d4",
-     "e4e5"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "d4c5",
-     "e8f8",
-     "d2b4",
-     "d7c5",
-     "f1d1"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "g1h1",
-     "e8f8",
-     "e3e4",
-     "h7h5",
-     "f4f5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/y5VebmDO/arBmmkH0"
  },
  {
   "n": 365,
@@ -10089,7 +9105,13 @@
    {
     "at": 4,
     "uci": [
-     "f4f1"
+     "f4f1",
+     "g1h2",
+     "f1h1",
+     "h2g3",
+     "h1g2",
+     "g3f4",
+     "g2f3"
     ]
    }
   ]
@@ -10122,44 +9144,6 @@
   ],
   "source": "https://lichess.org/study/y5VebmDO/8xEpaagk",
   "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "h8d8",
-     "h1c1",
-     "b8a8",
-     "d2c4",
-     "e5f4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "a7a5",
-     "b4b6",
-     "h8c8",
-     "c2d1",
-     "e5c7"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "g7g5",
-     "f4e2",
-     "h8c8",
-     "e2c3",
-     "c8d8"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g7g5",
-     "h4g5",
-     "a7a5"
-    ]
-   },
    {
     "at": 8,
     "uci": [
@@ -10196,12 +9180,6 @@
     "at": 6,
     "uci": [
      "g1g8"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "e4d4"
     ]
    }
   ]
@@ -10379,20 +9357,6 @@
   "source": "https://lichess.org/study/y5VebmDO/WgXm8OTA",
   "alternatives": [
    {
-    "at": 2,
-    "uci": [
-     "f6h8",
-     "e8d7",
-     "h8f6",
-     "d3g6",
-     "e5e6",
-     "d7e8",
-     "e6f7",
-     "g6f7",
-     "b6e6"
-    ]
-   },
-   {
     "at": 6,
     "uci": [
      "e6e7",
@@ -10415,13 +9379,17 @@
    {
     "at": 10,
     "uci": [
-     "c6b6"
+     "c6b6",
+     "b8c8",
+     "e7b7"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "e7c7"
+     "e7c7",
+     "b8a8",
+     "c7a7"
     ]
    }
   ]
@@ -10448,21 +9416,7 @@
    "h1g1",
    "f2h3"
   ],
-  "source": "https://lichess.org/study/y5VebmDO/eKivPmkX",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "d8d4",
-     "d1d4",
-     "b6d4",
-     "c2c4",
-     "d4a7",
-     "e5e6",
-     "a7c5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/y5VebmDO/eKivPmkX"
  },
  {
   "n": 376,
@@ -10532,7 +9486,7 @@
      "f1d3",
      "h7d3",
      "c3d3",
-     "e3f4",
+     "e3d3",
      "e8f7"
     ]
    }
@@ -10586,16 +9540,16 @@
     "at": 2,
     "uci": [
      "c6b5",
-     "c5e3",
-     "f4d6"
+     "d7e5",
+     "f4f6"
     ]
    },
    {
     "at": 2,
     "uci": [
      "f1d1",
-     "d7f8",
-     "f4f6"
+     "d7e5",
+     "f4c1"
     ]
    },
    {
@@ -10603,22 +9557,22 @@
     "uci": [
      "f4g3",
      "g8f8",
-     "c6d7"
+     "g3f4"
     ]
    },
    {
     "at": 2,
     "uci": [
      "f1c1",
-     "h7h5",
-     "c1d1"
+     "c5e3",
+     "f4g3"
     ]
    },
    {
     "at": 2,
     "uci": [
      "f4g4",
-     "g8f8",
+     "g8h8",
      "c6d7"
     ]
    }
@@ -10653,7 +9607,7 @@
     "uci": [
      "h7h5",
      "c4c3",
-     "d8d7"
+     "f8f6"
     ]
    },
    {
@@ -10661,7 +9615,7 @@
     "uci": [
      "d8e8",
      "e1g1",
-     "b7d5"
+     "f5g3"
     ]
    }
   ]
@@ -10688,29 +9642,7 @@
    "f8f7",
    "e6d8"
   ],
-  "source": "https://lichess.org/study/y5VebmDO/cNNxYaT9",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "d2e4",
-     "f6e4",
-     "g5e6"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "e6g5"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d2e4"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/y5VebmDO/cNNxYaT9"
  },
  {
   "n": 381,
@@ -10798,8 +9730,8 @@
     "at": 2,
     "uci": [
      "c6a8",
-     "c7d6",
-     "a8a6"
+     "e8d6",
+     "a8d5"
     ]
    }
   ]
@@ -10838,57 +9770,7 @@
    "f8g8",
    "h6f7"
   ],
-  "source": "https://lichess.org/study/y5VebmDO/1iG3Yb1u",
-  "alternatives": [
-   {
-    "at": 8,
-    "uci": [
-     "f7d6",
-     "g8h8",
-     "d6f7",
-     "h8g8",
-     "f7h6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "f7g5",
-     "g8h8",
-     "g5f7",
-     "h8g8",
-     "f7h6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "f7d8",
-     "g8h8",
-     "d8f7",
-     "h8g8",
-     "f7h6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "f7e5",
-     "g8h8",
-     "e5f7",
-     "h8g8",
-     "f7h6"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "h6f7",
-     "h8g8",
-     "f7h6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/y5VebmDO/1iG3Yb1u"
  },
  {
   "n": 385,
@@ -10941,31 +9823,33 @@
    {
     "at": 4,
     "uci": [
-     "h2f2"
+     "h2e2",
+     "f1g1",
+     "e2d1"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "h2e2"
+     "h2g2",
+     "f1e1",
+     "g2g1"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "h2g2"
+     "c2f2",
+     "f1e1",
+     "h2g1"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "c2f2"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "h2h3"
+     "h2h3",
+     "f1e1",
+     "h3h1"
     ]
    }
   ]
@@ -11216,8 +10100,8 @@
     "at": 0,
     "uci": [
      "d3f5",
-     "c7e5",
-     "f6h4"
+     "d2c2",
+     "f5g4"
     ]
    }
   ]
@@ -11240,17 +10124,7 @@
    "g8g7",
    "f6d7"
   ],
-  "source": "https://lichess.org/study/y5VebmDO/cJHERQKv",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "d3g6",
-     "g8h8",
-     "g6f7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/y5VebmDO/cJHERQKv"
  },
  {
   "n": 398,
@@ -11364,22 +10238,10 @@
      "a6e6",
      "f7e6",
      "e1e6",
-     "e8f8",
+     "e8f7",
      "e6e7",
      "d7e7",
      "d5e7"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d1f3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d1h5"
     ]
    }
   ]
@@ -11590,39 +10452,7 @@
    "g8g7",
    "f2e3"
   ],
-  "source": "https://lichess.org/study/RJQS7j5G/pgfL1A49",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "c5c8",
-     "b6d6",
-     "e4e5",
-     "d6f8",
-     "c8c7",
-     "a6c8",
-     "c7a7"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "h4h5",
-     "g8f7",
-     "e4e5",
-     "f6f5",
-     "e3c1",
-     "d8d2",
-     "c1d2"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d8d7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/RJQS7j5G/pgfL1A49"
  },
  {
   "n": 413,
@@ -11653,7 +10483,7 @@
     "uci": [
      "d4c5",
      "h2h4",
-     "f8f1"
+     "c5d5"
     ]
    },
    {
@@ -11700,19 +10530,7 @@
    "e6d8",
    "d7d8"
   ],
-  "source": "https://lichess.org/study/RJQS7j5G/ZOIeHXtJ",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "c5a4",
-     "b6b7",
-     "a4c5",
-     "b7b6",
-     "d7c7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/RJQS7j5G/ZOIeHXtJ"
  },
  {
   "n": 415,
@@ -11816,59 +10634,7 @@
    "e8g8",
    "h6f7"
   ],
-  "source": "https://lichess.org/study/RJQS7j5G/MlkcXiOz",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "g6f8",
-     "h7h8",
-     "f8g6",
-     "h8h7",
-     "g6e5",
-     "b7e4",
-     "d3e4",
-     "f6e4",
-     "e6g6"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "g6h4",
-     "h7h8",
-     "h4g6",
-     "h8h7",
-     "g6e5",
-     "b7e4",
-     "d3e4",
-     "f6e4",
-     "e6g6"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "g6e7",
-     "h7h8",
-     "e7g6",
-     "h8h7",
-     "g6e5",
-     "b7e4",
-     "d3e4",
-     "f6e4",
-     "e6g6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "h6f7",
-     "h8g8",
-     "f7h6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/RJQS7j5G/MlkcXiOz"
  },
  {
   "n": 420,
@@ -11894,10 +10660,10 @@
     "at": 0,
     "uci": [
      "h3h4",
-     "e7b4",
+     "b7b5",
      "h4h5",
-     "b4c3",
-     "b2c3"
+     "g6e4",
+     "c3e4"
     ]
    }
   ]
@@ -11933,7 +10699,7 @@
      "c6c5",
      "c2g6",
      "e8e7",
-     "d4c5"
+     "g6f7"
     ]
    },
    {
@@ -11951,7 +10717,7 @@
     "uci": [
      "g6f7",
      "e7d6",
-     "a4b5"
+     "f7g6"
     ]
    },
    {
@@ -12011,25 +10777,29 @@
    {
     "at": 10,
     "uci": [
-     "e6e8"
+     "e6e8",
+     "f7f8",
+     "h5h8"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "e6c8"
+     "f2f3",
+     "g7g5",
+     "h5h8",
+     "g8g7",
+     "e6h6"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "f2f3"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "b2b3"
+     "b2b3",
+     "g7g6",
+     "h5h8",
+     "g8g7",
+     "h1h7"
     ]
    }
   ]
@@ -12306,20 +11076,20 @@
     "at": 4,
     "uci": [
      "g6g5",
-     "b1c2",
-     "h3f3"
+     "b1a2",
+     "h3f3",
+     "a2g2",
+     "f3g2"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "c4e3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "f3g4"
+     "c4e3",
+     "d1d2",
+     "g6g5",
+     "d2g2",
+     "f3g2"
     ]
    }
   ]
@@ -12347,7 +11117,9 @@
    {
     "at": 4,
     "uci": [
-     "d6e4"
+     "d6e4",
+     "c5c4",
+     "d1d4"
     ]
    }
   ]
@@ -12495,14 +11267,6 @@
      "f7g7",
      "g5g7"
     ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "f6g5",
-     "g8h8",
-     "g5f6"
-    ]
    }
   ]
  },
@@ -12536,15 +11300,7 @@
    "e6d5",
    "e4d6"
   ],
-  "source": "https://lichess.org/study/RJQS7j5G/Plwi10MA",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "c7c8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/RJQS7j5G/Plwi10MA"
  },
  {
   "n": 445,
@@ -12593,14 +11349,6 @@
      "c1d1",
      "a1b1"
     ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "a1c3",
-     "b1c2",
-     "c3a1"
-    ]
    }
   ]
  },
@@ -12625,31 +11373,36 @@
    {
     "at": 2,
     "uci": [
-     "f5f4"
+     "f5f4",
+     "e1h4"
     ]
    },
    {
     "at": 2,
     "uci": [
-     "f3e4"
+     "f3e4",
+     "d3c4"
     ]
    },
    {
     "at": 2,
     "uci": [
-     "e6e5"
+     "e6e5",
+     "e1h4"
     ]
    },
    {
     "at": 2,
     "uci": [
-     "f3c6"
+     "f3c6",
+     "e1h4"
     ]
    },
    {
     "at": 2,
     "uci": [
-     "h4h3"
+     "h4h3",
+     "g2h3"
     ]
    }
   ]
@@ -12685,13 +11438,21 @@
      "g2h3",
      "f2f3",
      "h3h4",
-     "c5f2"
+     "c5f2",
+     "h4g5",
+     "h7h6",
+     "g5f5",
+     "f3h5"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "f3e4"
+     "f3e4",
+     "e1f1",
+     "e4f3",
+     "f1e1",
+     "f3f2"
     ]
    }
   ]
@@ -12807,12 +11568,6 @@
    {
     "at": 2,
     "uci": [
-     "c6e5"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
      "e6d6"
     ]
    }
@@ -12903,9 +11658,9 @@
     "uci": [
      "b1a3",
      "e8d7",
-     "d1f3",
-     "f8e7",
-     "g5e6"
+     "a3b5",
+     "d6c5",
+     "b2b3"
     ]
    },
    {
@@ -12916,16 +11671,6 @@
      "b1d2",
      "f8e7",
      "d2e4"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "b1c3",
-     "d4c3",
-     "c4d5",
-     "c6d8",
-     "d5e6"
     ]
    },
    {
@@ -13011,7 +11756,9 @@
     "uci": [
      "d6f6",
      "c2h2",
-     "h1h2"
+     "h1h2",
+     "g8h7",
+     "f6g7"
     ]
    },
    {
@@ -13019,15 +11766,21 @@
     "uci": [
      "d6h6",
      "c2h2",
-     "h1h2"
+     "h1h2",
+     "f7f6",
+     "h6g7"
     ]
    },
    {
     "at": 8,
     "uci": [
      "d6e7",
-     "c2c1",
-     "d1c1"
+     "c2h2",
+     "h1h2",
+     "g8h7",
+     "e7f6",
+     "h6h5",
+     "f6g7"
     ]
    },
    {
@@ -13035,7 +11788,11 @@
     "uci": [
      "d6d4",
      "f7f6",
-     "d4f6"
+     "d4f6",
+     "c2h2",
+     "h1h2",
+     "a5a4",
+     "f6g7"
     ]
    },
    {
@@ -13043,7 +11800,11 @@
     "uci": [
      "d1e1",
      "c2c6",
-     "d6c6"
+     "d6c6",
+     "f7f6",
+     "c6f6",
+     "a5a4",
+     "f6g7"
     ]
    }
   ]
@@ -13138,15 +11899,7 @@
    "h1g1",
    "g2f1"
   ],
-  "source": "https://lichess.org/study/KPtKmETT/ZlUWwGr7",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "e4g6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KPtKmETT/ZlUWwGr7"
  },
  {
   "n": 466,
@@ -13256,7 +12009,7 @@
     "at": 2,
     "uci": [
      "c5c3",
-     "g3g2",
+     "f6f3",
      "c3d2"
     ]
    }
@@ -13286,8 +12039,8 @@
     "at": 2,
     "uci": [
      "d1d4",
-     "d8d4",
-     "f3d4"
+     "a6b5",
+     "c4f7"
     ]
    }
   ]
@@ -13318,19 +12071,7 @@
    "c8c7",
    "d1d7"
   ],
-  "source": "https://lichess.org/study/KPtKmETT/fDh5x6u3",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "f7f8",
-     "d8e7",
-     "f8f7",
-     "e7d8",
-     "c1d1"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KPtKmETT/fDh5x6u3"
  },
  {
   "n": 474,
@@ -13364,24 +12105,6 @@
     "at": 4,
     "uci": [
      "g6f8"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "g6e5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "g6f4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "g6h4"
     ]
    }
   ]
@@ -13790,14 +12513,6 @@
   "source": "https://lichess.org/study/KPtKmETT/btZBNpUs",
   "alternatives": [
    {
-    "at": 4,
-    "uci": [
-     "h3e6",
-     "g8h7",
-     "h1h3"
-    ]
-   },
-   {
     "at": 6,
     "uci": [
      "h3f1"
@@ -13845,8 +12560,8 @@
      "h3f5",
      "g6f5",
      "c1c3",
-     "e4e3",
-     "c3e3"
+     "e8e7",
+     "c3g3"
     ]
    }
   ]
@@ -13880,33 +12595,23 @@
   "source": "https://lichess.org/study/KPtKmETT/gZ10mYlJ",
   "alternatives": [
    {
-    "at": 0,
-    "uci": [
-     "e4g5",
-     "h6g5",
-     "h4g6",
-     "e7e8",
-     "g6f8",
-     "h7g8",
-     "f8h7",
-     "b6d5",
-     "h7g5"
-    ]
-   },
-   {
     "at": 6,
     "uci": [
      "h2h3",
      "g4h4",
-     "c2e4"
+     "c2e4",
+     "f8f4",
+     "e4f4"
     ]
    },
    {
     "at": 6,
     "uci": [
      "f2f3",
-     "g4h4",
-     "c2e4"
+     "f8f3",
+     "c2e4",
+     "f3f4",
+     "e4f4"
     ]
    },
    {
@@ -13914,7 +12619,9 @@
     "uci": [
      "c2e2",
      "f8f3",
-     "e2f3"
+     "e2f3",
+     "g4h4",
+     "f3e4"
     ]
    },
    {
@@ -13922,33 +12629,23 @@
     "uci": [
      "c2g6",
      "e7g5",
-     "h2h3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "c2d3",
-     "e7g5",
-     "d3e4"
+     "e3g5",
+     "h6g5",
+     "g6h5",
+     "g4f4",
+     "h5f3"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "e3f4"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "e4g6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "c1c5"
+     "e3f4",
+     "d7f6",
+     "e4g6",
+     "g4h4",
+     "g3f5",
+     "e6f5",
+     "f4g3"
     ]
    }
   ]
@@ -13991,15 +12688,7 @@
    "g8h8",
    "e6h3"
   ],
-  "source": "https://lichess.org/study/KPtKmETT/lHcGK978",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "f1f6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KPtKmETT/lHcGK978"
  },
  {
   "n": 498,
@@ -14035,15 +12724,7 @@
    "g2c6",
    "b7c6"
   ],
-  "source": "https://lichess.org/study/KPtKmETT/yXz9B0Nh",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "e2e1"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KPtKmETT/yXz9B0Nh"
  },
  {
   "n": 500,
@@ -14180,13 +12861,13 @@
    {
     "at": 6,
     "uci": [
-     "f1f4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "f1f3"
+     "f1f3",
+     "f8g8",
+     "g3g7",
+     "g8g7",
+     "f3g3",
+     "d7c6",
+     "f6g7"
     ]
    }
   ]
@@ -14381,19 +13062,7 @@
    "h4h3",
    "d2d1q"
   ],
-  "source": "https://lichess.org/study/Cy4v4dlS/37P0zFHI",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "h8g8",
-     "g6e7",
-     "g8h8",
-     "e7g6",
-     "h7g6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Cy4v4dlS/37P0zFHI"
  },
  {
   "n": 514,
@@ -14436,107 +13105,17 @@
   "source": "https://lichess.org/study/Cy4v4dlS/jii6kEvO",
   "alternatives": [
    {
-    "at": 2,
-    "uci": [
-     "a4b3",
-     "f7g6",
-     "f3g5",
-     "d8d7",
-     "g2e4",
-     "g6f6",
-     "g5h7",
-     "f6e7",
-     "e3c5",
-     "e7d8",
-     "h7f8",
-     "e8f8",
-     "c5f8"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "f3g5",
-     "f7e7",
-     "g2c6",
-     "d8c8",
-     "c6a8",
-     "h7h6",
-     "g5e4",
-     "c8d7",
-     "a4a5",
-     "e7f7",
-     "a8d5",
-     "f7g6",
-     "e4d2"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c4e4",
-     "g6f7",
-     "e4c4",
-     "f7g6",
-     "c4g4",
-     "g6f7",
-     "f3g5",
-     "d8g5",
-     "e3g5",
-     "f8e7",
-     "g5e3"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "f3g5",
-     "d8d7",
-     "g2e4",
-     "g6f6",
-     "g5h7",
-     "f6e7",
-     "e3c5",
-     "e7d8",
-     "h7f8",
-     "e8f8",
-     "c5f8"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g4c4",
-     "f7g6",
-     "c4g4",
-     "g6f7",
-     "f3g5",
-     "d8g5",
-     "e3g5",
-     "f8e7",
-     "g5e3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g4h5",
-     "g7g6",
-     "f3g5",
-     "d8g5",
-     "h5g5",
-     "a5a4",
-     "g5h4",
-     "f7g7",
-     "h4c4"
-    ]
-   },
-   {
     "at": 12,
     "uci": [
      "f7d8",
      "e8e6",
-     "c4e6"
+     "c4e6",
+     "g8h8",
+     "d8f7",
+     "h8g8",
+     "f7h6",
+     "g8h8",
+     "e6g8"
     ]
    },
    {
@@ -14544,29 +13123,13 @@
     "uci": [
      "f7d6",
      "e8e6",
-     "c4e6"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "f7e5",
-     "d8d5",
-     "g2d5"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "f7g5",
-     "d8d5",
-     "g2d5"
-    ]
-   },
-   {
-    "at": 14,
-    "uci": [
-     "h6f7"
+     "c4e6",
+     "g8h8",
+     "d6f7",
+     "h8g8",
+     "f7h6",
+     "g8h8",
+     "e6g8"
     ]
    }
   ]
@@ -14620,14 +13183,6 @@
   "source": "https://lichess.org/study/Cy4v4dlS/kp5nystv",
   "alternatives": [
    {
-    "at": 2,
-    "uci": [
-     "c3d5",
-     "d7c5",
-     "d5c7"
-    ]
-   },
-   {
     "at": 4,
     "uci": [
      "b5a7"
@@ -14665,8 +13220,8 @@
      "d5f4",
      "d4d5",
      "f8c8",
-     "d1d2",
-     "f4d5"
+     "b1c1",
+     "c4c1"
     ]
    },
    {
@@ -14674,9 +13229,9 @@
     "uci": [
      "c4c6",
      "a2a4",
-     "f8d8",
+     "f8c8",
      "h2h3",
-     "d5f4"
+     "h7h6"
     ]
    },
    {
@@ -14684,18 +13239,18 @@
     "uci": [
      "b6b5",
      "f4f5",
-     "e6f5",
-     "b3f3",
-     "h7h6"
+     "h7h6",
+     "a2a3",
+     "e6f5"
     ]
    },
    {
     "at": 2,
     "uci": [
      "f8c8",
-     "f4f5",
-     "e6f5",
      "b3f3",
+     "a8a2",
+     "f4f5",
      "c4c6"
     ]
    },
@@ -14779,10 +13334,10 @@
     "at": 2,
     "uci": [
      "f2e1",
-     "f3e1",
-     "f6e4",
-     "e2e4",
-     "c8c1"
+     "f3d2",
+     "e1d2",
+     "e2d2",
+     "f6e4"
     ]
    },
    {
@@ -14792,17 +13347,7 @@
      "b3d1",
      "f2e3",
      "f3d2",
-     "b6d4"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "f2g3",
-     "f3d2",
-     "g3b8",
-     "d2c4",
-     "b6d4"
+     "b6c7"
     ]
    }
   ]
@@ -14883,20 +13428,10 @@
     "at": 0,
     "uci": [
      "a1a3",
-     "c1b2",
-     "a3b2",
-     "h3h4",
-     "b5b4"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "a1a2",
-     "c7c2",
-     "b8b7",
-     "c1b2",
-     "a2c4"
+     "c1g5",
+     "a3c3",
+     "c7b6",
+     "f8f7"
     ]
    },
    {
@@ -14921,18 +13456,6 @@
      "a1a3",
      "g5e6",
      "c1h6"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "a1a2"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "a1a5"
     ]
    }
   ]
@@ -14999,21 +13522,7 @@
    "d6e5",
    "a8h8"
   ],
-  "source": "https://lichess.org/study/Cy4v4dlS/t2JG6S2U",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "a8a6"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d2e3"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Cy4v4dlS/t2JG6S2U"
  },
  {
   "n": 524,
@@ -15058,7 +13567,9 @@
    {
     "at": 4,
     "uci": [
-     "h6g6"
+     "h6g6",
+     "g8h8",
+     "g6g7"
     ]
    }
   ]
@@ -15092,44 +13603,6 @@
   "source": "https://lichess.org/study/Cy4v4dlS/RanKCidY",
   "alternatives": [
    {
-    "at": 0,
-    "uci": [
-     "b2c1",
-     "b6b5",
-     "c3g3",
-     "g6g5",
-     "h2h4",
-     "g7b2",
-     "c1b2",
-     "c4b2",
-     "g3g5"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "b2b4",
-     "g7d4",
-     "h2h4",
-     "h8g7",
-     "f4h3",
-     "b6b5",
-     "c3c1",
-     "d4h4",
-     "b4c5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c4c3",
-     "a6c8",
-     "b2c1",
-     "c8e6",
-     "d5e6"
-    ]
-   },
-   {
     "at": 6,
     "uci": [
      "c4a4",
@@ -15141,8 +13614,8 @@
     "at": 6,
     "uci": [
      "c4c6",
-     "g7f8",
-     "h2h4"
+     "e8e7",
+     "f2f4"
     ]
    },
    {
@@ -15219,15 +13692,7 @@
    "f2c2",
    "e5a1"
   ],
-  "source": "https://lichess.org/study/Cy4v4dlS/c0tH0r1H",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "e5d4"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Cy4v4dlS/c0tH0r1H"
  },
  {
   "n": 528,
@@ -15271,15 +13736,7 @@
    "f7f8",
    "h7b7"
   ],
-  "source": "https://lichess.org/study/Cy4v4dlS/S0vAy9vn",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "h7h8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Cy4v4dlS/S0vAy9vn"
  },
  {
   "n": 530,
@@ -15321,7 +13778,7 @@
     "at": 0,
     "uci": [
      "f3e1",
-     "d7d8",
+     "h6h5",
      "e1d3"
     ]
    }
@@ -15349,39 +13806,7 @@
    "e6d6",
    "c5b3"
   ],
-  "source": "https://lichess.org/study/Cy4v4dlS/Wb2ncsEy",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "e3f2",
-     "b7c6",
-     "b5c6",
-     "d8c6",
-     "e4c5"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "e3d3",
-     "b7c6",
-     "b5c6",
-     "b3c2",
-     "d3c2"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "e3d2",
-     "b7c6",
-     "b5c6",
-     "d8c6",
-     "e4c5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Cy4v4dlS/Wb2ncsEy"
  },
  {
   "n": 533,
@@ -15405,15 +13830,7 @@
    "h3g4",
    "g7h6"
   ],
-  "source": "https://lichess.org/study/Cy4v4dlS/rk07BQQT",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "b4d6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Cy4v4dlS/rk07BQQT"
  },
  {
   "n": 534,
@@ -15457,15 +13874,7 @@
    "h8g8",
    "d1a1"
   ],
-  "source": "https://lichess.org/study/Cy4v4dlS/XNIHAb8J",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "f7h6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Cy4v4dlS/XNIHAb8J"
  },
  {
   "n": 536,
@@ -15643,15 +14052,7 @@
    "f8g6",
    "g5g6"
   ],
-  "source": "https://lichess.org/study/Cy4v4dlS/6174X7iM",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "f3h5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Cy4v4dlS/6174X7iM"
  },
  {
   "n": 544,
@@ -15667,15 +14068,7 @@
    "e1f3",
    "g3f1"
   ],
-  "source": "https://lichess.org/study/Cy4v4dlS/shnYKf1A",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "h5f3"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Cy4v4dlS/shnYKf1A"
  },
  {
   "n": 545,
@@ -15699,25 +14092,7 @@
    "a7a8",
    "g6g4"
   ],
-  "source": "https://lichess.org/study/Cy4v4dlS/TomphC1Z",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "h3h4",
-     "f2f3",
-     "h7h5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "h7h5",
-     "a7e7",
-     "f8f6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Cy4v4dlS/TomphC1Z"
  },
  {
   "n": 546,
@@ -15737,15 +14112,7 @@
    "e8e7",
    "g2b7"
   ],
-  "source": "https://lichess.org/study/Cy4v4dlS/XfXQyetx",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "d1e1"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Cy4v4dlS/XfXQyetx"
  },
  {
   "n": 547,
@@ -15821,39 +14188,7 @@
    "f5g6",
    "g1c5"
   ],
-  "source": "https://lichess.org/study/Cy4v4dlS/ItMzmqVQ",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "f1e1",
-     "g3f3",
-     "e1f1",
-     "f3g3",
-     "h5h4",
-     "g3g4",
-     "f1g2"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "h8g8"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "d5e4"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "d5g2"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Cy4v4dlS/ItMzmqVQ"
  },
  {
   "n": 550,
@@ -15881,14 +14216,8 @@
      "c5e6",
      "g5h4",
      "b6d8",
-     "f6d7",
-     "d8h4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "d8h4"
+     "d1d8",
+     "f8d8"
     ]
    }
   ]
@@ -16023,15 +14352,7 @@
    "h8g7",
    "h3g4"
   ],
-  "source": "https://lichess.org/study/HjGgG3Dn/jceb4bUW",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "h3d7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/HjGgG3Dn/jceb4bUW"
  },
  {
   "n": 557,
@@ -16083,21 +14404,7 @@
    "g1h1",
    "f3d4"
   ],
-  "source": "https://lichess.org/study/HjGgG3Dn/EYghpS6K",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "d8d7"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d8c8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/HjGgG3Dn/EYghpS6K"
  },
  {
   "n": 559,
@@ -16143,8 +14450,8 @@
     "at": 4,
     "uci": [
      "b1g6",
-     "c8f8",
-     "g6h7"
+     "d7h3",
+     "a1e5"
     ]
    },
    {
@@ -16218,31 +14525,41 @@
    {
     "at": 6,
     "uci": [
-     "a2a3"
+     "a2a3",
+     "e5e4",
+     "f2h3"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "a2a4"
+     "a2a4",
+     "e5e4",
+     "f2h3"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "b3b4"
+     "b3b4",
+     "e5e4",
+     "f2h3"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "c3b2"
+     "c3b2",
+     "e5e4",
+     "f2h3"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "g1g2"
+     "g1g2",
+     "e5e4",
+     "f2h3"
     ]
    }
   ]
@@ -16327,7 +14644,7 @@
     "at": 4,
     "uci": [
      "f6d5",
-     "f3e4",
+     "f3e2",
      "d5e7"
     ]
    },
@@ -16344,7 +14661,7 @@
     "uci": [
      "d1e1",
      "f3f4",
-     "e1e3"
+     "c1b2"
     ]
    },
    {
@@ -16423,19 +14740,7 @@
    "g8f7",
    "c1c7"
   ],
-  "source": "https://lichess.org/study/HjGgG3Dn/QFh4DTJf",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "c4f7",
-     "g8f7",
-     "c3b5",
-     "c7b6",
-     "b5d6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/HjGgG3Dn/QFh4DTJf"
  },
  {
   "n": 570,
@@ -16455,15 +14760,7 @@
    "e1f2",
    "b6b5"
   ],
-  "source": "https://lichess.org/study/HjGgG3Dn/Tt0xINLt",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "e8e3"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/HjGgG3Dn/Tt0xINLt"
  },
  {
   "n": 571,
@@ -16543,21 +14840,7 @@
    "g2h3",
    "c8h3"
   ],
-  "source": "https://lichess.org/study/HjGgG3Dn/ipcjmQ5g",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "d8h4",
-     "f2f1",
-     "g7d4",
-     "c3d1",
-     "h4h3",
-     "e2f3",
-     "h3h2"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/HjGgG3Dn/ipcjmQ5g"
  },
  {
   "n": 574,
@@ -16627,24 +14910,24 @@
     "at": 0,
     "uci": [
      "g5d2",
-     "e7f8",
-     "d3g3",
-     "d8c7",
-     "g3h3",
-     "g7g6",
-     "h3f3"
+     "e7d6",
+     "d3h3",
+     "d5f6",
+     "d2g5",
+     "h7h6",
+     "g5h6"
     ]
    },
    {
     "at": 0,
     "uci": [
      "g5c1",
-     "e7f8",
-     "d3h3",
      "g7g6",
-     "h3f3",
-     "f7f5",
-     "f3g3"
+     "h2h4",
+     "e7h4",
+     "c3c4",
+     "d5b6",
+     "e2d2"
     ]
    },
    {
@@ -16763,7 +15046,7 @@
     "at": 2,
     "uci": [
      "f3g5",
-     "f7f8",
+     "f7g8",
      "d1b3"
     ]
    }
@@ -16796,24 +15079,12 @@
    {
     "at": 0,
     "uci": [
-     "h5h6",
-     "f8e8",
-     "h6h5",
-     "e8f8",
-     "e3e6",
-     "h7h6",
-     "e6c6"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
      "f4f5",
      "e6e5",
      "d4e6",
      "f8e8",
      "e6g7",
-     "e8d7",
+     "e8d8",
      "h5f7"
     ]
    },
@@ -16821,11 +15092,11 @@
     "at": 0,
     "uci": [
      "d1e1",
-     "b4b3",
-     "a2b3",
      "h7h6",
      "d4e6",
      "f7e6",
+     "h5g6",
+     "a8e8",
      "e3e6"
     ]
    },
@@ -16833,12 +15104,12 @@
     "at": 0,
     "uci": [
      "g2g4",
-     "b7b8",
-     "d1e1",
-     "b8f4",
-     "e3e6",
-     "e7c5",
-     "h5d5"
+     "f8g8",
+     "f4f5",
+     "e6e5",
+     "g4g5",
+     "h7h6",
+     "g5h6"
     ]
    },
    {
@@ -17120,27 +15391,11 @@
    {
     "at": 6,
     "uci": [
-     "h7e4",
-     "a7a5",
-     "b3e6",
-     "f7e6",
-     "h3f3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
      "h3f3",
      "f6h6",
      "h7e4",
      "f8g8",
      "f3h3"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "h7h8"
     ]
    }
   ]
@@ -17186,7 +15441,11 @@
      "e7e8",
      "g7h8",
      "e8e7",
-     "h8g7"
+     "h8g7",
+     "e7e8",
+     "e2h5",
+     "e8d8",
+     "g7d7"
     ]
    },
    {
@@ -17196,27 +15455,25 @@
      "b6d8",
      "g7h8",
      "e8e7",
-     "h8g7"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g7g6",
-     "e8e7",
-     "g6g7",
+     "h8g7",
      "e7e8",
-     "g7h8"
+     "e2h5"
     ]
    },
    {
     "at": 6,
     "uci": [
      "d3d7",
+     "b6f2",
+     "g1f2",
      "c8d7",
      "g7h8",
      "e8e7",
-     "h8g7"
+     "h8g7",
+     "e7e8",
+     "e2h5",
+     "e8d8",
+     "g7d7"
     ]
    },
    {
@@ -17224,15 +15481,19 @@
     "uci": [
      "d3d7",
      "c8d7",
-     "d1d7"
+     "d1d7",
+     "f7g6",
+     "h8h5"
     ]
    },
    {
     "at": 8,
     "uci": [
      "h8h7",
-     "f7e8",
-     "e2h5"
+     "f7f8",
+     "d3d8",
+     "b6d8",
+     "d1d8"
     ]
    },
    {
@@ -17240,53 +15501,41 @@
     "uci": [
      "d3g3",
      "b6f2",
-     "g1f2"
+     "g1f2",
+     "f6f5",
+     "h8g7",
+     "f7e8",
+     "e2h5"
     ]
    },
    {
     "at": 8,
     "uci": [
      "h8h5",
-     "f7g7",
-     "d3g3"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "a2a3",
-     "b6d4",
-     "h8h7"
+     "f7g8",
+     "d3g3",
+     "g8f8",
+     "h5h8",
+     "f8f7",
+     "g3g7"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "h8e8"
+     "h8h7",
+     "e7f8",
+     "h7f7"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "h8h7"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "d3d7"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "a2a3"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "h2h4"
+     "d3d7",
+     "c8d7",
+     "h8g7",
+     "e7d8",
+     "g7d7"
     ]
    }
   ]
@@ -17400,35 +15649,9 @@
     ]
    },
    {
-    "at": 4,
-    "uci": [
-     "a1c1",
-     "f5f4",
-     "c3a5"
-    ]
-   },
-   {
     "at": 6,
     "uci": [
      "a2b3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "a1b1"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "f1b1"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "c3b2"
     ]
    }
   ]
@@ -17459,33 +15682,7 @@
    "a5c7",
    "b8a8"
   ],
-  "source": "https://lichess.org/study/HjGgG3Dn/AEq91UDr",
-  "alternatives": [
-   {
-    "at": 8,
-    "uci": [
-     "b8b4"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "b8b2"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "b8b3"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "b8b1"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/HjGgG3Dn/AEq91UDr"
  },
  {
   "n": 597,
@@ -17556,15 +15753,21 @@
     "uci": [
      "d7g4",
      "h3g4",
-     "f2g2"
+     "f2g2",
+     "g4h4",
+     "d4f2"
     ]
    },
    {
     "at": 4,
     "uci": [
      "d4e5",
-     "d2f4",
-     "f2f3"
+     "d2e1",
+     "f2f3",
+     "e1g3",
+     "d7g4",
+     "h3h4",
+     "e5f6"
     ]
    },
    {
@@ -17572,45 +15775,63 @@
     "uci": [
      "h7h5",
      "c4e2",
-     "h5g4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "b8f8",
-     "c1g1",
-     "f2f3"
+     "h5g4",
+     "e2g4",
+     "f2f3",
+     "h3h4",
+     "f3g4"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "d4f6"
+     "d4f6",
+     "g4g5",
+     "f3g4"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "f3f2"
+     "f3f2",
+     "h4g5",
+     "f2f6",
+     "g5h6",
+     "f6h4"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "d4f2"
+     "d4f2",
+     "h4g5",
+     "f2h4",
+     "g5h6",
+     "f3f8"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "b8e8"
+     "b8e8",
+     "h2h3",
+     "d4f2",
+     "h4g5",
+     "e8e5",
+     "g5h6",
+     "f3h3"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "f3g2"
+     "f3g2",
+     "h2h3",
+     "g2f2",
+     "h4g5",
+     "f2f6",
+     "g5h6",
+     "f6h4"
     ]
    }
   ]
@@ -17672,217 +15893,15 @@
   "source": "https://lichess.org/study/HjGgG3Dn/tshhYKjc",
   "alternatives": [
    {
-    "at": 0,
+    "at": 16,
     "uci": [
-     "d3b5",
-     "e5d7",
-     "h5f3",
-     "f7e6",
-     "f3a8",
-     "c7c8",
-     "b5d7",
-     "e8d7",
-     "a8a7",
-     "c8c7",
-     "a7d4",
-     "e6e5",
-     "d4e5"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "d5b7",
+     "d5b3",
      "c7d6",
+     "f7f8q",
+     "h8f8",
      "d2d6",
      "d7d6",
-     "b7a8",
-     "h8f8",
-     "e3h6",
-     "f8a8",
-     "f7f8q",
-     "a8f8",
-     "f1f8",
-     "a6a5",
-     "g1f2"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "d5e4",
-     "c7d6",
-     "d2d6",
-     "d7d6",
-     "e4a8",
-     "h8a8",
-     "f7f8r",
-     "a8f8",
-     "f1f8",
-     "d6d5",
-     "g1f2",
-     "h7h5",
-     "f8f6"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "f7f8n",
-     "h8f8",
-     "f1f8",
-     "c7c3",
-     "a8d5",
-     "e6e7",
-     "f8f3",
-     "e7d7",
-     "d5b3",
-     "c3d2",
-     "e3d2"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "f7f8q",
-     "h8f8",
-     "f1f8",
-     "c7c3",
-     "a8d5",
-     "e6e7",
-     "f8f3",
-     "c3b4",
-     "d5b7",
-     "b4d2",
-     "e3d2"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "f7f8b",
-     "h8f8",
-     "f1f8",
-     "c7c3",
-     "a8d5",
-     "e6e7",
-     "f8f3",
-     "c3b4",
-     "e3g5",
-     "e7d6",
-     "d5b3"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "f7f8r",
-     "h8f8",
-     "f1f8",
-     "c7c4",
-     "a8d5",
-     "c4d5",
-     "f8e8",
-     "e6f7",
-     "d2d5",
-     "f7e8",
-     "d5e5"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "a8e4",
-     "c7c3",
-     "e3g5",
-     "h7h6",
-     "f1f6",
-     "e6e7",
-     "f6f3",
-     "h6g5",
-     "f3c3",
-     "e7f7",
-     "c3c7"
-    ]
-   },
-   {
-    "at": 14,
-    "uci": [
-     "d5b3",
-     "h7h6",
-     "e3h6",
-     "c7b6",
-     "g1h1",
-     "b6f6",
-     "f1f6",
-     "e7f6",
-     "f7f8q"
-    ]
-   },
-   {
-    "at": 14,
-    "uci": [
-     "f7f8b",
-     "h8f8",
-     "e3g5",
-     "e7d7",
-     "d5b3",
-     "d7e8",
-     "f1f8",
-     "e8f8",
-     "d2d8"
-    ]
-   },
-   {
-    "at": 14,
-    "uci": [
-     "f7f8q",
-     "h8f8",
-     "e3g5",
-     "e7d7",
-     "d5b3",
-     "d7e8",
-     "d2d8",
-     "c7d8",
      "f1f8"
-    ]
-   },
-   {
-    "at": 14,
-    "uci": [
-     "f7f8r",
-     "h8f8",
-     "e3g5",
-     "f8f6",
-     "g5f6",
-     "e7d7",
-     "d5f3",
-     "d7e8",
-     "d2d8"
-    ]
-   },
-   {
-    "at": 16,
-    "uci": [
-     "d5b3",
-     "c7d6",
-     "f7f8q",
-     "h8f8",
-     "f1f8",
-     "d6d2",
-     "f8d8"
-    ]
-   },
-   {
-    "at": 16,
-    "uci": [
-     "f7f8q",
-     "h8f8",
-     "d5b3",
-     "d7e8",
-     "f1f8",
-     "e8f8",
-     "d2d8"
     ]
    },
    {
@@ -17890,10 +15909,10 @@
     "uci": [
      "d5a8",
      "c7d6",
-     "f7f8q",
-     "h8f8",
      "d2d6",
      "d7d6",
+     "f7f8q",
+     "h8f8",
      "f1f8"
     ]
    },
@@ -17902,23 +15921,11 @@
     "uci": [
      "d5b7",
      "c7d6",
+     "f7f8q",
+     "h8f8",
      "d2d6",
      "d7d6",
-     "f7f8r",
-     "h8f8",
      "f1f8"
-    ]
-   },
-   {
-    "at": 16,
-    "uci": [
-     "d5c4",
-     "c7d6",
-     "d2d6",
-     "d7d6",
-     "g5f6",
-     "h8f8",
-     "f1d1"
     ]
    },
    {
@@ -17926,9 +15933,9 @@
     "uci": [
      "f7f8n",
      "h8f8",
-     "d2d6",
-     "d7d6",
-     "f1f8"
+     "f1f8",
+     "d6d2",
+     "g5d2"
     ]
    },
    {
@@ -17946,29 +15953,9 @@
     "uci": [
      "f7f8r",
      "d6d2",
-     "f8f7",
-     "d7c8",
-     "g5d2"
-    ]
-   },
-   {
-    "at": 18,
-    "uci": [
-     "f7f8b",
-     "d6d2",
      "g5d2",
-     "g6g5",
-     "d2g5"
-    ]
-   },
-   {
-    "at": 18,
-    "uci": [
-     "d2d1",
      "h8f8",
-     "d1d6",
-     "d7d6",
-     "f1d1"
+     "f1f8"
     ]
    },
    {
@@ -17991,24 +15978,16 @@
     "at": 20,
     "uci": [
      "g5h6",
-     "d6c5",
+     "a6a5",
      "f7f8q"
     ]
    },
    {
     "at": 20,
     "uci": [
-     "f1f6",
-     "d6c7",
-     "f7f8r"
-    ]
-   },
-   {
-    "at": 20,
-    "uci": [
      "g5c1",
-     "b5b4",
-     "f7f8r"
+     "g6g5",
+     "f7f8q"
     ]
    }
   ]
@@ -18075,15 +16054,7 @@
    "d8d7",
    "f8f7"
   ],
-  "source": "https://lichess.org/study/lBdYC3vM/EVVMeAns",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "f5e6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/lBdYC3vM/EVVMeAns"
  },
  {
   "n": 604,
@@ -18111,21 +16082,7 @@
    "c4b4",
    "a6e2"
   ],
-  "source": "https://lichess.org/study/lBdYC3vM/nw3E6COp",
-  "alternatives": [
-   {
-    "at": 8,
-    "uci": [
-     "a8b8"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "a6a5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/lBdYC3vM/nw3E6COp"
  },
  {
   "n": 605,
@@ -18174,57 +16131,11 @@
      "c7f4",
      "h4f4",
      "h7g6",
-     "f4h6",
-     "g6f5",
-     "h6h5"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "g4h4",
-     "h7g7",
-     "h4g4",
-     "g7h7",
-     "f1f3",
-     "e5f4",
-     "f3h3",
-     "f4h6",
-     "g4h4",
-     "c7f4",
-     "h4f4"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "g4h5",
-     "h7g8",
-     "h5g4",
-     "g8h7",
-     "f1f3",
-     "e5f4",
-     "f3h3",
-     "f4h6",
-     "g4h4",
-     "c7f4",
-     "h4f4"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "g4h3",
-     "h7g8",
-     "h3g4",
-     "g8h7",
-     "f1f3",
-     "e5f4",
-     "f3h3",
-     "f4h6",
-     "g4h4",
-     "c7f4",
-     "h4f4"
+     "h3h6",
+     "g6g7",
+     "f4f6",
+     "g7g8",
+     "f6g5"
     ]
    },
    {
@@ -18235,7 +16146,7 @@
      "h4h6",
      "c7c2",
      "b1c2",
-     "f8e8",
+     "e6e5",
      "h6h8"
     ]
    },
@@ -18247,7 +16158,7 @@
      "h5h6",
      "c7c2",
      "b1c2",
-     "f8e8",
+     "e6e5",
      "h6h8"
     ]
    },
@@ -18255,12 +16166,12 @@
     "at": 6,
     "uci": [
      "f1f3",
-     "c7h2",
-     "h3h2",
-     "f8d8",
-     "h2h6",
+     "c7e5",
+     "h3h6",
      "h7h6",
-     "f3h3"
+     "f3h3",
+     "e5h5",
+     "h3h5"
     ]
    },
    {
@@ -18270,9 +16181,11 @@
      "h7h6",
      "f1f6",
      "h6h7",
-     "g4h4",
-     "h7g7",
-     "h4g5"
+     "g4h5",
+     "h7g8",
+     "h5g5",
+     "g8h8",
+     "f6h6"
     ]
    },
    {
@@ -18280,9 +16193,11 @@
     "uci": [
      "f6f4",
      "e6e5",
-     "h3h6",
-     "h7h6",
-     "g4h4"
+     "g4g5",
+     "c8h3",
+     "f4h4",
+     "h3g4",
+     "h4h6"
     ]
    },
    {
@@ -18305,7 +16220,7 @@
     "at": 10,
     "uci": [
      "f4g4",
-     "e6e5",
+     "a5a4",
      "h3h6"
     ]
    },
@@ -18313,7 +16228,7 @@
     "at": 10,
     "uci": [
      "f4g3",
-     "e6e5",
+     "a5a4",
      "h3h6"
     ]
    },
@@ -18328,31 +16243,17 @@
    {
     "at": 12,
     "uci": [
+     "f6g6",
+     "f7g6",
+     "h6g6"
+    ]
+   },
+   {
+    "at": 12,
+    "uci": [
+     "b1c1",
+     "a5a4",
      "h6h8"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "h6g5"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "h6h7"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "f6g6"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "b1c1"
     ]
    }
   ]
@@ -18500,25 +16401,7 @@
      "f3f6",
      "e6g8",
      "b4d2",
-     "e4e5"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g4h4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g4h3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g4e6"
+     "g8h8"
     ]
    }
   ]
@@ -18574,13 +16457,11 @@
    {
     "at": 6,
     "uci": [
-     "c2h7"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "h6g5"
+     "h6g5",
+     "e8g6",
+     "g5g6",
+     "g8h8",
+     "g6h7"
     ]
    }
   ]
@@ -18655,21 +16536,7 @@
    "g7h7",
    "d8g8"
   ],
-  "source": "https://lichess.org/study/lBdYC3vM/iEnTJBZu",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "g5d8",
-     "f8g7",
-     "d8g5",
-     "g7f8",
-     "h4g6",
-     "h7g6",
-     "g5d8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/lBdYC3vM/iEnTJBZu"
  },
  {
   "n": 617,
@@ -18822,19 +16689,7 @@
    {
     "at": 6,
     "uci": [
-     "h1h2"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
      "e2c4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "b2b3"
     ]
    }
   ]
@@ -18929,9 +16784,9 @@
      "b4d5",
      "e6d5",
      "f4d5",
-     "b6d6",
+     "b6a6",
      "d5f6",
-     "d6f6",
+     "a6f6",
      "d2d7"
     ]
    }
@@ -18999,17 +16854,7 @@
    "g7f6",
    "f1f6"
   ],
-  "source": "https://lichess.org/study/lBdYC3vM/8Ye7uJRV",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "f1f6",
-     "a8e8",
-     "e2d3"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/lBdYC3vM/8Ye7uJRV"
  },
  {
   "n": 628,
@@ -19053,15 +16898,7 @@
    "g8f6",
    "h7h8q"
   ],
-  "source": "https://lichess.org/study/lBdYC3vM/dVFjEwFO",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "e8f6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/lBdYC3vM/dVFjEwFO"
  },
  {
   "n": 630,
@@ -19109,21 +16946,7 @@
    "h7h8",
    "f8e7"
   ],
-  "source": "https://lichess.org/study/lBdYC3vM/nfZCvVwC",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "a8d8",
-     "h1h2",
-     "f6e4",
-     "c5c2",
-     "e4g3",
-     "e2f2",
-     "g3f5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/lBdYC3vM/nfZCvVwC"
  },
  {
   "n": 632,
@@ -19166,14 +16989,6 @@
     ]
    },
    {
-    "at": 8,
-    "uci": [
-     "e2e3",
-     "c1d1",
-     "b3d3"
-    ]
-   },
-   {
     "at": 10,
     "uci": [
      "e2c4"
@@ -19208,7 +17023,7 @@
     "uci": [
      "c8c6",
      "b2b1",
-     "c4d5"
+     "c6a6"
     ]
    },
    {
@@ -19223,16 +17038,16 @@
     "at": 0,
     "uci": [
      "c4c6",
-     "g2g3",
-     "c6c4"
+     "g2g1",
+     "c6d5"
     ]
    },
    {
     "at": 0,
     "uci": [
      "g8g7",
-     "e3e2",
-     "b4c3"
+     "b2b1",
+     "c8a8"
     ]
    }
   ]
@@ -19317,10 +17132,10 @@
     "at": 2,
     "uci": [
      "a8f8",
-     "e5e2",
-     "h8h7",
-     "e2e6",
-     "b7f7"
+     "h3e3",
+     "b7f7",
+     "e3f3",
+     "f7a7"
     ]
    },
    {
@@ -19328,9 +17143,9 @@
     "uci": [
      "b7a7",
      "e5d4",
-     "g8h7",
-     "d4a7",
-     "a8a7"
+     "a7d4",
+     "c3d4",
+     "h8h7"
     ]
    },
    {
@@ -19367,8 +17182,8 @@
     "at": 4,
     "uci": [
      "h8f8",
-     "e5g7",
-     "b7g7"
+     "e5d5",
+     "b7d5"
     ]
    },
    {
@@ -19383,8 +17198,8 @@
     "at": 4,
     "uci": [
      "b7a7",
-     "g1g2",
-     "h8e8"
+     "e5d4",
+     "a7d4"
     ]
    },
    {
@@ -19392,15 +17207,15 @@
     "uci": [
      "b7f7",
      "e5d5",
-     "f7d5"
+     "f7e7"
     ]
    },
    {
     "at": 4,
     "uci": [
      "a8f8",
-     "h2h4",
-     "b7f7"
+     "e5d5",
+     "b7d5"
     ]
    },
    {
@@ -19503,36 +17318,12 @@
     "at": 0,
     "uci": [
      "c5d3",
-     "f1f8",
-     "d8f8",
-     "b2a1",
-     "f8f4",
-     "g1h2",
-     "g7d4"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "f8f1",
-     "g1f1",
-     "d8f8",
-     "f1e2",
-     "c5e6",
-     "e2d3",
-     "g7d4"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "c5e4",
-     "f1f8",
-     "g8f8",
-     "b2a3",
-     "f8e8",
      "c4c5",
-     "g7d4"
+     "g7d4",
+     "c3d4",
+     "f8f1",
+     "g2f1",
+     "d3b2"
     ]
    },
    {
@@ -19549,10 +17340,10 @@
     "at": 2,
     "uci": [
      "d8d4",
-     "g1h2",
-     "b6c7",
-     "h2g1",
-     "d4d8"
+     "g1h1",
+     "d4d8",
+     "a2a3",
+     "g7c3"
     ]
    },
    {
@@ -19563,32 +17354,6 @@
      "d4e6",
      "c3g7",
      "e6g7"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "b6c5",
-     "g1h1",
-     "e6d4",
-     "a2a3",
-     "c5d6"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "g7h8",
-     "g1h1",
-     "h8d4",
-     "e1e6",
-     "d4c3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d8d4"
     ]
    }
   ]
@@ -19638,66 +17403,10 @@
   "source": "https://lichess.org/study/lBdYC3vM/yH14jkcb",
   "alternatives": [
    {
-    "at": 0,
-    "uci": [
-     "h3g4",
-     "c8e8",
-     "e1d1",
-     "f5g4",
-     "a4c6",
-     "e8d8",
-     "b2b4",
-     "f6e6",
-     "c6b7"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "e1d1",
-     "f8g7",
-     "b2b4",
-     "f6h6",
-     "a4c6",
-     "c8c6",
-     "d6d7",
-     "h6h8",
-     "d7d8q"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "b2b4",
-     "f6f7",
-     "h3g4",
-     "f5g4",
-     "e1d1",
-     "f8e8",
-     "a4b3",
-     "f7h7",
-     "d1d4"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "f2f3",
-     "f8g7",
-     "f3g4",
-     "f5g4",
-     "h3g4",
-     "f4f3",
-     "g1f2",
-     "f3g2",
-     "f2g2"
-    ]
-   },
-   {
     "at": 4,
     "uci": [
      "e1e8",
-     "f8f7",
+     "f8g7",
      "c5d6",
      "f6d6",
      "d7d8q"
@@ -19758,19 +17467,25 @@
     "uci": [
      "e2f2",
      "h2h3",
-     "f2f3"
+     "e1h1",
+     "h3g4",
+     "h7h5",
+     "g4g5",
+     "f2g3",
+     "g5f6",
+     "g3h4"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "h5d5"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "a8e8"
+     "h5d5",
+     "f2f3",
+     "e1e2",
+     "g2h1",
+     "d5f3",
+     "h1g1",
+     "f3g2"
     ]
    }
   ]
@@ -19797,21 +17512,7 @@
    "c1c4",
    "c8c4"
   ],
-  "source": "https://lichess.org/study/lBdYC3vM/fAno3xJo",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "e8d6",
-     "a4b2",
-     "d6b5",
-     "d4d3",
-     "b5a3",
-     "g2g3",
-     "e7g5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/lBdYC3vM/fAno3xJo"
  },
  {
   "n": 645,
@@ -19945,17 +17646,7 @@
    "f8e8",
    "e1e8"
   ],
-  "source": "https://lichess.org/study/lBdYC3vM/Cvyc9VHC",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "c1c8",
-     "f7f5",
-     "c8e8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/lBdYC3vM/Cvyc9VHC"
  },
  {
   "n": 651,
@@ -20143,10 +17834,10 @@
      "h3f3",
      "f7e6",
      "h7g6",
-     "f8f6",
-     "g6g7",
-     "f6f3",
-     "g7e5"
+     "g7f6",
+     "e3f4",
+     "f8g8",
+     "g6g8"
     ]
    },
    {
@@ -20188,7 +17879,7 @@
      "a1e1",
      "c8e8",
      "e1e4",
-     "c7g3"
+     "e8e4"
     ]
    },
    {
@@ -20197,26 +17888,8 @@
      "c7c6",
      "a1e1",
      "e8e4",
-     "e1e4",
-     "c6e4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d7e5"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d7f6"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "h7h5"
+     "b2c1",
+     "f6g4"
     ]
    }
   ]
@@ -20239,27 +17912,7 @@
    "f8g8",
    "e6c7"
   ],
-  "source": "https://lichess.org/study/ZcyZ5DVD/wqfQJjDv",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "e3b6",
-     "c7c8",
-     "g5f7",
-     "d7b6",
-     "a5b6"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "e3b6",
-     "c7c8",
-     "g5f7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/ZcyZ5DVD/wqfQJjDv"
  },
  {
   "n": 662,
@@ -20339,49 +17992,7 @@
    "d6b6",
    "e7f8"
   ],
-  "source": "https://lichess.org/study/ZcyZ5DVD/P25qsQCd",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "g5e7",
-     "d8e7",
-     "b3e3",
-     "b5e8",
-     "a2a4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "e7c5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "d5d6"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c1c2"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "a2a4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c1c5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/ZcyZ5DVD/P25qsQCd"
  },
  {
   "n": 666,
@@ -20405,39 +18016,7 @@
    "f1f2",
    "d4f2"
   ],
-  "source": "https://lichess.org/study/ZcyZ5DVD/emj5NIEf",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "b7g7"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "b7c7"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "b7h7"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g8g7"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "b7f7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/ZcyZ5DVD/emj5NIEf"
  },
  {
   "n": 667,
@@ -20464,31 +18043,23 @@
   "source": "https://lichess.org/study/ZcyZ5DVD/UDLD2KZH",
   "alternatives": [
    {
-    "at": 2,
+    "at": 6,
     "uci": [
-     "e1h4",
-     "h2g1",
-     "h4e1",
-     "g1h2",
-     "f8f1"
+     "h1g1",
+     "g2h3",
+     "e1g3"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "e1g1"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "h1g1"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "h1f1"
+     "h1f1",
+     "g2h3",
+     "f1h1",
+     "c2h2",
+     "e1f1",
+     "h3h4",
+     "h1h2"
     ]
    }
   ]
@@ -20511,15 +18082,7 @@
    "e8e6",
    "d5e6"
   ],
-  "source": "https://lichess.org/study/ZcyZ5DVD/P34BKlW4",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "e2e6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/ZcyZ5DVD/P34BKlW4"
  },
  {
   "n": 669,
@@ -20570,95 +18133,37 @@
   "source": "https://lichess.org/study/ZcyZ5DVD/KieomSWU",
   "alternatives": [
    {
-    "at": 4,
-    "uci": [
-     "f6g6",
-     "g8h8",
-     "g6f6",
-     "h8g8",
-     "d1d7",
-     "b4d3",
-     "d7d3",
-     "b5d3",
-     "c2d3",
-     "b8b7",
-     "f6c6",
-     "b7e7",
-     "c6g6",
-     "e7g7",
-     "g6h6"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "f6e6",
-     "g8f8",
-     "e6f6",
-     "f8g8",
-     "d1d7",
-     "b4d3",
-     "d7d3",
-     "b5d3",
-     "c2d3",
-     "b8e8",
-     "f6g6",
-     "g8f8",
-     "g6c6",
-     "f8f7",
-     "b2c3"
-    ]
-   },
-   {
     "at": 10,
     "uci": [
      "b1a2",
      "d3c1",
      "a2a1",
      "b3a3",
-     "a1b1",
+     "a1b2",
      "a3b3",
-     "b1c1",
+     "b2c1",
      "b3b1",
-     "c1b1"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "b1a1",
-     "b3a3",
-     "a1b1",
-     "a3b3",
-     "b1a2",
-     "d3c1",
-     "a2a1",
-     "b3a3",
-     "a1b1"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "c2c3",
-     "b2b3",
-     "c3c2",
-     "b3b2",
-     "c2d3",
-     "b2b3",
-     "d3c2"
+     "c1b1",
+     "a6a5",
+     "f6g7"
     ]
    },
    {
     "at": 12,
     "uci": [
      "c2d1",
-     "d3f2",
-     "d1c1",
-     "f2d3",
-     "d7d3",
      "b2b1",
-     "c1b1"
+     "d1d2",
+     "b1b2",
+     "d2d3",
+     "b2b3",
+     "d3c4",
+     "b3b4",
+     "c4b4",
+     "c6c5",
+     "b4c5",
+     "a6a5",
+     "f6g7"
     ]
    },
    {
@@ -20667,8 +18172,8 @@
      "d3d2",
      "b3b2",
      "f6b2",
-     "c6c5",
-     "b2g7"
+     "g8f8",
+     "b2h8"
     ]
    },
    {
@@ -20677,8 +18182,8 @@
      "d3e2",
      "b3b2",
      "f6b2",
-     "a6a5",
-     "b2g7"
+     "g8f8",
+     "b2h8"
     ]
    },
    {
@@ -20688,17 +18193,9 @@
      "b3b4",
      "c4b4",
      "c6c5",
-     "b4c5"
-    ]
-   },
-   {
-    "at": 14,
-    "uci": [
-     "d3e4",
-     "b3b4",
-     "e4d3",
-     "b4b3",
-     "d3c2"
+     "b4c5",
+     "a6a5",
+     "f6g7"
     ]
    },
    {
@@ -20708,14 +18205,16 @@
      "b3b4",
      "d4c3",
      "b4b3",
-     "c3b3"
+     "c3b3",
+     "a6a5",
+     "f6g7"
     ]
    },
    {
     "at": 16,
     "uci": [
      "f6b2",
-     "c6c5",
+     "a6a5",
      "b2g7"
     ]
    },
@@ -20724,7 +18223,9 @@
     "uci": [
      "c2c3",
      "b2b3",
-     "c3b3"
+     "c3b3",
+     "a6a5",
+     "f6g7"
     ]
    },
    {
@@ -20732,7 +18233,9 @@
     "uci": [
      "c2c1",
      "b2c2",
-     "c1c2"
+     "c1c2",
+     "a6a5",
+     "f6g7"
     ]
    },
    {
@@ -20740,45 +18243,43 @@
     "uci": [
      "c2d1",
      "b2b1",
-     "d1c2"
-    ]
-   },
-   {
-    "at": 16,
-    "uci": [
-     "c2d3",
-     "b2b3",
-     "d3c2"
+     "d1d2",
+     "b1d1",
+     "d2d1",
+     "a6a5",
+     "f6g7"
     ]
    },
    {
     "at": 18,
     "uci": [
-     "f6d8"
-    ]
-   },
-   {
-    "at": 18,
-    "uci": [
-     "d7g7"
-    ]
-   },
-   {
-    "at": 18,
-    "uci": [
-     "f6f7"
-    ]
-   },
-   {
-    "at": 18,
-    "uci": [
+     "d7g7",
+     "g8h8",
      "f6h6"
     ]
    },
    {
     "at": 18,
     "uci": [
-     "f6e6"
+     "f6f7",
+     "g8h8",
+     "f7g7"
+    ]
+   },
+   {
+    "at": 18,
+    "uci": [
+     "f6h6",
+     "a5a4",
+     "h6g7"
+    ]
+   },
+   {
+    "at": 18,
+    "uci": [
+     "f6e6",
+     "g8h8",
+     "e6e8"
     ]
    }
   ]
@@ -20801,23 +18302,7 @@
    "c6c4",
    "e1e3"
   ],
-  "source": "https://lichess.org/study/ZcyZ5DVD/6nW6Wnl9",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "b7c6",
-     "b5c6",
-     "e2c4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "b7d5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/ZcyZ5DVD/6nW6Wnl9"
  },
  {
   "n": 671,
@@ -20898,67 +18383,37 @@
   "source": "https://lichess.org/study/ZcyZ5DVD/FUdHeAh3",
   "alternatives": [
    {
-    "at": 6,
-    "uci": [
-     "e2g1",
-     "h3g3",
-     "g1e2",
-     "g3h3",
-     "d4f2",
-     "e7f6",
-     "h8g8"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "e2f4",
-     "h3g3",
-     "f4e2",
-     "g3h3",
-     "d4f2",
-     "g4f5",
-     "g6f5"
-    ]
-   },
-   {
     "at": 8,
     "uci": [
      "h8h7",
      "g4f5",
      "e2g1",
      "h3g4",
-     "e4f3"
+     "e4f5"
     ]
    },
    {
     "at": 10,
     "uci": [
      "h6h5",
-     "f6e5",
-     "e2g1"
+     "a3a4",
+     "e2f4"
     ]
    },
    {
     "at": 10,
     "uci": [
      "g6f5",
-     "f6g5",
-     "e2g1"
+     "a3a4",
+     "e2f4"
     ]
    },
    {
     "at": 10,
     "uci": [
      "e4f3",
-     "f6g5",
-     "e2g1"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "e4f3"
+     "a3a4",
+     "e2f4"
     ]
    }
   ]
@@ -20992,23 +18447,11 @@
     "uci": [
      "a5b5",
      "a1d1",
-     "e5d3",
-     "d1d3",
-     "e4d3",
-     "e1b4",
-     "b5g5"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g5g4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "b6b5"
+     "e5f3",
+     "g2f3",
+     "b5g5",
+     "h4g4",
+     "f6g4"
     ]
    }
   ]
@@ -21043,39 +18486,7 @@
    "g7h7",
    "g5f6"
   ],
-  "source": "https://lichess.org/study/ZcyZ5DVD/b1Mv1MyJ",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "g8g7",
-     "h6g7",
-     "g2g7",
-     "h7g7",
-     "f5f6",
-     "d5f6",
-     "f4g5",
-     "g7h7",
-     "g5f5"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "f4g5",
-     "g7h7",
-     "f5f6",
-     "f8g8",
-     "g5d5"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "g5f5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/ZcyZ5DVD/b1Mv1MyJ"
  },
  {
   "n": 675,
@@ -21112,39 +18523,15 @@
    {
     "at": 2,
     "uci": [
-     "c4f1",
-     "h7g8",
-     "g1g6",
-     "g8f7",
-     "f1h3",
-     "f7e8",
-     "g6e6",
-     "e4e6",
-     "d6e6"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
      "c4c5",
-     "a7f7",
+     "f8f7",
      "c5b4",
-     "f8c8",
+     "a7c7",
      "b4e4",
-     "c8c3",
+     "c7c3",
      "b2c3",
      "f5e4",
      "d6g6"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d6g6",
-     "g8f7",
-     "g6f6",
-     "f7e8",
-     "f6f8"
     ]
    },
    {
@@ -21153,12 +18540,6 @@
      "d6f6",
      "f7g7",
      "f6f8"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "h7h8"
     ]
    }
   ]
@@ -21181,15 +18562,7 @@
    "b8c8",
    "b6b4"
   ],
-  "source": "https://lichess.org/study/ZcyZ5DVD/GSv87uI7",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "b6a6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/ZcyZ5DVD/GSv87uI7"
  },
  {
   "n": 677,
@@ -21249,19 +18622,7 @@
    "f7f6",
    "g5f6"
   ],
-  "source": "https://lichess.org/study/ZcyZ5DVD/hMcXQkLQ",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "d5f6",
-     "f7f6",
-     "g5f6",
-     "c6e7",
-     "f6e7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/ZcyZ5DVD/hMcXQkLQ"
  },
  {
   "n": 680,
@@ -21309,15 +18670,7 @@
    "c6e5",
    "b3b7"
   ],
-  "source": "https://lichess.org/study/ZcyZ5DVD/tu0WzxG8",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "g2b7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/ZcyZ5DVD/tu0WzxG8"
  },
  {
   "n": 682,
@@ -21337,17 +18690,7 @@
    "g8h8",
    "e7c6"
   ],
-  "source": "https://lichess.org/study/ZcyZ5DVD/5mgQRgqa",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "e2g4",
-     "c6g6",
-     "f5e7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/ZcyZ5DVD/5mgQRgqa"
  },
  {
   "n": 683,
@@ -21391,32 +18734,16 @@
      "f5g3",
      "f2g2",
      "g5e7",
-     "b3d1",
+     "b3c2",
+     "e7e4",
+     "g2h2",
      "g7h6",
-     "g1e1",
+     "c2e4",
      "g3e4",
-     "c3c1",
-     "d8c8",
-     "d2c3",
-     "a7a5",
-     "d1f3",
-     "e7d7"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "g7d4",
-     "f4g2",
-     "g5f6",
-     "f2e2",
-     "d4c3",
-     "b2c3",
-     "f6e5",
-     "e2d3",
-     "e5e4",
-     "d3e2",
-     "d5d4"
+     "c3c2",
+     "e4d2",
+     "c2d2",
+     "e8e3"
     ]
    },
    {
@@ -21560,25 +18887,13 @@
   "source": "https://lichess.org/study/ZcyZ5DVD/CltbMEoB",
   "alternatives": [
    {
-    "at": 0,
-    "uci": [
-     "g3h3",
-     "g6h6",
-     "h3g3",
-     "g7h7",
-     "c4f1",
-     "h7e7",
-     "f1f5"
-    ]
-   },
-   {
     "at": 2,
     "uci": [
      "g3h3",
      "g7h7",
      "h3h7",
      "h8h7",
-     "c4f7"
+     "g2g3"
     ]
    }
   ]
@@ -21736,24 +19051,6 @@
   "source": "https://lichess.org/study/ZcyZ5DVD/Mj8XgHys",
   "alternatives": [
    {
-    "at": 2,
-    "uci": [
-     "f6g5",
-     "g8h8",
-     "g5f6",
-     "h8g8",
-     "f6f7",
-     "g8h8",
-     "e7e8q",
-     "a8e8",
-     "f7e8",
-     "h8g7",
-     "e8e5",
-     "g7g8",
-     "e5g5"
-    ]
-   },
-   {
     "at": 4,
     "uci": [
      "e7e8r",
@@ -21767,54 +19064,6 @@
      "g5d8",
      "h8g7",
      "d8c7"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "f7f6",
-     "h8g8",
-     "f6f7",
-     "g8h8",
-     "e7e8r",
-     "a8e8",
-     "f7e8",
-     "h8g7",
-     "e8e5",
-     "g7g8",
-     "e5g5"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "e5e8",
-     "g8g7",
-     "e8e5",
-     "g7g8",
-     "e5g5"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "e5e6",
-     "g8h8",
-     "e6e8",
-     "h8g7",
-     "e8e5"
-    ]
-   },
-   {
-    "at": 14,
-    "uci": [
-     "d8g5"
-    ]
-   },
-   {
-    "at": 14,
-    "uci": [
-     "d8f6"
     ]
    }
   ]
@@ -21937,33 +19186,7 @@
    "d8d7",
    "a1h8"
   ],
-  "source": "https://lichess.org/study/ZcyZ5DVD/wfsfldAa",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "a1e5",
-     "a7c8",
-     "e4f6",
-     "g8f7",
-     "f6d7"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "a1a3",
-     "f8g7",
-     "f6h5"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "a1f6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/ZcyZ5DVD/wfsfldAa"
  },
  {
   "n": 700,
@@ -21987,25 +19210,7 @@
    "c4c5",
    "d6e7"
   ],
-  "source": "https://lichess.org/study/ZcyZ5DVD/E6Ey6rag",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "d3d4",
-     "c4e2",
-     "d1e2"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c3a5",
-     "e7d7",
-     "a5d8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/ZcyZ5DVD/E6Ey6rag"
  },
  {
   "n": 701,
@@ -22049,15 +19254,7 @@
    "g8g7",
    "f3d5"
   ],
-  "source": "https://lichess.org/study/44kFiZlc/sxfX4t0B",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "d1d3"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/44kFiZlc/sxfX4t0B"
  },
  {
   "n": 703,
@@ -22093,25 +19290,7 @@
    "e6g6",
    "h5g6"
   ],
-  "source": "https://lichess.org/study/44kFiZlc/YOWCYxeh",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "c1g5",
-     "d5e3",
-     "g5e3",
-     "c5e3",
-     "f2e3"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "e5e6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/44kFiZlc/YOWCYxeh"
  },
  {
   "n": 705,
@@ -22127,33 +19306,7 @@
    "d1c1",
    "e7a3"
   ],
-  "source": "https://lichess.org/study/44kFiZlc/LSjctxrR",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "b7g2",
-     "g1g2",
-     "e7a7"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "b7d5",
-     "a4c5",
-     "d5g2"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "b7a8",
-     "a4c5",
-     "a8g2"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/44kFiZlc/LSjctxrR"
  },
  {
   "n": 706,
@@ -22194,39 +19347,39 @@
      "f6e5",
      "h6h2",
      "e5f6",
-     "c3e4"
+     "c3e4",
+     "f6g7",
+     "h2h7"
     ]
    },
    {
     "at": 6,
     "uci": [
      "h1d1",
-     "f8h8",
-     "c3e4",
      "f6e5",
-     "h7g7"
+     "h7h2",
+     "e5f6",
+     "h2h6",
+     "f6e5",
+     "f3f4",
+     "g5f4",
+     "e3f4"
     ]
    },
    {
     "at": 8,
     "uci": [
      "e3f4",
-     "f8h8",
-     "g4g5"
+     "b5b4",
+     "c3e4"
     ]
    },
    {
     "at": 8,
     "uci": [
      "h1h5",
-     "f4e3",
+     "f4f3",
      "c3e4"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "h1d1"
     ]
    }
   ]
@@ -22336,11 +19489,17 @@
     "uci": [
      "f7f6",
      "h6h7",
-     "f6f7",
-     "h7h6",
      "g3h3",
-     "h6g6",
-     "h3h7"
+     "h7g8",
+     "h3g2",
+     "g8h7",
+     "g2g6",
+     "h7h8",
+     "g6h6",
+     "h8g8",
+     "h6g5",
+     "g8h8",
+     "f6h6"
     ]
    },
    {
@@ -22357,32 +19516,12 @@
     "at": 8,
     "uci": [
      "f6f3",
-     "h5g5",
-     "f3f6"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "f6h4"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "f6f3"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "h7g7"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "f6g7"
+     "g2g4",
+     "f7h7",
+     "h5g6",
+     "f3f7",
+     "g6g5",
+     "d4f3"
     ]
    }
   ]
@@ -22441,15 +19580,7 @@
    "g7h8",
    "e5g6"
   ],
-  "source": "https://lichess.org/study/44kFiZlc/QWxnRvhy",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "e7g6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/44kFiZlc/QWxnRvhy"
  },
  {
   "n": 713,
@@ -22509,25 +19640,7 @@
    "h8h7",
    "d7f6"
   ],
-  "source": "https://lichess.org/study/44kFiZlc/HIwjqPL6",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "f8g6",
-     "h8h7",
-     "g6f8",
-     "h7g8",
-     "f8d7"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "e8e7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/44kFiZlc/HIwjqPL6"
  },
  {
   "n": 716,
@@ -22552,31 +19665,45 @@
    {
     "at": 4,
     "uci": [
-     "c3c4"
+     "c3c4",
+     "a4a3",
+     "g4g8"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "d4e2"
+     "d4e2",
+     "a4a3",
+     "g4g8"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "d4b5"
+     "d4b5",
+     "a4a3",
+     "g4g8"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "h2h3"
+     "h2h3",
+     "a6f1",
+     "a1f1",
+     "a4b3",
+     "g4g8"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "a1e1"
+     "a1e1",
+     "a6f1",
+     "e1f1",
+     "d7b5",
+     "g4g8"
     ]
    }
   ]
@@ -22605,14 +19732,6 @@
   ],
   "source": "https://lichess.org/study/44kFiZlc/oW4CNBSm",
   "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "e3f4",
-     "d5c4",
-     "b2b3"
-    ]
-   },
    {
     "at": 4,
     "uci": [
@@ -22740,7 +19859,7 @@
      "c8f5",
      "e4f5",
      "a8e8",
-     "g1f1"
+     "e2d3"
     ]
    },
    {
@@ -22777,8 +19896,8 @@
      "e5f6",
      "f8f6",
      "g4h4",
-     "f6f8",
-     "g2g4"
+     "f6f5",
+     "h4h7"
     ]
    }
   ]
@@ -22883,15 +20002,7 @@
    "d8e8",
    "d7e8q"
   ],
-  "source": "https://lichess.org/study/44kFiZlc/xNiU1kGs",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "d7e8r"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/44kFiZlc/xNiU1kGs"
  },
  {
   "n": 726,
@@ -22931,15 +20042,7 @@
    "g5d8",
    "c8d8"
   ],
-  "source": "https://lichess.org/study/44kFiZlc/5bCh6kkn",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "e2g4"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/44kFiZlc/5bCh6kkn"
  },
  {
   "n": 728,
@@ -23037,26 +20140,20 @@
     "at": 0,
     "uci": [
      "b2b4",
-     "e7d8",
+     "d7g4",
      "b4a5",
-     "g6e7",
-     "c1b2",
      "c7c6",
-     "d5c6",
-     "e7c6",
-     "b1d2"
+     "h4h5",
+     "g6f8",
+     "b1d2",
+     "c6d5",
+     "e4d5"
     ]
    },
    {
     "at": 8,
     "uci": [
      "e7e8q"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "e7e8b"
     ]
    },
    {
@@ -23100,37 +20197,19 @@
   "source": "https://lichess.org/study/44kFiZlc/55nqOGWY",
   "alternatives": [
    {
-    "at": 2,
-    "uci": [
-     "e4f6",
-     "e8e7",
-     "g3e5",
-     "h6f4",
-     "f6d5",
-     "a5d5",
-     "e5g7",
-     "e7d6",
-     "d1d5"
-    ]
-   },
-   {
     "at": 6,
     "uci": [
      "d1f1",
      "h6f4",
      "f1f4",
      "f7g8",
-     "d6e6"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d6d7",
-     "f7g8",
-     "d7e6",
-     "g8f8",
-     "h1f1"
+     "d6e6",
+     "g8g7",
+     "e6e7",
+     "g7h6",
+     "g4g5",
+     "h6h5",
+     "e4g3"
     ]
    },
    {
@@ -23138,7 +20217,7 @@
     "uci": [
      "d6e7",
      "g7g8",
-     "e4f6"
+     "e7f7"
     ]
    },
    {
@@ -23146,39 +20225,27 @@
     "uci": [
      "d6e5",
      "g7g8",
-     "e5e6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "f1f7",
-     "g7f7",
-     "d1f1"
+     "e5e6",
+     "g8g7",
+     "e6f7"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "d7e6"
+     "d7e6",
+     "g8g7",
+     "e6f7"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "e4f6"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "g4g5"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "a2a3"
+     "e4f6",
+     "g8f8",
+     "f6h7",
+     "f8g8",
+     "d7f7"
     ]
    }
   ]
@@ -23231,7 +20298,7 @@
     "at": 6,
     "uci": [
      "h5f5",
-     "d4c3",
+     "d4d3",
      "f5h7"
     ]
    },
@@ -23240,37 +20307,53 @@
     "uci": [
      "e5f6",
      "e8e4",
-     "c3e4"
+     "c3e4",
+     "h8h7",
+     "e4g5",
+     "h7g8",
+     "h5h6",
+     "d4d3",
+     "h6g7"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "e5f6"
+     "e5f6",
+     "d4d3",
+     "h6g7"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "c3d5"
+     "c3d5",
+     "d4d3",
+     "d5f6"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "e4d3"
+     "e4d3",
+     "c6c5",
+     "h6h7"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "e4f5"
+     "e4f5",
+     "d4d3",
+     "h6h7"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "a2a3"
+     "a2a3",
+     "d4d3",
+     "h6h7"
     ]
    }
   ]
@@ -23329,8 +20412,8 @@
      "c5g5",
      "b3b1",
      "g7f6",
-     "c3e4",
-     "g5f4"
+     "g2g3",
+     "a8b8"
     ]
    },
    {
@@ -23412,16 +20495,6 @@
   "source": "https://lichess.org/study/44kFiZlc/HCTQdNYS",
   "alternatives": [
    {
-    "at": 4,
-    "uci": [
-     "a4a6",
-     "a7b8",
-     "a6b5",
-     "b8c8",
-     "c6a6"
-    ]
-   },
-   {
     "at": 6,
     "uci": [
      "a4b5",
@@ -23433,7 +20506,7 @@
     "at": 6,
     "uci": [
      "a4c6",
-     "e6c4",
+     "f6f5",
      "a6a8"
     ]
    },
@@ -23442,19 +20515,23 @@
     "uci": [
      "f3e5",
      "e6d5",
-     "e4d5"
+     "e4d5",
+     "e7e8",
+     "a6a8",
+     "b8b7",
+     "a4a6"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "a8a7"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "a4a7"
+     "a4a7",
+     "b7c6",
+     "a7a4",
+     "c6d6",
+     "a8a6",
+     "c7c6",
+     "a4c6"
     ]
    }
   ]
@@ -23488,79 +20565,13 @@
   "source": "https://lichess.org/study/44kFiZlc/XubKKatM",
   "alternatives": [
    {
-    "at": 0,
-    "uci": [
-     "e4f6",
-     "e8e7",
-     "c4a5",
-     "c6c7",
-     "a5c4",
-     "f8g7",
-     "g4g5",
-     "c7a7",
-     "c4b6"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "g4g5",
-     "h6g5",
-     "e4f6",
-     "e8e7",
-     "f4g5",
-     "f8g7",
-     "h3h7",
-     "e7f8",
-     "h2h4"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "h3g3",
-     "e8d7",
-     "g3d3",
-     "d7c7",
-     "d3d8",
-     "c7d8",
-     "b3a3",
-     "c6c7",
-     "a3a1"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "h3f3",
-     "e8d7",
-     "f3d3",
-     "d7c7",
-     "d3d8",
-     "c7d8",
-     "b3a3",
-     "f8e7",
-     "a3a1"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "b3a3",
-     "f8g7",
-     "a3a1",
-     "c6c7",
-     "a1f1",
-     "e8f8",
-     "h3f3",
-     "f8g8",
-     "f1d1"
-    ]
-   },
-   {
     "at": 8,
     "uci": [
-     "c7c8"
+     "c7c8",
+     "d7d8",
+     "c8c7",
+     "d8d7",
+     "c7d7"
     ]
    }
   ]
@@ -23588,31 +20599,51 @@
    {
     "at": 4,
     "uci": [
-     "f5g6"
+     "f5g6",
+     "f8e8",
+     "h5h7",
+     "g8f8",
+     "h7f7"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "h5h3"
+     "h5h3",
+     "f8e8",
+     "h3h7",
+     "g8f8",
+     "h7f7"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "h5h4"
+     "h5h4",
+     "f8e8",
+     "h4h7",
+     "g8f8",
+     "h7f7"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "h5h6"
+     "h5h6",
+     "f8e8",
+     "h6h7",
+     "g8f8",
+     "h7f7"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "h5h2"
+     "h5h2",
+     "f8e8",
+     "h2h7",
+     "g8f8",
+     "h7f7"
     ]
    }
   ]
@@ -23651,21 +20682,7 @@
    "h7g6",
    "h1e4"
   ],
-  "source": "https://lichess.org/study/44kFiZlc/ESBAbZAC",
-  "alternatives": [
-   {
-    "at": 12,
-    "uci": [
-     "h4g4"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "h1f3"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/44kFiZlc/ESBAbZAC"
  },
  {
   "n": 742,
@@ -23756,13 +20773,13 @@
    {
     "at": 8,
     "uci": [
-     "h6f6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "c2c3"
+     "c2c3",
+     "a5c3",
+     "b2c3",
+     "e8g8",
+     "h6f6",
+     "g8g7",
+     "f6g7"
     ]
    }
   ]
@@ -23818,39 +20835,17 @@
      "h8g8",
      "d5e4",
      "f7f5",
-     "e4d5",
-     "f8f7",
      "h6g6",
-     "g8h8",
-     "d5f7",
-     "d8f8",
-     "g6h5"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "h5g6",
-     "g8h8",
-     "g6h6",
-     "h8g8",
-     "d5e4",
-     "f7f5",
-     "e4d5",
-     "f8f7",
-     "h6g6"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "h5g6",
      "g8h8",
      "g6h5",
      "h8g8",
      "e4d5",
      "f8f7",
-     "h5f7"
+     "d5f7",
+     "g8g7",
+     "h5g6",
+     "g7h8",
+     "g6h6"
     ]
    },
    {
@@ -23864,35 +20859,27 @@
     ]
    },
    {
-    "at": 14,
+    "at": 16,
     "uci": [
-     "f7g6",
+     "c1h6",
+     "g7f6",
+     "h5f7",
+     "f6e5",
+     "h6f4",
+     "e5d4",
+     "a1d1"
+    ]
+   },
+   {
+    "at": 16,
+    "uci": [
+     "h2h4",
+     "f5f4",
+     "c1f4",
      "e7g5",
-     "c1g5"
-    ]
-   },
-   {
-    "at": 16,
-    "uci": [
-     "h5f7"
-    ]
-   },
-   {
-    "at": 16,
-    "uci": [
-     "c1h6"
-    ]
-   },
-   {
-    "at": 16,
-    "uci": [
-     "h2h4"
-    ]
-   },
-   {
-    "at": 16,
-    "uci": [
-     "c1f4"
+     "h5f7",
+     "g7h8",
+     "h4g5"
     ]
    }
   ]
@@ -23967,12 +20954,12 @@
      "f5g6",
      "h7g6",
      "h4f6",
-     "d8f7",
+     "d8c6",
      "f6h4",
-     "f7e5",
-     "g4e5",
-     "c4e5",
-     "e2e3"
+     "c8b8",
+     "h2h3",
+     "e8f8",
+     "e4e5"
     ]
    },
    {
@@ -23993,12 +20980,12 @@
     "at": 2,
     "uci": [
      "d5f6",
-     "g7f6",
-     "g4f6",
-     "g8h8",
-     "f6e8",
-     "d8f7",
-     "e8f6"
+     "g8f7",
+     "f5g6",
+     "h7g6",
+     "f6d5",
+     "f7g8",
+     "g4f6"
     ]
    },
    {
@@ -24122,7 +21109,8 @@
     "uci": [
      "f5g6",
      "f7e8",
-     "g6h7"
+     "g6h7",
+     "a6e2"
     ]
    },
    {
@@ -24130,7 +21118,8 @@
     "uci": [
      "f5f6",
      "h7h1",
-     "f6e7"
+     "f6e7",
+     "a6e2"
     ]
    }
   ]
@@ -24197,15 +21186,7 @@
    "c6f6",
    "e5d5"
   ],
-  "source": "https://lichess.org/study/fxpx4587/lf839eez",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "c5e7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/fxpx4587/lf839eez"
  },
  {
   "n": 754,
@@ -24250,33 +21231,17 @@
      "f7f8",
      "g6g8",
      "f8e7",
-     "g8g7"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "g6h7",
-     "g8f7",
+     "g8g7",
+     "e7e8",
      "h7g6"
     ]
    },
    {
     "at": 12,
     "uci": [
-     "h7h8"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "h7h6"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "g2h2"
+     "h7h8",
+     "f8e7",
+     "h8g7"
     ]
    }
   ]
@@ -24299,29 +21264,7 @@
    "g8h8",
    "f7d5"
   ],
-  "source": "https://lichess.org/study/fxpx4587/nZQRgf2a",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "e7e3",
-     "g8h8",
-     "g2g4",
-     "f5d3",
-     "e3e6"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "e7c5",
-     "g8h8",
-     "g2g4",
-     "f5d3",
-     "g5e6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/fxpx4587/nZQRgf2a"
  },
  {
   "n": 756,
@@ -24381,17 +21324,7 @@
    "e1g2",
    "h6h3"
   ],
-  "source": "https://lichess.org/study/fxpx4587/W7ovWHUB",
-  "alternatives": [
-   {
-    "at": 14,
-    "uci": [
-     "h6h3",
-     "h1g2",
-     "h3h2"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/fxpx4587/W7ovWHUB"
  },
  {
   "n": 758,
@@ -24695,10 +21628,10 @@
     "at": 4,
     "uci": [
      "g5e7",
-     "d5f4",
+     "d5e7",
      "d1d8",
-     "f4e2",
-     "e1e2"
+     "a8d8",
+     "h2h4"
     ]
    }
   ]
@@ -24761,39 +21694,7 @@
    "h8g8",
    "g1g6"
   ],
-  "source": "https://lichess.org/study/fxpx4587/91nYM5bx",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "g1g4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g1g5"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g1g3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "f7h6"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "f7e5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/fxpx4587/91nYM5bx"
  },
  {
   "n": 773,
@@ -24841,57 +21742,7 @@
    "e8e7",
    "a8h8"
   ],
-  "source": "https://lichess.org/study/fxpx4587/KajiZd4C",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "c4b6",
-     "e8e7",
-     "a3a5",
-     "c6e4",
-     "a5c5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "a3a7",
-     "c7a7",
-     "a1a7"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "b6d6",
-     "f7f6",
-     "a3a7"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "b6b8",
-     "c7c8",
-     "b8e5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "b6e3",
-     "c4d4",
-     "a3a8"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "a1a7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/fxpx4587/KajiZd4C"
  },
  {
   "n": 775,
@@ -24994,7 +21845,11 @@
      "g7h7",
      "g5h4",
      "h7g6",
-     "e3g3"
+     "e3g3",
+     "d7g4",
+     "g3g4",
+     "g6f5",
+     "h4g5"
     ]
    },
    {
@@ -25010,37 +21865,59 @@
     "uci": [
      "h5g5",
      "g7h7",
-     "g5h4"
+     "g5h4",
+     "h7g6",
+     "h4g4",
+     "g6f6",
+     "g4g5"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "h5h6"
+     "h5h6",
+     "f6f5",
+     "h6g5"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "h5h4"
+     "h5h4",
+     "f6f5",
+     "h4g5"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "g4f4"
+     "g4f4",
+     "f6g7",
+     "h5g5",
+     "g7h7",
+     "f4h4"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "e1e8"
+     "e1e8",
+     "c5f2",
+     "g1f2",
+     "f8e8",
+     "h5g5"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "e1e5"
+     "e1e5",
+     "c5f2",
+     "g1f2",
+     "e8e5",
+     "h5h4",
+     "f6f5",
+     "h4g5"
     ]
    }
   ]
@@ -25131,10 +22008,10 @@
      "d4f5",
      "f8f5",
      "g1g7",
-     "g8f8",
-     "g7g8",
-     "f8g8",
-     "d1g4"
+     "g8h8",
+     "d1d3",
+     "d8f6",
+     "g7g3"
     ]
    }
   ]
@@ -25269,21 +22146,7 @@
    "f5g5",
    "f4e2"
   ],
-  "source": "https://lichess.org/study/fxpx4587/aBBC3nHf",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "h2h4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "f4e6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/fxpx4587/aBBC3nHf"
  },
  {
   "n": 786,
@@ -25316,19 +22179,11 @@
    {
     "at": 8,
     "uci": [
-     "e1e6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "g2e4"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "g5h6"
+     "e1e6",
+     "f8g8",
+     "e6e8",
+     "g8e8",
+     "g5g7"
     ]
    }
   ]
@@ -25376,31 +22231,41 @@
    {
     "at": 4,
     "uci": [
-     "d8d1"
+     "a6a5",
+     "h3d3",
+     "c4d3",
+     "a3a4",
+     "e1d1"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "a6a5"
+     "e1g1",
+     "h3f1",
+     "d8d1",
+     "f1d1",
+     "g1d1"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "e1g1"
+     "h7h5",
+     "h3d3",
+     "c4d3",
+     "a3a4",
+     "e1d1"
     ]
    },
    {
     "at": 4,
     "uci": [
-     "h7h5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "h7h6"
+     "h7h6",
+     "h3d3",
+     "c4d3",
+     "g5h6",
+     "e1d1"
     ]
    }
   ]
@@ -25432,7 +22297,9 @@
    {
     "at": 6,
     "uci": [
-     "b5f1"
+     "b5f1",
+     "h2h3",
+     "g5g2"
     ]
    }
   ]
@@ -25647,17 +22514,7 @@
    "e8e7",
    "d8e7"
   ],
-  "source": "https://lichess.org/study/fxpx4587/OgfP1AoU",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "d8e7",
-     "d7g4",
-     "g1f2"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/fxpx4587/OgfP1AoU"
  },
  {
   "n": 797,
@@ -25677,15 +22534,7 @@
    "d5f5",
    "f4b8"
   ],
-  "source": "https://lichess.org/study/fxpx4587/VKPSCdTY",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "d1d8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/fxpx4587/VKPSCdTY"
  },
  {
   "n": 798,
@@ -25849,42 +22698,42 @@
     "at": 6,
     "uci": [
      "c4c3",
-     "f3f4",
-     "c3c4",
-     "f4f5",
-     "c4d4",
-     "f5g6",
-     "d4d2"
+     "f3e2",
+     "c3e3",
+     "e2d1",
+     "e3d3",
+     "d1e2",
+     "d3d2"
     ]
    },
    {
     "at": 8,
     "uci": [
      "a2a4",
-     "e2f1",
-     "b5b6",
-     "f1g2",
-     "b6b7"
+     "e2f2",
+     "d4d2",
+     "f2f3",
+     "b5b6"
     ]
    },
    {
     "at": 8,
     "uci": [
      "d4d2",
-     "e2e1",
-     "d2b2",
-     "e1f1",
-     "b5b6"
+     "e2d2",
+     "b5b6",
+     "d2e2",
+     "b6b7"
     ]
    },
    {
     "at": 8,
     "uci": [
      "d5c6",
-     "d2d1q",
-     "d4d1",
-     "e2d1",
-     "b5b6"
+     "e2f2",
+     "d4d2",
+     "f2e3",
+     "d2b2"
     ]
    },
    {
@@ -25971,39 +22820,7 @@
    "d6d5",
    "f6h8"
   ],
-  "source": "https://lichess.org/study/LAt4RZVy/iK9sLIwm",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "h5e2"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "c3c4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "h5f7"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "b2b3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g1f1"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/LAt4RZVy/iK9sLIwm"
  },
  {
   "n": 806,
@@ -26121,15 +22938,7 @@
    "h8h7",
    "g4h4"
   ],
-  "source": "https://lichess.org/study/LAt4RZVy/EYcK7GoU",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "g4h3"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/LAt4RZVy/EYcK7GoU"
  },
  {
   "n": 811,
@@ -26153,25 +22962,7 @@
    "h8h7",
    "g4h4"
   ],
-  "source": "https://lichess.org/study/LAt4RZVy/9RWA7sPU",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "g4h4",
-     "g8g7",
-     "g3g7"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "h5f7",
-     "d4g1",
-     "h1g1"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/LAt4RZVy/9RWA7sPU"
  },
  {
   "n": 812,
@@ -26223,15 +23014,7 @@
    "e6g7",
    "f6d6"
   ],
-  "source": "https://lichess.org/study/LAt4RZVy/10Q6TbJ4",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "h6g7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/LAt4RZVy/10Q6TbJ4"
  },
  {
   "n": 814,
@@ -26322,7 +23105,9 @@
     "uci": [
      "b2f6",
      "e8g8",
-     "f7g8"
+     "f7g8",
+     "a8g8",
+     "h6f7"
     ]
    }
   ]
@@ -26349,15 +23134,7 @@
    "g8h8",
    "e7f6"
   ],
-  "source": "https://lichess.org/study/LAt4RZVy/HF5zASze",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "g5f6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/LAt4RZVy/HF5zASze"
  },
  {
   "n": 819,
@@ -26438,33 +23215,33 @@
    {
     "at": 8,
     "uci": [
-     "h7f6",
-     "g8f7",
-     "e3f3",
-     "d7f5",
-     "f3f5"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
      "e3f3",
      "d7f5",
      "f3f5",
      "d8e6",
-     "d5e6"
+     "h7f6",
+     "g8f7",
+     "f6g8",
+     "f7g8",
+     "d5e6",
+     "c8f8",
+     "f5f8"
     ]
    },
    {
     "at": 12,
     "uci": [
+     "g6h6",
+     "f5h7",
+     "h6h7"
+    ]
+   },
+   {
+    "at": 12,
+    "uci": [
+     "e4f5",
+     "c3c2",
      "g6h6"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "e4f5"
     ]
    }
   ]
@@ -26491,35 +23268,7 @@
    "b8a8",
    "b7a7"
   ],
-  "source": "https://lichess.org/study/LAt4RZVy/5g223PrU",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "a4b4",
-     "h6b6",
-     "c4e5",
-     "d7d6",
-     "b4d4"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "a4b3",
-     "h6b6",
-     "c4e5",
-     "d7d6",
-     "b3c3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "a4a7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/LAt4RZVy/5g223PrU"
  },
  {
   "n": 823,
@@ -26539,41 +23288,7 @@
    "g1h1",
    "f3d2"
   ],
-  "source": "https://lichess.org/study/LAt4RZVy/6Fxhcina",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "e7g5",
-     "e2g3",
-     "h4f3"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "e7h4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "e7d6"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "e7c7"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "e7d7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/LAt4RZVy/6Fxhcina"
  },
  {
   "n": 824,
@@ -26605,8 +23320,8 @@
      "f5e7",
      "g6f7",
      "e7c6",
-     "h5f6",
-     "g4f5"
+     "e4e3",
+     "f2e3"
     ]
    }
   ]
@@ -26629,15 +23344,7 @@
    "g6f4",
    "g3f4"
   ],
-  "source": "https://lichess.org/study/LAt4RZVy/F41X9mp9",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "a3d6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/LAt4RZVy/F41X9mp9"
  },
  {
   "n": 826,
@@ -26661,21 +23368,7 @@
    "g8h8",
    "e7c6"
   ],
-  "source": "https://lichess.org/study/LAt4RZVy/lUbJmoeS",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "f3d4",
-     "e6d5",
-     "e4d5",
-     "g7d4",
-     "e3d4",
-     "b7d5",
-     "c2c3"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/LAt4RZVy/lUbJmoeS"
  },
  {
   "n": 827,
@@ -26733,12 +23426,12 @@
     "at": 2,
     "uci": [
      "h6g7",
-     "g1g2",
+     "g1g7",
+     "g8g7",
+     "e2c2",
      "a2b1",
-     "e2d1",
-     "h4h3",
-     "g2g7",
-     "g8g7"
+     "c2c3",
+     "h4f6"
     ]
    }
   ]
@@ -26762,7 +23455,11 @@
    {
     "at": 2,
     "uci": [
-     "b7g7"
+     "b7g7",
+     "g8h8",
+     "g5h6",
+     "e4h7",
+     "h6h7"
     ]
    }
   ]
@@ -26800,23 +23497,13 @@
   "source": "https://lichess.org/study/LAt4RZVy/SLs5fNZR",
   "alternatives": [
    {
-    "at": 4,
-    "uci": [
-     "h6f7",
-     "h8g8",
-     "f7h6",
-     "g8h8",
-     "f1f7",
-     "d2d1",
-     "h1h2"
-    ]
-   },
-   {
     "at": 8,
     "uci": [
      "h2g3",
      "h1h3",
-     "g3h3"
+     "g2h3",
+     "c6c5",
+     "f8g7"
     ]
    }
   ]
@@ -26911,17 +23598,7 @@
    "g8h8",
    "f7h7"
   ],
-  "source": "https://lichess.org/study/LAt4RZVy/26jKfOOC",
-  "alternatives": [
-   {
-    "at": 10,
-    "uci": [
-     "g6f7",
-     "g8h7",
-     "f7g6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/LAt4RZVy/26jKfOOC"
  },
  {
   "n": 835,
@@ -26953,41 +23630,7 @@
    "g2g3",
    "h5h1"
   ],
-  "source": "https://lichess.org/study/LAt4RZVy/6Pywq4UW",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "f3g3",
-     "h1g2",
-     "g3e1",
-     "g1h2",
-     "e1h4",
-     "h2g1",
-     "a3g3"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "h6e3",
-     "g1h2",
-     "f3h5",
-     "h2g2",
-     "h5g4",
-     "c6e7",
-     "g6e7"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "h5f3",
-     "g2g1",
-     "f3d1"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/LAt4RZVy/6Pywq4UW"
  },
  {
   "n": 836,
@@ -27019,25 +23662,7 @@
    "g2h2",
    "e3d1"
   ],
-  "source": "https://lichess.org/study/LAt4RZVy/ueVcanIL",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "e5g4",
-     "h3g4",
-     "f6g4",
-     "h2g1",
-     "e4g2",
-     "g1g2",
-     "e8e3",
-     "c2c3",
-     "a8e8",
-     "d1d2",
-     "e3e4"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/LAt4RZVy/ueVcanIL"
  },
  {
   "n": 837,
@@ -27143,8 +23768,8 @@
     "at": 0,
     "uci": [
      "h2h4",
-     "e8f8",
-     "g1h2"
+     "h8g8",
+     "h4h5"
     ]
    },
    {
@@ -27152,7 +23777,7 @@
     "uci": [
      "g1f1",
      "h8g8",
-     "f2f3"
+     "d2e2"
     ]
    }
   ]
@@ -27210,35 +23835,15 @@
     "uci": [
      "g2f3",
      "f5e4",
-     "f3e3",
+     "f3e4",
      "a2e2",
-     "e3e2",
-     "e4f3",
-     "e2f3"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "g2g1",
-     "a2a1",
-     "g1f2",
-     "a1a2",
-     "f2g3",
-     "a2g2",
-     "g3g2"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "g2f1",
-     "f5d3",
-     "f1g1",
-     "a2a1",
-     "g1f2",
-     "a1a2",
-     "f2g3"
+     "e4d5",
+     "e2e7",
+     "d6e7",
+     "g8h7",
+     "e7e8q",
+     "h7h6",
+     "f6g6"
     ]
    },
    {
@@ -27248,7 +23853,11 @@
      "f5e4",
      "f3e3",
      "a2e2",
-     "e3e2"
+     "e3e2",
+     "e4d3",
+     "e2e3",
+     "g6g5",
+     "f6g7"
     ]
    },
    {
@@ -27258,7 +23867,13 @@
      "a2g2",
      "g3g2",
      "f5e4",
-     "e7e4"
+     "e7e4",
+     "g6g5",
+     "e4e7",
+     "g5g4",
+     "h4h7",
+     "g8f8",
+     "h7g7"
     ]
    },
    {
@@ -27266,7 +23881,9 @@
     "uci": [
      "f6g5",
      "f5g6",
-     "g5g6"
+     "g5g6",
+     "g8h8",
+     "g6e8"
     ]
    },
    {
@@ -27274,7 +23891,11 @@
     "uci": [
      "h4g5",
      "a2g2",
-     "g5f5"
+     "g5h4",
+     "g2g1",
+     "e7e8",
+     "g8h7",
+     "e8h8"
     ]
    },
    {
@@ -27282,45 +23903,61 @@
     "uci": [
      "h4h5",
      "f5g4",
-     "h5h6"
+     "h5h6",
+     "a2a5",
+     "f6g7"
     ]
    },
    {
     "at": 16,
     "uci": [
      "h4g3",
+     "g5f4",
+     "g3h4",
      "a2g2",
-     "g3g2"
+     "e7e8",
+     "g8h7",
+     "e8h8"
     ]
    },
    {
     "at": 18,
     "uci": [
-     "f6f7"
+     "f6f7",
+     "g8h8",
+     "f7g7"
     ]
    },
    {
     "at": 18,
     "uci": [
-     "e7g7"
+     "e7g7",
+     "g8h8",
+     "f6f8"
     ]
    },
    {
     "at": 18,
     "uci": [
-     "d6d7"
+     "d6d7",
+     "e4b1",
+     "d7d8q"
     ]
    },
    {
     "at": 18,
     "uci": [
-     "f6e6"
+     "f6e6",
+     "g8h8",
+     "e6c8"
     ]
    },
    {
     "at": 18,
     "uci": [
-     "e7e8"
+     "e7e8",
+     "g8h7",
+     "e8h8"
     ]
    }
   ]
@@ -27546,31 +24183,37 @@
     "uci": [
      "e4e3",
      "f4e3",
-     "h5h2"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
+     "h5h2",
+     "f2g3",
+     "e8e3",
+     "g3f4",
      "h1f3"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "h1h2"
+     "h1h2",
+     "g3g4",
+     "h2h3"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "h1h4"
+     "h1h4",
+     "g3g2",
+     "h4f2"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "h5h3"
+     "h5h3",
+     "g3g4",
+     "h1f3",
+     "g4f5",
+     "h3h5"
     ]
    }
   ]
@@ -27597,39 +24240,7 @@
    "g1f2",
    "d1h1"
   ],
-  "source": "https://lichess.org/study/KU6tPNfj/q6s3FIaT",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "c2e4",
-     "b7b6",
-     "e4f3"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c2c1",
-     "g1g2",
-     "c1c2"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c2b1",
-     "g1g2",
-     "b1c2"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d1c2"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KU6tPNfj/q6s3FIaT"
  },
  {
   "n": 854,
@@ -27740,7 +24351,7 @@
     "uci": [
      "e4c4",
      "d8f8",
-     "c4f4"
+     "g2d5"
     ]
    },
    {
@@ -27805,15 +24416,7 @@
    "d8g5",
    "a1a8"
   ],
-  "source": "https://lichess.org/study/KU6tPNfj/8TywgRJM",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "f3a8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KU6tPNfj/8TywgRJM"
  },
  {
   "n": 862,
@@ -27914,14 +24517,6 @@
   "source": "https://lichess.org/study/KU6tPNfj/m5dR8UTZ",
   "alternatives": [
    {
-    "at": 0,
-    "uci": [
-     "f6e8",
-     "c7d7",
-     "b8b1"
-    ]
-   },
-   {
     "at": 2,
     "uci": [
      "f6e8"
@@ -27969,8 +24564,8 @@
     "at": 2,
     "uci": [
      "f8e6",
-     "d2e4",
-     "d5e4"
+     "a5a7",
+     "g5f4"
     ]
    },
    {
@@ -28007,19 +24602,7 @@
    "e5h5",
    "f6h5"
   ],
-  "source": "https://lichess.org/study/KU6tPNfj/brcq4muN",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "d1g1",
-     "g7g6",
-     "g2h1",
-     "b2d2",
-     "f4d2"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KU6tPNfj/brcq4muN"
  },
  {
   "n": 870,
@@ -28193,23 +24776,7 @@
    "g7g6",
    "h5g6"
   ],
-  "source": "https://lichess.org/study/KU6tPNfj/fVJK3TTq",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "e4d6",
-     "f8d6",
-     "e2h5"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "e4d6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KU6tPNfj/fVJK3TTq"
  },
  {
   "n": 878,
@@ -28429,19 +24996,7 @@
    "d8d3",
    "e1e4"
   ],
-  "source": "https://lichess.org/study/KU6tPNfj/bNiNiAhL",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "f6g5",
-     "g8h8",
-     "g5f6",
-     "h8g8",
-     "f6e5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KU6tPNfj/bNiNiAhL"
  },
  {
   "n": 888,
@@ -28564,22 +25119,6 @@
   "source": "https://lichess.org/study/KU6tPNfj/LeeXODSf",
   "alternatives": [
    {
-    "at": 2,
-    "uci": [
-     "h6f8",
-     "c5f8",
-     "e5c4",
-     "h8g8",
-     "h5g4",
-     "g8f7",
-     "g4e6",
-     "f7g7",
-     "c4e5",
-     "f6e5",
-     "e1f1"
-    ]
-   },
-   {
     "at": 6,
     "uci": [
      "c5e7",
@@ -28596,23 +25135,27 @@
     "uci": [
      "c5c7",
      "c8g8",
-     "h6g7",
+     "c7f7",
+     "d4e6",
+     "f7f6",
      "g8g7",
-     "c7d8",
-     "g7g8",
-     "d8f6"
+     "e1e6",
+     "h8g8",
+     "f6g7"
     ]
    },
    {
     "at": 6,
     "uci": [
      "c5h5",
-     "d4e6",
-     "e1e6",
+     "d4e2",
+     "e1e2",
      "c8f8",
-     "e6e8",
+     "e2e8",
      "f8g8",
-     "e8g8"
+     "h5f7",
+     "g8e8",
+     "f7e8"
     ]
    },
    {
@@ -28620,33 +25163,39 @@
     "uci": [
      "h3h4",
      "d4e2",
-     "c5e7",
-     "e2g3",
+     "e1e2",
+     "c8d8",
+     "c5c7",
+     "d8d1",
      "h1h2",
-     "g3f1",
-     "e1f1"
+     "d1h1",
+     "h2h1",
+     "h8g8",
+     "c7g7"
     ]
    },
    {
     "at": 6,
     "uci": [
      "h1h2",
-     "d4f3",
-     "g2f3",
-     "c8d8",
-     "c5e7",
-     "d8d2",
-     "c4d2"
+     "b4b3",
+     "c5d4",
+     "c8f8",
+     "h6f8",
+     "h8g8",
+     "d4f6",
+     "a6a5",
+     "f6g7"
     ]
    },
    {
     "at": 8,
     "uci": [
      "h6f8",
-     "h8g8",
-     "d4f6",
-     "c7c5",
-     "f6g7"
+     "b4b3",
+     "d4g4",
+     "a6a5",
+     "g4g7"
     ]
    },
    {
@@ -28664,29 +25213,21 @@
     "uci": [
      "d4d7",
      "f8g8",
-     "d7e7",
-     "c7c6",
-     "e7f6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "d4e3",
-     "c7c5",
-     "e3e7",
-     "f8f7",
-     "e7e8"
+     "e1e8",
+     "b4b3",
+     "d7g7"
     ]
    },
    {
     "at": 8,
     "uci": [
      "d4e4",
-     "f8g8",
+     "c7c5",
      "e4e7",
-     "c7c6",
-     "e7f6"
+     "f8f7",
+     "e7f7",
+     "f6f5",
+     "f7g7"
     ]
    }
   ]
@@ -28751,20 +25292,10 @@
      "d6a6",
      "a8b8",
      "a6b6",
-     "b8a8",
-     "c5c6"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "d6d7",
-     "a7a6",
-     "d7d6",
-     "a6a7",
-     "f5d7",
+     "b8a7",
+     "c5c7",
      "a7a8",
-     "d6a6"
+     "b6a6"
     ]
    },
    {
@@ -28774,7 +25305,11 @@
      "a8b8",
      "c6b5",
      "b8c8",
-     "b5c5"
+     "b5c5",
+     "c8b7",
+     "d6b6",
+     "b7a7",
+     "c5a5"
     ]
    },
    {
@@ -28782,7 +25317,9 @@
     "uci": [
      "d7a7",
      "b8c8",
-     "a6c6"
+     "a6c6",
+     "c8d8",
+     "a7c7"
     ]
    },
    {
@@ -28790,27 +25327,31 @@
     "uci": [
      "d7d6",
      "b8c8",
-     "a6c6"
+     "a6c6",
+     "c8b7",
+     "d6c7",
+     "b7a8",
+     "c6a6"
     ]
    },
    {
     "at": 8,
     "uci": [
      "d7b5",
-     "b8c7",
-     "a6c6"
+     "b8c8",
+     "a6c6",
+     "c8d7",
+     "b5b7",
+     "d7d8",
+     "b7c7"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "d7c6"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "b6a6"
+     "d7c6",
+     "a8a7",
+     "c6b7"
     ]
    }
   ]
@@ -28861,17 +25402,7 @@
    "f8g7",
    "h7g7"
   ],
-  "source": "https://lichess.org/study/KU6tPNfj/Ypdmhuex",
-  "alternatives": [
-   {
-    "at": 8,
-    "uci": [
-     "h8f6",
-     "f7g8",
-     "f6h8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/KU6tPNfj/Ypdmhuex"
  },
  {
   "n": 898,
@@ -28951,8 +25482,8 @@
      "e3h6",
      "h3g4",
      "h6g6",
-     "g4h3",
-     "g6h5"
+     "g4h4",
+     "f2h2"
     ]
    },
    {
@@ -28969,10 +25500,10 @@
     "at": 8,
     "uci": [
      "g7g5",
-     "h4g5",
-     "e6f5",
-     "g5h6",
-     "f2h2"
+     "h4h5",
+     "e6h3",
+     "h5g5",
+     "f2f5"
     ]
    },
    {
@@ -28982,17 +25513,9 @@
      "h4h3",
      "f6h6",
      "h3g4",
-     "h6g6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "e6e4",
-     "h4h3",
-     "e4e6",
-     "h3h4",
-     "f2h2"
+     "h6g6",
+     "g4h3",
+     "g6h5"
     ]
    },
    {
@@ -29007,8 +25530,10 @@
     "at": 10,
     "uci": [
      "e6e3",
-     "g5g4",
-     "e3e4"
+     "g5f5",
+     "e3e4",
+     "f5g5",
+     "h7h6"
     ]
    },
    {
@@ -29016,7 +25541,9 @@
     "uci": [
      "e6g6",
      "g5f4",
-     "g6e4"
+     "g6e4",
+     "f4g5",
+     "h7h6"
     ]
    },
    {
@@ -29024,19 +25551,31 @@
     "uci": [
      "e6h6",
      "g5g4",
-     "h6g6"
+     "h6g6",
+     "g4f4",
+     "g6e4",
+     "f4g5",
+     "h7h6"
     ]
    },
    {
     "at": 12,
     "uci": [
-     "f6g6"
+     "f6g6",
+     "g4f4",
+     "g6e4",
+     "f4g5",
+     "h7h6"
     ]
    },
    {
     "at": 12,
     "uci": [
-     "f6e6"
+     "f6e6",
+     "g4f4",
+     "e6e4",
+     "f4g5",
+     "h7h6"
     ]
    }
   ]
@@ -29090,48 +25629,6 @@
   "source": "https://lichess.org/study/MC5fBpLs/a3vidCBr",
   "alternatives": [
    {
-    "at": 0,
-    "uci": [
-     "b3b4",
-     "c5c3",
-     "c1h6",
-     "g7h6",
-     "f3f6",
-     "h6h7",
-     "f6h4",
-     "h7g8",
-     "h4g3",
-     "g8h7",
-     "d3c3",
-     "c6c3",
-     "g3c3",
-     "a5b6",
-     "c3d2",
-     "b6d4",
-     "c2c3"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c3e2",
-     "c5f2",
-     "g1f2",
-     "c6c2",
-     "d3g3",
-     "a5b6",
-     "f2f1",
-     "b6e3",
-     "f6f3",
-     "h5h6",
-     "f3e3",
-     "h6h7",
-     "e3g5",
-     "c2c1",
-     "e2c1"
-    ]
-   },
-   {
     "at": 8,
     "uci": [
      "f2f1",
@@ -29141,22 +25638,10 @@
      "f3e3",
      "h6h7",
      "e3g5",
-     "e6c4",
-     "b3c4",
-     "f8g8",
-     "g5h4"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "f3f6",
-     "h6h5",
-     "f6f3",
-     "h5h6",
-     "f3e3",
-     "h6h7",
-     "e3g5"
+     "e6g4",
+     "g5h4",
+     "h7g7",
+     "g3g4"
     ]
    },
    {
@@ -29164,49 +25649,29 @@
     "uci": [
      "e3g5",
      "e6g4",
-     "g5g4",
-     "d6d5",
-     "g4g7"
+     "g5h4",
+     "h7g7",
+     "g3g4"
     ]
    },
    {
-    "at": 14,
+    "at": 18,
     "uci": [
-     "e3e2",
+     "g4g8",
      "h7h6",
-     "e2d2",
-     "h6h7",
-     "d2g5"
-    ]
-   },
-   {
-    "at": 18,
-    "uci": [
-     "g4h3"
-    ]
-   },
-   {
-    "at": 18,
-    "uci": [
-     "g4h4"
-    ]
-   },
-   {
-    "at": 18,
-    "uci": [
      "g3h3"
     ]
    },
    {
     "at": 18,
     "uci": [
-     "g4g8"
-    ]
-   },
-   {
-    "at": 18,
-    "uci": [
-     "g4f5"
+     "g4f5",
+     "g8g6",
+     "f5f7",
+     "h7h8",
+     "g3h3",
+     "g6h6",
+     "h3h6"
     ]
    }
   ]
@@ -29237,17 +25702,7 @@
    "g8h8",
    "e8f8"
   ],
-  "source": "https://lichess.org/study/MC5fBpLs/sn2iLMsC",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "b7e7",
-     "h3h1",
-     "g1h1"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/MC5fBpLs/sn2iLMsC"
  },
  {
   "n": 903,
@@ -29444,23 +25899,7 @@
    "d5e4",
    "c2d2"
   ],
-  "source": "https://lichess.org/study/MC5fBpLs/BQiBYZPa",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "e5e6",
-     "f7f6",
-     "e2e4"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "e5e6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/MC5fBpLs/BQiBYZPa"
  },
  {
   "n": 910,
@@ -29500,23 +25939,7 @@
    "f6d7",
    "e6d7"
   ],
-  "source": "https://lichess.org/study/MC5fBpLs/glLLqCqV",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "g4f4",
-     "f6d7",
-     "c4e6"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g4f4"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/MC5fBpLs/glLLqCqV"
  },
  {
   "n": 912,
@@ -29575,7 +25998,9 @@
     "uci": [
      "b6f2",
      "h4g5",
-     "f2g2"
+     "f3g3",
+     "h2g3",
+     "f2g3"
     ]
    },
    {
@@ -29583,7 +26008,9 @@
     "uci": [
      "b6d8",
      "c1g5",
-     "d8d7"
+     "d8c8",
+     "d3e4",
+     "c8h3"
     ]
    },
    {
@@ -29591,7 +26018,11 @@
     "uci": [
      "g7h6",
      "c1h6",
-     "b6f2"
+     "b6f2",
+     "h4g5",
+     "f2g2",
+     "g5h4",
+     "g2g4"
     ]
    },
    {
@@ -29599,7 +26030,13 @@
     "uci": [
      "e4d3",
      "b3b2",
-     "g7f6"
+     "g7f6",
+     "c1g5",
+     "f6g5",
+     "h4g5",
+     "b6e3",
+     "g5h4",
+     "e3f4"
     ]
    },
    {
@@ -29607,37 +26044,55 @@
     "uci": [
      "b6d4",
      "h4g5",
-     "h8h7"
+     "e4d3",
+     "b3c4",
+     "d4c4",
+     "d1g1",
+     "h8h7",
+     "c1d2",
+     "f3f5"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "f3f4"
+     "f3f4",
+     "h4h3",
+     "b6e3"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "f6g5"
+     "f6g5",
+     "h4g5",
+     "b6e3",
+     "g5h4",
+     "e3f4"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "h8h7"
+     "h8h7",
+     "d1g1",
+     "b6f2",
+     "g1g3",
+     "f2h2",
+     "g3h3",
+     "f3h3"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "f6e7"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "b6d8"
+     "f6e7",
+     "g5e7",
+     "b6f2",
+     "h4g5",
+     "f2e3",
+     "g5h4",
+     "e3f4"
     ]
    }
   ]
@@ -29667,57 +26122,13 @@
   "source": "https://lichess.org/study/MC5fBpLs/OfKrpae5",
   "alternatives": [
    {
-    "at": 0,
-    "uci": [
-     "a8e8",
-     "g1h1",
-     "e8e3",
-     "g3e4",
-     "g5e5",
-     "g2g3",
-     "f4h3"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "f8e8",
-     "g1h1",
-     "e8e3",
-     "g3e4",
-     "g5e5",
-     "d1f1",
-     "h5h4"
-    ]
-   },
-   {
     "at": 2,
     "uci": [
      "f4h3",
-     "g1h1",
-     "h3f2",
-     "e4f2",
-     "a8e8"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "g5g6",
-     "d1d2",
-     "f4h3",
-     "g1h1",
+     "g1f1",
+     "b7e4",
+     "f3e4",
      "h3f2"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
-     "g5h6",
-     "d1d2",
-     "g8h7",
-     "g2g3",
-     "f4h3"
     ]
    }
   ]
@@ -29777,14 +26188,6 @@
    {
     "at": 2,
     "uci": [
-     "b4b5",
-     "g3h5",
-     "c1b2"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
      "b3a3",
      "a7b8",
      "b4b5"
@@ -29794,8 +26197,8 @@
     "at": 2,
     "uci": [
      "c1b2",
-     "c5b4",
-     "b2e5"
+     "b7b5",
+     "b3a3"
     ]
    },
    {
@@ -29854,23 +26257,7 @@
    "f7g7",
    "e1c1"
   ],
-  "source": "https://lichess.org/study/MC5fBpLs/2c5gvObB",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "d1b3",
-     "a4b3",
-     "e1c1"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "d2d7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/MC5fBpLs/2c5gvObB"
  },
  {
   "n": 920,
@@ -29890,19 +26277,7 @@
    "g7h6",
    "d1h5"
   ],
-  "source": "https://lichess.org/study/MC5fBpLs/EV2ddtNG",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "a2a4",
-     "b7c8",
-     "a4b5",
-     "a6b5",
-     "f3g5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/MC5fBpLs/EV2ddtNG"
  },
  {
   "n": 921,
@@ -29927,13 +26302,13 @@
    {
     "at": 4,
     "uci": [
-     "h7h8"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "h7h6"
+     "h7h8",
+     "e7g8",
+     "h8g8",
+     "f8e7",
+     "g8f7",
+     "e7d6",
+     "f7d7"
     ]
    }
   ]
@@ -30049,35 +26424,37 @@
   "source": "https://lichess.org/study/MC5fBpLs/BodYiM4W",
   "alternatives": [
    {
-    "at": 8,
+    "at": 10,
     "uci": [
-     "f3f2",
-     "g2g3",
-     "f2f3"
+     "f3h3",
+     "d3e4",
+     "f2h2"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "f3h3"
+     "f2f1",
+     "d3f1",
+     "f3f1"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "f2f1"
+     "f2e1",
+     "d3f1",
+     "f3f1"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "f2e1"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "f2e2"
+     "f2e2",
+     "d3e4",
+     "f3f1",
+     "d1f1",
+     "e2f1"
     ]
    }
   ]
@@ -30127,31 +26504,13 @@
   "source": "https://lichess.org/study/MC5fBpLs/1Bun9lUd",
   "alternatives": [
    {
-    "at": 4,
-    "uci": [
-     "h1h5",
-     "c5c2",
-     "b1c2",
-     "f8c8",
-     "c2b1"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "g6h5",
-     "c5e3",
-     "d1g1",
-     "h8h7",
-     "b3f7"
-    ]
-   },
-   {
     "at": 6,
     "uci": [
      "d1g1",
      "c5g1",
-     "h1g1"
+     "h1g1",
+     "h5g3",
+     "g1g3"
     ]
    },
    {
@@ -30159,7 +26518,9 @@
     "uci": [
      "h1g1",
      "c5g1",
-     "d1g1"
+     "d1g1",
+     "h5g3",
+     "g1g3"
     ]
    },
    {
@@ -30167,7 +26528,9 @@
     "uci": [
      "h6h5",
      "c5c2",
-     "b3c2"
+     "b3c2",
+     "f8c8",
+     "h5h8"
     ]
    },
    {
@@ -30175,45 +26538,19 @@
     "uci": [
      "h1h5",
      "c5c2",
-     "b3c2"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "h6g5",
-     "h5g7",
-     "g5h6"
+     "b3c2",
+     "d7f5",
+     "h6h8"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "b3f7"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "g6h6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "d1g1"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "f5f6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "d1c1"
+     "b3f7",
+     "f8f7",
+     "g6h7",
+     "g8f8",
+     "h7h8"
     ]
    }
   ]
@@ -30236,15 +26573,7 @@
    "g5e4",
    "f6f7"
   ],
-  "source": "https://lichess.org/study/MC5fBpLs/atFI0LHF",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "f6g7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/MC5fBpLs/atFI0LHF"
  },
  {
   "n": 929,
@@ -30304,17 +26633,7 @@
    "h8a8",
    "f6d7"
   ],
-  "source": "https://lichess.org/study/MC5fBpLs/5utDcdJD",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "e8d6",
-     "f7g7",
-     "d6e8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/MC5fBpLs/5utDcdJD"
  },
  {
   "n": 932,
@@ -30413,51 +26732,19 @@
   "source": "https://lichess.org/study/MC5fBpLs/CkXvmE92",
   "alternatives": [
    {
-    "at": 6,
-    "uci": [
-     "b1c1",
-     "d3c4",
-     "e2c3",
-     "c4f1",
-     "c1d2",
-     "f1f2",
-     "c3e2",
-     "f2h4",
-     "g5h4",
-     "e8e5",
-     "h6h8",
-     "g8g7",
-     "h4h6",
-     "g7f6",
-     "h6f4"
-    ]
-   },
-   {
     "at": 12,
     "uci": [
      "g6f5",
      "e8e6",
-     "d5e6",
-     "f7f6",
-     "c1g1",
-     "a8e8",
-     "h6f6",
-     "f8e7",
-     "g1g7"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "c1f4",
-     "e8e7",
-     "h6h8",
-     "f8g7",
-     "h8h7",
-     "g7f8",
-     "f4h6",
+     "f5e6",
+     "f7e6",
+     "c1g5",
+     "e6d5",
+     "g5f6",
      "f8e8",
-     "g6f5"
+     "f6g7",
+     "d5e4",
+     "h6h8"
     ]
    },
    {
@@ -30468,30 +26755,36 @@
      "h8h7",
      "g7f8",
      "g6e4",
-     "f7f6",
-     "g5g7"
+     "f7f5",
+     "g5g7",
+     "f8e8",
+     "g7g8"
     ]
    },
    {
     "at": 14,
     "uci": [
      "h6h7",
-     "e4e1",
-     "g6b1",
+     "e4e5",
+     "g5h6",
      "f8e8",
-     "g5g8",
+     "g6f7",
      "e8d7",
-     "g8f7"
+     "f7e6",
+     "d7e8",
+     "h6g6",
+     "e8f8",
+     "g6f7"
     ]
    },
    {
     "at": 16,
     "uci": [
      "h6h7",
+     "c5c4",
+     "g5g8",
      "e8d7",
-     "h7f7",
-     "d7c8",
-     "g5g8"
+     "h7f7"
     ]
    },
    {
@@ -30499,9 +26792,9 @@
     "uci": [
      "e4f5",
      "f7f6",
-     "g5f6",
-     "c5c4",
-     "h6h8"
+     "g5g8",
+     "e8e7",
+     "h6h7"
     ]
    },
    {
@@ -30517,75 +26810,57 @@
    {
     "at": 16,
     "uci": [
-     "h6h1",
-     "e8d7",
-     "e4f5",
-     "d7c7",
-     "g5e7"
-    ]
-   },
-   {
-    "at": 16,
-    "uci": [
      "g5g8",
      "e8e7",
-     "g8g5",
-     "e7d7",
-     "e4f5"
+     "g8a8",
+     "c5c4",
+     "a8b7",
+     "e7f8",
+     "b7b8",
+     "f8e7",
+     "b8d6",
+     "e7e8",
+     "h6h8"
     ]
    },
    {
-    "at": 18,
+    "at": 20,
     "uci": [
-     "g5f5",
-     "d7c7",
-     "h8a8"
+     "g5f6",
+     "a5a4",
+     "f6f7"
     ]
    },
    {
-    "at": 18,
+    "at": 20,
     "uci": [
      "e4f5",
      "d7c7",
-     "g5e7"
-    ]
-   },
-   {
-    "at": 18,
-    "uci": [
-     "g5g4",
-     "d7c7",
-     "h8a8"
+     "g5d8"
     ]
    },
    {
     "at": 20,
     "uci": [
-     "g5f6"
+     "e4d3",
+     "a5a4",
+     "g5d8"
     ]
    },
    {
     "at": 20,
     "uci": [
-     "e4f5"
+     "e4b1",
+     "a5a4",
+     "g5d8"
     ]
    },
    {
     "at": 20,
     "uci": [
-     "e4d3"
-    ]
-   },
-   {
-    "at": 20,
-    "uci": [
-     "e4b1"
-    ]
-   },
-   {
-    "at": 20,
-    "uci": [
-     "a2a4"
+     "a2a4",
+     "c5c4",
+     "g5d8"
     ]
    }
   ]
@@ -30760,20 +27035,30 @@
     "at": 4,
     "uci": [
      "e6d6",
-     "f8e8",
-     "d6e6"
+     "f8g8",
+     "d6e6",
+     "g8h8",
+     "e6f6",
+     "h8g8",
+     "f6g7"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "b7g7"
+     "b7g7",
+     "g8h8",
+     "g7g5"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "f6e6"
+     "f6e6",
+     "h5f7",
+     "e6f7",
+     "g8h8",
+     "f7h7"
     ]
    }
   ]
@@ -30843,9 +27128,9 @@
     "uci": [
      "e1e3",
      "f7f6",
-     "h5h6",
+     "h5h8",
      "f8f7",
-     "h6g7"
+     "h8g7"
     ]
    },
    {
@@ -30855,7 +27140,11 @@
      "f8e7",
      "h8e5",
      "e7f8",
-     "e1e3"
+     "e1e3",
+     "f7f6",
+     "e5f6",
+     "d7f7",
+     "f6d8"
     ]
    },
    {
@@ -30863,21 +27152,13 @@
     "uci": [
      "h6h8",
      "e8e7",
-     "h8e5"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
+     "h8e5",
+     "e7f8",
      "e1e3",
-     "d7e7",
-     "g5g8"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "h6e3"
+     "f7f6",
+     "e5f6",
+     "d7f7",
+     "f6d8"
     ]
    }
   ]
@@ -30953,7 +27234,9 @@
    {
     "at": 4,
     "uci": [
-     "b2a3"
+     "b2a3",
+     "d7d6",
+     "h7f7"
     ]
    }
   ]
@@ -31020,17 +27303,7 @@
    "e8e6",
    "f3f8"
   ],
-  "source": "https://lichess.org/study/InyVvVo7/RVxR5vWv",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "d3f5",
-     "e6f7",
-     "e1e8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/InyVvVo7/RVxR5vWv"
  },
  {
   "n": 954,
@@ -31237,57 +27510,51 @@
   "source": "https://lichess.org/study/InyVvVo7/UL28l3lV",
   "alternatives": [
    {
-    "at": 0,
+    "at": 6,
     "uci": [
-     "d4d5",
-     "e6d5",
-     "f3d4",
-     "g7f8",
+     "a2a3",
+     "c7d6",
+     "e5d6",
+     "d7c8",
      "b5c6",
-     "f8g7",
-     "g2g3"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "f6g7",
-     "g8g7",
-     "f3g5",
-     "c7d8",
-     "b5c6",
-     "d7c6",
-     "g5e6"
+     "c8d7",
+     "g7h8"
     ]
    },
    {
     "at": 6,
     "uci": [
+     "g1h1",
+     "c7d6",
+     "e5d6",
+     "d7c8",
+     "b5c6",
+     "c8d7",
+     "g7h8"
+    ]
+   },
+   {
+    "at": 6,
+    "uci": [
+     "a2a4",
+     "c7d6",
+     "e5d6",
+     "d7c8",
+     "b5c6",
+     "c8d7",
      "g7g8"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "a2a3"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g1h1"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "a2a4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "f2f4"
+     "f2f4",
+     "c7d6",
+     "e5d6",
+     "d7c8",
+     "b5c6",
+     "c8d7",
+     "g7g8"
     ]
    }
   ]
@@ -31396,16 +27663,8 @@
     "at": 0,
     "uci": [
      "b5b4",
-     "a4e8",
-     "c3e5"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "g1h2",
-     "a4c4",
-     "f1a1"
+     "a4a6",
+     "b4b6"
     ]
    },
    {
@@ -31421,7 +27680,7 @@
     "uci": [
      "b5b7",
      "d8d7",
-     "c3e5"
+     "b7b4"
     ]
    },
    {
@@ -31523,13 +27782,9 @@
    {
     "at": 6,
     "uci": [
-     "e2e1"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "e2b2"
+     "e2e1",
+     "a4d1",
+     "c3b2"
     ]
    }
   ]
@@ -31614,14 +27869,6 @@
   ],
   "source": "https://lichess.org/study/InyVvVo7/f9gAWspq",
   "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "a4a5",
-     "g8g4",
-     "a5a6"
-    ]
-   },
    {
     "at": 4,
     "uci": [
@@ -31719,66 +27966,6 @@
   "source": "https://lichess.org/study/InyVvVo7/IxFJEVud",
   "alternatives": [
    {
-    "at": 0,
-    "uci": [
-     "b2b3",
-     "d6d5",
-     "e4e5",
-     "b5a6",
-     "g1g2",
-     "d8c8",
-     "h3c8"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "h3g4",
-     "b5d7",
-     "g4d7",
-     "d8d7",
-     "f4e6",
-     "e7c6",
-     "e1f1"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "g1g2",
-     "b5c6",
-     "f4e6",
-     "c6e4",
-     "e1e4",
-     "b6b7",
-     "d4d5"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "g1h2",
-     "b4b3",
-     "f3b3",
-     "b6a5",
-     "d4d5",
-     "d8e8",
-     "f4e6"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "e1c1",
-     "b4b3",
-     "f3b3",
-     "b6a5",
-     "b3a3",
-     "a5b6",
-     "d4d5"
-    ]
-   },
-   {
     "at": 4,
     "uci": [
      "f2h2",
@@ -31790,8 +27977,10 @@
     "at": 4,
     "uci": [
      "f3f8",
-     "d8f8",
-     "f2f8"
+     "e7g8",
+     "f2h2",
+     "h8g7",
+     "f8f7"
     ]
    },
    {
@@ -31799,13 +27988,11 @@
     "uci": [
      "f3h3",
      "h8g7",
-     "h3h7"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g1g2"
+     "h3h7",
+     "g7h7",
+     "f2h2",
+     "h7g7",
+     "h2h6"
     ]
    }
   ]
@@ -31854,10 +28041,10 @@
     "at": 0,
     "uci": [
      "e1e4",
-     "a5c4",
-     "e4c4",
-     "c7c6",
-     "d1d6"
+     "a5c6",
+     "h4f5",
+     "e7f5",
+     "f3f5"
     ]
    },
    {
@@ -31874,12 +28061,6 @@
      "f3d3",
      "a5c6",
      "g3c7"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "g3d6"
     ]
    },
    {
@@ -31959,23 +28140,13 @@
   "source": "https://lichess.org/study/InyVvVo7/hW0EmR2r",
   "alternatives": [
    {
-    "at": 0,
-    "uci": [
-     "d5d6",
-     "g5f4",
-     "d6d5",
-     "f5f6",
-     "d5f5",
-     "d2d1",
-     "f5f6"
-    ]
-   },
-   {
     "at": 4,
     "uci": [
      "g2d2",
      "f1f3",
-     "d5f3"
+     "d5f3",
+     "h1g1",
+     "f3h1"
     ]
    },
    {
@@ -31983,49 +28154,39 @@
     "uci": [
      "g2e2",
      "f1f3",
-     "d5f3"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "g2g6",
-     "h1h2",
-     "g6g2"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "g2g3",
-     "h1h2",
-     "g3g2"
+     "d5f3",
+     "h1g1",
+     "f3h1"
     ]
    },
    {
     "at": 4,
     "uci": [
      "b7a8",
-     "d2c2",
-     "g2c2"
+     "f1f3",
+     "g2d2",
+     "f4d2",
+     "d5f3",
+     "h1g1",
+     "f3g2"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "d5f3"
+     "d5f3",
+     "d4d5",
+     "f3g2"
     ]
    },
    {
     "at": 6,
     "uci": [
-     "f2d2"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "f2g2"
+     "f2d2",
+     "f1f3",
+     "d5f3",
+     "f4d2",
+     "f3g2"
     ]
    }
   ]
@@ -32131,25 +28292,19 @@
     "uci": [
      "h2h8",
      "g8h8",
-     "g1h1",
-     "h8g8",
      "g4h4",
+     "h8g8",
+     "g1h1",
      "f5h5",
      "h4h5",
+     "a3a2",
+     "b1a2",
      "g8f8",
      "h5h8",
      "f8e7",
-     "h8g7"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "h2h7",
-     "a3a2",
-     "b1a2",
-     "e7d7",
-     "h8g7"
+     "h8g7",
+     "e7d8",
+     "h1h8"
     ]
    },
    {
@@ -32157,7 +28312,9 @@
     "uci": [
      "g7f7",
      "e8d8",
-     "h2h8"
+     "h2h8",
+     "a3f8",
+     "h8f8"
     ]
    },
    {
@@ -32165,55 +28322,35 @@
     "uci": [
      "b3b4",
      "a3a2",
-     "b1a2"
+     "b1a2",
+     "b8b7",
+     "h2h8"
     ]
    },
    {
-    "at": 12,
+    "at": 14,
     "uci": [
-     "h2h7",
-     "a3f8",
-     "g7f8"
+     "g7f7",
+     "e8d8",
+     "h8f8"
     ]
    },
    {
-    "at": 12,
+    "at": 14,
     "uci": [
-     "g7c7",
-     "a3f8",
-     "g6g7"
+     "g7f8",
+     "e8d7",
+     "f8d6"
     ]
    },
    {
-    "at": 12,
+    "at": 14,
     "uci": [
      "f3d4",
-     "a3e7",
-     "g7e7"
-    ]
-   },
-   {
-    "at": 14,
-    "uci": [
-     "g7f7"
-    ]
-   },
-   {
-    "at": 14,
-    "uci": [
-     "g7f8"
-    ]
-   },
-   {
-    "at": 14,
-    "uci": [
-     "f3d4"
-    ]
-   },
-   {
-    "at": 14,
-    "uci": [
-     "g1h1"
+     "b2a3",
+     "g7f7",
+     "e8d8",
+     "d4c6"
     ]
    }
   ]
@@ -32379,19 +28516,19 @@
    {
     "at": 10,
     "uci": [
-     "g5h6"
+     "g5h6",
+     "c6c5",
+     "h6h7"
     ]
    },
    {
     "at": 10,
     "uci": [
-     "f5h7"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "h5f6"
+     "f5h7",
+     "f8g8",
+     "h7g8",
+     "e6g4",
+     "g5g7"
     ]
    }
   ]
@@ -32426,12 +28563,6 @@
     "at": 4,
     "uci": [
      "g2g3"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "e1e5"
     ]
    },
    {
@@ -32487,21 +28618,11 @@
   "source": "https://lichess.org/study/Pap9LVsX/O9ywJDw7",
   "alternatives": [
    {
-    "at": 2,
-    "uci": [
-     "d4d1",
-     "e2d1",
-     "c8c5",
-     "g1h1",
-     "g7b2"
-    ]
-   },
-   {
     "at": 4,
     "uci": [
      "c4a2",
-     "d1b1",
-     "a2e6"
+     "e4e5",
+     "d4d1"
     ]
    },
    {
@@ -32509,47 +28630,7 @@
     "uci": [
      "d4e4",
      "e1f1",
-     "g7d4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c4c5",
-     "g1h1",
-     "d4d1"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "a6a5",
-     "a2c3",
-     "b5b4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g7b2"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g7d4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "c4e4"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "c4c5"
+     "c4a2"
     ]
    }
   ]
@@ -32740,33 +28821,7 @@
    "e8e5",
    "f8a8"
   ],
-  "source": "https://lichess.org/study/Pap9LVsX/T57bDsvc",
-  "alternatives": [
-   {
-    "at": 0,
-    "uci": [
-     "b5b6",
-     "h8g8",
-     "f1f5",
-     "a8b8",
-     "a1d4",
-     "d5f4",
-     "d4e4"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "f1f5",
-     "e8f8",
-     "c2f2",
-     "d5f6",
-     "a1a3",
-     "a5a4",
-     "b5b6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Pap9LVsX/T57bDsvc"
  },
  {
   "n": 1012,
@@ -33113,16 +29168,6 @@
   "source": "https://lichess.org/study/Pap9LVsX/v0ndk1lB",
   "alternatives": [
    {
-    "at": 0,
-    "uci": [
-     "d3h7",
-     "g8h7",
-     "g5e7",
-     "c7e7",
-     "f3e5"
-    ]
-   },
-   {
     "at": 2,
     "uci": [
      "e2e5",
@@ -33277,31 +29322,11 @@
    {
     "at": 4,
     "uci": [
-     "f7f6"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "f7f8"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "e3e4"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c1a1"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "c1e1"
+     "f7f8",
+     "e7g8",
+     "c1h1",
+     "b7h7",
+     "e5g6"
     ]
    }
   ]
@@ -33392,15 +29417,7 @@
    "d3d4",
    "e7e8q"
   ],
-  "source": "https://lichess.org/study/Pap9LVsX/WW5Fi0pg",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "g1e1"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Pap9LVsX/WW5Fi0pg"
  },
  {
   "n": 1036,
@@ -33465,56 +29482,6 @@
     ]
    },
    {
-    "at": 12,
-    "uci": [
-     "g7g4",
-     "h8h7",
-     "g4g7",
-     "h7h8",
-     "g7c7"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "g7g3",
-     "h8h7",
-     "g3g7",
-     "h7h8",
-     "g7c7"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "g7g5",
-     "h8h7",
-     "g5g7",
-     "h7h8",
-     "g7c7"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "g7f7",
-     "h8g8",
-     "f7g7",
-     "g8h8",
-     "g7c7"
-    ]
-   },
-   {
-    "at": 12,
-    "uci": [
-     "g7g1",
-     "h8h7",
-     "g1g7",
-     "h7h8",
-     "g7c7"
-    ]
-   },
-   {
     "at": 16,
     "uci": [
      "g7f7"
@@ -33530,12 +29497,6 @@
     "at": 16,
     "uci": [
      "g7a7"
-    ]
-   },
-   {
-    "at": 16,
-    "uci": [
-     "g7c7"
     ]
    },
    {
@@ -33712,15 +29673,7 @@
    "f6e4",
    "h6f8"
   ],
-  "source": "https://lichess.org/study/Pap9LVsX/VkfQAmVV",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "f3f8"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Pap9LVsX/VkfQAmVV"
  },
  {
   "n": 1046,
@@ -33931,7 +29884,7 @@
     "uci": [
      "e2f3",
      "d8e7",
-     "g4f6"
+     "b3c4"
     ]
    },
    {
@@ -33946,8 +29899,8 @@
     "at": 2,
     "uci": [
      "a2a3",
-     "d8h4",
-     "e2f3"
+     "d8e7",
+     "b3c4"
     ]
    },
    {
@@ -34018,7 +29971,7 @@
     "at": 2,
     "uci": [
      "c8c7",
-     "e7e8",
+     "e7d8",
      "c7a7",
      "d4b5",
      "a7a2"
@@ -34070,49 +30023,13 @@
    {
     "at": 0,
     "uci": [
-     "f7b3",
-     "e7c8",
-     "b3f7",
-     "c8e7",
-     "f7e6",
-     "c7d6",
-     "e6c4"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
      "a6b5",
      "c7b7",
      "f7e6",
-     "b7c7",
-     "b5a6",
-     "c7d6",
-     "e6c4"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "f7c4",
-     "e7c8",
-     "c4f7",
-     "c8e7",
-     "f7e6",
-     "e7c6",
-     "e6d5"
-    ]
-   },
-   {
-    "at": 0,
-    "uci": [
-     "f7a2",
-     "e7c8",
-     "a2f7",
-     "c8e7",
-     "f7e6",
-     "c7c6",
-     "e6c4"
+     "b7a7",
+     "e6b3",
+     "a7b7",
+     "b3f7"
     ]
    },
    {
@@ -34120,11 +30037,11 @@
     "uci": [
      "f7e8",
      "c7d8",
-     "e8f7",
-     "d8c7",
-     "f7e6",
-     "c7c6",
-     "e6c4"
+     "e8g6",
+     "e7g6",
+     "a6b6",
+     "g6f8",
+     "b6c5"
     ]
    },
    {
@@ -34141,10 +30058,10 @@
     "at": 2,
     "uci": [
      "e6d5",
-     "c6e7",
-     "d5f7",
-     "c7c6",
-     "f7e8"
+     "c6b8",
+     "a6b5",
+     "b8d7",
+     "d5f7"
     ]
    },
    {
@@ -34160,29 +30077,11 @@
    {
     "at": 2,
     "uci": [
-     "e6f7",
-     "c6e7",
-     "f7e6",
-     "c7c6",
-     "e6c4"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
      "e6b3",
      "c6b8",
      "a6b5",
      "b8c6",
      "b3f7"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "a6a7",
-     "b8c6",
-     "a7a6"
     ]
    },
    {
@@ -34195,12 +30094,6 @@
     "at": 6,
     "uci": [
      "g8a2"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "b5a6"
     ]
    },
    {
@@ -34324,7 +30217,7 @@
      "f3f4",
      "e5c4",
      "e2f1",
-     "h3h5"
+     "h3h6"
     ]
    },
    {
@@ -34332,8 +30225,8 @@
     "uci": [
      "d8c8",
      "d1f1",
-     "d6e4",
-     "f3e4",
+     "e5g4",
+     "f3g4",
      "f8f2"
     ]
    }
@@ -34391,8 +30284,8 @@
     "at": 6,
     "uci": [
      "f6f7",
-     "h7h8",
-     "f7g8"
+     "f8g7",
+     "f7g7"
     ]
    },
    {
@@ -34400,61 +30293,79 @@
     "uci": [
      "g1f1",
      "f5f4",
-     "f6f7"
+     "f6g6",
+     "h7h8",
+     "g6g8"
     ]
    },
    {
     "at": 6,
     "uci": [
      "c6a7",
-     "b8d7",
-     "f6f7"
+     "f5f4",
+     "f6g6",
+     "h7h8",
+     "g6g8"
     ]
    },
    {
     "at": 6,
     "uci": [
      "d4d5",
-     "b8c6",
-     "f6f7"
+     "f5f4",
+     "f6g6",
+     "h7h8",
+     "g6g8"
     ]
    },
    {
     "at": 6,
     "uci": [
      "c6e5",
-     "c8d7",
-     "f6g6"
+     "f5f4",
+     "f6g6",
+     "h7h8",
+     "g6g8"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "d4d5"
+     "d4d5",
+     "f5f4",
+     "g6g8"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "c6e5"
+     "c6e5",
+     "f5f4",
+     "g6g8"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "a1e1"
+     "a1e1",
+     "f5f4",
+     "g6g8"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "g6f7"
+     "g6f7",
+     "f5f4",
+     "f7g8"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "c6a7"
+     "c6a7",
+     "f5f4",
+     "g6g8"
     ]
    }
   ]
@@ -34531,38 +30442,16 @@
     "at": 4,
     "uci": [
      "e2e1",
-     "b4d3",
+     "b4c2",
      "e1d2",
-     "g6h7",
-     "f1d3",
-     "f7f6",
-     "c4e3",
-     "f5g6",
-     "e4e7"
-    ]
-   },
-   {
-    "at": 4,
-    "uci": [
-     "e2e3",
-     "d2d3",
-     "e3e2",
-     "d3d2",
-     "e2d2",
      "h8d8",
-     "d2e2",
+     "d2c2",
      "d8d2",
-     "e2d2"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "e2e3",
-     "d2d3",
-     "e3e2",
-     "d3d2",
-     "e2d2"
+     "c2d2",
+     "g6h7",
+     "f1h3",
+     "f5g6",
+     "c4e5"
     ]
    },
    {
@@ -34572,13 +30461,21 @@
      "b4d3",
      "e1d2",
      "g6h7",
-     "f1d3"
+     "f1d3",
+     "f7f6",
+     "c4e3",
+     "f5g6",
+     "e4e7",
+     "f6f5",
+     "d3f5"
     ]
    },
    {
     "at": 12,
     "uci": [
-     "e4e6"
+     "e4e6",
+     "f7f6",
+     "c4e5"
     ]
    }
   ]
@@ -34621,15 +30518,7 @@
    "h4h6",
    "e8e7"
   ],
-  "source": "https://lichess.org/study/zTCW809p/MjUUf7e0",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "b4a2"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/zTCW809p/MjUUf7e0"
  },
  {
   "n": 1071,
@@ -34669,49 +30558,7 @@
    "g8f8",
    "h5f7"
   ],
-  "source": "https://lichess.org/study/zTCW809p/wpwBI3Zc",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "f6f5",
-     "h7h8",
-     "f5f6",
-     "h8h7",
-     "f6f7",
-     "h6g7",
-     "e6f5",
-     "h7h8",
-     "f7h5"
-    ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "e6f5",
-     "h7g8",
-     "f5e6",
-     "g8h7",
-     "f6f7",
-     "h6g7",
-     "e6f5",
-     "h7h8",
-     "f7h5"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "f7h5",
-     "g7h6",
-     "h5f7",
-     "h6g7",
-     "e6f5",
-     "h7h8",
-     "f7h5"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/zTCW809p/wpwBI3Zc"
  },
  {
   "n": 1072,
@@ -34772,14 +30619,6 @@
    {
     "at": 2,
     "uci": [
-     "b3c4",
-     "d7d5",
-     "e3f4"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
      "g2g3",
      "f4e2",
      "g1f1"
@@ -34788,17 +30627,9 @@
    {
     "at": 2,
     "uci": [
-     "g1h1",
-     "d7d5",
-     "b3d5"
-    ]
-   },
-   {
-    "at": 2,
-    "uci": [
      "h3h4",
-     "g5h4",
-     "g2g3"
+     "f4e2",
+     "g1f1"
     ]
    }
   ]
@@ -35032,12 +30863,6 @@
     "uci": [
      "g6h5"
     ]
-   },
-   {
-    "at": 6,
-    "uci": [
-     "g6h6"
-    ]
    }
   ]
  },
@@ -35095,15 +30920,7 @@
    "h7h6",
    "d1h1"
   ],
-  "source": "https://lichess.org/study/zTCW809p/CLdWEHwV",
-  "alternatives": [
-   {
-    "at": 4,
-    "uci": [
-     "g2g4"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/zTCW809p/CLdWEHwV"
  },
  {
   "n": 1089,
@@ -35140,7 +30957,11 @@
      "e7f6",
      "a1a8",
      "b7b8",
-     "a8b8"
+     "a8b8",
+     "c5c8",
+     "b8c8",
+     "e4e8",
+     "c8e8"
     ]
    },
    {
@@ -35148,7 +30969,11 @@
     "uci": [
      "d5f6",
      "e7f6",
-     "a8b8"
+     "a8b8",
+     "c5c8",
+     "b8c8",
+     "e4e8",
+     "c8e8"
     ]
    },
    {
@@ -35156,7 +30981,11 @@
     "uci": [
      "d5e7",
      "e4e7",
-     "a8b8"
+     "a8b8",
+     "c5c8",
+     "b8c8",
+     "e7e8",
+     "c8e8"
     ]
    }
   ]
@@ -35378,9 +31207,9 @@
     "uci": [
      "d6e7",
      "c6f6",
-     "e8f8",
+     "e7f8q",
      "f6f8",
-     "e7f8q"
+     "e8f8"
     ]
    },
    {
@@ -35390,7 +31219,9 @@
      "g8f7",
      "e8e7",
      "d8e7",
-     "h6g7"
+     "h6g7",
+     "f7e8",
+     "g7e7"
     ]
    },
    {
@@ -35400,7 +31231,9 @@
      "e7e1",
      "d3f1",
      "e1f1",
-     "g1f1"
+     "g1f1",
+     "d8f6",
+     "e8f8"
     ]
    },
    {
@@ -35410,7 +31243,11 @@
      "e7e1",
      "e8e1",
      "d8f6",
-     "d4f6"
+     "d4f6",
+     "c6c7",
+     "d6c7",
+     "d5c4",
+     "h6g7"
     ]
    },
    {
@@ -35420,7 +31257,11 @@
      "e7e3",
      "d4e3",
      "d8e7",
-     "d6e7"
+     "d6e7",
+     "c6f6",
+     "e7f8q",
+     "f6f8",
+     "e8f8"
     ]
    },
    {
@@ -35435,8 +31276,10 @@
     "at": 6,
     "uci": [
      "d3f5",
-     "b7c8",
-     "f5e6"
+     "c6d6",
+     "f5e6",
+     "d6e6",
+     "h6g7"
     ]
    },
    {
@@ -35444,7 +31287,11 @@
     "uci": [
      "e7g7",
      "g8f8",
-     "g7h7"
+     "g7h7",
+     "e6g7",
+     "h7h8",
+     "f8f7",
+     "h6g6"
     ]
    },
    {
@@ -35452,7 +31299,11 @@
     "uci": [
      "e7e6",
      "g8f7",
-     "h6h7"
+     "h6h7",
+     "f7e6",
+     "g3g6",
+     "d8f6",
+     "g6f6"
     ]
    },
    {
@@ -35460,37 +31311,43 @@
     "uci": [
      "e7h7",
      "d8f6",
-     "h6g6"
+     "g3g6",
+     "f6g7",
+     "g6g7",
+     "g8f8",
+     "h7h8"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "h7f7"
+     "d4g7",
+     "e6g7",
+     "h7g7"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "d4g7"
+     "h7h6",
+     "e6g7",
+     "h6g7"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "h7h6"
+     "g3g6",
+     "a6a5",
+     "g6f6"
     ]
    },
    {
     "at": 8,
     "uci": [
-     "g3g6"
-    ]
-   },
-   {
-    "at": 8,
-    "uci": [
-     "h7g6"
+     "h7g6",
+     "a6a5",
+     "g6f5"
     ]
    }
   ]
@@ -35573,15 +31430,7 @@
    "f8f7",
    "d5a8"
   ],
-  "source": "https://lichess.org/study/Tow5byBK/lEbnkRGJ",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "g1g7"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Tow5byBK/lEbnkRGJ"
  },
  {
   "n": 1102,
@@ -35733,17 +31582,7 @@
    "e3d2",
    "f3e2"
   ],
-  "source": "https://lichess.org/study/Tow5byBK/ZuaLt96Y",
-  "alternatives": [
-   {
-    "at": 2,
-    "uci": [
-     "f6e6",
-     "c6e5",
-     "f8g6"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Tow5byBK/ZuaLt96Y"
  },
  {
   "n": 1111,
@@ -35880,7 +31719,11 @@
    {
     "at": 6,
     "uci": [
-     "d5d8"
+     "d5d8",
+     "g8f7",
+     "h6g7",
+     "f7e6",
+     "g7f6"
     ]
    }
   ]
@@ -35983,17 +31826,7 @@
    "c2b3",
    "a1a4"
   ],
-  "source": "https://lichess.org/study/Tow5byBK/7B1w6RG3",
-  "alternatives": [
-   {
-    "at": 6,
-    "uci": [
-     "a1a4",
-     "c2b1",
-     "a4a2"
-    ]
-   }
-  ]
+  "source": "https://lichess.org/study/Tow5byBK/7B1w6RG3"
  },
  {
   "n": 1124,
@@ -36082,25 +31915,13 @@
      "a3a8",
      "g8g7",
      "a8g8",
-     "g7g8"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "f1f2"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "e1f2"
-    ]
-   },
-   {
-    "at": 10,
-    "uci": [
-     "f1h1"
+     "g7g8",
+     "f1h3",
+     "f2e1",
+     "d2f1",
+     "f3f1",
+     "h1g2",
+     "f1g1"
     ]
    }
   ]

@@ -87,7 +87,10 @@ export class LocalGame {
   private counter = 0
   readonly id = 'local'
 
-  constructor(fen: string = START_FEN) {
+  constructor(
+    fen: string = START_FEN,
+    private readonly repetitionEndsGame = true,
+  ) {
     new Chess(fen)
     this.root = this.createNode({ id: '0', san: '', fen, ply: rootPly(fen), parent: null })
     this.current = this.root
@@ -140,6 +143,19 @@ export class LocalGame {
     return repetitions >= 3
   }
 
+  repetitionsAfter(from: string, to: string, promotion?: string): number {
+    const chess = new Chess(this.current.fen)
+    const move = chess.moves({ verbose: true }).find((m) => m.from === from && m.to === to && (m.promotion ?? '') === (promotion ?? ''))
+    if (!move) return 0
+    chess.move({ from, to, promotion: move.promotion })
+    const key = repetitionKey(chess.fen())
+    let count = 1
+    for (let node: TreeNode | null = this.current; node; node = node.parent) {
+      if (node.repetitionKey === key) count++
+    }
+    return count
+  }
+
   resetTo(fen: string = START_FEN): void {
     new Chess(fen)
     this.root = this.createNode({ id: '0', san: '', fen, ply: rootPly(fen), parent: null })
@@ -182,7 +198,7 @@ export class LocalGame {
 
   applyMove(from: string, to: string, promotion?: string): boolean {
     const chess = new Chess(this.current.fen)
-    if (chess.isGameOver() || this.isThreefoldRepetition()) return false
+    if (chess.isGameOver() || (this.repetitionEndsGame && this.isThreefoldRepetition())) return false
     const legal = chess.moves({ verbose: true }).find((m) => {
       if (m.from !== from || m.to !== to) return false
       if (m.promotion) return m.promotion === (promotion && 'qrbn'.includes(promotion) ? promotion : 'q')
@@ -255,7 +271,7 @@ export class LocalGame {
     const isStalemate = !isCheck && !hasMoves
     const is50 = Number(fields[4]) >= 100
     const insufficient = chess.isInsufficientMaterial()
-    const isThreefold = this.isThreefoldRepetition()
+    const isThreefold = this.repetitionEndsGame && this.isThreefoldRepetition()
     const isDraw = isStalemate || is50 || isThreefold || insufficient
     const isGameOver = isCheckmate || isDraw
     const legalMoves: MoveJSON[] = isGameOver

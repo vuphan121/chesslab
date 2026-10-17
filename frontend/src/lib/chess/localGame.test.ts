@@ -129,6 +129,32 @@ describe('LocalGame', () => {
     expect(g.applyMove('g1', 'f3')).toBe(false)
   })
 
+  it('keeps the game going after threefold repetition when repetition does not end it', () => {
+    const g = new LocalGame(undefined, false)
+    for (const [from, to] of [
+      ['g1', 'f3'], ['g8', 'f6'], ['f3', 'g1'], ['f6', 'g8'],
+      ['g1', 'f3'], ['g8', 'f6'], ['f3', 'g1'], ['f6', 'g8'],
+    ]) {
+      expect(g.applyMove(from, to)).toBe(true)
+    }
+    expect(g.snapshot()).toMatchObject({ isDraw: false, isGameOver: false, gameOverReason: '' })
+    expect(g.snapshot().legalMoves.length).toBeGreaterThan(0)
+    expect(g.applyMove('g1', 'f3')).toBe(true)
+  })
+
+  it('counts how often a move would repeat the position', () => {
+    const g = new LocalGame(undefined, false)
+    expect(g.repetitionsAfter('g1', 'f3')).toBe(1)
+    for (const [from, to] of [
+      ['g1', 'f3'], ['g8', 'f6'], ['f3', 'g1'], ['f6', 'g8'],
+      ['g1', 'f3'], ['g8', 'f6'], ['f3', 'g1'],
+    ]) {
+      g.applyMove(from, to)
+    }
+    expect(g.repetitionsAfter('f6', 'g8')).toBe(3)
+    expect(g.repetitionsAfter('a7', 'a5')).toBe(1)
+  })
+
   it('ignores an en-passant square when the capture is illegal', () => {
     const g = new LocalGame('k3r3/8/8/3pP3/8/8/8/4K3 w - d6 0 1')
     for (const [from, to] of [
