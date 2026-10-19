@@ -41,7 +41,7 @@ def settled(b, user):
 def line_from(eng, b, horizon_plies, stop_on_mate):
     out = []
     b = b.copy()
-    while len(out) < horizon_plies and not b.is_game_over():
+    while len(out) < horizon_plies and not b.is_game_over() and not b.is_repetition(3):
         info = eng.analyse(b, chess.engine.Limit(depth=DEPTH))
         pv = info.get("pv", [])
         if not pv:
@@ -51,7 +51,7 @@ def line_from(eng, b, horizon_plies, stop_on_mate):
                 break
             out.append(m.uci())
             b.push(m)
-            if b.is_game_over():
+            if b.is_game_over() or b.is_repetition(3):
                 break
     return out, b
 
@@ -75,10 +75,8 @@ def check(job):
     user = chess.Board(fen).turn
     at = a["at"]
     b = chess.Board(fen)
-    seen = {b.epd()}
     for u in sol[:at]:
         b.push_uci(u)
-        seen.add(b.epd())
     book = chess.Board(fen)
     for u in sol:
         book.push_uci(u)
@@ -87,9 +85,8 @@ def check(job):
     book_user_moves = (remaining + 1) // 2
     first = a["uci"][0]
     b.push_uci(first)
-    if b.epd() in seen:
+    if b.is_repetition(3):
         return None
-    seen.add(b.epd())
     horizon = remaining - 1
     if book_mates:
         info = _eng.analyse(b, chess.engine.Limit(depth=DEPTH))
@@ -103,9 +100,8 @@ def check(job):
         chk.push_uci(u)
     for u in line:
         chk.push_uci(u)
-        if chk.epd() in seen:
+        if chk.is_repetition(3):
             return None
-        seen.add(chk.epd())
     if book_mates:
         if not chk.is_checkmate() or chk.turn == user:
             return None

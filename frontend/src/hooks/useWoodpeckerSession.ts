@@ -30,7 +30,7 @@ function newOperationId(): string {
 }
 
 export function useWoodpeckerSession() {
-  const [game] = useState(() => new LocalGame(undefined, false))
+  const [game] = useState(() => new LocalGame())
   const [progress, setProgress] = useState<WoodpeckerState | null>(null)
   const [puzzle, setPuzzle] = useState<WoodpeckerPuzzle | null>(null)
   const [status, setStatus] = useState<PuzzleStatus>('loading')
