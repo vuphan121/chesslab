@@ -121,10 +121,13 @@ func (b *B2) download(ctx context.Context, auth authorizeResponse, objectKey str
 }
 
 type authorizeResponse struct {
+	AccountID          string `json:"accountId"`
 	AuthorizationToken string `json:"authorizationToken"`
 	APIInfo            struct {
 		StorageAPI struct {
+			APIURL      string `json:"apiUrl"`
 			DownloadURL string `json:"downloadUrl"`
+			BucketID    string `json:"bucketId"`
 		} `json:"storageApi"`
 	} `json:"apiInfo"`
 }

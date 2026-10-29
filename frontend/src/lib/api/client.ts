@@ -781,3 +781,18 @@ export const recordWoodpeckerAttempt = (attempt: WoodpeckerAttempt): Promise<{ o
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(attempt),
   })
+
+export interface PdfBookSummary {
+  id: string
+  title: string
+  sizeBytes: number
+}
+
+export const listPdfBooks = (): Promise<PdfBookSummary[]> => request('/api/pdf-books')
+
+export const getPdfBook = async (id: string): Promise<ArrayBuffer> => {
+  const res = await apiFetch(`${API}/api/pdf-books/${encodeURIComponent(id)}/source.pdf`, { headers: authHeader() })
+  if (res.status === 401) clearToken()
+  if (!res.ok) throw new Error((await res.text()) || res.statusText)
+  return res.arrayBuffer()
+}

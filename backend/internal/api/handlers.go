@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -24,6 +25,7 @@ type Handler struct {
 	books                   *book.Store
 	bookSource              booksource.Reader
 	bookChapterPrefix       string
+	pdfBookObjectPrefix     string
 	db                      *db.Store
 	puzzles                 *puzzledb.Store
 	authCfg                 auth.Config
@@ -39,7 +41,7 @@ type Handler struct {
 }
 
 func NewHandler(precomputeEng *engine.Engine, repertoires *repertoire.Store, books *book.Store, dbStore *db.Store, authCfg auth.Config, bookSource booksource.Reader, bookChapterPrefix string) *Handler {
-	return &Handler{precomputeEngine: precomputeEng, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix, loginLimiter: newLoginLimiter(5, 5*time.Minute, time.Now), lineImportanceGen: make(map[string]int64)}
+	return &Handler{precomputeEngine: precomputeEng, repertoires: repertoires, books: books, db: dbStore, authCfg: authCfg, bookSource: bookSource, bookChapterPrefix: bookChapterPrefix, pdfBookObjectPrefix: os.Getenv("B2_PDF_PREFIX"), loginLimiter: newLoginLimiter(5, 5*time.Minute, time.Now), lineImportanceGen: make(map[string]int64)}
 }
 
 func (h *Handler) SetPrecomputeEngineFactory(factory func() (*engine.Engine, error)) {

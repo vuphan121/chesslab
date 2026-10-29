@@ -42,6 +42,9 @@ func NewRouter(h *Handler) http.Handler {
 			r.Get("/{id}", h.GetRepertoire)
 		})
 
+		r.Get("/api/pdf-books", h.ListPDFBooks)
+		r.Get("/api/pdf-books/{id}/source.pdf", h.GetPDFBook)
+
 		r.Route("/api/books", func(r chi.Router) {
 			r.Get("/", h.ListBooks)
 			r.Get("/{id}/chapters/{chapterID}/source.pdf", h.GetBookChapterPDF)

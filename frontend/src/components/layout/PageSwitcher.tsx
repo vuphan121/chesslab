@@ -86,7 +86,7 @@ export default function PageSwitcher() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const current = PAGES.find((p) => p.href === pathname) ?? PAGES[0]
+  const current = PAGES.find((p) => p.href === pathname) ?? PAGES.find((p) => p.href !== '/' && pathname.startsWith(p.href + '/')) ?? PAGES[0]
 
   useEffect(() => {
     if (!open) return

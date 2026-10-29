@@ -9,6 +9,7 @@ import BookMoveHistory from '@/components/book/BookMoveHistory'
 import EvalBar from '@/components/analysis/EvalBar'
 import MaterialCorners, { MATERIAL_CORNERS_WIDTH } from '@/components/board/MaterialCorners'
 import ChapterSections from '@/components/book/ChapterSections'
+import PdfBookList from '@/components/book/PdfBookList'
 import BookPDFViewer from '@/components/book/BookPDFViewer'
 import { useBookStudySession } from '@/hooks/useBookStudySession'
 import { useViewportWidth, clamp } from '@/hooks/useViewportWidth'
@@ -74,7 +75,7 @@ export default function BookStudyPage() {
   }
 
   if (phase === 'setup') {
-    return <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10"><TopBar right={<span />} /><BookPicker onStart={loadStart} starting={loading} startError={loadError} /></main>
+    return <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10"><TopBar right={<span />} /><BookPicker onStart={loadStart} starting={loading} startError={loadError} /><PdfBookList /></main>
   }
   if (phase === 'done') {
     return (
