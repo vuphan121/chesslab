@@ -1,0 +1,8 @@
+{
+  "id": "nimzo-larsen-white",
+  "name": "Nimzo-Larsen",
+  "side": "w",
+  "source": "https://lichess.org/study/1Q0vHovs",
+  "description": "White repertoire with 1.b3 (Nimzo-Larsen Attack). Chapters: main line, classical setup, reversed London, reversed Trompowsky, reversed Nimzo/QI/Dutch, Nf6 g6 setup, Dutch, and e5 d6 (KID/Dutch).",
+  "excluded": []
+}
