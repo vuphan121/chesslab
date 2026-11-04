@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   getWoodpeckerPuzzle,
   getWoodpeckerState,
+  pingBackend,
   recordWoodpeckerAttempt,
   type GameState,
   type WoodpeckerAttempt,
@@ -17,7 +18,7 @@ import { activeLine, flatten } from '@/lib/chess/moveTree'
 import type { Feedback } from '@/hooks/useTrainerSession'
 import { playMoveSound } from '@/lib/sound'
 import { judgeMove, splitUci } from '@/lib/puzzle/judge'
-import { toBoardState, type PuzzleStatus } from '@/hooks/usePuzzleSession'
+import { KEEP_ALIVE_MS, toBoardState, type PuzzleStatus } from '@/hooks/usePuzzleSession'
 
 const OPPONENT_REPLY_DELAY_MS = 350
 
@@ -72,6 +73,12 @@ export function useWoodpeckerSession() {
     timerRef.current = null
   }, [])
   useEffect(() => clearTimer, [clearTimer])
+
+  useEffect(() => {
+    pingBackend()
+    const interval = setInterval(pingBackend, KEEP_ALIVE_MS)
+    return () => clearInterval(interval)
+  }, [])
 
   const stopClock = useCallback(() => {
     if (runningSinceRef.current !== null) {
