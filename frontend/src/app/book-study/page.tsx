@@ -64,7 +64,8 @@ export default function BookStudyPage() {
   const boardSize = squareSize * 8
 
   const centerWidth = boardSize + MATERIAL_GAP + MATERIAL_CORNERS_WIDTH + EVAL_SLOT_WIDTH
-  const shellWidth = sidebarsHidden ? centerWidth + OUTER_PADDING * 2 : SECTIONS_WIDTH + centerWidth + PDF_WIDTH + COLUMN_GAP * 2 + OUTER_PADDING * 2
+  const sideExtras = MATERIAL_GAP + MATERIAL_CORNERS_WIDTH + EVAL_SLOT_WIDTH
+  const shellWidth = sidebarsHidden ? centerWidth + sideExtras + OUTER_PADDING * 2 : SECTIONS_WIDTH + centerWidth + PDF_WIDTH + COLUMN_GAP * 2 + OUTER_PADDING * 2
   const frameHeight = Math.max(720, boardSize + 370)
 
   const chapterItems = current ? flatItems.filter((f) => f.chapterId === current.chapterId) : []
@@ -114,7 +115,7 @@ export default function BookStudyPage() {
     <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10">
       <TopBar right={<span style={{ fontSize: 12, fontWeight: 600, color: '#6a675f', background: '#f0efe9', padding: '6px 13px', borderRadius: 8 }}>{book.title}</span>} />
       <div style={{ ...topWrap, background: '#e8e8e6', marginTop: 24 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: isNarrow ? '1fr' : sidebarsHidden ? `${centerWidth}px` : `${SECTIONS_WIDTH}px ${centerWidth}px ${PDF_WIDTH}px`, gap: COLUMN_GAP, alignItems: 'stretch' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isNarrow ? '1fr' : sidebarsHidden ? `${centerWidth}px` : `${SECTIONS_WIDTH}px ${centerWidth}px ${PDF_WIDTH}px`, gap: COLUMN_GAP, alignItems: 'stretch', paddingLeft: sidebarsHidden && !isNarrow ? sideExtras : 0 }}>
           {!(sidebarsHidden && !isNarrow) && <aside style={{ height: isNarrow ? 260 : frameHeight, minHeight: 0, order: isNarrow ? 1 : undefined, display: 'flex', flexDirection: 'column' }}>
             <ChapterSections items={chapterItems} startIndex={chapterStartIndex} activeItemId={current.item.id} completedItemIds={completedItemIds} bookmarkedItemIds={bookmarkedItemIds} busy={busy} onSelect={goToIndex} />
           </aside>}
