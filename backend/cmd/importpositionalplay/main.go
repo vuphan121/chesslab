@@ -65,10 +65,53 @@ func loadDotEnv(path string) {
 	}
 }
 
+func expandPlacement(placement string) string {
+	var b strings.Builder
+	for _, r := range placement {
+		switch {
+		case r >= '1' && r <= '8':
+			b.WriteString(strings.Repeat(".", int(r-'0')))
+		case r != '/':
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+func nearestGame(placement string, games map[string]commentaryGame, used map[string]bool) (commentaryGame, bool) {
+	want := expandPlacement(placement)
+	best, bestDiff, ties := "", 99, 0
+	for key := range games {
+		if used[key] {
+			continue
+		}
+		have, diff := expandPlacement(key), 0
+		if len(have) != len(want) {
+			continue
+		}
+		for i := range want {
+			if want[i] != have[i] {
+				diff++
+			}
+		}
+		if diff < bestDiff {
+			best, bestDiff, ties = key, diff, 1
+		} else if diff == bestDiff {
+			ties++
+		}
+	}
+	if best == "" || bestDiff > 3 || ties != 1 {
+		return commentaryGame{}, false
+	}
+	return games[best], true
+}
+
 func main() {
 	root := flag.String("root", "../tmp/positional-play", "parser output root (chapter-0..5)")
 	commentary := flag.String("commentary", "../tmp/positional-play/commentary/games.json", "commentary_parser.py games.json (optional)")
 	maxFailed := flag.Float64("max-failed-ratio", 0.10, "attach a game's author line only if at most this share of its moves failed to parse")
+	outPath := flag.String("out", "", "also write the book JSON to this file (for a local overlay; never touches Neon)")
+	puzzles := flag.Bool("exercise-puzzles", false, "turn exercises whose diagram matches a solution game into puzzles carrying the author's line")
 	apply := flag.Bool("apply", false, "write the book to Neon (otherwise dry run)")
 	flag.Parse()
 	loadDotEnv(".env")
@@ -85,7 +128,12 @@ func main() {
 			}
 		}
 	}
-	attached := 0
+	byPlacement := map[string]commentaryGame{}
+	for _, g := range lines {
+		byPlacement[strings.Fields(g.StartFEN)[0]] = g
+	}
+	usedGames := map[string]bool{}
+	attached, puzzleCount := 0, 0
 	out := book.Book{ID: "positional-play", Title: "Grandmaster Preparation: Positional Play", Author: "Jacob Aagaard"}
 	missing := 0
 	for number := 1; number <= len(chapters); number++ {
@@ -117,6 +165,16 @@ func main() {
 				item.Prompt = fmt.Sprintf("Exercise %d: the author's solution and commentary.", g.Exercise)
 				attached++
 			}
+			g, ok := byPlacement[p.PiecePlacement]
+			if !ok && number == 5 && *puzzles {
+				g, ok = nearestGame(p.PiecePlacement, byPlacement, usedGames)
+			}
+			if ok && number == 5 && *puzzles && (p.SideToMove == "" || p.SideToMove == strings.Fields(g.StartFEN)[1]) {
+				usedGames[strings.Fields(g.StartFEN)[0]] = true
+				item.Type, item.FEN, item.SideToMove, item.Line = "puzzle", g.StartFEN, strings.Fields(g.StartFEN)[1], g.Line
+				item.Prompt = fmt.Sprintf("Exercise %d: find the best move.", g.Exercise)
+				puzzleCount++
+			}
 			chapter.Items = append(chapter.Items, item)
 		}
 		log.Printf("chapter %d %s: %d positions", number, chapter.Name, len(chapter.Items))
@@ -129,8 +187,15 @@ func main() {
 	if _, err := book.ParseAndValidate(payload); err != nil {
 		log.Fatalf("book failed validation: %v", err)
 	}
+	log.Printf("%d exercises turned into puzzles", puzzleCount)
 	log.Printf("%d exercise solutions with author lines attached", attached)
 	log.Printf("%d diagrams had no recognized placement and were skipped", missing)
+	if *outPath != "" {
+		if err := os.WriteFile(*outPath, payload, 0o644); err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("wrote %s", *outPath)
+	}
 	if !*apply {
 		log.Printf("dry run only; re-run with --apply to upsert Neon")
 		return

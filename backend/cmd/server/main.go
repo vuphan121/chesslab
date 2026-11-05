@@ -137,6 +137,27 @@ func main() {
 }
 
 func loadBooks(dbStore *db.Store) []*book.Book {
+	books := loadBooksBase(dbStore)
+	dir := os.Getenv("BOOKS_OVERLAY_PATH")
+	if dir == "" {
+		return books
+	}
+	for _, o := range book.LoadDir(dir) {
+		replaced := false
+		for i := range books {
+			if books[i].ID == o.ID {
+				books[i], replaced = o, true
+			}
+		}
+		if !replaced {
+			books = append(books, o)
+		}
+		log.Printf("book: local overlay replaced %q (not written to the database)", o.ID)
+	}
+	return books
+}
+
+func loadBooksBase(dbStore *db.Store) []*book.Book {
 	if dbStore != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()

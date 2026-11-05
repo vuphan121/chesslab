@@ -14,12 +14,22 @@ from pathlib import Path
 
 import book_board_parser as parser
 
+_detect_boards = parser.detect_boards
+
+
+def column_major_boards(image, minimum_edge):
+    middle = image.shape[1] / 2
+    return sorted(_detect_boards(image, minimum_edge), key=lambda r: (r.x + r.width / 2 > middle, r.y))
+
+
+parser.detect_boards = column_major_boards
+
 CHAPTERS: dict[int, tuple[str, int, int]] = {
     0: ("Introduction", 12, 23),
     1: ("Weaknesses", 24, 71),
     2: ("Pieces", 72, 119),
-    3: ("Prophylaxis", 120, 153),
-    4: ("Exercises", 154, 177),
+    3: ("Prophylaxis", 120, 151),
+    4: ("Exercises", 152, 177),
     5: ("Solutions", 178, 309),
 }
 

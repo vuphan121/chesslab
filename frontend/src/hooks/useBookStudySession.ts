@@ -84,6 +84,7 @@ export function useBookStudySession() {
   const gameIdRef = useRef<string | null>(null)
   const flippedTurnRef = useRef<Set<string>>(new Set())
   const [lineNotes, setLineNotes] = useState<Record<string, LineNote>>({})
+  const [solutionShown, setSolutionShown] = useState(false)
   const moveReqId = useRef(0)
   const analysisReqId = useRef(0)
   const itemReqId = useRef(0)
@@ -309,7 +310,8 @@ export function useBookStudySession() {
     setSaveNote(null)
     let gs = await apiSetPosition(gid, fenForItem(item))
     if (reqId !== itemReqId.current) return false
-    if (item.line && !flippedTurnRef.current.has(item.id)) {
+    setSolutionShown(false)
+    if (item.line && item.type !== 'puzzle' && !flippedTurnRef.current.has(item.id)) {
       setLineNotes(bookGame.loadLine(item.line))
       gs = bookGame.snapshot()
     } else {
@@ -652,6 +654,23 @@ export function useBookStudySession() {
     [gameState],
   )
 
+  const revealSolution = useCallback(() => {
+    if (!current?.item.line) return
+    setLineNotes(bookGame.loadLine(current.item.line))
+    setGameState(bookGame.snapshot())
+    setSolutionShown(true)
+  }, [bookGame, current])
+
+  const puzzleFeedback = useMemo<{ result: 'correct' | 'wrong'; played: string } | null>(() => {
+    const line = current?.item.type === 'puzzle' ? current.item.line : undefined
+    if (!line || solutionShown || !gameState) return null
+    const first = activeLine(gameState.moveTree, gameState.currentNodeId)[0]
+    const author = line.children?.[0]?.san
+    if (!first || !author) return null
+    const strip = (san: string) => san.replace(/[+#]/g, '')
+    return { result: strip(first.san) === strip(author) ? 'correct' : 'wrong', played: first.san }
+  }, [current, gameState, solutionShown])
+
   const toggleSideToMove = useCallback(async () => {
     const gid = gameIdRef.current
     if (!gid || !current) return
@@ -731,6 +750,9 @@ export function useBookStudySession() {
     toggleFlipped,
     toggleSideToMove,
     lineNotes,
+    solutionShown,
+    revealSolution,
+    puzzleFeedback,
     analysisEnabled,
     analysis: analysisFen === currentFen ? analysis : null,
     barAnalysis: analysis,

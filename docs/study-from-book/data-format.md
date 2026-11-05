@@ -189,8 +189,8 @@ read by ChessOCR through `tools/book-board-parser/parse_positional_play.py`
 | 1 | Introduction (three questions) | 12-23 | `books/positional-play/chapter-1.pdf` |
 | 2 | Weaknesses | 24-71 | `.../chapter-2.pdf` |
 | 3 | Pieces | 72-119 | `.../chapter-3.pdf` |
-| 4 | Prophylaxis | 120-153 | `.../chapter-4.pdf` |
-| 5 | Exercises | 154-179 | `.../chapter-5.pdf` |
+| 4 | Prophylaxis | 120-151 | `.../chapter-4.pdf` |
+| 5 | Exercises | 152-177 | `.../chapter-5.pdf` |
 | 6 | Solutions | 180-309 | `.../chapter-6.pdf` |
 
 Only the exercise diagrams carry a turn triangle. In-text and solution
@@ -223,3 +223,22 @@ moves failed: 61 of 150 exercises. The board page shows these through
 `BookLineView.tsx` (main line inline, variations indented, comments between the
 moves). Known weak spots: ChessOCR misreads annotated diagrams (circles and
 arrows read as pieces) and two-column reading order can split a game's score.
+
+### Positional Play: corrections and later additions
+
+- **Page ranges:** Exercises start on master page 152 (intro) with exercises 1-6 on
+  page 153; Prophylaxis is 120-151. An earlier cut at page 154 made the Exercises PDF
+  open at exercise 7.
+- **Diagram order:** the book is two-column, so diagrams are numbered down the left
+  column then the right (`parse_positional_play.py` patches the board sorter; the
+  shared `book_board_parser` still sorts row by row for Build Up Your Chess). Item N
+  of the Exercises chapter is exercise N.
+- **Exercise puzzles (local only):** `importpositionalplay --exercise-puzzles` turns
+  an exercise into a `puzzle` carrying the author's line when its diagram matches a
+  Solutions game (exact placement, else the unique closest within 3 squares): 51 of
+  150. The board page hides the line until "Show solution" and says whether the first
+  move played is the author's. `--out file.json` writes the book without touching
+  Neon; the local server loads it over the database copy when `BOOKS_OVERLAY_PATH`
+  points at the folder (in-memory only). Nothing in Neon contains puzzle items.
+- **Board page:** "Hide PDF" (wide screens) collapses the PDF column and enlarges the
+  board; the choice is kept in `localStorage`. The chapter list scrolls inside its column.

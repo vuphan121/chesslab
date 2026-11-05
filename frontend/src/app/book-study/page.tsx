@@ -1,7 +1,7 @@
 'use client'
 
 import { arrowShapes } from '@/lib/engine/arrows'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Board from '@/components/board/Board'
 import TopBar from '@/components/layout/TopBar'
 import BookPicker from '@/components/book/BookPicker'
@@ -13,7 +13,7 @@ import ChapterSections from '@/components/book/ChapterSections'
 import PdfBookList from '@/components/book/PdfBookList'
 import BookPDFViewer from '@/components/book/BookPDFViewer'
 import { useBookStudySession } from '@/hooks/useBookStudySession'
-import { useViewportWidth, clamp } from '@/hooks/useViewportWidth'
+import { useViewportWidth, useViewportHeight, clamp } from '@/hooks/useViewportWidth'
 import { sourcePageForItem } from '@/lib/books/sourcePages'
 
 const DESKTOP_SQUARE_SIZE = 72
@@ -28,15 +28,33 @@ const MATERIAL_GAP = 8
 export default function BookStudyPage() {
   const {
     phase, book, loadError, loading, flatItems, current, boardState,
-    busy, moveError, flipped, toggleFlipped, toggleSideToMove, lineNotes, analysisEnabled, analysis, barAnalysis, analysisIsCurrent, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
+    busy, moveError, flipped, toggleFlipped, toggleSideToMove, lineNotes, solutionShown, revealSolution, puzzleFeedback, analysisEnabled, analysis, barAnalysis, analysisIsCurrent, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
     stepBack, stepForward, loadStart, goToIndex, goToMove, selectSquare,
     move, legalMovesFor, restart,
     moveEvals, savedLine, savingLine, saveNote, deleteMove, saveCurrentLine, restoreSavedLine,
   } = useBookStudySession()
 
   const viewportWidth = useViewportWidth()
+  const viewportHeight = useViewportHeight()
+  const [pdfCollapsed, setPdfCollapsed] = useState(false)
+  useEffect(() => {
+    setPdfCollapsed(window.localStorage.getItem('book-study-pdf-collapsed') === '1')
+  }, [])
+  const togglePdf = () => {
+    setPdfCollapsed((value) => {
+      window.localStorage.setItem('book-study-pdf-collapsed', value ? '0' : '1')
+      return !value
+    })
+  }
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
-  const squareSize = isNarrow
+  const wideBoard = !isNarrow && pdfCollapsed
+  const sideReserve = OUTER_PADDING * 2 + SECTIONS_WIDTH + COLUMN_GAP + MATERIAL_GAP + MATERIAL_CORNERS_WIDTH + EVAL_SLOT_WIDTH + 24
+  const wideSquare = clamp(
+    Math.floor(Math.min((viewportWidth ?? 1400) - sideReserve, (viewportHeight ?? 900) - 230) / 8),
+    DESKTOP_SQUARE_SIZE,
+    130,
+  )
+  const squareSize = wideBoard ? wideSquare : isNarrow
     ? clamp(
         Math.floor(((viewportWidth ?? NARROW_BREAKPOINT) - 28 - MATERIAL_GAP - MATERIAL_CORNERS_WIDTH) / 8),
         38,
@@ -46,7 +64,7 @@ export default function BookStudyPage() {
   const boardSize = squareSize * 8
 
   const centerWidth = boardSize + MATERIAL_GAP + MATERIAL_CORNERS_WIDTH + EVAL_SLOT_WIDTH
-  const shellWidth = SECTIONS_WIDTH + centerWidth + PDF_WIDTH + COLUMN_GAP * 2 + OUTER_PADDING * 2
+  const shellWidth = SECTIONS_WIDTH + centerWidth + (pdfCollapsed ? 0 : PDF_WIDTH + COLUMN_GAP) + COLUMN_GAP + OUTER_PADDING * 2
   const frameHeight = Math.max(720, boardSize + 370)
 
   const chapterItems = current ? flatItems.filter((f) => f.chapterId === current.chapterId) : []
@@ -96,8 +114,8 @@ export default function BookStudyPage() {
     <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10">
       <TopBar right={<span style={{ fontSize: 12, fontWeight: 600, color: '#6a675f', background: '#f0efe9', padding: '6px 13px', borderRadius: 8 }}>{book.title}</span>} />
       <div style={{ ...topWrap, background: '#e8e8e6', marginTop: 24 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: isNarrow ? '1fr' : `${SECTIONS_WIDTH}px ${centerWidth}px ${PDF_WIDTH}px`, gap: COLUMN_GAP, alignItems: 'stretch' }}>
-          <aside style={{ height: isNarrow ? 260 : frameHeight, minHeight: 0, order: isNarrow ? 1 : undefined }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isNarrow ? '1fr' : pdfCollapsed ? `${SECTIONS_WIDTH}px ${centerWidth}px` : `${SECTIONS_WIDTH}px ${centerWidth}px ${PDF_WIDTH}px`, gap: COLUMN_GAP, alignItems: 'stretch' }}>
+          <aside style={{ height: isNarrow ? 260 : frameHeight, minHeight: 0, order: isNarrow ? 1 : undefined, display: 'flex', flexDirection: 'column' }}>
             <ChapterSections items={chapterItems} startIndex={chapterStartIndex} activeItemId={current.item.id} completedItemIds={completedItemIds} bookmarkedItemIds={bookmarkedItemIds} busy={busy} onSelect={goToIndex} />
           </aside>
 
@@ -112,6 +130,7 @@ export default function BookStudyPage() {
                 {completionError && <span title={completionError} style={{ color: '#b1453b', fontSize: 11 }}>Not saved</span>}
                 {moveError && <span role="alert" title={moveError} style={{ color: '#b1453b', fontSize: 11 }}>Move failed — try again</span>}
                 <button onClick={toggleAnalysis} title="Toggle engine analysis" style={{ ...analysisButton, background: analysisEnabled ? '#e8f3fd' : '#fff', color: analysisEnabled ? '#2f6db0' : '#77746c' }}>{analysisLoading ? 'Analyzing…' : 'Analysis'}</button>
+                {!isNarrow && <button onClick={togglePdf} title={pdfCollapsed ? 'Show the book PDF' : 'Hide the book PDF and enlarge the board'} style={{ ...analysisButton, background: pdfCollapsed ? '#e8f3fd' : '#fff', color: pdfCollapsed ? '#2f6db0' : '#77746c' }}>{pdfCollapsed ? 'Show PDF' : 'Hide PDF'}</button>}
                 <button onClick={toggleFlipped} title="Flip board" style={flipButton}>⇅</button>
               </div>
             </div>
@@ -126,8 +145,19 @@ export default function BookStudyPage() {
               <div style={{ display: 'flex', gap: 6 }}><button onClick={stepBack} disabled={!canStepBack} title="Previous move (←)" style={navBtn(canStepBack)}>⟨</button><button onClick={stepForward} disabled={!canStepForward} title="Next move (→)" style={navBtn(canStepForward)}>⟩</button></div>
               <span className="mono" style={{ fontSize: 12, color: '#a3a099' }}>{currentPly > 0 || canStepBack ? `ply ${currentPly}` : ' '}</span>
             </div>
+            {current.item.type === 'puzzle' && current.item.line && !solutionShown && (
+              <div style={{ width: boardSize, display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}>
+                <span style={{ color: '#6a675f', flex: 1 }}>{current.item.prompt}</span>
+                {puzzleFeedback && (
+                  <span style={{ fontWeight: 700, color: puzzleFeedback.result === 'correct' ? '#25864d' : '#b1453b' }}>
+                    {puzzleFeedback.result === 'correct' ? `✓ ${puzzleFeedback.played} is the author's move` : `${puzzleFeedback.played} is not the author's move`}
+                  </span>
+                )}
+                <button onClick={revealSolution} style={{ ...analysisButton, background: '#fff', color: '#2f6db0' }}>Show solution</button>
+              </div>
+            )}
             <div style={{ width: boardSize }}>
-              {current.item.line ? (
+              {current.item.line && (current.item.type !== 'puzzle' || solutionShown) ? (
                 <BookLineView moveTree={boardState.moveTree} notes={lineNotes} currentNodeId={boardState.currentNodeId} busy={busy} onGoto={goToMove} />
               ) : (
               <BookMoveHistory
@@ -148,9 +178,9 @@ export default function BookStudyPage() {
             </div>
           </section>
 
-          <aside style={{ height: isNarrow ? 680 : frameHeight, minHeight: 0, order: isNarrow ? 3 : undefined }}>
+          {!(pdfCollapsed && !isNarrow) && <aside style={{ height: isNarrow ? 680 : frameHeight, minHeight: 0, order: isNarrow ? 3 : undefined }}>
             <BookPDFViewer key={`${book.id}:${current.chapterId}`} bookId={book.id} chapterId={current.chapterId} navigationKey={current.item.id} sourcePage={sourcePageForItem(book.id, current.item.id, current.item.sourcePage)} />
-          </aside>
+          </aside>}
         </div>
       </div>
     </main>
