@@ -1,5 +1,7 @@
 package book
 
+import "encoding/json"
+
 type Item struct {
 	ID         string   `json:"id"`
 	ChapterID  string   `json:"chapterId"`
@@ -11,6 +13,8 @@ type Item struct {
 
 	SolutionUCI []string `json:"solutionUci,omitempty"`
 	Note        string   `json:"note,omitempty"`
+
+	Line json.RawMessage `json:"line,omitempty"`
 
 	SourcePage    int `json:"sourcePage,omitempty"`
 	BookPage      int `json:"bookPage,omitempty"`

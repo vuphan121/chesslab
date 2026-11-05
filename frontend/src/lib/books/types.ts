@@ -1,5 +1,19 @@
 
 
+export interface LineNode {
+  san?: string
+  annotation?: string
+  before?: string
+  after?: string
+  children?: LineNode[]
+}
+
+export interface LineNote {
+  annotation?: string
+  before?: string
+  after?: string
+}
+
 export interface BookItem {
   id: string
   chapterId: string
@@ -10,6 +24,7 @@ export interface BookItem {
   solution?: string[]
   solutionUci?: string[]
   note?: string
+  line?: LineNode
   sourcePage?: number
   bookPage?: number
   masterPDFPage?: number

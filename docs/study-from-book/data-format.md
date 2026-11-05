@@ -175,3 +175,51 @@ valid piece placement and a `w`/`b` side to move. To review exclusions, run
 `work/review/overrides.json`. Re-running the importer with that override file
 includes only those accepted corrections. This makes a later book import
 repeatable without ever hand-editing the production JSON blob.
+
+## Grandmaster Preparation: Positional Play
+
+`book-sources/positional_play.pdf` (312 physical pages) is a scan with no text
+layer or bookmarks, so chapters were located by reading page headings with an
+OCR library; master PDF page = printed page + 1. Boards are found with OpenCV and
+read by ChessOCR through `tools/book-board-parser/parse_positional_play.py`
+(resumable, same 5.2 s pacing as Build Up Your Chess 1).
+
+| # | Chapter | Master PDF pages | Object |
+| --- | --- | --- | --- |
+| 1 | Introduction (three questions) | 12-23 | `books/positional-play/chapter-1.pdf` |
+| 2 | Weaknesses | 24-71 | `.../chapter-2.pdf` |
+| 3 | Pieces | 72-119 | `.../chapter-3.pdf` |
+| 4 | Prophylaxis | 120-153 | `.../chapter-4.pdf` |
+| 5 | Exercises | 154-179 | `.../chapter-5.pdf` |
+| 6 | Solutions | 180-309 | `.../chapter-6.pdf` |
+
+Only the exercise diagrams carry a turn triangle. In-text and solution
+diagrams do not, so every diagram without a detected marker is stored as White to
+move, and the board header's "White to move" label is a button that switches the
+side (it resets the position). Castling rights are assumed by the backend.
+
+Pipeline: `parse_positional_play.py` -> `split_positional_play.py` (chapter PDFs)
+-> `go run ./cmd/uploadbookchapter <pdf> positional-play <n>` per chapter ->
+`go run ./cmd/importpositionalplay [--apply]` (dry run by default).
+
+### Positional Play: author solutions and commentary (Solutions chapter only)
+
+`tools/book-board-parser/commentary_parser.py` reads the Solutions pages (master
+PDF 178-309) with rapidocr. The scan has no text layer and plain OCR drops the
+piece figurines, so the tool matches each figurine glyph to templates in
+`figurine_templates.npz`, paints the piece letter over it, then OCRs. Games are
+split at the "N. White - Black" headings; the start position is the first
+diagram under the heading (already read by ChessOCR). `python-chess` builds a
+move tree: a move that is not legal is dropped, never guessed. Main line vs
+variation is a heuristic (a line starting a text line is main unless that
+position already has a main move). Each node keeps `before`/`after` commentary
+and the `!?` marks. `--repair` tries one-piece edits to the OCR start position
+when many moves fail (27 games were adjusted this way).
+
+Result (150 games, 5347 moves): 37 games parse completely, 24 more fail at most
+10% of moves, and 42 fail over 30%. `importpositionalplay` attaches the tree
+(`Item.line`) only when at most `--max-failed-ratio` (default 0.10) of a game's
+moves failed: 61 of 150 exercises. The board page shows these through
+`BookLineView.tsx` (main line inline, variations indented, comments between the
+moves). Known weak spots: ChessOCR misreads annotated diagrams (circles and
+arrows read as pieces) and two-column reading order can split a game's score.

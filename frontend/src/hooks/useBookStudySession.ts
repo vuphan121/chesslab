@@ -9,7 +9,7 @@ import { LocalGame } from '@/lib/chess/localGame'
 import { acquireEngine, releaseEngine } from '@/lib/engine/browserEngine'
 import { MoveEvaluator } from '@/lib/engine/moveEval'
 import { lookupAnalysis, lookupEval } from '@/lib/lichess/lookup'
-import type { Book, BookItem } from '@/lib/books/types'
+import type { Book, BookItem, LineNote } from '@/lib/books/types'
 
 const ANALYSIS_CACHE_LIMIT = 200
 
@@ -82,6 +82,8 @@ export function useBookStudySession() {
   const [completionError, setCompletionError] = useState<string | null>(null)
 
   const gameIdRef = useRef<string | null>(null)
+  const flippedTurnRef = useRef<Set<string>>(new Set())
+  const [lineNotes, setLineNotes] = useState<Record<string, LineNote>>({})
   const moveReqId = useRef(0)
   const analysisReqId = useRef(0)
   const itemReqId = useRef(0)
@@ -283,6 +285,14 @@ export function useBookStudySession() {
     return { ply: (entry?.node.ply ?? 0) - gameState.moveTree.ply, canBack, canForward }
   }, [gameState])
 
+  const fenForItem = useCallback((item: BookItem): string => {
+    if (!flippedTurnRef.current.has(item.id)) return item.fen
+    const parts = item.fen.split(' ')
+    parts[1] = parts[1] === 'w' ? 'b' : 'w'
+    parts[3] = '-'
+    return parts.join(' ')
+  }, [])
+
   const enterItem = useCallback(async (gid: string, item: BookItem): Promise<boolean> => {
     const reqId = ++itemReqId.current
     moveReqId.current++
@@ -297,11 +307,17 @@ export function useBookStudySession() {
     setAnalysisError(null)
     setSavedLine(null)
     setSaveNote(null)
-    const gs = await apiSetPosition(gid, item.fen)
+    let gs = await apiSetPosition(gid, fenForItem(item))
     if (reqId !== itemReqId.current) return false
+    if (item.line && !flippedTurnRef.current.has(item.id)) {
+      setLineNotes(bookGame.loadLine(item.line))
+      gs = bookGame.snapshot()
+    } else {
+      setLineNotes({})
+    }
     setGameState(gs)
     return true
-  }, [apiSetPosition])
+  }, [apiSetPosition, bookGame, fenForItem])
 
   const replayLine = useCallback(async (line: SavedLine, expectedItemRequest = itemReqId.current): Promise<GameState | null> => {
     const gid = gameIdRef.current
@@ -554,7 +570,7 @@ export function useBookStudySession() {
     setSavingLine(true)
     setSaveNote(null)
     try {
-      const { line } = await saveBookLine(bookId, itemId, current.item.fen, moves)
+      const { line } = await saveBookLine(bookId, itemId, fenForItem(current.item), moves)
       if (expectedItemRequest !== itemReqId.current) return
       setSavedLine(line)
       setSaveNote('Saved')
@@ -565,7 +581,7 @@ export function useBookStudySession() {
     } finally {
       setSavingLine(false)
     }
-  }, [book, current, gameState, savingLine])
+  }, [book, current, fenForItem, gameState, savingLine])
 
   const attemptMove = useCallback(
     async (from: Square, to: Square, promotion?: string) => {
@@ -636,6 +652,15 @@ export function useBookStudySession() {
     [gameState],
   )
 
+  const toggleSideToMove = useCallback(async () => {
+    const gid = gameIdRef.current
+    if (!gid || !current) return
+    const id = current.item.id
+    if (flippedTurnRef.current.has(id)) flippedTurnRef.current.delete(id)
+    else flippedTurnRef.current.add(id)
+    await enterItem(gid, current.item)
+  }, [current, enterItem])
+
   const toggleFlipped = useCallback(() => setFlipped((f) => !f), [])
   const toggleAnalysis = useCallback(() => {
     setAnalysisEnabled((enabled) => !enabled)
@@ -704,6 +729,8 @@ export function useBookStudySession() {
     moveError,
     flipped,
     toggleFlipped,
+    toggleSideToMove,
+    lineNotes,
     analysisEnabled,
     analysis: analysisFen === currentFen ? analysis : null,
     barAnalysis: analysis,

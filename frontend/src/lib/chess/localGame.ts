@@ -1,6 +1,7 @@
 import { Chess } from 'chess.js'
 import type { GameState, MoveJSON, PieceJSON } from '@/lib/api/client'
 import type { MoveNode } from './types'
+import type { LineNode, LineNote } from '@/lib/books/types'
 
 export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
@@ -253,6 +254,35 @@ export class LocalGame {
       applied++
     }
     return { appliedPlies: applied, totalTokens: tokens.length, ...(error ? { error } : {}) }
+  }
+
+  loadLine(line: LineNode): Record<string, LineNote> {
+    const notes: Record<string, LineNote> = {}
+    const noteOf = (node: LineNode): LineNote | null =>
+      node.annotation || node.before || node.after
+        ? { annotation: node.annotation, before: node.before, after: node.after }
+        : null
+    const rootNote = noteOf(line)
+    if (rootNote) notes[this.root.id] = rootNote
+    const walk = (node: LineNode, parentId: string) => {
+      for (const child of node.children ?? []) {
+        this.gotoNode(parentId)
+        let move
+        try {
+          move = new Chess(this.current.fen).move(child.san ?? '', { strict: false })
+        } catch {
+          continue
+        }
+        if (!this.applyMove(move.from, move.to, move.promotion)) continue
+        const id = this.current.id
+        const note = noteOf(child)
+        if (note) notes[id] = note
+        walk(child, id)
+      }
+    }
+    walk(line, this.root.id)
+    this.gotoNode(this.root.id)
+    return notes
   }
 
   snapshot(): GameState {

@@ -6,6 +6,7 @@ import Board from '@/components/board/Board'
 import TopBar from '@/components/layout/TopBar'
 import BookPicker from '@/components/book/BookPicker'
 import BookMoveHistory from '@/components/book/BookMoveHistory'
+import BookLineView from '@/components/book/BookLineView'
 import EvalBar from '@/components/analysis/EvalBar'
 import MaterialCorners, { MATERIAL_CORNERS_WIDTH } from '@/components/board/MaterialCorners'
 import ChapterSections from '@/components/book/ChapterSections'
@@ -27,7 +28,7 @@ const MATERIAL_GAP = 8
 export default function BookStudyPage() {
   const {
     phase, book, loadError, loading, flatItems, current, boardState,
-    busy, moveError, flipped, toggleFlipped, analysisEnabled, analysis, barAnalysis, analysisIsCurrent, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
+    busy, moveError, flipped, toggleFlipped, toggleSideToMove, lineNotes, analysisEnabled, analysis, barAnalysis, analysisIsCurrent, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
     stepBack, stepForward, loadStart, goToIndex, goToMove, selectSquare,
     move, legalMovesFor, restart,
     moveEvals, savedLine, savingLine, saveNote, deleteMove, saveCurrentLine, restoreSavedLine,
@@ -102,7 +103,7 @@ export default function BookStudyPage() {
 
           <section style={{ width: isNarrow ? '100%' : centerWidth, display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'flex-start', order: isNarrow ? 2 : undefined }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: centerWidth, minHeight: 30 }}>
-              <strong style={{ fontSize: 14, color: '#37352f' }}>{boardState.turn === 'w' ? 'White' : 'Black'} to move</strong>
+              <button onClick={toggleSideToMove} disabled={busy} title="Switch whose move it is (resets the position)" style={{ fontSize: 14, fontWeight: 700, color: '#37352f', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>{boardState.turn === 'w' ? 'White' : 'Black'} to move ⇄</button>
               <div style={{ display: 'flex', gap: 7 }}>
                 <button onClick={toggleCurrentBookmark} title="Save this section" style={{ ...analysisButton, background: bookmarkedItemIds.has(current.item.id) ? '#fff5df' : '#fff', color: bookmarkedItemIds.has(current.item.id) ? '#a46b15' : '#77746c', borderColor: bookmarkedItemIds.has(current.item.id) ? '#edd9ae' : '#dbe8f4' }}>{bookmarkedItemIds.has(current.item.id) ? '★ Saved' : '☆ Save'}</button>
                 <button onClick={markCurrentComplete} disabled={completionBusy || completedItemIds.has(current.item.id)} style={{ ...completeButton, background: completedItemIds.has(current.item.id) ? '#e5f6eb' : '#fff', color: completedItemIds.has(current.item.id) ? '#25864d' : '#427e59', borderColor: completedItemIds.has(current.item.id) ? '#b9e5c8' : '#d6e8dd' }}>
@@ -126,6 +127,9 @@ export default function BookStudyPage() {
               <span className="mono" style={{ fontSize: 12, color: '#a3a099' }}>{currentPly > 0 || canStepBack ? `ply ${currentPly}` : ' '}</span>
             </div>
             <div style={{ width: boardSize }}>
+              {current.item.line ? (
+                <BookLineView moveTree={boardState.moveTree} notes={lineNotes} currentNodeId={boardState.currentNodeId} busy={busy} onGoto={goToMove} />
+              ) : (
               <BookMoveHistory
                 moveTree={boardState.moveTree}
                 currentNodeId={boardState.currentNodeId}
@@ -140,6 +144,7 @@ export default function BookStudyPage() {
                 onSaveLine={saveCurrentLine}
                 onRestore={restoreSavedLine}
               />
+              )}
             </div>
           </section>
 
