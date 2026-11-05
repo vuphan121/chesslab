@@ -117,12 +117,16 @@ func main() {
 	loadDotEnv(".env")
 
 	lines := map[int]commentaryGame{}
+	starts := map[int]commentaryGame{}
 	if raw, err := os.ReadFile(*commentary); err == nil {
 		var games []commentaryGame
 		if err := json.Unmarshal(raw, &games); err != nil {
 			log.Fatalf("decode commentary: %v", err)
 		}
 		for _, g := range games {
+			if g.DiagramNumber > 0 {
+				starts[g.DiagramNumber] = g
+			}
 			if g.StartFEN != "" && len(g.Line) > 0 && g.Stats.Moves > 0 && float64(g.Stats.Failed) <= *maxFailed*float64(g.Stats.Moves) {
 				lines[g.DiagramNumber] = g
 			}
@@ -151,6 +155,10 @@ func main() {
 				missing++
 				continue
 			}
+			start, isStart := starts[p.DiagramNumber]
+			if number == 6 && len(starts) > 0 && !isStart {
+				continue
+			}
 			side := p.SideToMove
 			if side != "w" && side != "b" {
 				side = "w"
@@ -164,6 +172,11 @@ func main() {
 				item.FEN, item.SideToMove, item.Line = g.StartFEN, strings.Fields(g.StartFEN)[1], g.Line
 				item.Prompt = fmt.Sprintf("Exercise %d: the author's solution and commentary.", g.Exercise)
 				attached++
+			} else if number == 6 && isStart {
+				item.Prompt = fmt.Sprintf("Exercise %d: the author's solution.", start.Exercise)
+				if f := strings.Fields(start.StartFEN); len(f) > 1 {
+					item.FEN, item.SideToMove = p.PiecePlacement+" "+f[1]+" - - 0 1", f[1]
+				}
 			}
 			g, ok := byPlacement[p.PiecePlacement]
 			if !ok && number == 5 && *puzzles {

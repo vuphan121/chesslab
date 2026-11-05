@@ -244,3 +244,10 @@ arrows read as pieces) and two-column reading order can split a game's score.
   column; the board grows to fit the window (up to 112 px squares, fitted to the window height like the Puzzles
   page) and is centered. The choice is kept in
   `localStorage` (`book-study-sidebars-hidden`). The chapter list scrolls inside its column.
+- **Solutions chapter = one item per exercise:** only the diagram each game starts
+  from is imported (150 items, "Exercise N", same numbering as Exercises); diagrams
+  inside the analysis are dropped. Games without a parsed line take their side to move
+  from the game's first move.
+- **Author lines show moves only:** the OCR'd prose commentary is not displayed
+  (it was unreliable); `BookLineView` renders moves, variations and `!?` marks. It
+  scrolls inside its own box, so stepping through moves never scrolls the page.

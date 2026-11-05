@@ -15,9 +15,16 @@ interface Props {
 
 export default function BookLineView({ moveTree, notes, currentNodeId, busy, onGoto }: Props) {
   const activeRef = useRef<HTMLButtonElement | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    activeRef.current?.scrollIntoView({ block: 'nearest' })
+    const container = containerRef.current
+    const active = activeRef.current
+    if (!container || !active) return
+    const box = container.getBoundingClientRect()
+    const rect = active.getBoundingClientRect()
+    if (rect.top < box.top) container.scrollTop += rect.top - box.top - 8
+    else if (rect.bottom > box.bottom) container.scrollTop += rect.bottom - box.bottom + 8
   }, [currentNodeId])
 
   const label = (node: MoveNode, parent: MoveNode, forceNumber: boolean) => {
@@ -29,10 +36,8 @@ export default function BookLineView({ moveTree, notes, currentNodeId, busy, onG
   }
 
   const moveParts = (node: MoveNode, parent: MoveNode, forceNumber: boolean): ReactNode[] => {
-    const note = notes[node.id]
     const active = node.id === currentNodeId
     const parts: ReactNode[] = []
-    if (note?.before) parts.push(<span key={`b${node.id}`} style={commentStyle}> {note.before} </span>)
     parts.push(
       <button
         key={`m${node.id}`}
@@ -48,7 +53,6 @@ export default function BookLineView({ moveTree, notes, currentNodeId, busy, onG
       </button>,
       ' ',
     )
-    if (note?.after) parts.push(<span key={`a${node.id}`} style={commentStyle}> {note.after} </span>)
     return parts
   }
 
@@ -65,18 +69,15 @@ export default function BookLineView({ moveTree, notes, currentNodeId, busy, onG
         </div>,
       )
     }
-    out.push(...renderChildren(main, variations.length > 0 || !!notes[main.id]?.after))
+    out.push(...renderChildren(main, variations.length > 0))
     return out
   }
 
-  const intro = notes[moveTree.id]?.before
   return (
-    <div style={{ background: '#fff', border: '1px solid #eae8e2', borderRadius: 8, padding: '10px 12px', maxHeight: 420, overflowY: 'auto', lineHeight: 1.7 }}>
-      {intro && <p style={{ ...commentStyle, margin: '0 0 8px' }}>{intro}</p>}
+    <div ref={containerRef} style={{ background: '#fff', border: '1px solid #eae8e2', borderRadius: 8, padding: '10px 12px', maxHeight: 420, overflowY: 'auto', lineHeight: 1.7 }}>
       {renderChildren(moveTree, false)}
     </div>
   )
 }
 
-const commentStyle: React.CSSProperties = { fontSize: 12, color: '#6a675f', fontStyle: 'italic' }
 const variationStyle: React.CSSProperties = { margin: '4px 0 4px 8px', padding: '2px 0 2px 8px', borderLeft: '2px solid #e0ddd3' }
