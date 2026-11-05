@@ -50,7 +50,7 @@ export default function BookStudyPage() {
   const wideBoard = !isNarrow && sidebarsHidden
   const sideReserve = OUTER_PADDING * 2 + MATERIAL_GAP + MATERIAL_CORNERS_WIDTH + EVAL_SLOT_WIDTH + 24
   const wideSquare = clamp(
-    Math.floor(Math.min((viewportWidth ?? 1400) - sideReserve, (viewportHeight ?? 900) - 230) / 8),
+    Math.floor(Math.min((viewportWidth ?? 1400) - sideReserve, (viewportHeight ?? 900) - 130) / 8),
     DESKTOP_SQUARE_SIZE,
     112,
   )
