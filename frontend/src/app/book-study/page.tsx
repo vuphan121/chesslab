@@ -27,7 +27,7 @@ const MATERIAL_GAP = 8
 
 export default function BookStudyPage() {
   const {
-    phase, book, loadError, loading, flatItems, current, boardState,
+    phase, book, flatIndex, loadError, loading, flatItems, current, boardState,
     busy, moveError, flipped, toggleFlipped, toggleSideToMove, lineNotes, solutionShown, revealSolution, puzzleFeedback, analysisEnabled, analysis, barAnalysis, analysisIsCurrent, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
     stepBack, stepForward, loadStart, goToIndex, goToMove, selectSquare,
     move, legalMovesFor, restart,
@@ -36,23 +36,23 @@ export default function BookStudyPage() {
 
   const viewportWidth = useViewportWidth()
   const viewportHeight = useViewportHeight()
-  const [pdfCollapsed, setPdfCollapsed] = useState(false)
+  const [sidebarsHidden, setSidebarsHidden] = useState(false)
   useEffect(() => {
-    setPdfCollapsed(window.localStorage.getItem('book-study-pdf-collapsed') === '1')
+    setSidebarsHidden(window.localStorage.getItem('book-study-sidebars-hidden') === '1')
   }, [])
-  const togglePdf = () => {
-    setPdfCollapsed((value) => {
-      window.localStorage.setItem('book-study-pdf-collapsed', value ? '0' : '1')
+  const toggleSidebars = () => {
+    setSidebarsHidden((value) => {
+      window.localStorage.setItem('book-study-sidebars-hidden', value ? '0' : '1')
       return !value
     })
   }
   const isNarrow = viewportWidth != null && viewportWidth < NARROW_BREAKPOINT
-  const wideBoard = !isNarrow && pdfCollapsed
-  const sideReserve = OUTER_PADDING * 2 + SECTIONS_WIDTH + COLUMN_GAP + MATERIAL_GAP + MATERIAL_CORNERS_WIDTH + EVAL_SLOT_WIDTH + 24
+  const wideBoard = !isNarrow && sidebarsHidden
+  const sideReserve = OUTER_PADDING * 2 + MATERIAL_GAP + MATERIAL_CORNERS_WIDTH + EVAL_SLOT_WIDTH + 24
   const wideSquare = clamp(
     Math.floor(Math.min((viewportWidth ?? 1400) - sideReserve, (viewportHeight ?? 900) - 230) / 8),
     DESKTOP_SQUARE_SIZE,
-    130,
+    112,
   )
   const squareSize = wideBoard ? wideSquare : isNarrow
     ? clamp(
@@ -64,7 +64,7 @@ export default function BookStudyPage() {
   const boardSize = squareSize * 8
 
   const centerWidth = boardSize + MATERIAL_GAP + MATERIAL_CORNERS_WIDTH + EVAL_SLOT_WIDTH
-  const shellWidth = SECTIONS_WIDTH + centerWidth + (pdfCollapsed ? 0 : PDF_WIDTH + COLUMN_GAP) + COLUMN_GAP + OUTER_PADDING * 2
+  const shellWidth = sidebarsHidden ? centerWidth + OUTER_PADDING * 2 : SECTIONS_WIDTH + centerWidth + PDF_WIDTH + COLUMN_GAP * 2 + OUTER_PADDING * 2
   const frameHeight = Math.max(720, boardSize + 370)
 
   const chapterItems = current ? flatItems.filter((f) => f.chapterId === current.chapterId) : []
@@ -114,10 +114,10 @@ export default function BookStudyPage() {
     <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10">
       <TopBar right={<span style={{ fontSize: 12, fontWeight: 600, color: '#6a675f', background: '#f0efe9', padding: '6px 13px', borderRadius: 8 }}>{book.title}</span>} />
       <div style={{ ...topWrap, background: '#e8e8e6', marginTop: 24 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: isNarrow ? '1fr' : pdfCollapsed ? `${SECTIONS_WIDTH}px ${centerWidth}px` : `${SECTIONS_WIDTH}px ${centerWidth}px ${PDF_WIDTH}px`, gap: COLUMN_GAP, alignItems: 'stretch' }}>
-          <aside style={{ height: isNarrow ? 260 : frameHeight, minHeight: 0, order: isNarrow ? 1 : undefined, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isNarrow ? '1fr' : sidebarsHidden ? `${centerWidth}px` : `${SECTIONS_WIDTH}px ${centerWidth}px ${PDF_WIDTH}px`, gap: COLUMN_GAP, alignItems: 'stretch' }}>
+          {!(sidebarsHidden && !isNarrow) && <aside style={{ height: isNarrow ? 260 : frameHeight, minHeight: 0, order: isNarrow ? 1 : undefined, display: 'flex', flexDirection: 'column' }}>
             <ChapterSections items={chapterItems} startIndex={chapterStartIndex} activeItemId={current.item.id} completedItemIds={completedItemIds} bookmarkedItemIds={bookmarkedItemIds} busy={busy} onSelect={goToIndex} />
-          </aside>
+          </aside>}
 
           <section style={{ width: isNarrow ? '100%' : centerWidth, display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'flex-start', order: isNarrow ? 2 : undefined }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: centerWidth, minHeight: 30 }}>
@@ -130,7 +130,13 @@ export default function BookStudyPage() {
                 {completionError && <span title={completionError} style={{ color: '#b1453b', fontSize: 11 }}>Not saved</span>}
                 {moveError && <span role="alert" title={moveError} style={{ color: '#b1453b', fontSize: 11 }}>Move failed — try again</span>}
                 <button onClick={toggleAnalysis} title="Toggle engine analysis" style={{ ...analysisButton, background: analysisEnabled ? '#e8f3fd' : '#fff', color: analysisEnabled ? '#2f6db0' : '#77746c' }}>{analysisLoading ? 'Analyzing…' : 'Analysis'}</button>
-                {!isNarrow && <button onClick={togglePdf} title={pdfCollapsed ? 'Show the book PDF' : 'Hide the book PDF and enlarge the board'} style={{ ...analysisButton, background: pdfCollapsed ? '#e8f3fd' : '#fff', color: pdfCollapsed ? '#2f6db0' : '#77746c' }}>{pdfCollapsed ? 'Show PDF' : 'Hide PDF'}</button>}
+                {sidebarsHidden && !isNarrow && (
+                  <>
+                    <button onClick={() => goToIndex(flatIndex - 1)} disabled={busy || flatIndex <= 0} title="Previous position" style={{ ...analysisButton, background: '#fff', color: '#77746c' }}>‹ Prev</button>
+                    <button onClick={() => goToIndex(flatIndex + 1)} disabled={busy || flatIndex >= flatItems.length - 1} title="Next position" style={{ ...analysisButton, background: '#fff', color: '#77746c' }}>Next ›</button>
+                  </>
+                )}
+                {!isNarrow && <button onClick={toggleSidebars} title={sidebarsHidden ? 'Show the chapter list and book PDF' : 'Hide the chapter list and book PDF and enlarge the board'} style={{ ...analysisButton, background: sidebarsHidden ? '#e8f3fd' : '#fff', color: sidebarsHidden ? '#2f6db0' : '#77746c' }}>{sidebarsHidden ? 'Show sidebars' : 'Hide sidebars'}</button>}
                 <button onClick={toggleFlipped} title="Flip board" style={flipButton}>⇅</button>
               </div>
             </div>
@@ -178,7 +184,7 @@ export default function BookStudyPage() {
             </div>
           </section>
 
-          {!(pdfCollapsed && !isNarrow) && <aside style={{ height: isNarrow ? 680 : frameHeight, minHeight: 0, order: isNarrow ? 3 : undefined }}>
+          {!(sidebarsHidden && !isNarrow) && <aside style={{ height: isNarrow ? 680 : frameHeight, minHeight: 0, order: isNarrow ? 3 : undefined }}>
             <BookPDFViewer key={`${book.id}:${current.chapterId}`} bookId={book.id} chapterId={current.chapterId} navigationKey={current.item.id} sourcePage={sourcePageForItem(book.id, current.item.id, current.item.sourcePage)} />
           </aside>}
         </div>

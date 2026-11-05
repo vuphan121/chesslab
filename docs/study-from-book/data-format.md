@@ -240,5 +240,7 @@ arrows read as pieces) and two-column reading order can split a game's score.
   move played is the author's. `--out file.json` writes the book without touching
   Neon; the local server loads it over the database copy when `BOOKS_OVERLAY_PATH`
   points at the folder (in-memory only). Nothing in Neon contains puzzle items.
-- **Board page:** "Hide PDF" (wide screens) collapses the PDF column and enlarges the
-  board; the choice is kept in `localStorage`. The chapter list scrolls inside its column.
+- **Board page:** "Hide sidebars" (wide screens) hides the chapter list and the PDF
+  column; the board grows to fit the window (up to 112 px squares, like the Puzzles
+  page) and Prev/Next buttons step between positions. The choice is kept in
+  `localStorage` (`book-study-sidebars-hidden`). The chapter list scrolls inside its column.
