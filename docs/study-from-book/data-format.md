@@ -242,5 +242,5 @@ arrows read as pieces) and two-column reading order can split a game's score.
   points at the folder (in-memory only). Nothing in Neon contains puzzle items.
 - **Board page:** "Hide sidebars" (wide screens) hides the chapter list and the PDF
   column; the board grows to fit the window (up to 112 px squares, fitted to the window height like the Puzzles
-  page) and Prev/Next buttons step between positions. The choice is kept in
+  page). The choice is kept in
   `localStorage` (`book-study-sidebars-hidden`). The chapter list scrolls inside its column.

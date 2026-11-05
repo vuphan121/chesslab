@@ -27,7 +27,7 @@ const MATERIAL_GAP = 8
 
 export default function BookStudyPage() {
   const {
-    phase, book, flatIndex, loadError, loading, flatItems, current, boardState,
+    phase, book, loadError, loading, flatItems, current, boardState,
     busy, moveError, flipped, toggleFlipped, toggleSideToMove, lineNotes, solutionShown, revealSolution, puzzleFeedback, analysisEnabled, analysis, barAnalysis, analysisIsCurrent, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
     stepBack, stepForward, loadStart, goToIndex, goToMove, selectSquare,
     move, legalMovesFor, restart,
@@ -130,12 +130,6 @@ export default function BookStudyPage() {
                 {completionError && <span title={completionError} style={{ color: '#b1453b', fontSize: 11 }}>Not saved</span>}
                 {moveError && <span role="alert" title={moveError} style={{ color: '#b1453b', fontSize: 11 }}>Move failed — try again</span>}
                 <button onClick={toggleAnalysis} title="Toggle engine analysis" style={{ ...analysisButton, background: analysisEnabled ? '#e8f3fd' : '#fff', color: analysisEnabled ? '#2f6db0' : '#77746c' }}>{analysisLoading ? 'Analyzing…' : 'Analysis'}</button>
-                {sidebarsHidden && !isNarrow && (
-                  <>
-                    <button onClick={() => goToIndex(flatIndex - 1)} disabled={busy || flatIndex <= 0} title="Previous position" style={{ ...analysisButton, background: '#fff', color: '#77746c' }}>‹ Prev</button>
-                    <button onClick={() => goToIndex(flatIndex + 1)} disabled={busy || flatIndex >= flatItems.length - 1} title="Next position" style={{ ...analysisButton, background: '#fff', color: '#77746c' }}>Next ›</button>
-                  </>
-                )}
                 {!isNarrow && <button onClick={toggleSidebars} title={sidebarsHidden ? 'Show the chapter list and book PDF' : 'Hide the chapter list and book PDF and enlarge the board'} style={{ ...analysisButton, background: sidebarsHidden ? '#e8f3fd' : '#fff', color: sidebarsHidden ? '#2f6db0' : '#77746c' }}>{sidebarsHidden ? 'Show sidebars' : 'Hide sidebars'}</button>}
                 <button onClick={toggleFlipped} title="Flip board" style={flipButton}>⇅</button>
               </div>
