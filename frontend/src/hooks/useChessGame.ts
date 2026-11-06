@@ -176,6 +176,20 @@ export function useChessGame() {
     commit(false)
   }, [game, commit])
 
+  const setPosition = useCallback(
+    (fen: string): string | null => {
+      try {
+        game.resetTo(fen)
+      } catch {
+        return 'That position could not be loaded.'
+      }
+      setExplorer(null)
+      commit(false)
+      return null
+    },
+    [game, commit],
+  )
+
   const loadPgn = useCallback(
     async (pgn: string) => {
       const result = game.loadPgn(pgn)
@@ -199,6 +213,7 @@ export function useChessGame() {
     navEnd,
     reset,
     loadPgn,
+    setPosition,
     explorer,
     explorerLoading,
     lastOpening,

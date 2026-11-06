@@ -4,6 +4,7 @@ import Board from '@/components/board/Board'
 import EvalBar from '@/components/analysis/EvalBar'
 import { EVAL_DISPLAY_LABEL, EvalIcon, useEvalDisplay } from '@/components/analysis/EvalToggle'
 import MaterialCorners, { MATERIAL_CORNERS_WIDTH } from '@/components/board/MaterialCorners'
+import BoardEditor from '@/components/analysis/BoardEditor'
 import MoveHistory from '@/components/history/MoveHistory'
 import TopBar from '@/components/layout/TopBar'
 import OpeningTree from '@/components/tree/OpeningTree'
@@ -105,6 +106,7 @@ export default function Home() {
     navNext,
     navEnd,
     loadPgn,
+    setPosition,
     explorer,
     explorerLoading,
     lastOpening,
@@ -113,6 +115,8 @@ export default function Home() {
   } = useChessGame()
 
   const [animateMove, setAnimateMove] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
   const stepPrev = useCallback(() => {
     setAnimateMove(true)
     navPrev()
@@ -347,6 +351,28 @@ export default function Home() {
         </svg>
       </button>
       <button
+        onClick={() => { setEditError(null); setEditing(true) }}
+        title="Edit board"
+        aria-label="Edit board"
+        style={{
+          width: ctlSize,
+          height: ctlSize,
+          border: '1px solid #eae8e2',
+          background: '#fff',
+          borderRadius: 6,
+          color: '#9a978f',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 12L2.6 9.2L9.6 2.2C10.1 1.7 10.9 1.7 11.4 2.2L11.8 2.6C12.3 3.1 12.3 3.9 11.8 4.4L4.8 11.4L2 12Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+          <path d="M8.6 3.2L10.8 5.4" stroke="currentColor" strokeWidth="1.3" />
+        </svg>
+      </button>
+      <button
         onClick={toggleFlipped}
         title="Flip board"
         style={{
@@ -391,6 +417,27 @@ export default function Home() {
       height={isNarrow ? 260 : boardSize}
     />
   )
+
+  if (editing) {
+    return (
+      <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10">
+        <TopBar />
+        <BoardEditor
+          initialFen={boardState.fen}
+          error={editError}
+          onCancel={() => setEditing(false)}
+          onApply={(fen) => {
+            const failure = setPosition(fen)
+            setEditError(failure)
+            if (!failure) {
+              setAnimateMove(false)
+              setEditing(false)
+            }
+          }}
+        />
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-[#e8e8e6] pb-6 sm:pb-10">
