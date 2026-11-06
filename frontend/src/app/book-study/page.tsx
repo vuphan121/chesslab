@@ -37,6 +37,11 @@ export default function BookStudyPage() {
   const viewportWidth = useViewportWidth()
   const viewportHeight = useViewportHeight()
   const [sidebarsHidden, setSidebarsHidden] = useState(false)
+  const [viewSolution, setViewSolution] = useState(false)
+  const currentItemId = current?.item.id
+  useEffect(() => {
+    setViewSolution(false)
+  }, [currentItemId])
   useEffect(() => {
     setSidebarsHidden(window.localStorage.getItem('book-study-sidebars-hidden') === '1')
   }, [])
@@ -130,6 +135,19 @@ export default function BookStudyPage() {
                 </button>
                 {completionError && <span title={completionError} style={{ color: '#b1453b', fontSize: 11 }}>Not saved</span>}
                 {moveError && <span role="alert" title={moveError} style={{ color: '#b1453b', fontSize: 11 }}>Move failed — try again</span>}
+                {current.item.solutionPage && (!sidebarsHidden || isNarrow || current.item.line) && (
+                  <button
+                    onClick={() => {
+                      if (viewSolution) { setViewSolution(false); return }
+                      setViewSolution(true)
+                      if (current.item.type === 'puzzle' && current.item.line && !solutionShown) revealSolution()
+                    }}
+                    title={viewSolution ? 'Back to the exercise page' : "Open the author's solution page"}
+                    style={{ ...analysisButton, background: viewSolution ? '#fff5df' : '#fff', color: '#a46b15', borderColor: '#edd9ae' }}
+                  >
+                    {viewSolution ? 'Back to exercise' : 'View solution'}
+                  </button>
+                )}
                 <button onClick={toggleAnalysis} title="Toggle engine analysis" style={{ ...analysisButton, background: analysisEnabled ? '#e8f3fd' : '#fff', color: analysisEnabled ? '#2f6db0' : '#77746c' }}>{analysisLoading ? 'Analyzing…' : 'Analysis'}</button>
                 {!isNarrow && <button onClick={toggleSidebars} title={sidebarsHidden ? 'Show the chapter list and book PDF' : 'Hide the chapter list and book PDF and enlarge the board'} style={{ ...analysisButton, background: sidebarsHidden ? '#e8f3fd' : '#fff', color: sidebarsHidden ? '#2f6db0' : '#77746c' }}>{sidebarsHidden ? 'Show sidebars' : 'Hide sidebars'}</button>}
                 <button onClick={toggleFlipped} title="Flip board" style={flipButton}>⇅</button>
@@ -154,7 +172,6 @@ export default function BookStudyPage() {
                     {puzzleFeedback.result === 'correct' ? `✓ ${puzzleFeedback.played} is the author's move` : `${puzzleFeedback.played} is not the author's move`}
                   </span>
                 )}
-                <button onClick={revealSolution} style={{ ...analysisButton, background: '#fff', color: '#2f6db0' }}>Show solution</button>
               </div>
             )}
             <div style={{ width: boardSize }}>
@@ -180,7 +197,7 @@ export default function BookStudyPage() {
           </section>
 
           {!(sidebarsHidden && !isNarrow) && <aside style={{ height: isNarrow ? 680 : frameHeight, minHeight: 0, order: isNarrow ? 3 : undefined }}>
-            <BookPDFViewer key={`${book.id}:${current.chapterId}`} bookId={book.id} chapterId={current.chapterId} navigationKey={current.item.id} sourcePage={sourcePageForItem(book.id, current.item.id, current.item.sourcePage)} />
+            <BookPDFViewer key={`${book.id}:${current.chapterId}`} bookId={book.id} chapterId={current.chapterId} navigationKey={`${current.item.id}:${viewSolution ? 's' : 'e'}`} sourcePage={viewSolution && current.item.solutionPage ? current.item.solutionPage : sourcePageForItem(book.id, current.item.id, current.item.sourcePage)} />
           </aside>}
         </div>
       </div>

@@ -190,8 +190,7 @@ read by ChessOCR through `tools/book-board-parser/parse_positional_play.py`
 | 2 | Weaknesses | 24-71 | `.../chapter-2.pdf` |
 | 3 | Pieces | 72-119 | `.../chapter-3.pdf` |
 | 4 | Prophylaxis | 120-151 | `.../chapter-4.pdf` |
-| 5 | Exercises | 152-177 | `.../chapter-5.pdf` |
-| 6 | Solutions | 180-309 | `.../chapter-6.pdf` |
+| 5 | Exercises and Solutions (one app chapter) | 152-309 | `.../chapter-5.pdf` |
 
 Only the exercise diagrams carry a turn triangle. In-text and solution
 diagrams do not, so every diagram without a detected marker is stored as White to
@@ -251,3 +250,14 @@ arrows read as pieces) and two-column reading order can split a game's score.
 - **Author lines show moves only:** the OCR'd prose commentary is not displayed
   (it was unreliable); `BookLineView` renders moves, variations and `!?` marks. It
   scrolls inside its own box, so stepping through moves never scrolls the page.
+- **Exercises and Solutions are one chapter (5):** 150 exercise items; the PDF
+  (`chapter-5.pdf`, master pages 152-309) holds both. Each item has `solutionPage` (the
+  page where the author's solution starts); the "View solution" button jumps the PDF
+  there ("Back to exercise" returns) and, for puzzle items, also shows the author's
+  line on the board. The separate Solutions chapter is gone. Item N is exercise N;
+  `solutionPage = master page - 151`. The old `chapter-6.pdf` in B2 is unused.
+- **All exercises are puzzles:** with `--exercise-puzzles` every exercise item is a
+  `puzzle` (the book does not distinguish them). Only the 51 with a clean parsed line
+  (at most 10% of moves unparsed, start diagram within 3 squares of the solution
+  diagram) also carry `line`, which gives the "author's move" feedback and the line on
+  the board; the other 99 just jump the PDF to the solution page.

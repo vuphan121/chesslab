@@ -16,8 +16,10 @@ import (
 	"github.com/chesslab/backend/internal/db"
 )
 
+const solutionPageBase = 151
+
 var chapters = map[int]string{
-	1: "Introduction", 2: "Weaknesses", 3: "Pieces", 4: "Prophylaxis", 5: "Exercises", 6: "Solutions",
+	1: "Introduction", 2: "Weaknesses", 3: "Pieces", 4: "Prophylaxis", 5: "Exercises",
 }
 
 type parsedPosition struct {
@@ -31,6 +33,7 @@ type parsedPosition struct {
 
 type commentaryGame struct {
 	Exercise      int    `json:"exercise"`
+	Page          int    `json:"page"`
 	DiagramNumber int    `json:"diagramNumber"`
 	StartFEN      string `json:"startFen"`
 	Stats         struct {
@@ -78,32 +81,17 @@ func expandPlacement(placement string) string {
 	return b.String()
 }
 
-func nearestGame(placement string, games map[string]commentaryGame, used map[string]bool) (commentaryGame, bool) {
-	want := expandPlacement(placement)
-	best, bestDiff, ties := "", 99, 0
-	for key := range games {
-		if used[key] {
-			continue
-		}
-		have, diff := expandPlacement(key), 0
-		if len(have) != len(want) {
-			continue
-		}
-		for i := range want {
-			if want[i] != have[i] {
-				diff++
-			}
-		}
-		if diff < bestDiff {
-			best, bestDiff, ties = key, diff, 1
-		} else if diff == bestDiff {
-			ties++
+func placementDiff(a, b string) int {
+	x, y, diff := expandPlacement(a), expandPlacement(b), 0
+	if len(x) != len(y) {
+		return 64
+	}
+	for i := range x {
+		if x[i] != y[i] {
+			diff++
 		}
 	}
-	if best == "" || bestDiff > 3 || ties != 1 {
-		return commentaryGame{}, false
-	}
-	return games[best], true
+	return diff
 }
 
 func main() {
@@ -116,28 +104,17 @@ func main() {
 	flag.Parse()
 	loadDotEnv(".env")
 
-	lines := map[int]commentaryGame{}
-	starts := map[int]commentaryGame{}
+	games := map[int]commentaryGame{}
 	if raw, err := os.ReadFile(*commentary); err == nil {
-		var games []commentaryGame
-		if err := json.Unmarshal(raw, &games); err != nil {
+		var all []commentaryGame
+		if err := json.Unmarshal(raw, &all); err != nil {
 			log.Fatalf("decode commentary: %v", err)
 		}
-		for _, g := range games {
-			if g.DiagramNumber > 0 {
-				starts[g.DiagramNumber] = g
-			}
-			if g.StartFEN != "" && len(g.Line) > 0 && g.Stats.Moves > 0 && float64(g.Stats.Failed) <= *maxFailed*float64(g.Stats.Moves) {
-				lines[g.DiagramNumber] = g
-			}
+		for _, g := range all {
+			games[g.Exercise] = g
 		}
 	}
-	byPlacement := map[string]commentaryGame{}
-	for _, g := range lines {
-		byPlacement[strings.Fields(g.StartFEN)[0]] = g
-	}
-	usedGames := map[string]bool{}
-	attached, puzzleCount := 0, 0
+	solutionPages, lineCount, puzzleCount := 0, 0, 0
 	out := book.Book{ID: "positional-play", Title: "Grandmaster Preparation: Positional Play", Author: "Jacob Aagaard"}
 	missing := 0
 	for number := 1; number <= len(chapters); number++ {
@@ -155,10 +132,6 @@ func main() {
 				missing++
 				continue
 			}
-			start, isStart := starts[p.DiagramNumber]
-			if number == 6 && len(starts) > 0 && !isStart {
-				continue
-			}
 			side := p.SideToMove
 			if side != "w" && side != "b" {
 				side = "w"
@@ -168,25 +141,22 @@ func main() {
 				FEN: p.PiecePlacement + " " + side + " - - 0 1", SideToMove: side,
 				Prompt: "Explore the position on the board.", SourcePage: p.SourcePage, BookPage: p.BookPage, MasterPDFPage: p.MasterPDFPage,
 			}
-			if g, ok := lines[p.DiagramNumber]; ok && number == 6 {
-				item.FEN, item.SideToMove, item.Line = g.StartFEN, strings.Fields(g.StartFEN)[1], g.Line
-				item.Prompt = fmt.Sprintf("Exercise %d: the author's solution and commentary.", g.Exercise)
-				attached++
-			} else if number == 6 && isStart {
-				item.Prompt = fmt.Sprintf("Exercise %d: the author's solution.", start.Exercise)
-				if f := strings.Fields(start.StartFEN); len(f) > 1 {
-					item.FEN, item.SideToMove = p.PiecePlacement+" "+f[1]+" - - 0 1", f[1]
+			if g, ok := games[p.DiagramNumber]; ok && number == 5 {
+				item.Prompt = fmt.Sprintf("Exercise %d: find the best move.", p.DiagramNumber)
+				item.SolutionPage = g.Page - solutionPageBase
+				solutionPages++
+				good := g.StartFEN != "" && len(g.Line) > 0 && g.Stats.Moves > 0 && float64(g.Stats.Failed) <= *maxFailed*float64(g.Stats.Moves)
+				fields := strings.Fields(g.StartFEN)
+				if *puzzles {
+					item.Type = "puzzle"
+					puzzleCount++
 				}
-			}
-			g, ok := byPlacement[p.PiecePlacement]
-			if !ok && number == 5 && *puzzles {
-				g, ok = nearestGame(p.PiecePlacement, byPlacement, usedGames)
-			}
-			if ok && number == 5 && *puzzles && (p.SideToMove == "" || p.SideToMove == strings.Fields(g.StartFEN)[1]) {
-				usedGames[strings.Fields(g.StartFEN)[0]] = true
-				item.Type, item.FEN, item.SideToMove, item.Line = "puzzle", g.StartFEN, strings.Fields(g.StartFEN)[1], g.Line
-				item.Prompt = fmt.Sprintf("Exercise %d: find the best move.", g.Exercise)
-				puzzleCount++
+				if good && len(fields) > 1 && placementDiff(p.PiecePlacement, fields[0]) <= 3 && (p.SideToMove == "" || p.SideToMove == fields[1]) {
+					lineCount++
+					if *puzzles {
+						item.FEN, item.SideToMove, item.Line = g.StartFEN, fields[1], g.Line
+					}
+				}
 			}
 			chapter.Items = append(chapter.Items, item)
 		}
@@ -200,8 +170,7 @@ func main() {
 	if _, err := book.ParseAndValidate(payload); err != nil {
 		log.Fatalf("book failed validation: %v", err)
 	}
-	log.Printf("%d exercises turned into puzzles", puzzleCount)
-	log.Printf("%d exercise solutions with author lines attached", attached)
+	log.Printf("%d exercises link to a solution page; %d have a usable author line; %d turned into puzzles", solutionPages, lineCount, puzzleCount)
 	log.Printf("%d diagrams had no recognized placement and were skipped", missing)
 	if *outPath != "" {
 		if err := os.WriteFile(*outPath, payload, 0o644); err != nil {

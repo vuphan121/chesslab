@@ -28,6 +28,7 @@ export interface BookItem {
   sourcePage?: number
   bookPage?: number
   masterPDFPage?: number
+  solutionPage?: number
 }
 
 export interface BookChapter {

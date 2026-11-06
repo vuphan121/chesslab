@@ -19,6 +19,7 @@ type Item struct {
 	SourcePage    int `json:"sourcePage,omitempty"`
 	BookPage      int `json:"bookPage,omitempty"`
 	MasterPDFPage int `json:"masterPDFPage,omitempty"`
+	SolutionPage  int `json:"solutionPage,omitempty"`
 }
 
 type Chapter struct {
