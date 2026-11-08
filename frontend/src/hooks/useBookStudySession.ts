@@ -6,6 +6,7 @@ import type { Analysis, GameState, FenEval, SavedLine, SavedLineMove } from '@/l
 import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
 import { activeLine, flatten } from '@/lib/chess/moveTree'
 import { LocalGame } from '@/lib/chess/localGame'
+import { playMoveSound } from '@/lib/sound'
 import { acquireEngine, releaseEngine } from '@/lib/engine/browserEngine'
 import { MoveEvaluator } from '@/lib/engine/moveEval'
 import { lookupAnalysis, lookupEval } from '@/lib/lichess/lookup'
@@ -469,6 +470,7 @@ export function useBookStudySession() {
     try {
       const gs = await gotoNode(gid, parentId)
       if (expectedItemRequest !== itemReqId.current) return
+      if (bookGame.currentSan) playMoveSound(bookGame.currentSan.includes('x'))
       setGameState(gs)
       setSelected(null)
       setMoveError(null)
@@ -479,7 +481,7 @@ export function useBookStudySession() {
     } finally {
       if (expectedItemRequest === itemReqId.current) setBusy(false)
     }
-  }, [gameState, busy, gotoNode])
+  }, [gameState, busy, gotoNode, bookGame])
 
   const stepForward = useCallback(async () => {
     const gid = gameIdRef.current
@@ -493,6 +495,7 @@ export function useBookStudySession() {
     try {
       const gs = await gotoNode(gid, child.id)
       if (expectedItemRequest !== itemReqId.current) return
+      if (bookGame.currentSan) playMoveSound(bookGame.currentSan.includes('x'))
       setGameState(gs)
       setSelected(null)
       setMoveError(null)
@@ -503,7 +506,7 @@ export function useBookStudySession() {
     } finally {
       if (expectedItemRequest === itemReqId.current) setBusy(false)
     }
-  }, [gameState, busy, gotoNode])
+  }, [gameState, busy, gotoNode, bookGame])
 
   const goToMove = useCallback(async (nodeId: string) => {
     const gid = gameIdRef.current
@@ -514,6 +517,7 @@ export function useBookStudySession() {
     try {
       const gs = await gotoNode(gid, nodeId)
       if (expectedItemRequest !== itemReqId.current) return
+      if (bookGame.currentSan) playMoveSound(bookGame.currentSan.includes('x'))
       setGameState(gs)
       setSelected(null)
       setMoveError(null)
@@ -524,7 +528,7 @@ export function useBookStudySession() {
     } finally {
       if (expectedItemRequest === itemReqId.current) setBusy(false)
     }
-  }, [gameState, busy, gotoNode])
+  }, [gameState, busy, gotoNode, bookGame])
 
   const deleteMove = useCallback(async (nodeId: string) => {
     const gid = gameIdRef.current
@@ -604,6 +608,7 @@ export function useBookStudySession() {
           piece?.type === 'p' && ((piece.color === 'w' && to[1] === '8') || (piece.color === 'b' && to[1] === '1'))
         const gs = await makeMove(gid, from, to, promotion ?? (isPromo ? 'q' : undefined))
         if (reqId !== moveReqId.current) return
+        playMoveSound(bookGame.currentSan.includes('x'))
         setGameState(gs)
         setSelected(null)
 
@@ -619,7 +624,7 @@ export function useBookStudySession() {
         if (reqId === moveReqId.current) setBusy(false)
       }
     },
-    [phase, busy, boardState, book, current, makeMove],
+    [phase, busy, boardState, book, current, makeMove, bookGame],
   )
 
   const selectSquare = useCallback(
