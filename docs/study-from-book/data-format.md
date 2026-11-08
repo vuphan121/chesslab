@@ -262,18 +262,8 @@ arrows read as pieces) and two-column reading order can split a game's score.
   diagram) also carry `line`, which gives the "author's move" feedback and the line on
   the board; the other 99 just jump the PDF to the solution page.
 
-### Pending: publish the merged Positional Play book to Neon
+### Published: merged Positional Play book in Neon
 
-The merged book (Exercises and Solutions as chapter 5, all exercises as puzzles, 51 with
-author lines) is not yet in Neon. On 2026-11-06 the save failed from this machine
-("connect: ping: context deadline exceeded"): the Neon host name resolved to an
-address that refused connections, probably a network firewall or DNS filter. Nothing
-was written. To finish, from a network that reaches Neon, run in `backend/`:
-
-    go run ./cmd/importpositionalplay --exercise-puzzles --apply
-
-It reads the parser output under `tmp/positional-play/` (gitignored; regenerate with
-`parse_positional_play.py` and `commentary_parser.py --repair` if it is missing). The
-merged `chapter-5.pdf` is already in B2. Until then, prod still has the older
-separate Exercises and Solutions chapters, and the merged version only exists in the
-local overlay (`tmp/books-overlay/`, `BOOKS_OVERLAY_PATH`).
+Published 2026-11-08 with `go run ./cmd/importpositionalplay --exercise-puzzles --apply`
+(from `backend/`). Neon now has the merged chapter 5 (150 exercises, all puzzles, 51 with
+author lines). The merged `chapter-5.pdf` is in B2; the old `chapter-6.pdf` is unused.
