@@ -1,4 +1,4 @@
-const VERSION = 'v4'
+const VERSION = 'v5'
 const STATIC_CACHE = `chesslab-static-${VERSION}`
 const PAGE_CACHE = `chesslab-pages-${VERSION}`
 const REVALIDATE_MIN_GAP_MS = 60000
