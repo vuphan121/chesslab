@@ -1,15 +1,24 @@
-import { Chess } from 'chess.js'
+import { Chess, type Square } from 'chess.js'
 import type { Analysis, AnalysisLine } from '@/lib/api/client'
 import type { UciInfo } from './uci'
 
 export const BROWSER_ENGINE_NAME = 'Stockfish 19 Lite (browser)'
+
+function castlingToKingMove(game: Chess, uci: string): string {
+  const king = game.get(uci.slice(0, 2) as Square)
+  const target = game.get(uci.slice(2, 4) as Square)
+  if (uci.length !== 4 || king?.type !== 'k' || target?.type !== 'r' || target.color !== king.color) return uci
+  const rank = uci[1]
+  return `${uci.slice(0, 2)}${uci[2] > uci[0] ? 'g' : 'c'}${rank}`
+}
 
 export function sanAndFens(fen: string, uciMoves: string[]): { sans: string[]; fens: string[]; played: string[] } {
   const game = new Chess(fen)
   const sans: string[] = []
   const fens: string[] = []
   const played: string[] = []
-  for (const uci of uciMoves) {
+  for (const raw of uciMoves) {
+    const uci = castlingToKingMove(game, raw)
     try {
       const move = game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci[4] : undefined })
       sans.push(move.san)

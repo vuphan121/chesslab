@@ -12136,10 +12136,14 @@
   "fen": "1r2kb1r/p2n1ppp/2Q1pn2/8/3R4/2B5/qPP1NPPP/2KR4 b kq - 0 1",
   "toMove": "black",
   "solutionSan": [
-   "Ba3"
+   "Ba3",
+   "bxa3",
+   "O-O"
   ],
   "solutionUci": [
-   "f8a3"
+   "f8a3",
+   "b2a3",
+   "e8g8"
   ],
   "source": "https://lichess.org/study/KPtKmETT/4W5CNBQI"
  },

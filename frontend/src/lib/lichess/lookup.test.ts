@@ -5,6 +5,14 @@ import { explorerPositionKey, toExplorer } from './explorer'
 const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 describe('cloudAnalysis', () => {
+  it('reads Lichess castling (king takes rook) as a normal castling move', () => {
+    const fen = '1r2k2r/p2n1ppp/2Q1pn2/8/3R4/P1B5/q1P1NPPP/2KR4 b k - 0 2'
+    const a = cloudAnalysis(fen, { depth: 32, pvs: [{ moves: 'e8h8 c1d2', cp: -163 }, { moves: 'a2a3', cp: -9 }] })
+    expect(a.bestMove).toBe('e8g8')
+    expect(a.lines?.[0].moves).toEqual(['O-O', 'Kd2'])
+    expect(a.lines?.[0].uciMoves).toEqual(['e8g8', 'c1d2'])
+  })
+
   it('turns cloud lines into an analysis with SAN and FENs', () => {
     const a = cloudAnalysis(START, { depth: 40, pvs: [{ moves: 'e2e4 e7e5 g1f3', cp: 25 }, { moves: 'd2d4', cp: 20 }] })
     expect(a).toMatchObject({ bestMove: 'e2e4', score: 25, mate: 0, depth: 40, engineName: 'Lichess Cloud' })
