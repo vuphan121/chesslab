@@ -367,6 +367,7 @@ export function useBookStudySession() {
         setSavedLine(line)
         if (!line) return
         if (expectedBoardRevision !== boardRevisionRef.current) return
+        if (line.startFen !== bookGame.snapshot().moveTree.fen) return
         setBusy(true)
         try {
           const gs = await replayLine(line, expectedItemRequest)
@@ -385,7 +386,7 @@ export function useBookStudySession() {
     return () => {
       cancelled = true
     }
-  }, [book?.id, current?.item.id, gameReadyVersion, replayLine])
+  }, [book?.id, current?.item.id, gameReadyVersion, replayLine, bookGame])
 
   const restoreSavedLine = useCallback(async () => {
     if (!savedLine || busy) return
