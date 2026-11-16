@@ -17,6 +17,7 @@ type SavedLineMove struct {
 	Score   int    `json:"score"`
 	Mate    int    `json:"mate"`
 	HasEval bool   `json:"hasEval"`
+	Parent  *int   `json:"parent,omitempty"`
 }
 
 type SavedLine struct {

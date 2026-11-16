@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getBook, getBookProgress, markItemDone, recordBookStudyActivity, getBookSavedLine, saveBookLine } from '@/lib/api/client'
 import type { Analysis, GameState, FenEval, SavedLine, SavedLineMove } from '@/lib/api/client'
-import type { BoardState, Color, PieceType, Square } from '@/lib/chess/types'
+import type { BoardState, Color, MoveNode, PieceType, Square } from '@/lib/chess/types'
 import { activeLine, flatten } from '@/lib/chess/moveTree'
 import { LocalGame } from '@/lib/chess/localGame'
 import { playMoveSound } from '@/lib/sound'
@@ -327,9 +327,18 @@ export function useBookStudySession() {
     if (!gid || expectedItemRequest !== itemReqId.current) return null
     let gs = await apiSetPosition(gid, line.startFen)
     if (expectedItemRequest !== itemReqId.current) return null
-    for (const m of line.moves) {
-      if (m.uci.length < 4) continue
+    const nodeIds: (string | null)[] = []
+    for (let i = 0; i < line.moves.length; i++) {
+      const m = line.moves[i]
+      const parentIndex = m.parent === undefined || m.parent === null ? i - 1 : m.parent
+      const parentId = parentIndex < 0 ? gs.moveTree.id : nodeIds[parentIndex]
+      if (!parentId || m.uci.length < 4) {
+        nodeIds.push(null)
+        continue
+      }
+      await gotoNode(gid, parentId)
       gs = await makeMove(gid, m.uci.slice(0, 2), m.uci.slice(2, 4), m.uci.slice(4) || undefined)
+      nodeIds.push(gs.currentNodeId)
       if (expectedItemRequest !== itemReqId.current) return null
     }
     const reset = await gotoNode(gid, gs.moveTree.id)
@@ -552,27 +561,42 @@ export function useBookStudySession() {
     }
   }, [gameState, busy, deleteGameNode])
 
+  const promoteMove = useCallback(async (nodeId: string) => {
+    const gid = gameIdRef.current
+    if (!gid || !gameState || busy) return
+    if (!bookGame.promoteNode(nodeId)) return
+    boardRevisionRef.current++
+    setGameState(bookGame.snapshot())
+    setSaveNote(null)
+  }, [gameState, busy, bookGame])
+
   const saveCurrentLine = useCallback(async () => {
     const bookId = book?.id
     const itemId = current?.item.id
     if (!bookId || !itemId || !gameState || savingLine) return
     const expectedItemRequest = itemReqId.current
-    const nodes = activeLine(gameState.moveTree, gameState.currentNodeId)
-    if (nodes.length === 0) {
+    const moves: SavedLineMove[] = []
+    const walk = (node: MoveNode, parentIndex: number) => {
+      for (const child of node.children ?? []) {
+        const e = moveEvalsRef.current[child.fen]
+        const index = moves.length
+        moves.push({
+          san: child.san,
+          uci: (child.from ?? '') + (child.to ?? '') + (child.promotion ?? ''),
+          fen: child.fen,
+          score: e?.score ?? 0,
+          mate: e?.mate ?? 0,
+          hasEval: e != null,
+          parent: parentIndex,
+        })
+        walk(child, index)
+      }
+    }
+    walk(gameState.moveTree, -1)
+    if (moves.length === 0) {
       setSaveNote('Play some moves first.')
       return
     }
-    const moves: SavedLineMove[] = nodes.map((n) => {
-      const e = moveEvalsRef.current[n.fen]
-      return {
-        san: n.san,
-        uci: (n.from ?? '') + (n.to ?? '') + (n.promotion ?? ''),
-        fen: n.fen,
-        score: e?.score ?? 0,
-        mate: e?.mate ?? 0,
-        hasEval: e != null,
-      }
-    })
     setSavingLine(true)
     setSaveNote(null)
     try {
@@ -770,6 +794,7 @@ export function useBookStudySession() {
     savingLine,
     saveNote,
     deleteMove,
+    promoteMove,
     saveCurrentLine,
     restoreSavedLine,
     completedItemIds,

@@ -197,6 +197,19 @@ export class LocalGame {
     return true
   }
 
+  promoteNode(id: string): boolean {
+    let changed = false
+    for (let node = this.nodes.get(id) ?? null; node && node.parent; node = node.parent) {
+      const parent: TreeNode = node.parent
+      if (parent.children[0] === node) continue
+      parent.children = [node, ...parent.children.filter((c) => c !== node)]
+      changed = true
+    }
+    if (!changed) return false
+    this.rebuildViewPath(this.nodes.get(id) ?? null)
+    return true
+  }
+
   applyMove(from: string, to: string, promotion?: string): boolean {
     const chess = new Chess(this.current.fen)
     if (chess.isGameOver() || (this.repetitionEndsGame && this.isThreefoldRepetition())) return false

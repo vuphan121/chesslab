@@ -271,6 +271,7 @@ export interface SavedLineMove {
   score: number
   mate: number
   hasEval: boolean
+  parent?: number | null
 }
 
 export interface SavedLine {

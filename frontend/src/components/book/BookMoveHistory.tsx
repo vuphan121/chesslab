@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { MoveNode } from '@/lib/chess/types'
 import type { FenEval } from '@/lib/api/client'
 import { toFigurine } from '@/lib/chess/figurine'
-import { activeLine } from '@/lib/chess/moveTree'
+import { flatten } from '@/lib/chess/moveTree'
 
 interface Props {
   moveTree: MoveNode
@@ -17,6 +17,7 @@ interface Props {
   hasSaved: boolean
   onGoto: (nodeId: string) => void
   onDeleteMove: (nodeId: string) => void
+  onPromoteMove: (nodeId: string) => void
   onSaveLine: () => void
   onRestore: () => void
 }
@@ -30,9 +31,9 @@ function fmtEval(e: FenEval | undefined): string {
 
 export default function BookMoveHistory({
   moveTree, currentNodeId, busy, evals, canSave, saving, saveNote, hasSaved,
-  onGoto, onDeleteMove, onSaveLine, onRestore,
+  onGoto, onDeleteMove, onPromoteMove, onSaveLine, onRestore,
 }: Props) {
-  const [menu, setMenu] = useState<{ nodeId: string; san: string; x: number; y: number } | null>(null)
+  const [menu, setMenu] = useState<{ nodeId: string; san: string; x: number; y: number; canPromote: boolean } | null>(null)
 
   useEffect(() => {
     if (!menu) return
@@ -47,50 +48,64 @@ export default function BookMoveHistory({
     }
   }, [menu])
 
-  const mainline: MoveNode[] = activeLine(moveTree, currentNodeId)
+  const flat = useMemo(() => flatten(moveTree), [moveTree])
 
-  const moveCell = (move: MoveNode | undefined) => {
-    if (!move) return <span style={{ flex: 1 }} />
-    const active = move.id === currentNodeId
+  const offMainline = (nodeId: string): boolean => {
+    for (let entry = flat.get(nodeId); entry && entry.parentId !== null; entry = flat.get(entry.parentId)) {
+      const parent = flat.get(entry.parentId)?.node
+      if (parent && parent.children?.[0]?.id !== entry.node.id) return true
+    }
+    return false
+  }
+
+  const moveButton = (node: MoveNode, parent: MoveNode, forceNumber: boolean, sideline: boolean): ReactNode => {
+    const active = node.id === currentNodeId
+    const fields = parent.fen.split(' ')
+    const white = fields[1] === 'w'
+    const number = fields[5] ?? '1'
+    const prefix = white ? `${number}.` : forceNumber ? `${number}…` : ''
+    const evalText = fmtEval(evals[node.fen])
     return (
       <button
-        onClick={() => onGoto(move.id)}
+        key={`m${node.id}`}
+        onClick={() => onGoto(node.id)}
         onContextMenu={(e) => {
           e.preventDefault()
-          setMenu({ nodeId: move.id, san: move.san, x: e.clientX, y: e.clientY })
+          setMenu({ nodeId: node.id, san: node.san, x: e.clientX, y: e.clientY, canPromote: offMainline(node.id) })
         }}
         disabled={busy}
-        title="Right-click to delete from here"
+        title="Right-click for options"
         style={{
-          flex: 1, minWidth: 0, border: 'none', borderRadius: 5, padding: '4px 6px',
-          display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 6,
-          background: active ? '#dff0fb' : 'transparent', color: active ? '#1f6294' : '#37352f',
-          cursor: busy ? 'default' : 'pointer', fontSize: 12,
+          border: 'none', borderRadius: 5, padding: '2px 5px', margin: '0 1px',
+          background: active ? '#dff0fb' : 'transparent', color: active ? '#1f6294' : sideline ? '#6a675f' : '#37352f',
+          cursor: busy ? 'default' : 'pointer', fontSize: sideline ? 12 : 13,
         }}
       >
-        <span className="mono" style={{ fontWeight: active ? 700 : 500 }}>{toFigurine(move.san)}</span>
-        <span className="mono" style={{ fontSize: 11, color: active ? '#4b87ab' : '#a3a099' }}>{fmtEval(evals[move.fen])}</span>
+        {prefix && <span className="mono" style={{ color: '#b4b1a8', fontSize: 11, marginRight: 3 }}>{prefix}</span>}
+        <span className="mono" style={{ fontWeight: active || !sideline ? 700 : 500 }}>{toFigurine(node.san)}</span>
+        {evalText && <span className="mono" style={{ fontSize: 10, marginLeft: 4, color: active ? '#4b87ab' : '#a3a099' }}>{evalText}</span>}
       </button>
     )
   }
 
-  const pairs: { num: number; white?: MoveNode; black?: MoveNode }[] = []
-  for (const move of mainline) {
-    const num = Math.ceil(move.ply / 2)
-    const last = pairs[pairs.length - 1]
-    if (move.ply % 2 === 1) pairs.push({ num, white: move })
-    else if (last && last.num === num && !last.black) last.black = move
-    else pairs.push({ num, black: move })
+  const renderChildren = (parent: MoveNode, forceNumber: boolean, sideline: boolean): ReactNode[] => {
+    const kids = parent.children ?? []
+    if (kids.length === 0) return []
+    const [main, ...variations] = kids
+    const out: ReactNode[] = [moveButton(main, parent, forceNumber, sideline)]
+    for (const variation of variations) {
+      out.push(
+        <div key={`v${variation.id}`} style={variationStyle}>
+          {moveButton(variation, parent, true, true)}
+          {renderChildren(variation, false, true)}
+        </div>,
+      )
+    }
+    out.push(...renderChildren(main, variations.length > 0, sideline))
+    return out
   }
-  const rows = pairs.map(({ num, white, black }) => (
-    <div key={(white ?? black)!.id} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-      <span className="mono" style={{ width: 26, color: '#b4b1a8', fontSize: 11, textAlign: 'right' }}>{white ? `${num}.` : `${num}…`}</span>
-      {moveCell(white)}
-      {moveCell(black)}
-    </div>
-  ))
 
-  const hasMoves = mainline.length > 0
+  const hasMoves = (moveTree.children?.length ?? 0) > 0
   const saveEnabled = canSave && !saving && !busy
 
   return (
@@ -103,7 +118,7 @@ export default function BookMoveHistory({
             <button
               onClick={onRestore}
               disabled={busy}
-              title="Reload the saved line onto the board"
+              title="Reload the saved lines onto the board"
               style={{ border: 'none', background: 'transparent', color: busy ? '#c8c5bd' : '#8a8780', fontSize: 11, fontWeight: 600, cursor: busy ? 'default' : 'pointer' }}
             >
               ↺ Restore
@@ -112,6 +127,7 @@ export default function BookMoveHistory({
           <button
             onClick={onSaveLine}
             disabled={!saveEnabled}
+            title="Saves every line and sideline"
             style={{
               border: `1px solid ${saveEnabled ? '#b9e5c8' : '#eae8e2'}`,
               background: saveEnabled ? '#e5f6eb' : '#f4f3ee',
@@ -120,30 +136,37 @@ export default function BookMoveHistory({
               cursor: saveEnabled ? 'pointer' : 'default',
             }}
           >
-            {saving ? 'Saving…' : hasSaved ? 'Update line' : 'Save line'}
+            {saving ? 'Saving…' : hasSaved ? 'Update lines' : 'Save lines'}
           </button>
         </div>
       </div>
 
-      <div style={{ maxHeight: 280, overflow: 'auto', padding: hasMoves ? 6 : '10px 12px' }}>
-        {hasMoves ? rows : <span style={{ color: '#a3a099', fontSize: 12 }}>No moves yet</span>}
+      <div style={{ maxHeight: 320, overflow: 'auto', padding: hasMoves ? '8px 10px' : '10px 12px', lineHeight: 1.8 }}>
+        {hasMoves ? renderChildren(moveTree, false, false) : <span style={{ color: '#a3a099', fontSize: 12 }}>Play a move on the board to start a line</span>}
       </div>
 
       {menu && (
         <div
           style={{
-            position: 'fixed', left: Math.min(menu.x, window.innerWidth - 190), top: menu.y,
+            position: 'fixed', left: Math.min(menu.x, window.innerWidth - 220), top: menu.y,
             background: '#fff', border: '1px solid #e6e4dd', borderRadius: 8,
-            boxShadow: '0 6px 20px rgba(0,0,0,.14)', padding: 4, zIndex: 1000, minWidth: 176,
+            boxShadow: '0 6px 20px rgba(0,0,0,.14)', padding: 4, zIndex: 1000, minWidth: 200,
           }}
           onClick={(e) => e.stopPropagation()}
         >
+          {menu.canPromote && (
+            <button
+              onClick={() => { onPromoteMove(menu.nodeId); setMenu(null) }}
+              style={menuItem('#37352f')}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = '#f1f0ea')}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+            >
+              Make {toFigurine(menu.san)} the main line
+            </button>
+          )}
           <button
             onClick={() => { onDeleteMove(menu.nodeId); setMenu(null) }}
-            style={{
-              width: '100%', textAlign: 'left', border: 'none', background: 'transparent',
-              padding: '7px 10px', borderRadius: 6, fontSize: 12, color: '#b1453b', cursor: 'pointer',
-            }}
+            style={menuItem('#b1453b')}
             onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = '#fbeceb')}
             onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
           >
@@ -154,3 +177,9 @@ export default function BookMoveHistory({
     </section>
   )
 }
+
+function menuItem(color: string): React.CSSProperties {
+  return { width: '100%', textAlign: 'left', border: 'none', background: 'transparent', padding: '7px 10px', borderRadius: 6, fontSize: 12, color, cursor: 'pointer', display: 'block' }
+}
+
+const variationStyle: React.CSSProperties = { margin: '3px 0 3px 8px', padding: '1px 0 1px 8px', borderLeft: '2px solid #e0ddd3' }

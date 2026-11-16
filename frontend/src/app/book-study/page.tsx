@@ -32,7 +32,7 @@ export default function BookStudyPage() {
     busy, moveError, flipped, toggleFlipped, toggleSideToMove, lineNotes, solutionShown, revealSolution, puzzleFeedback, analysisEnabled, analysis, barAnalysis, analysisIsCurrent, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
     stepBack, stepForward, loadStart, goToIndex, goToMove, selectSquare,
     move, legalMovesFor, restart,
-    moveEvals, savedLine, savingLine, saveNote, deleteMove, saveCurrentLine, restoreSavedLine,
+    moveEvals, savedLine, savingLine, saveNote, deleteMove, promoteMove, saveCurrentLine, restoreSavedLine,
   } = useBookStudySession()
 
   const isDrill = current?.item.type === 'drill'
@@ -206,6 +206,7 @@ export default function BookStudyPage() {
                 hasSaved={!!savedLine}
                 onGoto={goToMove}
                 onDeleteMove={deleteMove}
+                onPromoteMove={promoteMove}
                 onSaveLine={saveCurrentLine}
                 onRestore={restoreSavedLine}
               />
