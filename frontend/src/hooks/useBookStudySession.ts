@@ -367,7 +367,7 @@ export function useBookStudySession() {
         setSavedLine(line)
         if (!line) return
         if (expectedBoardRevision !== boardRevisionRef.current) return
-        if (line.startFen !== bookGame.snapshot().moveTree.fen) return
+        if (STANDARD_START_BOOKS.has(bookId) && line.startFen !== bookGame.snapshot().moveTree.fen) return
         setBusy(true)
         try {
           const gs = await replayLine(line, expectedItemRequest)
@@ -604,7 +604,21 @@ export function useBookStudySession() {
         walk(child, index)
       }
     }
-    walk(gameState.moveTree, -1)
+    if (STANDARD_START_BOOKS.has(bookId)) {
+      walk(gameState.moveTree, -1)
+    } else {
+      for (const n of activeLine(gameState.moveTree, gameState.currentNodeId)) {
+        const e = moveEvalsRef.current[n.fen]
+        moves.push({
+          san: n.san,
+          uci: (n.from ?? '') + (n.to ?? '') + (n.promotion ?? ''),
+          fen: n.fen,
+          score: e?.score ?? 0,
+          mate: e?.mate ?? 0,
+          hasEval: e != null,
+        })
+      }
+    }
     if (moves.length === 0) {
       setSaveNote('Play some moves first.')
       return

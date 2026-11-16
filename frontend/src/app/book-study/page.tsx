@@ -6,6 +6,7 @@ import Board from '@/components/board/Board'
 import TopBar from '@/components/layout/TopBar'
 import BookPicker from '@/components/book/BookPicker'
 import BookMoveHistory from '@/components/book/BookMoveHistory'
+import BookMoveHistoryFlat from '@/components/book/BookMoveHistoryFlat'
 import BookLineView from '@/components/book/BookLineView'
 import EvalBar from '@/components/analysis/EvalBar'
 import MaterialCorners, { MATERIAL_CORNERS_WIDTH } from '@/components/board/MaterialCorners'
@@ -196,6 +197,7 @@ export default function BookStudyPage() {
               {current.item.line && (current.item.type !== 'puzzle' || solutionShown) ? (
                 <BookLineView moveTree={boardState.moveTree} notes={lineNotes} currentNodeId={boardState.currentNodeId} busy={busy} onGoto={goToMove} />
               ) : (
+              standardStartBook ? (
               <BookMoveHistory
                 moveTree={boardState.moveTree}
                 currentNodeId={boardState.currentNodeId}
@@ -211,6 +213,22 @@ export default function BookStudyPage() {
                 onSaveLine={saveCurrentLine}
                 onRestore={restoreSavedLine}
               />
+              ) : (
+              <BookMoveHistoryFlat
+                moveTree={boardState.moveTree}
+                currentNodeId={boardState.currentNodeId}
+                busy={busy}
+                evals={moveEvals}
+                canSave={(boardState.moveTree.children?.length ?? 0) > 0}
+                saving={savingLine}
+                saveNote={saveNote}
+                hasSaved={!!savedLine}
+                onGoto={goToMove}
+                onDeleteMove={deleteMove}
+                onSaveLine={saveCurrentLine}
+                onRestore={restoreSavedLine}
+              />
+              )
               )}
             </div>}
           </section>
