@@ -5,7 +5,7 @@ import { getBook, getBookProgress, markItemDone, recordBookStudyActivity, getBoo
 import type { Analysis, GameState, FenEval, SavedLine, SavedLineMove } from '@/lib/api/client'
 import type { BoardState, Color, MoveNode, PieceType, Square } from '@/lib/chess/types'
 import { activeLine, flatten } from '@/lib/chess/moveTree'
-import { LocalGame } from '@/lib/chess/localGame'
+import { LocalGame, START_FEN } from '@/lib/chess/localGame'
 import { playMoveSound } from '@/lib/sound'
 import { acquireEngine, releaseEngine } from '@/lib/engine/browserEngine'
 import { MoveEvaluator } from '@/lib/engine/moveEval'
@@ -13,6 +13,7 @@ import { lookupAnalysis, lookupEval } from '@/lib/lichess/lookup'
 import type { Book, BookItem, LineNote } from '@/lib/books/types'
 
 const ANALYSIS_CACHE_LIMIT = 200
+const STANDARD_START_BOOKS = new Set(['positional-play'])
 
 function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
   const pieces: BoardState['pieces'] = {}
@@ -84,6 +85,9 @@ export function useBookStudySession() {
 
   const gameIdRef = useRef<string | null>(null)
   const flippedTurnRef = useRef<Set<string>>(new Set())
+  const bookPositionRef = useRef<Set<string>>(new Set())
+  const bookIdRef = useRef<string | null>(null)
+  const [startVersion, setStartVersion] = useState(0)
   const [lineNotes, setLineNotes] = useState<Record<string, LineNote>>({})
   const [solutionShown, setSolutionShown] = useState(false)
   const moveReqId = useRef(0)
@@ -295,12 +299,17 @@ export function useBookStudySession() {
     return parts.join(' ')
   }, [])
 
+  const usesStandardStart = useCallback((item: BookItem): boolean => {
+    return STANDARD_START_BOOKS.has(bookIdRef.current ?? '') && !bookPositionRef.current.has(item.id)
+  }, [])
+
   const enterItem = useCallback(async (gid: string, item: BookItem): Promise<boolean> => {
+    const standard = usesStandardStart(item)
     const reqId = ++itemReqId.current
     moveReqId.current++
     setSelected(null)
     setMoveError(null)
-    setFlipped(item.sideToMove === 'b')
+    setFlipped(standard ? false : item.sideToMove === 'b')
     boardRevisionRef.current++
     analysisCacheRef.current = new Map()
     setMoveEvals({})
@@ -309,10 +318,10 @@ export function useBookStudySession() {
     setAnalysisError(null)
     setSavedLine(null)
     setSaveNote(null)
-    let gs = await apiSetPosition(gid, fenForItem(item))
+    let gs = await apiSetPosition(gid, standard ? START_FEN : fenForItem(item))
     if (reqId !== itemReqId.current) return false
     setSolutionShown(false)
-    if (item.line && item.type !== 'puzzle' && !flippedTurnRef.current.has(item.id)) {
+    if (!standard && item.line && item.type !== 'puzzle' && !flippedTurnRef.current.has(item.id)) {
       setLineNotes(bookGame.loadLine(item.line))
       gs = bookGame.snapshot()
     } else {
@@ -320,7 +329,7 @@ export function useBookStudySession() {
     }
     setGameState(gs)
     return true
-  }, [apiSetPosition, bookGame, fenForItem])
+  }, [apiSetPosition, bookGame, fenForItem, usesStandardStart])
 
   const replayLine = useCallback(async (line: SavedLine, expectedItemRequest = itemReqId.current): Promise<GameState | null> => {
     const gid = gameIdRef.current
@@ -405,6 +414,8 @@ export function useBookStudySession() {
           getBookProgress(bookId).catch(() => ({ done: [] })),
         ])
         setBook(b)
+        bookIdRef.current = b.id
+        bookPositionRef.current = new Set()
         setCompletedItemIds(new Set(progress.done))
         try {
           setBookmarkedItemIds(new Set(JSON.parse(localStorage.getItem(`chesslab.book-bookmarks.${bookId}`) ?? '[]')))
@@ -600,7 +611,7 @@ export function useBookStudySession() {
     setSavingLine(true)
     setSaveNote(null)
     try {
-      const { line } = await saveBookLine(bookId, itemId, fenForItem(current.item), moves)
+      const { line } = await saveBookLine(bookId, itemId, gameState.moveTree.fen, moves)
       if (expectedItemRequest !== itemReqId.current) return
       setSavedLine(line)
       setSaveNote('Saved')
@@ -611,7 +622,7 @@ export function useBookStudySession() {
     } finally {
       setSavingLine(false)
     }
-  }, [book, current, fenForItem, gameState, savingLine])
+  }, [book, current, gameState, savingLine])
 
   const attemptMove = useCallback(
     async (from: Square, to: Square, promotion?: string) => {
@@ -685,20 +696,25 @@ export function useBookStudySession() {
 
   const revealSolution = useCallback(() => {
     if (!current?.item.line) return
+    bookPositionRef.current.add(current.item.id)
+    bookGame.resetTo(fenForItem(current.item))
+    setFlipped(current.item.sideToMove === 'b')
+    setStartVersion((v) => v + 1)
     setLineNotes(bookGame.loadLine(current.item.line))
     setGameState(bookGame.snapshot())
     setSolutionShown(true)
-  }, [bookGame, current])
+  }, [bookGame, current, fenForItem])
 
   const puzzleFeedback = useMemo<{ result: 'correct' | 'wrong'; played: string } | null>(() => {
     const line = current?.item.type === 'puzzle' ? current.item.line : undefined
     if (!line || solutionShown || !gameState) return null
+    if (gameState.moveTree.fen !== fenForItem(current!.item)) return null
     const first = activeLine(gameState.moveTree, gameState.currentNodeId)[0]
     const author = line.children?.[0]?.san
     if (!first || !author) return null
     const strip = (san: string) => san.replace(/[+#]/g, '')
     return { result: strip(first.san) === strip(author) ? 'correct' : 'wrong', played: first.san }
-  }, [current, gameState, solutionShown])
+  }, [current, gameState, solutionShown, fenForItem])
 
   const toggleSideToMove = useCallback(async () => {
     const gid = gameIdRef.current
@@ -708,6 +724,21 @@ export function useBookStudySession() {
     else flippedTurnRef.current.add(id)
     await enterItem(gid, current.item)
   }, [current, enterItem])
+
+  const showingBookPosition = useMemo(
+    () => !!current && !!gameState && gameState.moveTree.fen === fenForItem(current.item),
+    [current, gameState, fenForItem, startVersion],
+  )
+
+  const toggleStartPosition = useCallback(async () => {
+    const gid = gameIdRef.current
+    if (!gid || !current || busy) return
+    const id = current.item.id
+    if (bookPositionRef.current.has(id)) bookPositionRef.current.delete(id)
+    else bookPositionRef.current.add(id)
+    setSolutionShown(false)
+    await enterItem(gid, current.item)
+  }, [current, busy, enterItem])
 
   const toggleFlipped = useCallback(() => setFlipped((f) => !f), [])
   const toggleAnalysis = useCallback(() => {
@@ -778,6 +809,9 @@ export function useBookStudySession() {
     flipped,
     toggleFlipped,
     toggleSideToMove,
+    showingBookPosition,
+    toggleStartPosition,
+    standardStartBook: STANDARD_START_BOOKS.has(book?.id ?? ''),
     lineNotes,
     solutionShown,
     revealSolution,
