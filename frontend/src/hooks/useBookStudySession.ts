@@ -13,7 +13,7 @@ import { lookupAnalysis, lookupEval } from '@/lib/lichess/lookup'
 import type { Book, BookItem, LineNote } from '@/lib/books/types'
 
 const ANALYSIS_CACHE_LIMIT = 200
-const STANDARD_START_BOOKS = new Set(['positional-play'])
+const STANDARD_START_BOOKS = new Set(['chess-structures'])
 
 function toBoardState(gs: GameState, selectedSquare: Square | null): BoardState {
   const pieces: BoardState['pieces'] = {}
