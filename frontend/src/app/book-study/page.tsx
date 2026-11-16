@@ -12,6 +12,7 @@ import MaterialCorners, { MATERIAL_CORNERS_WIDTH } from '@/components/board/Mate
 import ChapterSections from '@/components/book/ChapterSections'
 import PdfBookList from '@/components/book/PdfBookList'
 import BookPDFViewer from '@/components/book/BookPDFViewer'
+import { useBookDrill } from '@/hooks/useBookDrill'
 import { useBookStudySession } from '@/hooks/useBookStudySession'
 import { useViewportWidth, useViewportHeight, clamp } from '@/hooks/useViewportWidth'
 import { sourcePageForItem } from '@/lib/books/sourcePages'
@@ -34,6 +35,8 @@ export default function BookStudyPage() {
     moveEvals, savedLine, savingLine, saveNote, deleteMove, saveCurrentLine, restoreSavedLine,
   } = useBookStudySession()
 
+  const isDrill = current?.item.type === 'drill'
+  const drill = useBookDrill(isDrill ? current.item.fen : null, current?.item.id ?? '')
   const viewportWidth = useViewportWidth()
   const viewportHeight = useViewportHeight()
   const [sidebarsHidden, setSidebarsHidden] = useState(false)
@@ -154,16 +157,30 @@ export default function BookStudyPage() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: MATERIAL_GAP, alignItems: 'flex-start' }}>
-              <Board boardState={boardState} onSquareClick={selectSquare} onMove={move} legalMovesFor={legalMovesFor} squareSize={squareSize} flipped={flipped} analysisMoves={analysisEnabled ? analysisMoves : []} />
-              <MaterialCorners pieces={boardState.pieces} flipped={flipped} height={boardSize} />
+              {isDrill && drill.boardState ? (
+                <Board boardState={drill.boardState} onSquareClick={drill.selectSquare} onMove={drill.move} legalMovesFor={drill.legalMovesFor} squareSize={squareSize} flipped={drill.flipped !== flipped} analysisMoves={drill.hintMoves.map((uci) => ({ uci, scale: 1, color: 'rgba(0, 48, 136, 0.4)' }))} />
+              ) : (
+                <Board boardState={boardState} onSquareClick={selectSquare} onMove={move} legalMovesFor={legalMovesFor} squareSize={squareSize} flipped={flipped} analysisMoves={analysisEnabled ? analysisMoves : []} />
+              )}
+              <MaterialCorners pieces={(isDrill && drill.boardState ? drill.boardState : boardState).pieces} flipped={isDrill ? drill.flipped !== flipped : flipped} height={boardSize} />
               <div style={{ width: 22, opacity: analysisEnabled ? (analysisIsCurrent ? 1 : 0.45) : 0, transition: 'opacity 160ms ease', pointerEvents: 'none' }}>
                 <EvalBar score={barAnalysis?.score ?? 0} mate={barAnalysis?.mate ?? 0} height={boardSize} flipped={flipped} hasEval={analysisEnabled && (!!barAnalysis?.depth || !!barAnalysis?.tablebaseCategory)} />
               </div>
             </div>
-            <div style={{ width: boardSize, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {isDrill && (
+              <div style={{ width: boardSize, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <span aria-live="polite" style={{ minHeight: 20, fontSize: 13, fontWeight: 600, color: drill.feedback?.tone === 'bad' ? '#b34343' : drill.feedback?.tone === 'good' ? '#2f6db0' : '#37352f' }}>{drill.feedback?.text ?? (drill.status === 'opponent' ? 'Opponent is thinking…' : '')}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button onClick={drill.restart} style={analysisButton}>Restart</button>
+                  <button onClick={drill.showHint} disabled={drill.mode === 'free'} title={drill.mode === 'free' ? 'Hints need the tablebase (7 pieces or fewer)' : 'Show the best moves'} style={{ ...analysisButton, opacity: drill.mode === 'free' ? 0.45 : 1 }}>Hint</button>
+                  <span className="mono" style={{ fontSize: 12, color: '#7a776f', marginLeft: 'auto' }}>{drill.mode === 'free' ? 'Stockfish defends' : `${drill.mode === 'win' ? 'Win' : 'Hold'} · ${drill.movesLeft ?? 0} moves left · ${drill.mistakes} mistakes`}</span>
+                </div>
+              </div>
+            )}
+            {!isDrill && <div style={{ width: boardSize, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', gap: 6 }}><button onClick={stepBack} disabled={!canStepBack} title="Previous move (←)" style={navBtn(canStepBack)}>⟨</button><button onClick={stepForward} disabled={!canStepForward} title="Next move (→)" style={navBtn(canStepForward)}>⟩</button></div>
               <span className="mono" style={{ fontSize: 12, color: '#a3a099' }}>{currentPly > 0 || canStepBack ? `ply ${currentPly}` : ' '}</span>
-            </div>
+            </div>}
             {current.item.type === 'puzzle' && current.item.line && !solutionShown && (
               <div style={{ width: boardSize, display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}>
                 <span style={{ color: '#6a675f', flex: 1 }}>{current.item.prompt}</span>
@@ -174,7 +191,7 @@ export default function BookStudyPage() {
                 )}
               </div>
             )}
-            <div style={{ width: boardSize }}>
+            {!isDrill && <div style={{ width: boardSize }}>
               {current.item.line && (current.item.type !== 'puzzle' || solutionShown) ? (
                 <BookLineView moveTree={boardState.moveTree} notes={lineNotes} currentNodeId={boardState.currentNodeId} busy={busy} onGoto={goToMove} />
               ) : (
@@ -193,11 +210,11 @@ export default function BookStudyPage() {
                 onRestore={restoreSavedLine}
               />
               )}
-            </div>
+            </div>}
           </section>
 
           {!(sidebarsHidden && !isNarrow) && <aside style={{ height: isNarrow ? 680 : frameHeight, minHeight: 0, order: isNarrow ? 3 : undefined }}>
-            <BookPDFViewer key={`${book.id}:${current.chapterId}`} bookId={book.id} chapterId={current.chapterId} navigationKey={`${current.item.id}:${viewSolution ? 's' : 'e'}`} sourcePage={viewSolution && current.item.solutionPage ? current.item.solutionPage : sourcePageForItem(book.id, current.item.id, current.item.sourcePage)} />
+            <BookPDFViewer key={`${book.id}:${current.item.sourceChapterId ?? current.chapterId}`} bookId={book.id} chapterId={current.item.sourceChapterId ?? current.chapterId} navigationKey={`${current.item.id}:${viewSolution ? 's' : 'e'}`} sourcePage={viewSolution && current.item.solutionPage ? current.item.solutionPage : sourcePageForItem(book.id, current.item.id, current.item.sourcePage)} />
           </aside>}
         </div>
       </div>

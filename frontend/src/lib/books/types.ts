@@ -17,7 +17,7 @@ export interface LineNote {
 export interface BookItem {
   id: string
   chapterId: string
-  type: 'lesson' | 'puzzle'
+  type: 'lesson' | 'puzzle' | 'drill'
   fen: string
   sideToMove: 'w' | 'b'
   prompt: string
@@ -29,6 +29,7 @@ export interface BookItem {
   bookPage?: number
   masterPDFPage?: number
   solutionPage?: number
+  sourceChapterId?: string
 }
 
 export interface BookChapter {

@@ -13,7 +13,7 @@ interface Props {
   onSelect: (globalIndex: number) => void
 }
 
-type Filter = 'all' | 'remaining' | 'lesson' | 'puzzle' | 'saved'
+type Filter = 'all' | 'remaining' | 'lesson' | 'puzzle' | 'drill' | 'saved'
 
 export default function ChapterSections({ items, startIndex, activeItemId, completedItemIds, bookmarkedItemIds, busy, onSelect }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
@@ -38,6 +38,7 @@ export default function ChapterSections({ items, startIndex, activeItemId, compl
             ['remaining', 'To do'],
             ['lesson', 'To-do lessons'],
             ['puzzle', 'To-do puzzles'],
+            ['drill', 'To-do drills'],
             ['saved', 'Saved'],
           ] as [Filter, string][]).map(([value, label]) => (
             <button key={value} onClick={() => setFilter(value)} style={{ border: filter === value ? 'none' : '1px solid #e5e3dc', background: filter === value ? '#4a90d9' : '#fff', color: filter === value ? '#fff' : '#77746c', borderRadius: 5, padding: '3px 6px', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>{label}</button>
@@ -52,7 +53,7 @@ export default function ChapterSections({ items, startIndex, activeItemId, compl
           return (
             <button key={flat.item.id} onClick={() => onSelect(startIndex + index)} disabled={busy} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', padding: '8px 10px', marginBottom: 4, borderRadius: 7, border: 'none', background: active ? '#f2f8fd' : 'transparent', cursor: busy ? 'default' : 'pointer' }}>
               <span className="mono" style={{ flexShrink: 0, width: 20, height: 20, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: active ? '#fff' : isPuzzle ? '#8a5a1c' : '#2f6db0', background: active ? '#4a90d9' : isPuzzle ? '#fdf3e4' : '#ecf3fb' }}>{index + 1}</span>
-              <span style={{ flex: 1, fontSize: 12, color: active ? '#2f6db0' : '#37352f', fontWeight: active ? 600 : 500 }}>{isPuzzle ? 'Puzzle' : 'Lesson'}</span>
+              <span style={{ flex: 1, fontSize: 12, color: active ? '#2f6db0' : '#37352f', fontWeight: active ? 600 : 500 }}>{isPuzzle ? 'Puzzle' : flat.item.type === 'drill' ? flat.item.prompt.replace('Drill ', '') : 'Lesson'}</span>
               {bookmarkedItemIds.has(flat.item.id) && <span title="Saved" style={{ color: '#b88124', fontSize: 13 }}>★</span>}
               {completed && <span aria-label="Completed" title="Completed" style={{ color: '#2f9e5b', fontSize: 16, fontWeight: 700 }}>✓</span>}
             </button>

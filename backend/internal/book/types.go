@@ -13,6 +13,7 @@ type Item struct {
 
 	SolutionUCI []string `json:"solutionUci,omitempty"`
 	Note        string   `json:"note,omitempty"`
+	Result      string   `json:"result,omitempty"`
 
 	Line json.RawMessage `json:"line,omitempty"`
 
@@ -20,6 +21,8 @@ type Item struct {
 	BookPage      int `json:"bookPage,omitempty"`
 	MasterPDFPage int `json:"masterPDFPage,omitempty"`
 	SolutionPage  int `json:"solutionPage,omitempty"`
+
+	SourceChapterID string `json:"sourceChapterId,omitempty"`
 }
 
 type Chapter struct {
