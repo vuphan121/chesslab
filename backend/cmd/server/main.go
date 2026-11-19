@@ -72,6 +72,7 @@ func main() {
 
 	loadedBooks := loadBooks(dbStore)
 	books := book.NewStore(loadedBooks)
+	books.SetLoader(func() []*book.Book { return loadBooks(dbStore) })
 	bookSource, err := booksource.NewB2FromEnv()
 	if err != nil {
 		log.Printf("book storage unavailable (%v) — chapter PDFs will return 503", err)

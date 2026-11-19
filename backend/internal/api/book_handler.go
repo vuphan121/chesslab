@@ -88,3 +88,16 @@ func toBookSummary(b *book.Book) BookSummaryJSON {
 		Chapters: chapters, ItemCount: total,
 	}
 }
+
+func (h *Handler) ReloadBooks(w http.ResponseWriter, r *http.Request) {
+	if h.books == nil {
+		http.Error(w, "books unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	n, ok := h.books.Reload()
+	if !ok {
+		http.Error(w, "could not reload books from the database", http.StatusServiceUnavailable)
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]int{"books": n})
+}

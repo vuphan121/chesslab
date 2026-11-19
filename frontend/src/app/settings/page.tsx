@@ -5,6 +5,7 @@ import { useState } from 'react'
 import TopBar from '@/components/layout/TopBar'
 import { pieceImagePath, useUserSettings } from '@/components/settings/UserSettingsProvider'
 import type { PieceTheme } from '@/lib/api/client'
+import { reloadBooks } from '@/lib/api/client'
 import { refreshOfflineData } from '@/lib/offline/refresh'
 
 const THEMES: { id: PieceTheme; name: string; description: string }[] = [
@@ -32,6 +33,23 @@ export default function SettingsPage() {
       setRefreshMessage('Could not reach the server. Your saved data is unchanged.')
     } finally {
       setRefreshing(false)
+    }
+  }
+
+  const [reloading, setReloading] = useState(false)
+  const [reloadMessage, setReloadMessage] = useState('')
+
+  const reloadBookData = async () => {
+    if (reloading) return
+    setReloading(true)
+    setReloadMessage('')
+    try {
+      await reloadBooks()
+      setReloadMessage('Book data reloaded from the database.')
+    } catch {
+      setReloadMessage('Could not reload book data. Please try again.')
+    } finally {
+      setReloading(false)
     }
   }
 
@@ -177,6 +195,28 @@ export default function SettingsPage() {
           </button>
           <div aria-live="polite" style={{ minHeight: 20, marginTop: 14, fontSize: 12, color: refreshMessage.startsWith('Could') ? '#b3483f' : '#4d8062' }}>
             {refreshMessage}
+          </div>
+          <button
+            type="button"
+            onClick={reloadBookData}
+            disabled={reloading}
+            style={{
+              marginTop: 10,
+              fontSize: 14,
+              fontWeight: 700,
+              color: '#1c1b18',
+              background: '#fff',
+              border: '1px solid #1c1b18',
+              borderRadius: 999,
+              padding: '12px 24px',
+              cursor: reloading ? 'wait' : 'pointer',
+              opacity: reloading ? 0.6 : 1,
+            }}
+          >
+            {reloading ? 'Reloading…' : 'Reload book data from database'}
+          </button>
+          <div aria-live="polite" style={{ minHeight: 20, marginTop: 14, fontSize: 12, color: reloadMessage.startsWith('Could') ? '#b3483f' : '#4d8062' }}>
+            {reloadMessage}
           </div>
         </section>
 

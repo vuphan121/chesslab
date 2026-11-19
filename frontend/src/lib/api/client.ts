@@ -245,6 +245,8 @@ export const refreshRepertoire = (id: string): Promise<RepertoireSummary> =>
 
 export const listBooks = (): Promise<BookSummary[]> => request('/api/books')
 
+export const reloadBooks = (): Promise<{ books: number }> => request('/api/books/reload', { method: 'POST' })
+
 export const getBook = (id: string): Promise<Book> => request(`/api/books/${id}`)
 
 export const getBookChapterPDF = async (id: string, chapterId: string): Promise<Blob> => {
