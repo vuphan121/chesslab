@@ -58,12 +58,12 @@ export default function BookMoveHistory({
     return false
   }
 
-  const moveButton = (node: MoveNode, parent: MoveNode, forceNumber: boolean, sideline: boolean): ReactNode => {
+  const moveButton = (node: MoveNode, parent: MoveNode, forceNumber: boolean, sideline: boolean, hidePrefix = false): ReactNode => {
     const active = node.id === currentNodeId
     const fields = parent.fen.split(' ')
     const white = fields[1] === 'w'
     const number = fields[5] ?? '1'
-    const prefix = white ? `${number}.` : forceNumber ? `${number}…` : ''
+    const prefix = hidePrefix ? '' : white ? `${number}.` : forceNumber ? `${number}…` : ''
     const evalText = fmtEval(evals[node.fen])
     return (
       <button
@@ -88,20 +88,53 @@ export default function BookMoveHistory({
     )
   }
 
-  const renderChildren = (parent: MoveNode, forceNumber: boolean, sideline: boolean): ReactNode[] => {
-    const kids = parent.children ?? []
-    if (kids.length === 0) return []
-    const [main, ...variations] = kids
-    const out: ReactNode[] = [moveButton(main, parent, forceNumber, sideline)]
-    for (const variation of variations) {
+  type Entry = { node: MoveNode; parent: MoveNode }
+
+  const renderLine = (start: Entry, depth: number): ReactNode => {
+    const chain: Entry[] = []
+    const subs: Entry[] = []
+    for (let cur: Entry | null = start; cur; ) {
+      chain.push(cur)
+      const kids: MoveNode[] = cur.node.children ?? []
+      for (const v of kids.slice(1)) subs.push({ node: v, parent: cur.node })
+      cur = kids[0] ? { node: kids[0], parent: cur.node } : null
+    }
+    return (
+      <div key={`l${start.node.id}`}>
+        <div style={{ margin: `1px 0 3px ${28 + Math.min(depth, 2) * 10}px`, padding: '0 0 0 10px', borderLeft: '2px solid #e0ddd3', lineHeight: 1.7 }}>
+          {chain.map((e, i) => moveButton(e.node, e.parent, i === 0, true))}
+        </div>
+        {subs.map((s) => renderLine(s, depth + 1))}
+      </div>
+    )
+  }
+
+  const renderMainline = (): ReactNode[] => {
+    const entries: Entry[] = []
+    for (let p = moveTree; p.children?.[0]; p = p.children[0]) entries.push({ node: p.children[0], parent: p })
+    const rows: { number: string; white?: Entry; black?: Entry }[] = []
+    for (const e of entries) {
+      const fields = e.parent.fen.split(' ')
+      const number = fields[5] ?? '1'
+      const last = rows[rows.length - 1]
+      if (fields[1] === 'w') rows.push({ number, white: e })
+      else if (last && last.white && !last.black) last.black = e
+      else rows.push({ number, black: e })
+    }
+    const out: ReactNode[] = []
+    for (const row of rows) {
       out.push(
-        <div key={`v${variation.id}`} style={variationStyle}>
-          {moveButton(variation, parent, true, true)}
-          {renderChildren(variation, false, true)}
+        <div key={`r${(row.white ?? row.black)!.node.id}`} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 1fr', alignItems: 'center' }}>
+          <span className="mono" style={{ color: '#b4b1a8', fontSize: 11 }}>{row.number}.</span>
+          <span>{row.white ? moveButton(row.white.node, row.white.parent, false, false, true) : <span className="mono" style={{ color: '#b4b1a8', fontSize: 11 }}>…</span>}</span>
+          <span>{row.black && moveButton(row.black.node, row.black.parent, false, false, true)}</span>
         </div>,
       )
+      for (const e of [row.white, row.black]) {
+        if (!e) continue
+        for (const v of (e.parent.children ?? []).slice(1)) out.push(renderLine({ node: v, parent: e.parent }, 0))
+      }
     }
-    out.push(...renderChildren(main, variations.length > 0, sideline))
     return out
   }
 
@@ -142,7 +175,7 @@ export default function BookMoveHistory({
       </div>
 
       <div style={{ maxHeight: 320, overflow: 'auto', padding: hasMoves ? '8px 10px' : '10px 12px', lineHeight: 1.8 }}>
-        {hasMoves ? renderChildren(moveTree, false, false) : <span style={{ color: '#a3a099', fontSize: 12 }}>Play a move on the board to start a line</span>}
+        {hasMoves ? renderMainline() :<span style={{ color: '#a3a099', fontSize: 12 }}>Play a move on the board to start a line</span>}
       </div>
 
       {menu && (
@@ -181,5 +214,3 @@ export default function BookMoveHistory({
 function menuItem(color: string): React.CSSProperties {
   return { width: '100%', textAlign: 'left', border: 'none', background: 'transparent', padding: '7px 10px', borderRadius: 6, fontSize: 12, color, cursor: 'pointer', display: 'block' }
 }
-
-const variationStyle: React.CSSProperties = { margin: '3px 0 3px 8px', padding: '1px 0 1px 8px', borderLeft: '2px solid #e0ddd3' }
