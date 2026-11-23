@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { getBookChapterPDF } from '@/lib/api/client'
+import { PdfViewer } from './PdfReader'
 
 interface Props {
   bookId: string
@@ -10,9 +11,15 @@ interface Props {
   sourcePage?: number
 }
 
+function isTouchDevice(): boolean {
+  return window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(display-mode: standalone)').matches
+}
+
 export default function BookPDFViewer({ bookId, chapterId, navigationKey, sourcePage }: Props) {
   const [url, setUrl] = useState<string | null>(null)
+  const [data, setData] = useState<ArrayBuffer | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const touch = useSyncExternalStore(() => () => {}, isTouchDevice, () => false)
 
   useEffect(() => {
     let active = true
@@ -22,6 +29,7 @@ export default function BookPDFViewer({ bookId, chapterId, navigationKey, source
         if (!active) return
         objectURL = URL.createObjectURL(pdf)
         setUrl(objectURL)
+        pdf.arrayBuffer().then((buffer) => { if (active) setData(buffer) }).catch(() => {})
       })
       .catch((err: unknown) => {
         if (active) setError(err instanceof Error ? err.message : 'Unable to load this chapter PDF.')
@@ -31,6 +39,14 @@ export default function BookPDFViewer({ bookId, chapterId, navigationKey, source
       if (objectURL) URL.revokeObjectURL(objectURL)
     }
   }, [bookId, chapterId])
+
+  if (touch) {
+    return (
+      <section style={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', borderRadius: 11, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.05)' }}>
+        <PdfViewer data={data} error={error} title="Chapter source" startPage={sourcePage ?? 1} targetKey={navigationKey} />
+      </section>
+    )
+  }
 
   return <BookPDFPage key={navigationKey} url={url} error={error} initialPage={sourcePage ?? 1} />
 }

@@ -19,44 +19,80 @@ interface Props {
 }
 
 export default function PdfReader({ bookId, title }: Props) {
+  const [data, setData] = useState<ArrayBuffer | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    getPdfBook(bookId)
+      .then((buffer) => { if (active) setData(buffer) })
+      .catch((err: unknown) => { if (active) setError(err instanceof Error ? err.message : 'Unable to load this book.') })
+    return () => { active = false }
+  }, [bookId])
+
+  return (
+    <PdfViewer
+      data={data}
+      error={error}
+      title={title}
+      startPage={getLastPdfPage(bookId)}
+      targetKey={bookId}
+      onPageChange={(n) => saveLastPdfPage(bookId, n)}
+    />
+  )
+}
+
+interface ViewerProps {
+  data: ArrayBuffer | null
+  error: string | null
+  title: string
+  startPage: number
+  targetKey: string
+  onPageChange?: (page: number) => void
+}
+
+export function PdfViewer({ data, error: loadError, title, startPage, targetKey, onPageChange }: ViewerProps) {
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null)
   const [aspect, setAspect] = useState(1.4)
-  const [error, setError] = useState<string | null>(null)
+  const [openError, setOpenError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [draft, setDraft] = useState('1')
   const [zoom, setZoom] = useState(1)
   const [width, setWidth] = useState(0)
   const scroller = useRef<HTMLDivElement>(null)
   const pageRef = useRef(1)
+  const startRef = useRef(startPage)
+  useEffect(() => { startRef.current = startPage }, [startPage])
+  const error = loadError ?? openError
 
   useEffect(() => {
+    if (!data) return
     let active = true
     let loadingTask: PDFDocumentLoadingTask | null = null
     ;(async () => {
       try {
         const pdfjs = await import('pdfjs-dist')
         pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
-        const data = await getPdfBook(bookId)
-        loadingTask = pdfjs.getDocument({ data: new Uint8Array(data), wasmUrl: '/pdfjs/wasm/' })
+        loadingTask = pdfjs.getDocument({ data: new Uint8Array(data.slice(0)), wasmUrl: '/pdfjs/wasm/' })
         const opened = await loadingTask.promise
         if (!active) return
         const first = await opened.getPage(1)
         const view = first.getViewport({ scale: 1 })
-        const start = Math.min(getLastPdfPage(bookId), opened.numPages)
+        const start = Math.max(1, Math.min(startRef.current, opened.numPages))
         pageRef.current = start
         setAspect(view.height / view.width)
         setPage(start)
         setDraft(String(start))
         setDoc(opened)
       } catch (err) {
-        if (active) setError(err instanceof Error ? err.message : 'Unable to load this book.')
+        if (active) setOpenError(err instanceof Error ? err.message : 'Unable to open this PDF.')
       }
     })()
     return () => {
       active = false
       loadingTask?.destroy()
     }
-  }, [bookId])
+  }, [data])
 
   useEffect(() => {
     const el = scroller.current
@@ -72,7 +108,7 @@ export default function PdfReader({ bookId, title }: Props) {
   const pageHeight = pageWidth * aspect
   const stride = pageHeight + PAGE_GAP
   const strideRef = useRef(stride)
-  strideRef.current = stride
+  useEffect(() => { strideRef.current = stride }, [stride])
 
   const scrollToPage = useCallback((n: number) => {
     const el = scroller.current
@@ -82,15 +118,30 @@ export default function PdfReader({ bookId, title }: Props) {
   const restored = useRef(false)
   useEffect(() => {
     if (!doc || pageWidth === 0) return
+    restored.current = false
     scrollToPage(pageRef.current)
-    restored.current = true
+    const release = window.setTimeout(() => { restored.current = true }, 150)
+    return () => window.clearTimeout(release)
   }, [doc, pageWidth, scrollToPage])
 
+  const jumpedFor = useRef<string | null>(null)
   useEffect(() => {
     if (!doc) return
-    const timer = window.setTimeout(() => saveLastPdfPage(bookId, page), SAVE_DELAY_MS)
+    if (jumpedFor.current === null) { jumpedFor.current = targetKey; return }
+    if (jumpedFor.current === targetKey) return
+    jumpedFor.current = targetKey
+    const target = Math.max(1, Math.min(startRef.current, doc.numPages))
+    pageRef.current = target
+    setPage(target)
+    setDraft(String(target))
+    scrollToPage(target)
+  }, [doc, targetKey, scrollToPage])
+
+  useEffect(() => {
+    if (!doc || !onPageChange) return
+    const timer = window.setTimeout(() => onPageChange(page), SAVE_DELAY_MS)
     return () => window.clearTimeout(timer)
-  }, [bookId, doc, page])
+  }, [doc, page, onPageChange])
 
   const onScroll = useCallback(() => {
     const el = scroller.current
