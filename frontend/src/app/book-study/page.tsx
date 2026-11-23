@@ -33,7 +33,7 @@ export default function BookStudyPage() {
     busy, moveError, flipped, toggleFlipped, toggleSideToMove, showingBookPosition, toggleStartPosition, standardStartBook, lineNotes, solutionShown, revealSolution, puzzleFeedback, analysisEnabled, analysis, barAnalysis, analysisIsCurrent, analysisLoading, toggleAnalysis, completedItemIds, bookmarkedItemIds, completionBusy, completionError, markCurrentComplete, toggleCurrentBookmark, currentPly, canStepBack, canStepForward,
     stepBack, stepForward, loadStart, goToIndex, goToMove, selectSquare,
     move, legalMovesFor, restart,
-    moveEvals, savedLine, savingLine, saveNote, deleteMove, promoteMove, saveCurrentLine, restoreSavedLine,
+    moveEvals, savedLine, deleteMove, promoteMove, restoreSavedLine,
   } = useBookStudySession()
 
   const isDrill = current?.item.type === 'drill'
@@ -203,14 +203,10 @@ export default function BookStudyPage() {
                 currentNodeId={boardState.currentNodeId}
                 busy={busy}
                 evals={moveEvals}
-                canSave={(boardState.moveTree.children?.length ?? 0) > 0}
-                saving={savingLine}
-                saveNote={saveNote}
                 hasSaved={!!savedLine}
                 onGoto={goToMove}
                 onDeleteMove={deleteMove}
                 onPromoteMove={promoteMove}
-                onSaveLine={saveCurrentLine}
                 onRestore={restoreSavedLine}
               />
               ) : (
@@ -219,13 +215,9 @@ export default function BookStudyPage() {
                 currentNodeId={boardState.currentNodeId}
                 busy={busy}
                 evals={moveEvals}
-                canSave={(boardState.moveTree.children?.length ?? 0) > 0}
-                saving={savingLine}
-                saveNote={saveNote}
                 hasSaved={!!savedLine}
                 onGoto={goToMove}
                 onDeleteMove={deleteMove}
-                onSaveLine={saveCurrentLine}
                 onRestore={restoreSavedLine}
               />
               )

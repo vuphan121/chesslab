@@ -25,6 +25,8 @@ type structure struct {
 
 type parsedPosition struct {
 	Pattern        int    `json:"pattern"`
+	Position       int    `json:"position"`
+	MoreInPattern  bool   `json:"moreInPattern"`
 	Title          string `json:"title"`
 	PiecePlacement string `json:"piecePlacement"`
 	SideToMove     string `json:"sideToMove"`
@@ -107,7 +109,19 @@ func main() {
 		}
 		chapter := book.Chapter{ID: fmt.Sprintf("ep-ch%d", ch.Number), Number: ch.Number, Name: ch.Name}
 		for _, p := range source.Positions {
-			if o, ok := overrides[fmt.Sprintf("%d-%d", ch.Number, p.Pattern)]; ok {
+			if p.Position == 0 {
+				p.Position = 1
+			}
+			overrideKey := fmt.Sprintf("%d-%d", ch.Number, p.Pattern)
+			idSuffix, promptSuffix := "", ""
+			if p.Position > 1 {
+				overrideKey += fmt.Sprintf("-%d", p.Position)
+				idSuffix = fmt.Sprintf("-%d", p.Position)
+			}
+			if p.Position > 1 || p.MoreInPattern {
+				promptSuffix = fmt.Sprintf(" (position %d)", p.Position)
+			}
+			if o, ok := overrides[overrideKey]; ok {
 				p.PiecePlacement = o.PiecePlacement
 				if o.SideToMove == "w" || o.SideToMove == "b" {
 					p.SideToMove = o.SideToMove
@@ -124,9 +138,9 @@ func main() {
 				unknownSide++
 			}
 			chapter.Items = append(chapter.Items, book.Item{
-				ID: fmt.Sprintf("ep-ch%d-pattern-%d", ch.Number, p.Pattern), ChapterID: chapter.ID, Type: "lesson",
+				ID: fmt.Sprintf("ep-ch%d-pattern-%d%s", ch.Number, p.Pattern, idSuffix), ChapterID: chapter.ID, Type: "lesson",
 				FEN: p.PiecePlacement + " " + side + " - - 0 1", SideToMove: side,
-				Prompt: fmt.Sprintf("Pattern %d: %s", p.Pattern, p.Title), SourcePage: p.SourcePage, MasterPDFPage: p.MasterPDFPage,
+				Prompt: fmt.Sprintf("Pattern %d: %s%s", p.Pattern, p.Title, promptSuffix), SourcePage: p.SourcePage, MasterPDFPage: p.MasterPDFPage,
 			})
 		}
 		for _, lesson := range chapter.Items {

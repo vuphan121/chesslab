@@ -11,14 +11,10 @@ interface Props {
   currentNodeId: string
   busy: boolean
   evals: Record<string, FenEval>
-  canSave: boolean
-  saving: boolean
-  saveNote: string | null
   hasSaved: boolean
   onGoto: (nodeId: string) => void
   onDeleteMove: (nodeId: string) => void
   onPromoteMove: (nodeId: string) => void
-  onSaveLine: () => void
   onRestore: () => void
 }
 
@@ -30,8 +26,8 @@ function fmtEval(e: FenEval | undefined): string {
 }
 
 export default function BookMoveHistory({
-  moveTree, currentNodeId, busy, evals, canSave, saving, saveNote, hasSaved,
-  onGoto, onDeleteMove, onPromoteMove, onSaveLine, onRestore,
+  moveTree, currentNodeId, busy, evals, hasSaved,
+  onGoto, onDeleteMove, onPromoteMove, onRestore,
 }: Props) {
   const [menu, setMenu] = useState<{ nodeId: string; san: string; x: number; y: number; canPromote: boolean } | null>(null)
 
@@ -139,14 +135,12 @@ export default function BookMoveHistory({
   }
 
   const hasMoves = (moveTree.children?.length ?? 0) > 0
-  const saveEnabled = canSave && !saving && !busy
 
   return (
     <section style={{ background: '#fff', borderRadius: 10, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.05)', overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderBottom: '1px solid #efeee9' }}>
         <span className="lbl" style={{ color: '#b4b1a8' }}>Moves</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {saveNote && <span style={{ fontSize: 11, color: saveNote.startsWith('Saved') ? '#25864d' : '#b1453b' }}>{saveNote}</span>}
           {hasSaved && (
             <button
               onClick={onRestore}
@@ -157,20 +151,6 @@ export default function BookMoveHistory({
               ↺ Restore
             </button>
           )}
-          <button
-            onClick={onSaveLine}
-            disabled={!saveEnabled}
-            title="Saves every line and sideline"
-            style={{
-              border: `1px solid ${saveEnabled ? '#b9e5c8' : '#eae8e2'}`,
-              background: saveEnabled ? '#e5f6eb' : '#f4f3ee',
-              borderRadius: 5, padding: '3px 10px', fontSize: 11, fontWeight: 700,
-              color: saveEnabled ? '#25864d' : '#c8c5bd',
-              cursor: saveEnabled ? 'pointer' : 'default',
-            }}
-          >
-            {saving ? 'Saving…' : hasSaved ? 'Update lines' : 'Save lines'}
-          </button>
         </div>
       </div>
 
