@@ -12,8 +12,8 @@ export function runLabel(run: { cycle: number; name: string }): string {
   return run.name ? run.name : `Run ${run.cycle}`
 }
 
-export function solveRate(run: { done: number; solved: number }): number {
-  return run.done > 0 ? Math.round((run.solved / run.done) * 100) : 0
+export function solveRate(run: { done: number; solved: number; half: number }): number {
+  return run.done > 0 ? Math.round(((run.solved + run.half / 2) / run.done) * 100) : 0
 }
 
 export const cardStyle: React.CSSProperties = {

@@ -88,6 +88,7 @@ func NewRouter(h *Handler) http.Handler {
 		r.Get("/api/woodpecker/runs/{cycle}/attempts", h.GetWoodpeckerRunAttempts)
 		r.Post("/api/woodpecker/runs/{cycle}/reset", h.ResetWoodpeckerRange)
 		r.Post("/api/woodpecker/runs/{cycle}/unsolve", h.UnsolveWoodpeckerPuzzle)
+		r.Post("/api/woodpecker/runs/{cycle}/solve", h.SolveWoodpeckerPuzzle)
 
 		r.Get("/api/user-settings", h.GetUserSettings)
 		r.Put("/api/user-settings", h.SaveUserSettings)

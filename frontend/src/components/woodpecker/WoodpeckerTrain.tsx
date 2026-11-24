@@ -215,6 +215,11 @@ export default function WoodpeckerTrain({ topRight }: { topRight: React.ReactNod
           Give up
         </button>
       )}
+      {finished && s.markable && (
+        <button onClick={() => void s.markCorrect()} className="tap" style={secondaryButton}>
+          Mark correct
+        </button>
+      )}
       {finished && (
         <div style={{ display: 'flex', flexDirection: stacked || isLandscape ? 'row' : 'column', gap: 8 }}>
           <button onClick={s.next} className="tap" style={iconButton('primary')} title="Next puzzle" aria-label="Next puzzle">

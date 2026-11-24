@@ -5,7 +5,7 @@ import {
   getWoodpeckerPuzzle,
   getWoodpeckerState,
   pingBackend,
-  recordWoodpeckerAttempt,
+  recordWoodpeckerAttempt, solveWoodpeckerPuzzle,
   type GameState,
   type WoodpeckerAttempt,
   type WoodpeckerOutcome,
@@ -51,6 +51,8 @@ export function useWoodpeckerSession() {
   const submittedRef = useRef(false)
   const missedRef = useRef(false)
   const branchedRef = useRef(false)
+  const firstBookRef = useRef(false)
+  const [markable, setMarkable] = useState(false)
   const operationRef = useRef('')
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const statusRef = useRef<PuzzleStatus>('loading')
@@ -158,6 +160,7 @@ export function useWoodpeckerSession() {
       if (!p || submittedRef.current) return
       stopClock()
       submittedRef.current = true
+      setMarkable(outcome !== 'solved')
       pendingRef.current = {
         operationId: operationRef.current,
         cycle: cycleRef.current,
@@ -195,6 +198,8 @@ export function useWoodpeckerSession() {
       submittedRef.current = !record
       missedRef.current = false
       branchedRef.current = false
+      firstBookRef.current = false
+      setMarkable(false)
       operationRef.current = newOperationId()
       elapsedRef.current = 0
       runningSinceRef.current = null
@@ -307,6 +312,7 @@ export function useWoodpeckerSession() {
         missedRef.current = true
         return
       }
+      if (indexRef.current === 0 && !branchedRef.current) firstBookRef.current = true
       playUci(verdict.uci)
       setFeedback({ kind: 'correct' })
       setHintUci(null)
@@ -315,7 +321,7 @@ export function useWoodpeckerSession() {
         if (missedRef.current) {
           setFeedback(null)
           setStatusBoth('failed')
-          finish('mistake')
+          finish(firstBookRef.current && !branchedRef.current ? 'half' : 'mistake')
         } else {
           setStatusBoth('solved')
           finish('solved')
@@ -337,12 +343,24 @@ export function useWoodpeckerSession() {
     [game, commit, finish, stopClock, playUci, scheduleOpponent, setStatusBoth],
   )
 
+  const markCorrect = useCallback(async () => {
+    const p = puzzleRef.current
+    if (!p) return
+    if (!(await flushPending())) return
+    try {
+      await solveWoodpeckerPuzzle(cycleRef.current, p.number)
+      setMarkable(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save that result.')
+    }
+  }, [flushPending])
+
   const giveUp = useCallback(() => {
     if (statusRef.current !== 'playing') return
     setStatusBoth('failed')
     setSelected(null)
     setHintUci(movesRef.current[indexRef.current] ?? null)
-    finish(missedRef.current ? 'mistake' : 'gave_up')
+    finish(firstBookRef.current && !branchedRef.current ? 'half' : missedRef.current ? 'mistake' : 'gave_up')
   }, [finish, setStatusBoth])
 
   const selectSquare = useCallback(
@@ -422,6 +440,6 @@ export function useWoodpeckerSession() {
 
   return {
     progress, puzzle, status, error, boardState, flipped, hintUci, userColor, feedback, paused,
-    togglePause, next, retry, giveUp, navPrev, navNext, gotoNode, moveNodes, currentNodeId, canPrev, canNext, selectSquare, move, legalMovesFor,
+    togglePause, next, retry, giveUp, markable, markCorrect, navPrev, navNext, gotoNode, moveNodes, currentNodeId, canPrev, canNext, selectSquare, move, legalMovesFor,
   }
 }

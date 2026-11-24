@@ -19,6 +19,7 @@ type woodpeckerRunResponse struct {
 	LastAt    *time.Time `json:"lastAt"`
 	Done      int        `json:"done"`
 	Solved    int        `json:"solved"`
+	Half      int        `json:"half"`
 	GaveUp    int        `json:"gaveUp"`
 	Skipped   int        `json:"skipped"`
 	TotalMs   int64      `json:"totalMs"`
@@ -47,7 +48,7 @@ func (h *Handler) ListWoodpeckerRuns(w http.ResponseWriter, r *http.Request) {
 	for _, run := range runs {
 		resp := woodpeckerRunResponse{
 			Cycle: run.Cycle, Name: run.Name, StartedAt: run.StartedAt, LastAt: run.LastAt,
-			Done: run.Done, Solved: run.Solved, GaveUp: run.GaveUp, Skipped: run.Skipped,
+			Done: run.Done, Solved: run.Solved, Half: run.Half, GaveUp: run.GaveUp, Skipped: run.Skipped,
 			TotalMs: run.TotalMs, Total: woodpecker.Total(),
 		}
 		if run.Timed > 0 {
@@ -161,6 +162,29 @@ func (h *Handler) ResetWoodpeckerRange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, map[string]int64{"removed": n})
+}
+
+func (h *Handler) SolveWoodpeckerPuzzle(w http.ResponseWriter, r *http.Request) {
+	username, ok := h.woodpeckerUser(w, r)
+	if !ok {
+		return
+	}
+	cycle, ok := woodpeckerCycleParam(w, r)
+	if !ok {
+		return
+	}
+	var req struct {
+		Puzzle int `json:"puzzle"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Puzzle < 1 || req.Puzzle > woodpecker.Total() {
+		http.Error(w, "invalid puzzle", http.StatusBadRequest)
+		return
+	}
+	if err := h.db.SolveWoodpeckerPuzzle(r.Context(), username, cycle, req.Puzzle); err != nil {
+		http.Error(w, "failed to update: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
 func (h *Handler) UnsolveWoodpeckerPuzzle(w http.ResponseWriter, r *http.Request) {

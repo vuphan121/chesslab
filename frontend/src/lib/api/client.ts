@@ -763,7 +763,7 @@ export interface WoodpeckerPuzzle {
   alternatives?: { at: number; moves: string }[]
 }
 
-export type WoodpeckerOutcome = 'solved' | 'mistake' | 'gave_up' | 'skipped'
+export type WoodpeckerOutcome = 'solved' | 'half' | 'mistake' | 'gave_up' | 'skipped'
 
 export interface WoodpeckerRun {
   cycle: number
@@ -772,6 +772,7 @@ export interface WoodpeckerRun {
   lastAt: string | null
   done: number
   solved: number
+  half: number
   gaveUp: number
   skipped: number
   totalMs: number
@@ -808,6 +809,9 @@ export const resetWoodpeckerRange = (cycle: number, from: number, to: number): P
 
 export const unsolveWoodpeckerPuzzle = (cycle: number, puzzle: number): Promise<{ ok: boolean }> =>
   request(`/api/woodpecker/runs/${cycle}/unsolve`, woodpeckerJson('POST', { puzzle }))
+
+export const solveWoodpeckerPuzzle = (cycle: number, puzzle: number): Promise<{ ok: boolean }> =>
+  request(`/api/woodpecker/runs/${cycle}/solve`, woodpeckerJson('POST', { puzzle }))
 
 export interface WoodpeckerAttempt {
   operationId: string

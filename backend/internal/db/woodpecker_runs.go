@@ -13,6 +13,7 @@ type WoodpeckerRun struct {
 	LastAt    *time.Time
 	Done      int
 	Solved    int
+	Half      int
 	GaveUp    int
 	Skipped   int
 	Timed     int
@@ -34,6 +35,7 @@ func (s *Store) WoodpeckerRuns(ctx context.Context, username string) ([]Woodpeck
 		SELECT c.cycle, COALESCE(r.name, ''), COALESCE(r.created_at, MIN(a.played_at)), MAX(a.played_at),
 			COUNT(DISTINCT a.puzzle_number),
 			COUNT(DISTINCT a.puzzle_number) FILTER (WHERE a.solved),
+			COUNT(DISTINCT a.puzzle_number) FILTER (WHERE a.outcome = 'half'),
 			COUNT(a.id) FILTER (WHERE a.outcome = 'gave_up'),
 			COUNT(a.id) FILTER (WHERE a.outcome = 'skipped'),
 			COUNT(a.id) FILTER (WHERE a.outcome <> 'skipped'),
@@ -50,7 +52,7 @@ func (s *Store) WoodpeckerRuns(ctx context.Context, username string) ([]Woodpeck
 	var out []WoodpeckerRun
 	for rows.Next() {
 		var r WoodpeckerRun
-		if err := rows.Scan(&r.Cycle, &r.Name, &r.StartedAt, &r.LastAt, &r.Done, &r.Solved, &r.GaveUp, &r.Skipped, &r.Timed, &r.TotalMs); err != nil {
+		if err := rows.Scan(&r.Cycle, &r.Name, &r.StartedAt, &r.LastAt, &r.Done, &r.Solved, &r.Half, &r.GaveUp, &r.Skipped, &r.Timed, &r.TotalMs); err != nil {
 			return nil, fmt.Errorf("woodpecker runs scan: %w", err)
 		}
 		out = append(out, r)
@@ -110,6 +112,18 @@ func (s *Store) ResetWoodpeckerRange(ctx context.Context, username string, cycle
 		return 0, fmt.Errorf("reset woodpecker range: %w", err)
 	}
 	return tag.RowsAffected(), nil
+}
+
+func (s *Store) SolveWoodpeckerPuzzle(ctx context.Context, username string, cycle, puzzle int) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE woodpecker_attempts SET solved = true, outcome = 'solved'
+		WHERE id = (SELECT id FROM woodpecker_attempts
+			WHERE username = $1 AND cycle = $2 AND puzzle_number = $3
+			ORDER BY played_at DESC, id DESC LIMIT 1)`, username, cycle, puzzle)
+	if err != nil {
+		return fmt.Errorf("solve woodpecker puzzle: %w", err)
+	}
+	return nil
 }
 
 func (s *Store) UnsolveWoodpeckerPuzzle(ctx context.Context, username string, cycle, puzzle int) error {
