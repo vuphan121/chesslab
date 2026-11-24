@@ -211,6 +211,7 @@ function Chart({
   signed: Signed
 }) {
   const n = chosen.length
+  const [hot, setHot] = useState<string | null>(null)
   return (
     <div style={cardStyle}>
       <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>{title}</div>
@@ -223,12 +224,41 @@ function Chart({
           return (
             <div key={block.start} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, minWidth: 0 }}>
               <div style={{ height: 110, width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 1 }}>
-                {values.map((v, i) => (
-                  <div
-                    key={chosen[i].cycle}
-                    style={{ flex: 1, maxWidth: 14, height: `${v ? Math.max(2, (v / max) * 100) : 0}%`, background: colorOf(chosen[i].cycle), borderRadius: '3px 3px 0 0' }}
-                  />
-                ))}
+                {values.map((v, i) => {
+                  const key = `${block.start}:${chosen[i].cycle}`
+                  const label = v == null ? '' : metric === 'time' ? `${Math.round(v)} s` : `${Math.round(v)}%`
+                  return (
+                    <div
+                      key={chosen[i].cycle}
+                      onMouseEnter={() => setHot(key)}
+                      onMouseLeave={() => setHot((k) => (k === key ? null : k))}
+                      onClick={() => setHot((k) => (k === key ? null : key))}
+                      style={{ position: 'relative', flex: 1, maxWidth: 14, height: `${v ? Math.max(2, (v / max) * 100) : 0}%`, background: colorOf(chosen[i].cycle), borderRadius: '3px 3px 0 0', cursor: 'default' }}
+                    >
+                      {hot === key && label && (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            bottom: '100%',
+                            left: '50%',
+                            transform: 'translate(-50%, -4px)',
+                            zIndex: 5,
+                            padding: '2px 6px',
+                            borderRadius: 6,
+                            background: '#37352f',
+                            color: '#fff',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            pointerEvents: 'none',
+                          }}
+                        >
+                          {label}
+                        </span>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
               <span style={{ fontSize: 10, fontWeight: 600, lineHeight: 1, minHeight: 10, color: diff == null ? 'transparent' : tone(diff, lowerBetter) }}>
                 {diff == null ? '.' : signed(diff)}
