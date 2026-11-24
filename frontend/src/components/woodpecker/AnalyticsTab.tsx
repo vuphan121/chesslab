@@ -5,57 +5,56 @@ import { getWoodpeckerRunAttempts, listWoodpeckerRuns, type WoodpeckerRun, type 
 import { cardStyle, formatDuration, runLabel, solveRate } from './format'
 
 const BLOCK = 100
-const COLORS = ['#b4b1a8', '#4a90d9']
+const COLORS = ['#b4b1a8', '#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#6250d6', '#e34948', '#e87ba4']
+
+const points = (x: WoodpeckerRunAttempt) => (x.solved ? 1 : x.outcome === 'half' ? 0.5 : 0)
+
+type Block = { start: number; time: (number | null)[]; acc: (number | null)[] }
+type Tone = (diff: number, lowerBetter: boolean) => string
+type Signed = (diff: number) => string
 
 export default function AnalyticsTab({ onOpen }: { onOpen: (puzzle: number) => void }) {
   const [runs, setRuns] = useState<WoodpeckerRun[] | null>(null)
-  const [picked, setPicked] = useState<number[]>([])
+  const [off, setOff] = useState<number[]>([])
   const [attempts, setAttempts] = useState<Record<number, WoodpeckerRunAttempt[]>>({})
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     listWoodpeckerRuns()
-      .then((r) => {
-        const withData = r.filter((x) => x.done > 0)
-        setRuns(r)
-        setPicked(withData.slice(0, 2).map((x) => x.cycle).reverse())
-      })
+      .then((r) => setRuns(r.filter((x) => x.done > 0).sort((a, b) => a.cycle - b.cycle)))
       .catch((err) => setError(err instanceof Error ? err.message : 'Could not load runs.'))
   }, [])
 
+  const chosen = useMemo(() => (runs ?? []).filter((r) => !off.includes(r.cycle)), [runs, off])
+
   useEffect(() => {
-    for (const cycle of picked) {
-      if (attempts[cycle]) continue
-      getWoodpeckerRunAttempts(cycle)
-        .then((a) => setAttempts((prev) => ({ ...prev, [cycle]: a })))
+    for (const run of chosen) {
+      if (attempts[run.cycle]) continue
+      getWoodpeckerRunAttempts(run.cycle)
+        .then((a) => setAttempts((prev) => ({ ...prev, [run.cycle]: a })))
         .catch((err) => setError(err instanceof Error ? err.message : 'Could not load the run.'))
     }
-  }, [picked, attempts])
+  }, [chosen, attempts])
 
-  const toggle = (cycle: number) =>
-    setPicked((prev) => (prev.includes(cycle) ? prev.filter((c) => c !== cycle) : [...prev, cycle].sort((a, b) => a - b).slice(-2)))
+  const colorOf = (cycle: number) => COLORS[(runs ?? []).findIndex((r) => r.cycle === cycle) % COLORS.length]
 
-  const chosen = useMemo(() => (runs ?? []).filter((r) => picked.includes(r.cycle)).sort((a, b) => a.cycle - b.cycle), [runs, picked])
-  const [a, b] = chosen
+  const toggle = (cycle: number) => setOff((prev) => (prev.includes(cycle) ? prev.filter((c) => c !== cycle) : [...prev, cycle]))
 
   const blocks = useMemo(() => {
     if (chosen.length === 0) return []
     const total = chosen[0].total
-    const out: { label: string; avg: (number | null)[] }[] = []
+    const out: Block[] = []
     for (let start = 1; start <= total; start += BLOCK) {
       const end = Math.min(start + BLOCK - 1, total)
+      const rowsOf = chosen.map((run) => (attempts[run.cycle] ?? []).filter((x) => x.puzzle >= start && x.puzzle <= end && x.outcome !== 'skipped'))
       out.push({
-        label: `${start}–${end}`,
-        avg: chosen.map((run) => {
-          const rows = (attempts[run.cycle] ?? []).filter((x) => x.puzzle >= start && x.puzzle <= end && x.outcome !== 'skipped')
-          return rows.length ? rows.reduce((sum, x) => sum + x.durationMs, 0) / rows.length : null
-        }),
+        start,
+        time: rowsOf.map((rows) => (rows.length ? rows.reduce((sum, x) => sum + x.durationMs, 0) / rows.length / 1000 : null)),
+        acc: rowsOf.map((rows) => (rows.length ? (rows.reduce((sum, x) => sum + points(x), 0) / rows.length) * 100 : null)),
       })
     }
     return out
   }, [chosen, attempts])
-
-  const maxAvg = Math.max(1, ...blocks.flatMap((x) => x.avg.map((v) => v ?? 0)))
 
   const difficult = useMemo(() => {
     if (chosen.length === 0 || chosen.some((r) => !attempts[r.cycle])) return []
@@ -77,22 +76,8 @@ export default function AnalyticsTab({ onOpen }: { onOpen: (puzzle: number) => v
       .slice(0, 10)
   }, [chosen, attempts])
 
-  const delta = (current: number, previous: number, fmt: (v: number) => string, lowerBetter: boolean) => {
-    const diff = current - previous
-    if (diff === 0) return { text: 'No change', color: '#6a675f' }
-    const good = lowerBetter ? diff < 0 : diff > 0
-    return { text: `${diff > 0 ? '+' : '−'}${fmt(Math.abs(diff))}`, color: good ? '#3f7a45' : '#b34343' }
-  }
-
-  const metrics =
-    a && b
-      ? [
-          { label: 'Total time', value: formatDuration(b.totalMs), d: delta(b.totalMs, a.totalMs, formatDuration, true) },
-          { label: 'Solved', value: `${solveRate(b)}%`, d: delta(solveRate(b), solveRate(a), (v) => `${v} pts`, false) },
-          { label: 'Avg time', value: formatDuration(b.avgMs), d: delta(b.avgMs, a.avgMs, formatDuration, true) },
-          { label: 'Gave up', value: String(b.gaveUp), d: delta(b.gaveUp, a.gaveUp, String, true) },
-        ]
-      : []
+  const tone: Tone = (diff, lowerBetter) => (diff === 0 ? '#6a675f' : (lowerBetter ? diff < 0 : diff > 0) ? '#3f7a45' : '#b34343')
+  const signed: Signed = (diff) => `${diff > 0 ? '+' : diff < 0 ? '−' : ''}${Math.abs(Math.round(diff))}`
 
   return (
     <div style={{ width: 'min(760px, calc(100vw - 32px))', margin: '16px auto 32px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -103,11 +88,11 @@ export default function AnalyticsTab({ onOpen }: { onOpen: (puzzle: number) => v
       )}
       <div style={cardStyle}>
         <div className="lbl" style={{ color: '#b4b1a8', marginBottom: 8 }}>
-          Compare runs
+          Runs
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {runs?.filter((r) => r.done > 0).map((run) => {
-            const on = picked.includes(run.cycle)
+          {runs?.map((run) => {
+            const on = !off.includes(run.cycle)
             return (
               <button
                 key={run.cycle}
@@ -115,58 +100,70 @@ export default function AnalyticsTab({ onOpen }: { onOpen: (puzzle: number) => v
                 onClick={() => toggle(run.cycle)}
                 aria-pressed={on}
                 style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
                   fontSize: 13,
-                  padding: '6px 12px',
+                  padding: '8px 12px',
                   borderRadius: 8,
                   cursor: 'pointer',
-                  border: on ? '1.5px solid #4a90d9' : '1px solid #d9d6cf',
-                  background: on ? '#e8f3fd' : '#fbfaf7',
-                  color: on ? '#2f6db0' : '#37352f',
+                  border: on ? `1.5px solid ${colorOf(run.cycle)}` : '1px solid #d9d6cf',
+                  background: on ? '#fff' : '#fbfaf7',
+                  color: on ? '#37352f' : '#a3a099',
                 }}
               >
+                <span style={{ width: 10, height: 10, borderRadius: 2, background: on ? colorOf(run.cycle) : '#d9d6cf' }} />
                 {runLabel(run)}
               </button>
             )
           })}
         </div>
-        {runs && runs.every((r) => r.done === 0) && <div style={{ fontSize: 13, color: '#6a675f', marginTop: 8 }}>No results yet</div>}
-        {chosen.length === 1 && <div style={{ fontSize: 12, color: '#6a675f', marginTop: 8 }}>Pick a second run to compare</div>}
+        {runs && runs.length === 0 && <div style={{ fontSize: 13, color: '#6a675f' }}>No results yet</div>}
+        {chosen.length > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <div style={{ display: 'flex', gap: 10, fontSize: 11, color: '#a3a099', padding: '0 0 4px 20px' }}>
+              <span style={{ flex: 1 }} />
+              <span>Avg time</span>
+              <span style={{ width: 84, textAlign: 'right' }}>Accuracy</span>
+            </div>
+            {chosen.map((run, i) => {
+              const prev = chosen[i - 1]
+              const timeDiff = prev ? (run.avgMs - prev.avgMs) / 1000 : null
+              const accDiff = prev ? solveRate(run) - solveRate(prev) : null
+              return (
+                <div key={run.cycle} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '8px 0', borderTop: '1px solid #f0efe9' }}>
+                  <span style={{ width: 10, height: 10, borderRadius: 2, background: colorOf(run.cycle), flexShrink: 0 }} />
+                  <span style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{runLabel(run)}</span>
+                  <span style={{ textAlign: 'right' }}>
+                    <span style={{ fontWeight: 600 }}>{formatDuration(run.avgMs)}</span>
+                    {timeDiff != null && <span style={{ fontSize: 12, marginLeft: 6, color: tone(timeDiff, true) }}>{signed(timeDiff)} s</span>}
+                  </span>
+                  <span style={{ width: 84, textAlign: 'right' }}>
+                    <span style={{ fontWeight: 600 }}>{solveRate(run)}%</span>
+                    {accDiff != null && <span style={{ fontSize: 12, marginLeft: 6, color: tone(accDiff, false) }}>{signed(accDiff)}</span>}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
-      {a && b && (
-        <div style={cardStyle}>
-          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>
-            {runLabel(b)} vs {runLabel(a)}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
-            {metrics.map((m) => (
-              <div key={m.label} style={{ background: '#f7f6f2', borderRadius: 8, padding: '10px 12px' }}>
-                <div style={{ fontSize: 12, color: '#6a675f' }}>{m.label}</div>
-                <div style={{ fontSize: 18, fontWeight: 600 }}>{m.value}</div>
-                <div style={{ fontSize: 12, color: m.d.color }}>{m.d.text}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {chosen.length > 0 && blocks.length > 0 && (
-        <div style={cardStyle}>
-          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>Avg time per {BLOCK} puzzles</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '64px minmax(0, 1fr) 56px', gap: '6px 10px', alignItems: 'center', fontSize: 12 }}>
-            {blocks.map((block) => (
-              <Row key={block.label} label={block.label} values={block.avg} max={maxAvg} count={chosen.length} />
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 14, marginTop: 12, fontSize: 12, color: '#6a675f' }}>
-            {chosen.map((run, i) => (
-              <span key={run.cycle} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ width: 10, height: 8, borderRadius: 2, background: COLORS[i + (2 - chosen.length)] }} />
-                {runLabel(run)}
-              </span>
-            ))}
-          </div>
-        </div>
+        <>
+          <Chart
+            title={`Avg time per ${BLOCK}`}
+            blocks={blocks}
+            metric="time"
+            chosen={chosen}
+            colorOf={colorOf}
+            max={Math.max(1, ...blocks.flatMap((b) => b.time.map((v) => v ?? 0)))}
+            lowerBetter
+            tone={tone}
+            signed={signed}
+          />
+          <Chart title={`Accuracy per ${BLOCK}`} blocks={blocks} metric="acc" chosen={chosen} colorOf={colorOf} max={100} lowerBetter={false} tone={tone} signed={signed} />
+        </>
       )}
 
       {chosen.length > 0 && (
@@ -180,7 +177,7 @@ export default function AnalyticsTab({ onOpen }: { onOpen: (puzzle: number) => v
               <button
                 className="tap"
                 onClick={() => onOpen(d.puzzle)}
-                style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 8, border: '1px solid #d9d6cf', background: '#fbfaf7', cursor: 'pointer' }}
+                style={{ fontSize: 12, fontWeight: 600, padding: '8px 12px', borderRadius: 8, border: '1px solid #d9d6cf', background: '#fbfaf7', cursor: 'pointer' }}
               >
                 Open
               </button>
@@ -192,23 +189,56 @@ export default function AnalyticsTab({ onOpen }: { onOpen: (puzzle: number) => v
   )
 }
 
-function Row({ label, values, max, count }: { label: string; values: (number | null)[]; max: number; count: number }) {
-  const last = values[values.length - 1]
-  const first = values[0]
-  const change = count === 2 && first != null && last != null ? Math.round((last - first) / 1000) : null
+function Chart({
+  title,
+  blocks,
+  metric,
+  chosen,
+  colorOf,
+  max,
+  lowerBetter,
+  tone,
+  signed,
+}: {
+  title: string
+  blocks: Block[]
+  metric: 'time' | 'acc'
+  chosen: WoodpeckerRun[]
+  colorOf: (cycle: number) => string
+  max: number
+  lowerBetter: boolean
+  tone: Tone
+  signed: Signed
+}) {
+  const n = chosen.length
   return (
-    <>
-      <span>{label}</span>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {values.map((v, i) => (
-          <div key={i} style={{ height: 8, borderRadius: 4, background: '#f0efe9', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${v ? (v / max) * 100 : 0}%`, background: COLORS[i + (2 - count)] }} />
-          </div>
-        ))}
+    <div style={cardStyle}>
+      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>{title}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${blocks.length}, minmax(0, 1fr))`, gap: 4, alignItems: 'end' }}>
+        {blocks.map((block) => {
+          const values = block[metric]
+          const last = values[n - 1]
+          const before = values[n - 2]
+          const diff = n >= 2 && last != null && before != null ? last - before : null
+          return (
+            <div key={block.start} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, minWidth: 0 }}>
+              <div style={{ height: 110, width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 1 }}>
+                {values.map((v, i) => (
+                  <div
+                    key={chosen[i].cycle}
+                    style={{ flex: 1, maxWidth: 14, height: `${v ? Math.max(2, (v / max) * 100) : 0}%`, background: colorOf(chosen[i].cycle), borderRadius: '3px 3px 0 0' }}
+                  />
+                ))}
+              </div>
+              <span style={{ fontSize: 10, fontWeight: 600, lineHeight: 1, minHeight: 10, color: diff == null ? 'transparent' : tone(diff, lowerBetter) }}>
+                {diff == null ? '.' : signed(diff)}
+              </span>
+              <span style={{ fontSize: 10, color: '#a3a099', lineHeight: 1 }}>{block.start}</span>
+            </div>
+          )
+        })}
       </div>
-      <span style={{ color: change == null ? '#6a675f' : change <= 0 ? '#3f7a45' : '#b34343' }}>
-        {change == null ? '' : `${change > 0 ? '+' : change < 0 ? '−' : ''}${Math.abs(change)} s`}
-      </span>
-    </>
+      {n >= 2 && <div style={{ fontSize: 11, color: '#a3a099', marginTop: 10 }}>Change: latest vs previous run{metric === 'time' ? ' (s)' : ' (pts)'}</div>}
+    </div>
   )
 }
