@@ -160,13 +160,12 @@ function Overlay({ title, onClose, children }: { title: string; onClose: () => v
 }
 
 function NewRunDialog({ nextCycle, onClose, onDone }: { nextCycle: number; onClose: () => void; onDone: () => void }) {
-  const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const start = async () => {
     setBusy(true)
     try {
-      await startWoodpeckerRun(name)
+      await startWoodpeckerRun('')
       onDone()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not start the run.')
@@ -175,7 +174,7 @@ function NewRunDialog({ nextCycle, onClose, onDone }: { nextCycle: number; onClo
   }
   return (
     <Overlay title="New run" onClose={onClose}>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder={`Run ${nextCycle}`} maxLength={80} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }} />
+      <div style={{ fontSize: 14 }}>Start Run {nextCycle}?</div>
       {error && (
         <p role="alert" style={{ color: '#b34343', fontSize: 13, marginTop: 8 }}>
           {error}
