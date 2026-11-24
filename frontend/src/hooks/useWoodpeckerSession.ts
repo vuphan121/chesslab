@@ -229,7 +229,18 @@ export function useWoodpeckerSession() {
     setStatusBoth('loading')
     try {
       const state = await getWoodpeckerState()
-      const p = await getWoodpeckerPuzzle(state.next)
+      let target = state.next
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search)
+        const requested = Number(params.get('puzzle'))
+        if (requested >= 1 && requested <= state.total) target = requested
+        if (params.has('puzzle')) {
+          params.delete('puzzle')
+          const query = params.toString()
+          window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`)
+        }
+      }
+      const p = await getWoodpeckerPuzzle(target)
       if (generation !== generationRef.current) return
       cycleRef.current = state.cycle
       setProgress(state)

@@ -57,7 +57,6 @@ const PAGES = [
   { href: '/opening-study', label: 'Opening Study', icon: 'openings' },
   { href: '/book-study', label: 'Study from Book', icon: 'book' },
   { href: '/puzzles', label: 'Puzzles', icon: 'puzzle' },
-  { href: '/woodpecker', label: 'Woodpecker', icon: 'puzzle' },
   { href: '/endgames', label: 'Endgames', icon: 'endgames' },
   { href: '/statistics', label: 'Statistics', icon: 'statistics' },
   { href: '/settings', label: 'Settings', icon: 'settings' },

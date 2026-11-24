@@ -763,7 +763,51 @@ export interface WoodpeckerPuzzle {
   alternatives?: { at: number; moves: string }[]
 }
 
-export type WoodpeckerOutcome = 'solved' | 'mistake' | 'gave_up'
+export type WoodpeckerOutcome = 'solved' | 'mistake' | 'gave_up' | 'skipped'
+
+export interface WoodpeckerRun {
+  cycle: number
+  name: string
+  startedAt: string | null
+  lastAt: string | null
+  done: number
+  solved: number
+  gaveUp: number
+  skipped: number
+  totalMs: number
+  avgMs: number
+  total: number
+}
+
+export interface WoodpeckerRunAttempt {
+  puzzle: number
+  solved: boolean
+  outcome: WoodpeckerOutcome
+  durationMs: number
+}
+
+export const listWoodpeckerRuns = (): Promise<WoodpeckerRun[]> => request('/api/woodpecker/runs')
+
+const woodpeckerJson = (method: string, body: unknown): RequestInit => ({
+  method,
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+})
+
+export const startWoodpeckerRun = (name: string): Promise<{ cycle: number }> =>
+  request('/api/woodpecker/runs', woodpeckerJson('POST', { name }))
+
+export const renameWoodpeckerRun = (cycle: number, name: string): Promise<{ ok: boolean }> =>
+  request(`/api/woodpecker/runs/${cycle}`, woodpeckerJson('PATCH', { name }))
+
+export const getWoodpeckerRunAttempts = (cycle: number): Promise<WoodpeckerRunAttempt[]> =>
+  request(`/api/woodpecker/runs/${cycle}/attempts`)
+
+export const resetWoodpeckerRange = (cycle: number, from: number, to: number): Promise<{ removed: number }> =>
+  request(`/api/woodpecker/runs/${cycle}/reset`, woodpeckerJson('POST', { from, to }))
+
+export const unsolveWoodpeckerPuzzle = (cycle: number, puzzle: number): Promise<{ ok: boolean }> =>
+  request(`/api/woodpecker/runs/${cycle}/unsolve`, woodpeckerJson('POST', { puzzle }))
 
 export interface WoodpeckerAttempt {
   operationId: string

@@ -82,6 +82,12 @@ func NewRouter(h *Handler) http.Handler {
 		r.Get("/api/woodpecker/state", h.GetWoodpeckerState)
 		r.Get("/api/woodpecker/puzzles/{number}", h.GetWoodpeckerPuzzle)
 		r.Post("/api/woodpecker/attempts", h.SubmitWoodpeckerAttempt)
+		r.Get("/api/woodpecker/runs", h.ListWoodpeckerRuns)
+		r.Post("/api/woodpecker/runs", h.StartWoodpeckerRun)
+		r.Patch("/api/woodpecker/runs/{cycle}", h.RenameWoodpeckerRun)
+		r.Get("/api/woodpecker/runs/{cycle}/attempts", h.GetWoodpeckerRunAttempts)
+		r.Post("/api/woodpecker/runs/{cycle}/reset", h.ResetWoodpeckerRange)
+		r.Post("/api/woodpecker/runs/{cycle}/unsolve", h.UnsolveWoodpeckerPuzzle)
 
 		r.Get("/api/user-settings", h.GetUserSettings)
 		r.Put("/api/user-settings", h.SaveUserSettings)
@@ -105,7 +111,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 	origin := allowedOrigin()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", origin)
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Chesslab-Time-Zone")
 		w.Header().Set("Access-Control-Expose-Headers", auth.RefreshedTokenHeader)
 		w.Header().Set("Access-Control-Max-Age", "7200")

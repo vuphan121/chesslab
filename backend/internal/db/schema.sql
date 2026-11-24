@@ -412,3 +412,12 @@ ALTER TABLE woodpecker_attempts ADD COLUMN IF NOT EXISTS outcome TEXT NOT NULL D
 
 CREATE INDEX IF NOT EXISTS woodpecker_attempts_cycle_idx
     ON woodpecker_attempts (username, cycle, puzzle_number);
+
+CREATE TABLE IF NOT EXISTS woodpecker_runs (
+    username TEXT NOT NULL CONSTRAINT woodpecker_runs_user_fk
+        REFERENCES users (username) ON DELETE CASCADE,
+    cycle INT NOT NULL,
+    name TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (username, cycle)
+);

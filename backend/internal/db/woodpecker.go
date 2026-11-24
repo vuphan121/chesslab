@@ -14,7 +14,10 @@ type WoodpeckerState struct {
 
 func (s *Store) WoodpeckerState(ctx context.Context, username string, total int) (WoodpeckerState, error) {
 	st := WoodpeckerState{Cycle: 1}
-	if err := s.pool.QueryRow(ctx, `SELECT COALESCE(MAX(cycle), 1) FROM woodpecker_attempts WHERE username = $1`, username).Scan(&st.Cycle); err != nil {
+	if err := s.pool.QueryRow(ctx, `
+		SELECT COALESCE(MAX(c), 1) FROM (
+			SELECT cycle AS c FROM woodpecker_attempts WHERE username = $1
+			UNION ALL SELECT cycle FROM woodpecker_runs WHERE username = $1) t`, username).Scan(&st.Cycle); err != nil {
 		return st, fmt.Errorf("woodpecker cycle: %w", err)
 	}
 	if err := s.pool.QueryRow(ctx, `

@@ -121,7 +121,7 @@ func validWoodpeckerOutcome(outcome string, solved bool) bool {
 	switch outcome {
 	case "solved":
 		return solved
-	case "mistake", "gave_up":
+	case "mistake", "gave_up", "skipped":
 		return !solved
 	}
 	return false
