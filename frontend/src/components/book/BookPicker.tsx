@@ -1,8 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { getBook, getBookProgress, listBooks } from '@/lib/api/client'
 import type { BookSummary } from '@/lib/books/types'
+
+const WOODPECKER_ID = 'woodpecker'
 
 interface Props {
   onStart: (bookId: string, chapterId: string) => void
@@ -11,6 +14,7 @@ interface Props {
 }
 
 export default function BookPicker({ onStart, starting, startError }: Props) {
+  const router = useRouter()
   const [books, setBooks] = useState<BookSummary[] | null>(null)
   const [listError, setListError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -33,7 +37,7 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
   const selected = books?.find((b) => b.id === selectedId) ?? null
 
   useEffect(() => {
-    if (!selectedId) return
+    if (!selectedId || selectedId === WOODPECKER_ID) return
     let cancelled = false
     Promise.all([getBook(selectedId), getBookProgress(selectedId).catch(() => ({ done: [] }))])
       .then(([book, progress]) => {
@@ -128,6 +132,22 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
             </div>
           )
         })}
+        <div
+          onClick={() => selectBook(WOODPECKER_ID)}
+          style={{
+            cursor: 'pointer',
+            padding: '12px 14px',
+            borderRadius: 8,
+            border: selectedId === WOODPECKER_ID ? '1px solid #4a90d9' : '1px solid #eae8e2',
+            background: selectedId === WOODPECKER_ID ? '#f2f8fd' : '#fff',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 14, fontWeight: 600 }}>Woodpecker</span>
+            <span style={{ fontSize: 11, color: '#a3a099' }}>1128 puzzles</span>
+          </div>
+          <div style={{ fontSize: 12, color: '#7a776f', marginTop: 4 }}>Woodpecker Method</div>
+        </div>
       </div>
 
       {selected && (
@@ -165,8 +185,11 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
 
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button
-          onClick={() => selectedId && selectedChapterId && onStart(selectedId, selectedChapterId)}
-          disabled={starting || !selectedId || !selectedChapterId}
+          onClick={() => {
+            if (selectedId === WOODPECKER_ID) router.push('/book-study/woodpecker')
+            else if (selectedId && selectedChapterId) onStart(selectedId, selectedChapterId)
+          }}
+          disabled={starting || !selectedId || (selectedId !== WOODPECKER_ID && !selectedChapterId)}
           style={{
             fontSize: 13,
             fontWeight: 600,
@@ -178,7 +201,7 @@ export default function BookPicker({ onStart, starting, startError }: Props) {
             cursor: starting ? 'default' : 'pointer',
           }}
         >
-          {starting ? 'Starting…' : 'Start studying'}
+          {starting ? 'Starting…' : selectedId === WOODPECKER_ID ? 'Open' : 'Start studying'}
         </button>
       </div>
     </div>

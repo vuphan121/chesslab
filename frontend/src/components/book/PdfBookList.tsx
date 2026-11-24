@@ -11,6 +11,8 @@ export default function PdfBookList() {
     listPdfBooks().then(setBooks).catch(() => {})
   }, [])
 
+  if (books.length === 0) return null
+
   return (
     <div
       style={{
@@ -23,16 +25,9 @@ export default function PdfBookList() {
       }}
     >
       <div className="lbl" style={{ color: '#b4b1a8', marginBottom: 8 }}>
-        Books
+        PDF books
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <Link
-          href="/book-study/woodpecker"
-          style={{ display: 'block', padding: '12px 14px', borderRadius: 8, border: '1px solid #eae8e2', color: 'inherit', textDecoration: 'none' }}
-        >
-          <span style={{ fontSize: 14, fontWeight: 600 }}>Woodpecker</span>
-          <span style={{ fontSize: 11, color: '#a3a099', marginLeft: 8 }}>Puzzle runs</span>
-        </Link>
         {books.map((b) => (
           <Link
             key={b.id}
