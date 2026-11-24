@@ -213,7 +213,7 @@ export default function SettingsPage() {
               opacity: reloading ? 0.6 : 1,
             }}
           >
-            {reloading ? 'Reloading…' : 'Reload book data from database'}
+            {reloading ? 'Reloadingâ€¦' : 'Reload book data from database'}
           </button>
           <div aria-live="polite" style={{ minHeight: 20, marginTop: 14, fontSize: 12, color: reloadMessage.startsWith('Could') ? '#b3483f' : '#4d8062' }}>
             {reloadMessage}
