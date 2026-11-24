@@ -19,7 +19,8 @@ import (
 type structure struct {
 	Chapters []struct {
 		Number int    `json:"number"`
-		Name   string `json:"name"`
+		Name      string `json:"name"`
+		FirstPage int    `json:"firstPage"`
 	} `json:"chapters"`
 }
 
@@ -32,6 +33,7 @@ type parsedPosition struct {
 	SideToMove     string `json:"sideToMove"`
 	SourcePage     int    `json:"chapterPDFPage"`
 	MasterPDFPage  int    `json:"masterPDFPage"`
+	DiagramPage    int    `json:"diagramPage"`
 }
 
 type override struct {
@@ -112,6 +114,9 @@ func main() {
 			if p.Position == 0 {
 				p.Position = 1
 			}
+			if p.DiagramPage > 0 && ch.FirstPage > 0 && p.DiagramPage >= ch.FirstPage {
+				p.SourcePage = p.DiagramPage - ch.FirstPage + 1
+			}
 			overrideKey := fmt.Sprintf("%d-%d", ch.Number, p.Pattern)
 			idSuffix, promptSuffix := "", ""
 			if p.Position > 1 {
@@ -149,9 +154,6 @@ func main() {
 				FEN: lesson.FEN, SideToMove: lesson.SideToMove, Prompt: "Drill p" + lesson.Prompt[1:],
 				SourcePage: lesson.SourcePage, MasterPDFPage: lesson.MasterPDFPage, SourceChapterID: chapter.ID,
 			})
-		}
-		if len(chapter.Items) > 0 {
-			chapter.Items[0].SourcePage = 1
 		}
 		log.Printf("chapter %d %s: %d patterns", ch.Number, chapter.Name, len(chapter.Items))
 		out.Chapters = append(out.Chapters, chapter)
