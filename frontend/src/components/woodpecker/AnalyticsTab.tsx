@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { getWoodpeckerRunAttempts, listWoodpeckerRuns, type WoodpeckerRun, type WoodpeckerRunAttempt } from '@/lib/api/client'
-import { cardStyle, formatDuration, runLabel, solveRate } from './format'
+import { cardStyle, formatDuration, runLabel } from './format'
 
 const BLOCK = 100
 const COLORS = ['#b4b1a8', '#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#6250d6', '#e34948', '#e87ba4']
@@ -72,6 +72,25 @@ export default function AnalyticsTab({ onOpen }: { onOpen: (puzzle: number) => v
       .slice(0, 10)
   }, [chosen, attempts])
 
+  const shared = useMemo(() => {
+    if (chosen.length === 0 || chosen.some((r) => !attempts[r.cycle])) return null
+    const rowsOf = chosen.map((run) => attempts[run.cycle].filter((x) => x.outcome !== 'skipped'))
+    let common = new Set(rowsOf[0].map((x) => x.puzzle))
+    for (const rows of rowsOf.slice(1)) {
+      const have = new Set(rows.map((x) => x.puzzle))
+      common = new Set([...common].filter((p) => have.has(p)))
+    }
+    const stats = new Map<number, { avgMs: number; acc: number }>()
+    chosen.forEach((run, i) => {
+      const rows = rowsOf[i].filter((x) => common.has(x.puzzle))
+      stats.set(run.cycle, {
+        avgMs: rows.length ? rows.reduce((sum, x) => sum + x.durationMs, 0) / rows.length : 0,
+        acc: rows.length ? Math.round((rows.reduce((sum, x) => sum + points(x), 0) / rows.length) * 100) : 0,
+      })
+    })
+    return { count: common.size, stats }
+  }, [chosen, attempts])
+
   const tone: Tone = (diff, lowerBetter) => (diff === 0 ? '#6a675f' : (lowerBetter ? diff < 0 : diff > 0) ? '#3f7a45' : '#b34343')
   const signed: Signed = (diff) => `${diff > 0 ? '+' : diff < 0 ? '−' : ''}${Math.abs(Math.round(diff))}`
 
@@ -118,24 +137,26 @@ export default function AnalyticsTab({ onOpen }: { onOpen: (puzzle: number) => v
         {chosen.length > 0 && (
           <div style={{ marginTop: 12 }}>
             <div style={{ display: 'flex', gap: 10, fontSize: 11, color: '#a3a099', padding: '0 0 4px 20px' }}>
-              <span style={{ flex: 1 }} />
+              <span style={{ flex: 1 }}>{shared ? `${shared.count} puzzles${chosen.length > 1 ? ' in common' : ''}` : ''}</span>
               <span>Avg time</span>
               <span style={{ width: 84, textAlign: 'right' }}>Accuracy</span>
             </div>
             {chosen.map((run, i) => {
               const prev = chosen[i - 1]
-              const timeDiff = prev ? (run.avgMs - prev.avgMs) / 1000 : null
-              const accDiff = prev ? solveRate(run) - solveRate(prev) : null
+              const mine = shared?.stats.get(run.cycle)
+              const before = prev ? shared?.stats.get(prev.cycle) : undefined
+              const timeDiff = mine && before ? (mine.avgMs - before.avgMs) / 1000 : null
+              const accDiff = mine && before ? mine.acc - before.acc : null
               return (
                 <div key={run.cycle} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '8px 0', borderTop: '1px solid #f0efe9' }}>
                   <span style={{ width: 10, height: 10, borderRadius: 2, background: colorOf(run.cycle), flexShrink: 0 }} />
                   <span style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{runLabel(run)}</span>
                   <span style={{ textAlign: 'right' }}>
-                    <span style={{ fontWeight: 600 }}>{formatDuration(run.avgMs)}</span>
+                    <span style={{ fontWeight: 600 }}>{mine ? formatDuration(mine.avgMs) : '–'}</span>
                     {timeDiff != null && <span style={{ fontSize: 12, marginLeft: 6, color: tone(timeDiff, true) }}>{signed(timeDiff)} s</span>}
                   </span>
                   <span style={{ width: 84, textAlign: 'right' }}>
-                    <span style={{ fontWeight: 600 }}>{solveRate(run)}%</span>
+                    <span style={{ fontWeight: 600 }}>{mine ? `${mine.acc}%` : '–'}</span>
                     {accDiff != null && <span style={{ fontSize: 12, marginLeft: 6, color: tone(accDiff, false) }}>{signed(accDiff)}</span>}
                   </span>
                 </div>
