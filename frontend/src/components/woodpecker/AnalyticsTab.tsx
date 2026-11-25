@@ -9,7 +9,7 @@ const COLORS = ['#b4b1a8', '#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#6250d6'
 
 const points = (x: WoodpeckerRunAttempt) => (x.solved ? 1 : x.outcome === 'half' ? 0.5 : 0)
 
-type Block = { start: number; time: (number | null)[]; acc: (number | null)[] }
+type Block = { start: number; end: number; time: (number | null)[]; acc: (number | null)[] }
 type Tone = (diff: number, lowerBetter: boolean) => string
 type Signed = (diff: number) => string
 
@@ -49,6 +49,7 @@ export default function AnalyticsTab({ onOpen }: { onOpen: (puzzle: number) => v
       const rowsOf = chosen.map((run) => (attempts[run.cycle] ?? []).filter((x) => x.puzzle >= start && x.puzzle <= end && x.outcome !== 'skipped'))
       out.push({
         start,
+        end,
         time: rowsOf.map((rows) => (rows.length ? rows.reduce((sum, x) => sum + x.durationMs, 0) / rows.length / 1000 : null)),
         acc: rowsOf.map((rows) => (rows.length ? (rows.reduce((sum, x) => sum + points(x), 0) / rows.length) * 100 : null)),
       })
@@ -58,21 +59,16 @@ export default function AnalyticsTab({ onOpen }: { onOpen: (puzzle: number) => v
 
   const difficult = useMemo(() => {
     if (chosen.length === 0 || chosen.some((r) => !attempts[r.cycle])) return []
-    const stats = new Map<number, { missed: number; ms: number; n: number }>()
+    const wrong = new Map<number, number>()
     for (const run of chosen) {
       for (const x of attempts[run.cycle]) {
-        if (x.outcome === 'skipped') continue
-        const s = stats.get(x.puzzle) ?? { missed: 0, ms: 0, n: 0 }
-        if (!x.solved) s.missed += 1
-        s.ms += x.durationMs
-        s.n += 1
-        stats.set(x.puzzle, s)
+        if (x.outcome === 'skipped' || x.solved) continue
+        wrong.set(x.puzzle, (wrong.get(x.puzzle) ?? 0) + 1)
       }
     }
-    return [...stats.entries()]
-      .filter(([, s]) => s.missed === chosen.length)
-      .map(([puzzle, s]) => ({ puzzle, avgMs: s.ms / s.n }))
-      .sort((x, y) => y.avgMs - x.avgMs)
+    return [...wrong.entries()]
+      .map(([puzzle, count]) => ({ puzzle, count }))
+      .sort((x, y) => y.count - x.count || x.puzzle - y.puzzle)
       .slice(0, 10)
   }, [chosen, attempts])
 
@@ -173,7 +169,7 @@ export default function AnalyticsTab({ onOpen }: { onOpen: (puzzle: number) => v
           {difficult.map((d) => (
             <div key={d.puzzle} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '8px 0', borderTop: '1px solid #f0efe9' }}>
               <span style={{ fontWeight: 600, width: 56 }}>#{d.puzzle}</span>
-              <span style={{ flex: 1, color: '#6a675f' }}>avg {formatDuration(d.avgMs)}</span>
+              <span style={{ flex: 1, color: '#6a675f' }}>Wrong {d.count}×</span>
               <button
                 className="tap"
                 onClick={() => onOpen(d.puzzle)}
@@ -263,12 +259,13 @@ function Chart({
               <span style={{ fontSize: 10, fontWeight: 600, lineHeight: 1, minHeight: 10, color: diff == null ? 'transparent' : tone(diff, lowerBetter) }}>
                 {diff == null ? '.' : signed(diff)}
               </span>
-              <span style={{ fontSize: 10, color: '#a3a099', lineHeight: 1 }}>{block.start}</span>
+              <span style={{ fontSize: 10, color: '#a3a099', lineHeight: 1, writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap' }}>
+                {block.start}–{block.end}
+              </span>
             </div>
           )
         })}
       </div>
-      {n >= 2 && <div style={{ fontSize: 11, color: '#a3a099', marginTop: 10 }}>Change: latest vs previous run{metric === 'time' ? ' (s)' : ' (pts)'}</div>}
     </div>
   )
 }
