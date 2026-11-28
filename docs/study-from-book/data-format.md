@@ -333,3 +333,25 @@ Corrected squares, as chapter/diagram square (reapply these after a fresh parse)
 - Thinking Inside the Box, white rook to black: 4/3 a8, 4/46 a8, 4/63 a8, 5/45 g8,
   7/16 c8, 8/2 a4, 10/39 a8, 11/1 g8, 11/5 a2, 12/73 f8.
 - Thinking Inside the Box, queens: 10/15 d6 black to white, 3/24 a5 white to black.
+
+## Build Up Your Chess 1: exercises in chapters 3-24
+
+`importparsedboards` imports every diagram of chapters 3-24 as a lesson. Each of
+these chapters ends with two pages of six exercises, followed by the solutions.
+After running that importer, mark the exercises again:
+
+1. From the repo root: `python tools/book-board-parser/yusupov_exercises.py`
+   finds the two six-diagram pages, numbers the exercises down the left column and
+   then the right (the parser numbers diagrams row by row), checks each number
+   against the label printed above the board where OCR can read it, and finds the
+   page of each solution heading. It writes `tmp/yusupov/exercises.json`.
+2. From `backend/`: `go run ./cmd/markyusupovexercises` (dry run; `-apply` writes
+   to Neon, `-out` writes the JSON, `-dump` saves the stored book).
+
+The tool turns those 264 items into puzzles, sets the prompt and `solutionPage`,
+and puts them last in each chapter in exercise order. Item ids and positions do
+not change, so progress is kept. The puzzles carry no solution moves.
+
+Applied 2026-11-28: 164 printed labels were read and all matched; 100 were not
+readable. Exercise 22-12 has no detected solution heading and uses the page of
+exercise 22-11. Chapters 1 and 2 already ended with 12 puzzles each.
