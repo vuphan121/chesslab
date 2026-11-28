@@ -19,7 +19,7 @@ python -m pip install -r tools/book-board-parser/requirements.txt
 Use the ranges in `docs/study-from-book/data-format.md`:
 
 ```powershell
-python tools/book-board-parser/book_board_parser.py 'book-sources/Book 1.pdf' `
+python tools/book-board-parser/book_board_parser.py 'book-sources/Build Up Your Chess 1 The Fundamentals - Artur Yusupov.pdf' `
   --chapter 2 --first-master-page 16 --last-master-page 27 `
   --output tmp/book-board-parser/chapter-2 --recognize `
   --validate-api http://localhost:8080
@@ -56,7 +56,7 @@ the diagrams the tool could not recognize or whose turn marker was unknown.
 It never corrects those diagrams or writes to Neon.
 
 ```powershell
-python tools/book-board-parser/parse_remaining.py 'book-sources/Book 1.pdf'
+python tools/book-board-parser/parse_remaining.py 'book-sources/Build Up Your Chess 1 The Fundamentals - Artur Yusupov.pdf'
 ```
 
 ## Import valid boards and review exceptions
@@ -86,3 +86,9 @@ cd backend
 go run ./cmd/importparsedboards
 go run ./cmd/importparsedboards --apply
 ```
+
+## Aagaard: Calculation and Thinking Inside the Box
+
+`parse_aagaard.py`, `solutions_aagaard.py`, `build_aagaard.py` and `split_aagaard.py`
+cover these two books. Commands and results are in
+[../../docs/study-from-book/data-format.md](../../docs/study-from-book/data-format.md).

@@ -125,6 +125,22 @@ def tokenize(line: str) -> list[tuple]:
     return tokens
 
 
+def missing_piece_move(board: chess.Board, raw: str) -> chess.Move | None:
+    """OCR sometimes loses the figurine ("9.d2" for Bd2, "xc5" for Bxc5): take the only legal piece move that fits."""
+    match = re.fullmatch(r"([a-h]?)(x?)([a-h][1-8])", raw)
+    if not match:
+        return None
+    file, capture, target = match.groups()
+    found = [
+        move for move in board.legal_moves
+        if chess.square_name(move.to_square) == target
+        and board.piece_at(move.from_square).piece_type != chess.PAWN
+        and (not file or chess.square_name(move.from_square)[0] == file)
+        and (not capture or board.is_capture(move))
+    ]
+    return found[0] if len(found) == 1 else None
+
+
 @dataclass
 class Node:
     fen: str
@@ -149,7 +165,30 @@ def chain_main(node: Node) -> bool:
     return True
 
 
-def build_tree(text: str, start_fen: str) -> tuple[Node, dict[str, Any]]:
+def follow_score(fen: str, tokens: list[tuple], depth: int = 10) -> int:
+    start = chess.Board(fen)
+    local, previous, score, seen = {ply_key(start): start}, start, 0, 0
+    for token in tokens:
+        if token[0] != "move":
+            continue
+        seen += 1
+        number, dots, san = token[1], token[2], token[3]
+        board = local.get(int(number) * 2 + (1 if dots == "..." else 0)) if number else previous
+        if board is not None:
+            copy = board.copy(stack=False)
+            try:
+                copy.push_san(san)
+            except ValueError:
+                copy = None
+            if copy is not None:
+                local[ply_key(copy)] = previous = copy
+                score += 1
+        if seen >= depth:
+            break
+    return score
+
+
+def build_tree(text: str, start_fen: str, brackets: bool = False) -> tuple[Node, dict[str, Any]]:
     root = Node(start_fen, main=True)
     by_ply: dict[int, list[Node]] = {ply_key(chess.Board(start_fen)): [root]}
     tokens: list[tuple] = []
@@ -170,6 +209,8 @@ def build_tree(text: str, start_fen: str) -> tuple[Node, dict[str, Any]]:
             except ValueError:
                 continue
         if move is None:
+            move = missing_piece_move(board, raw)
+        if move is None:
             return None
         san = board.san(move)
         board.push(move)
@@ -184,12 +225,23 @@ def build_tree(text: str, start_fen: str) -> tuple[Node, dict[str, Any]]:
     words: list[str] = []
     last: Node | None = None
     pending: tuple[int, str] | None = None
-    for token in tokens:
+    stack: list[Node | None] = []
+    for position, token in enumerate(tokens):
         starts = token[-1] is True
         if token[0] == "num":
             pending = (int(token[1]), token[2])
             continue
         if token[0] == "word":
+            if brackets and token[1] == "(":
+                stack.append(last)
+            if brackets and token[1] == ")" and stack:
+                if words and last is not None:
+                    last.after = (last.after + " " + " ".join(words + [")"])).strip()
+                    words = []
+                else:
+                    words.append(")")
+                last, pending = stack.pop(), None
+                continue
             words.append(token[1])
             continue
         number, dots, san, mark, evaluation = token[1], token[2], token[3], token[4], token[5]
@@ -217,6 +269,17 @@ def build_tree(text: str, start_fen: str) -> tuple[Node, dict[str, Any]]:
                 candidates.append(last)
             rest = [n for n in reversed(by_ply.get(ply, [])) if n not in candidates]
             candidates += [n for n in rest if chain_main(n)] + [n for n in rest if not chain_main(n)]
+            if brackets and len(candidates) > 1:
+                scored = []
+                for order_index, parent in enumerate(candidates):
+                    board = chess.Board(parent.fen)
+                    try:
+                        board.push_san(san)
+                    except ValueError:
+                        continue
+                    scored.append((-follow_score(board.fen(), tokens[position + 1:]), order_index, parent))
+                if scored:
+                    candidates = [entry[2] for entry in sorted(scored, key=lambda entry: entry[:2])]
             for parent in candidates:
                 node = attach(parent, san, mark + evaluation)
                 if node is not None:
@@ -307,7 +370,7 @@ def placement_variants(placement: str) -> list[tuple[str, str]]:
     return variants
 
 
-def repair_start(text: str, placement: str, turn: str, moveno: int, base_failed: int, rounds: int = 3) -> tuple[str, list[str], dict[str, Any]]:
+def repair_start(text: str, placement: str, turn: str, moveno: int, base_failed: int, rounds: int = 3, brackets: bool = False) -> tuple[str, list[str], dict[str, Any]]:
     edits: list[str] = []
     best_placement, best_failed = placement, base_failed
     best_stats: dict[str, Any] = {}
@@ -318,7 +381,7 @@ def repair_start(text: str, placement: str, turn: str, moveno: int, base_failed:
         for label, candidate in placement_variants(best_placement):
             try:
                 fen = f"{candidate} {turn} {castling_rights(candidate)} - 0 {moveno}"
-                _, stats = build_tree(text, fen)
+                _, stats = build_tree(text, fen, brackets)
             except ValueError:
                 continue
             if stats["failed"] < best_failed - 1 and (choice is None or stats["failed"] < choice[0]):

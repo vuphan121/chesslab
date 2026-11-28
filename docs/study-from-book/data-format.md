@@ -17,7 +17,7 @@ from completion: a student can explore freely without marking an item complete.
 ## Content and copyright
 
 - Purchased source PDFs are private. The master PDF used for local preparation
-  is `book-sources/Book 1.pdf`; it is gitignored and must never be committed.
+  is `book-sources/Build Up Your Chess 1 The Fundamentals - Artur Yusupov.pdf`; it is gitignored and must never be committed.
 - The app stores only structured chess facts (FEN, side to move, chapter/item
   identifiers, and optional source-page numbers) plus app-authored labels.
 - Production book records live in Neon Postgres. Chapter PDFs live in the
@@ -72,7 +72,7 @@ chapter bytes; neither B2 keys nor B2 download tokens reach the browser.
 ## Build Up Your Chess 1 source-page map
 
 The table below is the canonical page map for the private master file
-`Book 1.pdf` (263 physical PDF pages). `Book page` is the printed page number
+`Build Up Your Chess 1 The Fundamentals - Artur Yusupov.pdf` (263 physical PDF pages). `Book page` is the printed page number
 visible in the book; `master PDF` is its 1-based physical page in the source
 file. The first numbered page has an offset of two: `master PDF = book page -
 2`.
@@ -178,7 +178,7 @@ repeatable without ever hand-editing the production JSON blob.
 
 ## Grandmaster Preparation: Positional Play
 
-`book-sources/positional_play.pdf` (312 physical pages) is a scan with no text
+`book-sources/Grandmaster Preparation Positional Play - Jacob Aagaard.pdf` (312 physical pages) is a scan with no text
 layer or bookmarks, so chapters were located by reading page headings with an
 OCR library; master PDF page = printed page + 1. Boards are found with OpenCV and
 read by ChessOCR through `tools/book-board-parser/parse_positional_play.py`
@@ -267,3 +267,69 @@ arrows read as pieces) and two-column reading order can split a game's score.
 Published 2026-11-08 with `go run ./cmd/importpositionalplay --exercise-puzzles --apply`
 (from `backend/`). Neon now has the merged chapter 5 (150 exercises, all puzzles, 51 with
 author lines). The merged `chapter-5.pdf` is in B2; the old `chapter-6.pdf` is unused.
+
+## Grandmaster Preparation: Calculation and Thinking Inside the Box
+
+Sources: `book-sources/Grandmaster Preparation Calculation - Jacob Aagaard.pdf` and
+`book-sources/Grandmaster Preparation Thinking Inside the Box - Jacob Aagaard.pdf`.
+Book ids are `calculation` (10 chapters) and `thinking-inside-the-box` (14 chapters).
+Unnumbered front matter and appendices are left out. Master PDF page = printed
+page + 1. Chapter names and page ranges are in `BOOKS` in `parse_aagaard.py`.
+
+Run from the repo root, with `<book>` as one of the two ids:
+
+1. `python tools/book-board-parser/parse_aagaard.py <book>` finds boards and turn
+   triangles and reads placements with ChessOCR (resumable). Diagrams are numbered
+   down the left column, then the right. A board box that is wider than tall is
+   trimmed to a square, because it can swallow the turn triangle.
+2. Calculation only: `python tools/book-board-parser/solutions_aagaard.py`
+   OCRs the solution pages and builds move trees. `exercises_aagaard.py` picks out
+   the exercise diagrams by their circled numbers (388 exercises, matching the
+   book's numbering). The check sign is OCR'd as `t` and some move numbers lose a
+   dot, which `tidy_text` fixes. These solutions mark side lines with brackets, so
+   `build_tree(..., brackets=True)` follows them and, when a move fits more than one
+   branch, picks the branch where the following moves fit best. The flag is off by
+   default, so other books parse as before.
+3. `python tools/book-board-parser/build_aagaard.py <book>` writes
+   `tmp/<book>/study.json` and `build-report.txt`.
+4. `python tools/book-board-parser/split_aagaard.py <book>`, then
+   `go run ./cmd/uploadbookchapter ../tmp/<book>/pdf/chapter-<n>.pdf <book> <n>`
+   for each chapter (from `backend/`).
+5. `go run ./cmd/importaagaard -book <book>` (dry run; `-apply` writes to Neon,
+   `-out` writes the JSON to a file).
+
+Calculation puzzles are the 388 exercises. Thinking Inside the Box has no exercise
+sections, so its puzzles are the "Test yourself against the book" positions
+(chapters 3-14; the solution page comes from each "see page N" caption) and the six
+numbered exercises in chapter 6.
+
+Imported 2026-11-28:
+
+| Book | Positions | Puzzles | Author lines | Skipped | No turn marker (White) |
+| --- | --- | --- | --- | --- | --- |
+| Calculation | 618 | 388 | 231 | 0 | 14 |
+| Thinking Inside the Box | 708 | 85 | 0 | 30 | 567 |
+
+All 388 Calculation puzzles have a solution page. Exercise 1.21 has no detected
+solution heading and uses the previous exercise's page. 84 Thinking Inside the Box
+puzzles have one; the exception is chapter 10, diagram 1. Of its 30 skipped crops,
+28 are photos or drawings. Chapter 11 diagrams 27 and 33 are real positions that
+ChessOCR could not read with any crop tried; chapter 4 diagram 14 was read on a
+retry with no crop margin (`retryCrop` in its `positions.json`). In 10 Calculation
+exercises the turn triangle and the solution's first numbered move disagree
+(listed in `build-report.txt`); the triangle is used, and the first numbered move
+can simply be one quoted from earlier in the game. The Thinking Inside the Box
+chapter PDFs are 10-14 MB each because of the fonts embedded in the scan's text layer.
+
+Do not pass `--repair`: the one-piece edits it makes can remove pieces that are
+printed in the diagram. After the first import, 18 piece colors that ChessOCR got
+wrong (white queens read as black, black rooks read as white) were corrected in
+`positions.json` (`colourFixes`) and both books re-imported. Some wrong colors
+remain in Thinking Inside the Box; fix them as they are reported.
+
+Corrected squares, as chapter/diagram square (reapply these after a fresh parse):
+
+- Calculation, black queen to white: 1/4 d6, 1/48 e7, 3/30 h6, 6/28 e7, 7/2 h6, 10/18 h6.
+- Thinking Inside the Box, white rook to black: 4/3 a8, 4/46 a8, 4/63 a8, 5/45 g8,
+  7/16 c8, 8/2 a4, 10/39 a8, 11/1 g8, 11/5 a2, 12/73 f8.
+- Thinking Inside the Box, queens: 10/15 d6 black to white, 3/24 a5 white to black.

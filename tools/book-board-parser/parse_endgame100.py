@@ -7,7 +7,7 @@ title line); full pattern titles come from the contents pages. Each diagram is c
 (5.2 s apart, checkpointed, resumable). The side to move comes from a "White/Black to move" phrase in the
 pattern's text when there is one, otherwise it is left unknown. Nothing is hand-read and nothing is written to Neon.
 
-    python parse_endgame100.py book-sources/100_Endgame_....pdf --output-root tmp/endgame100 [--detect-only]
+    python parse_endgame100.py "book-sources/100 Endgame Patterns You Must Know - Jesus de la Villa.pdf" --output-root tmp/endgame100 [--detect-only]
 """
 
 from __future__ import annotations

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Split positional_play.pdf into the per-chapter PDFs the reader streams.
+"""Split the Positional Play PDF into the per-chapter PDFs the reader streams.
 
 Exercises and Solutions are one app chapter (chapter-5.pdf, master pages
 152-309): an exercise's page and its solution page are in the same file.
